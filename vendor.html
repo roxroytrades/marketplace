@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Grid - Vendor Dashboard & Moderation</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --dark: #1a1a1a;
+            --bg-light: #f4f4f9;
+            --sidebar-width: 270px;
+        }
+
+        body { font-family: Arial, sans-serif; background-color: var(--bg-light); margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }
+
+        /* Left Sidebar Navigation */
+        aside { width: var(--sidebar-width); background: var(--dark); color: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        aside h2 { font-size: 20px; margin-top: 0; color: #00bcd4; }
+        aside .nav-tag { font-size: 11px; text-transform: uppercase; background: #00bcd4; color: black; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+        aside nav button { background: none; border: none; color: #ccc; text-align: left; padding: 12px 10px; font-size: 14px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; width: 100%; transition: 0.2s; }
+        aside nav button:hover, aside nav button.active { background: rgba(255,255,255,0.1); color: white; font-weight: bold; }
+        aside .back-link { margin-top: auto; color: #aaa; text-decoration: none; font-size: 13px; padding-top: 15px; border-top: 1px solid #333; }
+        aside .back-link:hover { color: white; }
+
+        /* Main Content View Area */
+        main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+        .view-section { display: none; padding: 30px; box-sizing: border-box; width: 100%; }
+        .view-section.active { display: block; }
+
+        /* Header Bar */
+        header { background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 22px; margin: 0; }
+
+        /* Tables & Managers */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 15px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { background: #f8f9fa; font-weight: bold; }
+
+        /* Buttons & Actions */
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        button.btn:hover { opacity: 0.9; }
+        button.btn-success { background: var(--success); }
+        button.btn-danger { background: var(--danger); }
+
+        /* Modal Popup Overlay */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-card { background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .modal-card h3 { margin-top: 0; }
+        .modal-actions { margin-top: 20px; display: flex; justify-content: center; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Left Sidebar Panel Navigation -->
+    <aside>
+        <h2>The Grid</h2>
+        <span class="nav-tag">Vendor Control Center</span>
+        <nav>
+            <button onclick="switchView('vendorModView', this)" class="active">1. Feedback Approval Queue</button>
+            <button onclick="switchView('vendorQueueView', this)">2. Commission Payout Queue</button>
+            <button onclick="switchView('receiptView', this)">3. Upload Receipts Pipeline</button>
+        </nav>
+        <a href="index.html" class="back-link">&larr; Switch to User Storefront</a>
+    </aside>
+
+    <!-- Main Dynamic Viewer Area -->
+    <main>
+        <header>
+            <h1 id="pageTitle">Feedback Approval Queue</h1>
+            <span style="font-size: 13px; color: #666;">Vendor Portal Active</span>
+        </header>
+
+        <!-- VIEW 1: VENDOR FEEDBACK APPROVAL MODERATION -->
+        <section id="vendorModView" class="view-section active">
+            <h2>Feedback Moderation Dashboard</h2>
+            <p>Review incoming Amazon links and feedback items submitted by platform reviewers. Approving unlocks commissions; denying requires a reason.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reviewer</th>
+                        <th>Feedback ID & Link</th>
+                        <th>Submitted Date</th>
+                        <th>Status</th>
+                        <th>Moderation Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="vendorModTableBody">
+                    <!-- Sample mock row to demonstrate interface state -->
+                    <tr id="sampleModRow">
+                        <td>Roxroy Gough (ID: REV-777)</td>
+                        <td><a href="#" target="_blank">amazon.com/dp/B08N5WRWNW</a> (FB-8901)</td>
+                        <td>Sep 17, 2026</td>
+                        <td><span style="color: var(--warning); font-weight: bold;">Pending Review</span></td>
+                        <td>
+                            <button class="btn btn-success" onclick="approveFeedback('sampleModRow', 'amazon.com/dp/B08N5WRWNW')">Approve</button>
+                            <button class="btn btn-danger" onclick="openDenialModal('sampleModRow', 'amazon.com/dp/B08N5WRWNW')">Deny</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- VIEW 2: VENDOR PAYOUT QUEUE -->
+        <section id="vendorQueueView" class="view-section">
+            <h2>Commission Payout Queue</h2>
+            <p>Manage payment requests submitted by recipients (Reviewers, Reviewer Inviters, Vendor Inviters) awaiting external funds transfer.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Commission Type</th>
+                        <th>Recipient Name & ID</th>
+                        <th>Date Submitted</th>
+                        <th>Amount</th>
+                        <th>Feedback Link</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="vendorQueueBody">
+                    <tr id="emptyQueueRow">
+                        <td colspan="6" style="text-align: center; color: #666; font-style: italic;">No pending payout requests in queue.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- VIEW 3: UPLOAD RECEIPTS PIPELINE -->
+        <section id="receiptView" class="view-section">
+            <h2>Must Upload Receipt After Payment Transfer</h2>
+            <p>Track commissions that have cleared the active queue after payment execution. Upload final transaction receipts here to complete the audit trail.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Recipient Name</th>
+                        <th>Type</th>
+                        <th>Amount Paid</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="receiptPipelineBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #666; font-style: italic;">No completed transfers pending receipt upload.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- DENIAL REASON MODAL -->
+    <div class="modal-overlay" id="denialModal">
+        <div class="modal-card">
+            <h3>Deny Feedback Submission</h3>
+            <p>Please enter the reason for denial so the reviewer can review and resubmit:</p>
+            <input type="text" id="denialReasonInput" placeholder="e.g., Image missing or incorrect order ID" style="width: 100%; padding: 8px; box-sizing: border-box; margin-top: 10px;">
+            <div class="modal-actions">
+                <button class="btn" onclick="document.getElementById('denialModal').style.display='none'">Cancel</button>
+                <button class="btn btn-danger" onclick="submitDenialReason()">Submit Denial</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation Handler
+        function switchView(viewId, btnElement) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('aside nav button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            btnElement.classList.add('active');
+            document.getElementById('pageTitle').innerText = btnElement.innerText;
+        }
+
+        // Vendor Approve Action
+        function approveFeedback(rowId, linkText) {
+            const row = document.getElementById(rowId);
+            if(row) row.remove();
+            alert("Feedback Approved successfully! Commissions have been released to the participants' managers.");
+        }
+
+        // Vendor Deny Action
+        let activeDenyRowId = null;
+        function openDenialModal(rowId, linkText) {
+            activeDenyRowId = rowId;
+            document.getElementById('denialReasonInput').value = "";
+            document.getElementById('denialModal').style.display = 'flex';
+        }
+
+        function submitDenialReason() {
+            const reason = document.getElementById('denialReasonInput').value.trim();
+            if(!reason) { alert("Please provide a denial reason."); return; }
+            
+            document.getElementById('denialModal').style.display = 'none';
+            const row = document.getElementById(activeDenyRowId);
+            if(row) row.remove();
+
+            alert("Feedback denied with reason logged. Notification sent back to user.");
+        }
+
+        // Vendor Pay & Receipt Pipeline Transfer
+        function transferToReceiptQueue(buttonElement, type, amount) {
+            buttonElement.closest('tr').remove();
+
+            const receiptBody = document.getElementById('receiptPipelineBody');
+            if(receiptBody.innerText.includes("No completed transfers")) {
+                receiptBody.innerHTML = "";
+            }
+
+            receiptBody.innerHTML += `
+                <tr>
+                    <td>Roxroy Gough</td>
+                    <td>${type}</td>
+                    <td>${amount}</td>
+                    <td><span style="color: var(--warning); font-weight: bold;">Pending Receipt Upload</span></td>
+                    <td><button class="btn" onclick="alert('Receipt uploaded successfully! Workflow complete.')">Upload Receipt</button></td>
+                </tr>
+            `;
+            alert("Commission paid! Transferred to receipt upload pipeline.");
+        }
+    </script>
+</body>
+</html>
