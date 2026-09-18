@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Storefront & Hub</title>
+    <title>Echo Hub - Vendor Control Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #007bff;
             --success: #28a745;
             --danger: #dc3545;
+            --warning: #ffc107;
             --dark: #1a1a1a;
             --bg-light: #f4f4f9;
             --sidebar-width: 270px;
@@ -19,184 +20,146 @@
 
         aside { width: var(--sidebar-width); background: var(--dark); color: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
         aside h2 { font-size: 20px; margin-top: 0; color: #00bcd4; }
-        aside .nav-tag { font-size: 11px; text-transform: uppercase; background: var(--primary); color: white; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
-        aside nav button { background: none; border: none; color: #ccc; text-align: left; padding: 12px 10px; font-size: 14px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; width: 100%; transition: 0.2s; position: relative; }
+        aside .nav-tag { font-size: 11px; text-transform: uppercase; background: #00bcd4; color: black; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+        aside nav button { background: none; border: none; color: #ccc; text-align: left; padding: 12px 10px; font-size: 14px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; width: 100%; transition: 0.2s; }
         aside nav button:hover, aside nav button.active { background: rgba(255,255,255,0.1); color: white; font-weight: bold; }
-        
-        .badge { background: var(--danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; position: absolute; right: 10px; top: 12px; display: none; }
-        aside .vendor-link { margin-top: auto; color: #00bcd4; text-decoration: none; font-size: 13px; padding-top: 15px; border-top: 1px solid #333; }
-        aside .vendor-link:hover { text-decoration: underline; }
+        aside .back-link { margin-top: auto; color: #aaa; text-decoration: none; font-size: 13px; padding-top: 15px; border-top: 1px solid #333; }
+        aside .back-link:hover { color: white; }
 
         main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
-        .view-section { display: none; padding: 30px; box-sizing: border-box; width: 100%; }
+        .view-section { display: none; padding: 30px; box-sizing: border-box; width: 100%; max-width: 900px; }
         .view-section.active { display: block; }
 
         header { background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 22px; margin: 0; }
 
-        /* Enhanced Product Grid & Animated Elements */
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-top: 20px; }
-        .product-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .product-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
-        
-        /* Image container with overflow hidden for smooth zoom effect */
-        .product-image-container { width: 100%; height: 160px; overflow: hidden; background: #e9ecef; position: relative; }
-        .product-image-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-        /* Motion on mouse hover for the product image */
-        .product-card:hover .product-image-container img { transform: scale(1.08); }
-
-        .product-content { padding: 15px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
-        .product-card h3 { margin: 0 0 8px 0; font-size: 16px; }
-        .product-card .price { font-size: 18px; color: var(--primary); font-weight: bold; margin-bottom: 10px; }
-
-        /* Motion on mouse hover for the product card button */
-        button.product-btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%; transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease; }
-        button.product-btn:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3); }
-
-        .messaging-layout { display: flex; height: calc(100vh - 140px); background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        .chat-sidebar { width: 300px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-        .search-box { padding: 15px; border-bottom: 1px solid #ddd; }
-        .search-box input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        .recipient-list { overflow-y: auto; flex: 1; }
-        .recipient-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.1s; }
-        .recipient-item:hover, .recipient-item.active { background: #f1f3f5; }
-        
-        .chat-window { flex: 1; display: flex; flex-direction: column; background: #efeae2; }
-        .chat-header { padding: 15px; background: #f0f2f5; border-bottom: 1px solid #ddd; font-weight: bold; }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message-bubble { max-width: 60%; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
-        .message-bubble.standard { background: white; align-self: flex-start; }
-        .message-bubble.feedback { background: #dcf8c6; align-self: flex-start; border-left: 4px solid var(--success); }
-        .chat-input-area { padding: 15px; background: #f0f2f5; display: flex; gap: 10px; }
-        .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .form-card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .form-group textarea { height: 80px; }
 
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 15px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
         th { background: #f8f9fa; font-weight: bold; }
 
-        .notification-list { display: flex; flex-direction: column; gap: 10px; max-width: 600px; }
-        .notification-item { background: white; padding: 15px; border-radius: 6px; border-left: 4px solid var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .notification-item h4 { margin: 0 0 5px 0; font-size: 15px; }
-        .notification-item p { margin: 0; font-size: 13px; color: #555; }
-        .notification-item time { font-size: 11px; color: #999; display: block; margin-top: 5px; }
-
         button.btn { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         button.btn:hover { opacity: 0.9; }
         button.btn-success { background: var(--success); }
         button.btn-danger { background: var(--danger); }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-card { background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .modal-actions { margin-top: 20px; display: flex; justify-content: center; gap: 10px; }
     </style>
 </head>
 <body>
 
     <aside>
         <h2>Echo Hub</h2>
-        <span class="nav-tag">User Portal</span>
+        <span class="nav-tag">Vendor Control Center</span>
         <nav>
-            <button onclick="switchView('storeView', this)" class="active">1. Storefront (The Grid)</button>
-            <button onclick="switchView('messagingView', this)">2. Messaging Hub</button>
-            <button onclick="switchView('commissionsView', this)">3. Commissions Manager</button>
-            <button onclick="switchView('notificationsView', this)">4. Notifications <span class="badge" id="notifBadge">0</span></button>
+            <button onclick="switchView('vendorProductView', this)" class="active">1. Product Dashboard</button>
+            <button onclick="switchView('vendorModView', this)">2. Feedback Approval Queue</button>
+            <button onclick="switchView('vendorQueueView', this)">3. Commission Payout Queue</button>
+            <button onclick="switchView('receiptView', this)">4. Upload Receipts Pipeline</button>
         </nav>
-        <a href="vendor.html" class="vendor-link">Switch to Vendor Dashboard &rarr;</a>
+        <a href="index.html" class="back-link">&larr; Switch to User Storefront</a>
     </aside>
 
     <main>
         <header>
-            <h1 id="pageTitle">Storefront - The Grid</h1>
-            <span style="font-size: 13px; color: #666;">Welcome, Reviewer</span>
+            <h1 id="pageTitle">Product Dashboard</h1>
+            <span style="font-size: 13px; color: #666;">Vendor Portal Active</span>
         </header>
 
-        <!-- 1. Storefront View -->
-        <section id="storeView" class="view-section active">
-            <h2>Browse Marketplace Products</h2>
-            <p>Explore tools and assets. Hover over images and buttons for interactive motion effects. Click 'Inquire' on any item to jump straight into the Messaging Hub workflow.</p>
-            <div class="product-grid" id="productGridContainer">
-                <div style="color: #666; font-style: italic;">Loading marketplace products from database...</div>
+        <!-- 1. Product Dashboard View -->
+        <section id="vendorProductView" class="view-section active">
+            <div class="form-card">
+                <h3>Create Product Listing</h3>
+                <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Use these controls to set up new listings. Clicking Submit publishes items straight to the grid and triggers a notification to all user tabs.</p>
+                
+                <div class="form-group">
+                    <label>Product Title</label>
+                    <input type="text" id="productTitle" placeholder="e.g., Automation Tool">
+                </div>
+                <div class="form-group">
+                    <label>Price ($)</label>
+                    <input type="number" id="productPrice" step="0.01" placeholder="29.99">
+                </div>
+                <div class="form-group">
+                    <label>Vendor Name</label>
+                    <input type="text" id="vendorNameInput" value="Vendor Alpha">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="productDesc" placeholder="Product features..."></textarea>
+                </div>
+                <button class="btn btn-success" onclick="submitProductListing()">Submit Listing</button>
             </div>
         </section>
 
-        <!-- 2. Messaging Hub View -->
-        <section id="messagingView" class="view-section">
-            <div class="messaging-layout">
-                <div class="chat-sidebar">
-                    <div class="search-box">
-                        <input type="text" id="smartSearch" placeholder="Search chats..." oninput="filterRecipients(this.value)">
-                    </div>
-                    <div class="recipient-list" id="recipientListContainer">
-                        <div style="padding: 15px; color: #666; font-style: italic; font-size: 13px;">Loading chats...</div>
-                    </div>
-                </div>
-                <div class="chat-window">
-                    <div class="chat-header" id="activeChatTitle">Select a Chat</div>
-                    <div class="chat-messages" id="chatMessages">
-                        <div style="text-align: center; color: #666; margin-top: 20px;">Select a conversation from the sidebar to view messages.</div>
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" placeholder="Type message or paste Amazon URL...">
-                        <button class="btn" onclick="sendMessage()">Send</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. Commissions Manager View -->
-        <section id="commissionsView" class="view-section">
-            <h2>Commissions Manager</h2>
-            <p>Track your approved feedback payouts and submit payment requests directly to vendors.</p>
+        <!-- 2. Feedback Approval Queue -->
+        <section id="vendorModView" class="view-section">
+            <h2>Feedback Approval Queue</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Type</th>
-                        <th>Feedback Item / Link</th>
-                        <th>Amount</th>
+                        <th>Reviewer</th>
+                        <th>Feedback Link</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody id="commissionsTableBody">
-                    <tr><td colspan="5" style="text-align: center; color: #666;">Loading commissions from database...</td></tr>
+                <tbody id="vendorModTableBody">
+                    <tr><td colspan="4" style="text-align: center; color: #666;">Loading moderation queue...</td></tr>
                 </tbody>
             </table>
         </section>
 
-        <!-- 4. Notifications Tab View -->
-        <section id="notificationsView" class="view-section">
-            <h2>Notifications</h2>
-            <p>Alerts broadcasted by vendors regarding new product listings.</p>
-            <div class="notification-list" id="notificationListContainer">
-                <div style="color: #666; font-style: italic;">No notifications found.</div>
-            </div>
+        <!-- 3. Commission Payout Queue -->
+        <section id="vendorQueueView" class="view-section">
+            <h2>Commission Payout Queue</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Recipient</th>
+                        <th>Amount</th>
+                        <th>Link</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="vendorQueueBody">
+                    <tr><td colspan="5" style="text-align: center; color: #666;">Loading payout queue...</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 4. Upload Receipts Pipeline -->
+        <section id="receiptView" class="view-section">
+            <h2>Upload Receipts Pipeline</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Recipient Name</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="receiptPipelineBody">
+                    <tr><td colspan="4" style="text-align: center; color: #666;">Loading receipt pipeline...</td></tr>
+                </tbody>
+            </table>
         </section>
     </main>
-
-    <div class="modal-overlay" id="feedbackModal">
-        <div class="modal-card">
-            <h3>Feedback Submission Detected</h3>
-            <p>Confirm this message as an official verified feedback item for database tracking?</p>
-            <div class="modal-actions">
-                <button class="btn btn-danger" onclick="closeFeedbackModal(false)">Cancel</button>
-                <button class="btn btn-success" onclick="closeFeedbackModal(true)">Confirm Feedback</button>
-            </div>
-        </div>
-    </div>
 
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let activeRecipientId = null;
-        let allRecipients = [];
-
         window.onload = function() {
-            fetchProducts();
-            fetchRecipients();
-            fetchUserCommissions();
-            fetchNotifications();
+            fetchModerationQueue();
+            fetchPayoutQueue();
+            fetchReceiptPipeline();
         };
 
         function switchView(viewId, btnElement) {
@@ -205,208 +168,124 @@
             document.getElementById(viewId).classList.add('active');
             btnElement.classList.add('active');
             document.getElementById('pageTitle').innerText = btnElement.innerText;
-
-            if (viewId === 'notificationsView') {
-                document.getElementById('notifBadge').style.display = 'none';
-            }
         }
 
-        async function fetchProducts() {
-            const { data, error } = await supabaseClient.from('products').select('*').order('created_at', { ascending: false });
-            const container = document.getElementById('productGridContainer');
+        async function submitProductListing() {
+            const title = document.getElementById('productTitle').value.trim();
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const vendor_name = document.getElementById('vendorNameInput').value.trim();
+            const description = document.getElementById('productDesc').value.trim();
 
-            if (error || !data || data.length === 0) {
-                container.innerHTML = `<p style="color: #666; font-style: italic;">No products found in database.</p>`;
+            if (!title || isNaN(price)) {
+                alert("Please provide a title and valid price.");
                 return;
             }
 
-            container.innerHTML = "";
-            data.forEach(prod => {
-                // Fallback placeholder image if none provided in database
-                const imageUrl = prod.image_url || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500&auto=format&fit=crop&q=60';
-                
-                container.innerHTML += `
-                    <div class="product-card">
-                        <div class="product-image-container">
-                            <img src="${imageUrl}" alt="${prod.title}">
-                        </div>
-                        <div class="product-content">
-                            <div>
-                                <h3>${prod.title}</h3>
-                                <p class="price">$${Number(prod.price).toFixed(2)}</p>
-                                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">${prod.description || ''}</p>
-                            </div>
-                            <button class="product-btn" onclick="openMessagingFromProduct('${prod.vendor_name || 'Vendor Alpha'}', '${prod.title}')">Inquire / Review</button>
-                        </div>
-                    </div>
-                `;
-            });
+            // Save to products table
+            const { error } = await supabaseClient.from('products').insert([{ title, price, vendor_name, description }]);
+            if (error) { alert("Error: " + error.message); return; }
+
+            // Broadcast notification
+            await supabaseClient.from('notifications').insert([{
+                title: 'New Product Listed!',
+                message: `${vendor_name} published "${title}" for $${price.toFixed(2)}.`
+            }]);
+
+            alert("Product submitted to grid and notification broadcasted to all users!");
+            document.getElementById('productTitle').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productDesc').value = '';
         }
 
-        async function fetchRecipients() {
-            const { data, error } = await supabaseClient.from('vendors').select('*');
-            const container = document.getElementById('recipientListContainer');
-
-            if (error || !data || data.length === 0) {
-                container.innerHTML = `<div style="padding: 15px; color: #666; font-style: italic; font-size: 13px;">No chats found in database.</div>`;
-                return;
-            }
-
-            allRecipients = data;
-            renderRecipients(allRecipients);
-            if (data.length > 0) {
-                selectChat(data[0].id, data[0].name, data[0].code || 'VEND-001');
-            }
-        }
-
-        function renderRecipients(recipients) {
-            const container = document.getElementById('recipientListContainer');
-            container.innerHTML = "";
-            recipients.forEach(rec => {
-                const isActive = activeRecipientId === rec.id ? 'active' : '';
-                container.innerHTML += `
-                    <div class="recipient-item ${isActive}" onclick="selectChat('${rec.id}', '${rec.name}', '${rec.code || 'VEND-001'}')">
-                        <b>${rec.name}</b><br>
-                        <small>ID: ${rec.code || 'VEND-001'} | Active</small>
-                    </div>
-                `;
-            });
-        }
-
-        function filterRecipients(query) {
-            const filtered = allRecipients.filter(r => r.name.toLowerCase().includes(query.toLowerCase()));
-            renderRecipients(filtered);
-        }
-
-        function selectChat(id, name, code) {
-            activeRecipientId = id;
-            document.getElementById('activeChatTitle').innerText = `Chat with ${name} (${code})`;
-            document.querySelectorAll('.recipient-item').forEach(el => el.classList.remove('active'));
-            event && event.currentTarget && event.currentTarget.classList.add('active');
-            fetchMessages();
-        }
-
-        function openMessagingFromProduct(vendorName, product) {
-            document.querySelector("aside nav button:nth-child(2)").click();
-            const match = allRecipients.find(r => r.name.toLowerCase() === vendorName.toLowerCase());
-            if (match) { selectChat(match.id, match.name, match.code || 'VEND-001'); }
-            document.getElementById('activeChatTitle').innerText = `Chat with ${product} (${vendorName})`;
-        }
-
-        let pendingMessageText = "";
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if(!text) return;
-
-            if(text.includes("amazon.com") || text.includes("http")) {
-                pendingMessageText = text;
-                document.getElementById('feedbackModal').style.display = 'flex';
-            } else {
-                saveMessageToDB(text, 'standard');
-                input.value = "";
-            }
-        }
-
-        async function closeFeedbackModal(isConfirmed) {
-            document.getElementById('feedbackModal').style.display = 'none';
-            const input = document.getElementById('chatInput');
-            
-            if(isConfirmed) {
-                const msgText = `[VERIFIED FEEDBACK PENDING] ${pendingMessageText}`;
-                await saveMessageToDB(msgText, 'feedback');
-                await supabaseClient.from('feedback_moderation').insert([{
-                    reviewer: 'Roxroy Gough (ID: REV-777)',
-                    link: pendingMessageText,
-                    status: 'Pending Review'
-                }]);
-                alert("Feedback confirmed and saved to database!");
-            } else {
-                await saveMessageToDB(pendingMessageText, 'standard');
-            }
-            input.value = "";
-            pendingMessageText = "";
-        }
-
-        async function saveMessageToDB(text, type) {
-            if (!activeRecipientId) { alert("Please select a recipient chat first."); return; }
-            await supabaseClient.from('messages').insert([{ text, type, vendor_id: activeRecipientId }]);
-            fetchMessages();
-        }
-
-        async function fetchMessages() {
-            if (!activeRecipientId) return;
-            const { data } = await supabaseClient.from('messages').select('*').eq('vendor_id', activeRecipientId).order('created_at', { ascending: true });
-            const container = document.getElementById('chatMessages');
-            container.innerHTML = "";
-            
+        async function fetchModerationQueue() {
+            const { data } = await supabaseClient.from('feedback_moderation').select('*').eq('status', 'Pending Review');
+            const tableBody = document.getElementById('vendorModTableBody');
             if (!data || data.length === 0) {
-                container.innerHTML = `<div style="text-align: center; color: #666; margin-top: 20px;">No messages yet.</div>`;
+                tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #666;">No pending submissions.</td></tr>`;
                 return;
             }
-
-            data.forEach(msg => {
-                const bubble = document.createElement('div');
-                bubble.className = `message-bubble ${msg.type}`;
-                bubble.innerText = msg.text;
-                container.appendChild(bubble);
-            });
-            container.scrollTop = container.scrollHeight;
-        }
-
-        async function fetchUserCommissions() {
-            const { data } = await supabaseClient.from('commissions').select('*').eq('status', 'Approved');
-            const tableBody = document.getElementById('commissionsTableBody');
-            
-            if (!data || data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #666; font-style: italic;">No approved commissions found.</td></tr>`;
-                return;
-            }
-
             tableBody.innerHTML = "";
-            data.forEach((comm) => {
+            data.forEach(mod => {
                 tableBody.innerHTML += `
                     <tr>
-                        <td><b>${comm.type}</b></td>
-                        <td>${comm.link}</td>
-                        <td>${comm.amount}</td>
-                        <td><span style="color: var(--success); font-weight: bold;">Approved</span></td>
-                        <td><button class="btn btn-success" onclick="requestPayout('${comm.id}', '${comm.type}', '${comm.amount}', '${comm.link}')">Submit Request</button></td>
+                        <td>${mod.reviewer}</td>
+                        <td>${mod.link}</td>
+                        <td><span style="color: var(--warning);">${mod.status}</span></td>
+                        <td>
+                            <button class="btn btn-success" onclick="approveFeedback('${mod.id}', '${mod.link}')">Approve</button>
+                            <button class="btn btn-danger" onclick="denyFeedback('${mod.id}')">Deny</button>
+                        </td>
                     </tr>
                 `;
             });
         }
 
-        async function requestPayout(id, type, amount, link) {
-            await supabaseClient.from('payout_queue').insert([{ type, recipient: 'Roxroy Gough (ID: REV-777)', amount, link, status: 'Pending Transfer' }]);
-            await supabaseClient.from('commissions').delete().eq('id', id);
-            fetchUserCommissions();
-            alert("Payment request sent to vendor queue!");
+        async function approveFeedback(id, link) {
+            await supabaseClient.from('feedback_moderation').delete().eq('id', id);
+            await supabaseClient.from('commissions').insert([{ type: 'Reviewer', link, amount: '$15.00', status: 'Approved' }]);
+            fetchModerationQueue();
+            alert("Feedback Approved and commission unlocked!");
         }
 
-        async function fetchNotifications() {
-            const { data } = await supabaseClient.from('notifications').select('*').order('created_at', { ascending: false });
-            const container = document.getElementById('notificationListContainer');
-            const badge = document.getElementById('notifBadge');
+        async function denyFeedback(id) {
+            await supabaseClient.from('feedback_moderation').delete().eq('id', id);
+            fetchModerationQueue();
+            alert("Feedback denied.");
+        }
 
+        async function fetchPayoutQueue() {
+            const { data } = await supabaseClient.from('payout_queue').select('*');
+            const queueBody = document.getElementById('vendorQueueBody');
             if (!data || data.length === 0) {
-                container.innerHTML = `<div style="color: #666; font-style: italic;">No notifications.</div>`;
+                queueBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #666;">No pending payouts.</td></tr>`;
                 return;
             }
-
-            container.innerHTML = "";
-            data.forEach(notif => {
-                container.innerHTML += `
-                    <div class="notification-item">
-                        <h4>${notif.title}</h4>
-                        <p>${notif.message}</p>
-                        <time>${new Date(notif.created_at).toLocaleString()}</time>
-                    </div>
+            queueBody.innerHTML = "";
+            data.forEach(item => {
+                queueBody.innerHTML += `
+                    <tr>
+                        <td><b>${item.type}</b></td>
+                        <td>${item.recipient}</td>
+                        <td>${item.amount}</td>
+                        <td>${item.link}</td>
+                        <td><button class="btn btn-success" onclick="payCommission('${item.id}', '${item.type}', '${item.recipient}', '${item.amount}')">Pay Now</button></td>
+                    </tr>
                 `;
             });
+        }
 
-            badge.innerText = data.length;
-            badge.style.display = 'inline-block';
+        async function payCommission(id, type, recipient, amount) {
+            await supabaseClient.from('payout_queue').delete().eq('id', id);
+            await supabaseClient.from('receipt_pipeline').insert([{ recipient, type, amount, status: 'Pending Receipt' }]);
+            fetchPayoutQueue();
+            fetchReceiptPipeline();
+            alert("Paid and moved to receipt pipeline!");
+        }
+
+        async function fetchReceiptPipeline() {
+            const { data } = await supabaseClient.from('receipt_pipeline').select('*');
+            const receiptBody = document.getElementById('receiptPipelineBody');
+            if (!data || data.length === 0) {
+                receiptBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #666;">No pending receipts.</td></tr>`;
+                return;
+            }
+            receiptBody.innerHTML = "";
+            data.forEach(rec => {
+                receiptBody.innerHTML += `
+                    <tr>
+                        <td>${rec.recipient}</td>
+                        <td>${rec.type}</td>
+                        <td>${rec.amount}</td>
+                        <td><button class="btn" onclick="uploadReceipt('${rec.id}')">Upload Receipt</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function uploadReceipt(id) {
+            await supabaseClient.from('receipt_pipeline').delete().eq('id', id);
+            fetchReceiptPipeline();
+            alert("Receipt uploaded successfully!");
         }
     </script>
 </body>
