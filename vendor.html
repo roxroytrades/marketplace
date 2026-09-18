@@ -17,7 +17,7 @@
 
         body { font-family: Arial, sans-serif; background-color: var(--bg-light); margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }
 
-        aside { width: var(--sidebar-width); background: var(--dark); color: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        aside { width: var(--sidebar-width); background: var(--dark); color: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; flex-shrink: 0; }
         aside h2 { font-size: 20px; margin-top: 0; color: var(--primary); }
         aside .nav-tag { font-size: 11px; text-transform: uppercase; background: var(--success); color: white; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
         aside nav button { background: none; border: none; color: #ccc; text-align: left; padding: 12px 10px; font-size: 14px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; width: 100%; transition: 0.2s; position: relative; }
@@ -30,42 +30,61 @@
         .view-section { display: none; padding: 30px; box-sizing: border-box; width: 100%; }
         .view-section.active { display: block; }
 
-        header { background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        header { background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         header h1 { font-size: 22px; margin: 0; }
 
         /* Form Styling */
-        .form-card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 600px; margin-top: 20px; }
+        .form-card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 600px; margin-top: 20px; box-sizing: border-box; width: 100%; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
         .form-group input, .form-group textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
         .form-group textarea { resize: vertical; height: 100px; }
         
-        .image-inputs-wrapper { display: flex; gap: 10px; }
-        .image-inputs-wrapper input { flex: 1; }
+        .image-inputs-wrapper { display: flex; gap: 10px; flex-wrap: wrap; }
+        .image-inputs-wrapper input { flex: 1; min-width: 200px; }
 
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 15px; }
+        /* Table & Mobile Responsiveness */
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); min-width: 600px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
         th { background: #f8f9fa; font-weight: bold; }
 
-        button.btn { background: var(--primary); color: #1a1a1a; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        button.btn { background: var(--primary); color: #1a1a1a; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
         button.btn:hover { opacity: 0.9; }
         button.btn-success { background: var(--success); color: white; }
         button.btn-danger { background: var(--danger); color: white; }
+        button.btn-warning { background: #ffc107; color: #1a1a1a; }
+
+        .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 
         .messaging-layout { display: flex; height: calc(100vh - 140px); background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        .chat-sidebar { width: 300px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        .chat-sidebar { width: 280px; border-right: 1px solid #ddd; display: flex; flex-direction: column; flex-shrink: 0; }
         .recipient-list { overflow-y: auto; flex: 1; }
         .recipient-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.1s; }
         .recipient-item:hover, .recipient-item.active { background: #f1f3f5; }
         
-        .chat-window { flex: 1; display: flex; flex-direction: column; background: #efeae2; }
+        .chat-window { flex: 1; display: flex; flex-direction: column; background: #efeae2; min-width: 0; }
         .chat-header { padding: 15px; background: #f0f2f5; border-bottom: 1px solid #ddd; font-weight: bold; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message-bubble { max-width: 60%; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+        .message-bubble { max-width: 75%; padding: 10px 14px; border-radius: 8px; font-size: 14px; word-break: break-word; }
         .message-bubble.standard { background: white; align-self: flex-start; }
         .message-bubble.feedback { background: #dcf8c6; align-self: flex-start; border-left: 4px solid var(--success); }
         .chat-input-area { padding: 15px; background: #f0f2f5; display: flex; gap: 10px; }
-        .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; min-width: 0; }
+
+        /* Modal Overlay */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box; }
+        .modal-card { background: white; padding: 25px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .modal-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            body { flex-direction: column; height: auto; overflow: auto; }
+            aside { width: 100%; height: auto; padding: 15px; }
+            main { height: auto; overflow-y: visible; }
+            .messaging-layout { flex-direction: column; height: 500px; }
+            .chat-sidebar { width: 100%; height: 150px; }
+        }
     </style>
 </head>
 <body>
@@ -92,7 +111,7 @@
         <!-- 1. Add New Product View -->
         <section id="addProductView" class="view-section active">
             <h2>List a New Product or Tool</h2>
-            <p>Publish items to the user storefront grid. You can specify up to 2 image URLs per product.</p>
+            <p>Publish items to the user storefront grid with up to 2 image URLs.</p>
             <div class="form-card">
                 <div class="form-group">
                     <label>Product Title</label>
@@ -106,74 +125,77 @@
                     <label>Description</label>
                     <textarea id="prodDesc" placeholder="Brief summary of features..."></textarea>
                 </div>
-                
-                <!-- Up to 2 Product Images Support -->
                 <div class="form-group">
                     <label>Product Image URLs (Up to 2 images)</label>
                     <div class="image-inputs-wrapper">
                         <input type="url" id="prodImg1" placeholder="Image URL 1 (Primary)">
-                        <input type="url" id="prodImg2" placeholder="Image URL 2 (Secondary/Alt view)">
+                        <input type="url" id="prodImg2" placeholder="Image URL 2 (Secondary)">
                     </div>
                 </div>
-
                 <button class="btn btn-success" onclick="handleAddProduct()">Publish Product</button>
             </div>
         </section>
 
         <!-- 2. Manage Products View -->
         <section id="manageProductsView" class="view-section">
-            <h2>Active Storefront Products</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Price</th>
-                        <th>Images</th>
-                        <th>Description</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="vendorProductsTable">
-                    <tr><td colspan="5" style="text-align: center; color: #666;">Loading products...</td></tr>
-                </tbody>
-            </table>
+            <h2>Active Storefront Products (Edit or Delete)</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Price</th>
+                            <th>Images</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendorProductsTable">
+                        <tr><td colspan="5" style="text-align: center; color: #666;">Loading products...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- 3. Feedback Moderation View -->
         <section id="moderationView" class="view-section">
             <h2>Reviewer Feedback Moderation</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Reviewer</th>
-                        <th>Submission Link</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="moderationTableBody">
-                    <tr><td colspan="4" style="text-align: center; color: #666;">Loading moderation queue...</td></tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Reviewer</th>
+                            <th>Submission Link</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="moderationTableBody">
+                        <tr><td colspan="4" style="text-align: center; color: #666;">Loading moderation queue...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- 4. Payout Requests View -->
         <section id="payoutsView" class="view-section">
             <h2>Pending Payout Requests</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Reviewer</th>
-                        <th>Amount</th>
-                        <th>Link / Item</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="payoutsTableBody">
-                    <tr><td colspan="5" style="text-align: center; color: #666;">Loading payout requests...</td></tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Reviewer</th>
+                            <th>Amount</th>
+                            <th>Link / Item</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payoutsTableBody">
+                        <tr><td colspan="5" style="text-align: center; color: #666;">Loading payout requests...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- 5. Reviewer Messaging View -->
@@ -181,7 +203,7 @@
             <div class="messaging-layout">
                 <div class="chat-sidebar">
                     <div class="recipient-list" id="vendorRecipientList">
-                        <div style="padding: 15px; color: #666; font-style: italic; font-size: 13px;">Loading reviewers...</div>
+                        <div style="padding: 15px; color: #666; font-size: 13px;">Loading reviewers...</div>
                     </div>
                 </div>
                 <div class="chat-window">
@@ -197,6 +219,38 @@
             </div>
         </section>
     </main>
+
+    <!-- Edit Product Modal -->
+    <div class="modal-overlay" id="editProductModal">
+        <div class="modal-card">
+            <h3>Edit Product Listing</h3>
+            <input type="hidden" id="editProdId">
+            <div class="form-group">
+                <label>Product Title</label>
+                <input type="text" id="editProdTitle">
+            </div>
+            <div class="form-group">
+                <label>Price ($ USD)</label>
+                <input type="number" id="editProdPrice">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="editProdDesc"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Image URL 1</label>
+                <input type="url" id="editProdImg1">
+            </div>
+            <div class="form-group">
+                <label>Image URL 2</label>
+                <input type="url" id="editProdImg2">
+            </div>
+            <div class="modal-actions">
+                <button class="btn" style="background:#ccc;" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-success" onclick="saveEditedProduct()">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
@@ -224,28 +278,22 @@
             const title = document.getElementById('prodTitle').value.trim();
             const price = document.getElementById('prodPrice').value.trim();
             const description = document.getElementById('prodDesc').value.trim();
-            const img1 = document.getElementById('prodImg1').value.trim();
-            const img2 = document.getElementById('prodImg2').value.trim();
+            const image_url = document.getElementById('prodImg1').value.trim();
+            const image_url_2 = document.getElementById('prodImg2').value.trim();
 
             if (!title || !price) {
                 alert("Please fill in at least the product title and price.");
                 return;
             }
 
-            // Save both image URLs (storing primary in image_url and secondary in image_url_2 or JSON if needed, or mapping cleanly)
             const { error } = await supabaseClient.from('products').insert([{
-                title,
-                price: parseFloat(price),
-                description,
-                image_url: img1,
-                image_url_2: img2,
-                vendor_name: 'Vendor Alpha'
+                title, price: parseFloat(price), description, image_url, image_url_2, vendor_name: 'Vendor Alpha'
             }]);
 
             if (error) {
                 alert("Error publishing product: " + error.message);
             } else {
-                alert("Product successfully published with images!");
+                alert("Product successfully published!");
                 document.getElementById('prodTitle').value = '';
                 document.getElementById('prodPrice').value = '';
                 document.getElementById('prodDesc').value = '';
@@ -273,28 +321,79 @@
                         <td>$${Number(prod.price).toFixed(2)}</td>
                         <td>${imgCount} / 2 attached</td>
                         <td>${prod.description || 'N/A'}</td>
-                        <td><button class="btn btn-danger" onclick="deleteProduct('${prod.id}')">Delete</button></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-warning" onclick="openEditModal('${prod.id}', '${escapeHtml(prod.title)}', '${prod.price}', '${escapeHtml(prod.description || '')}', '${escapeHtml(prod.image_url || '')}', '${escapeHtml(prod.image_url_2 || '')}')">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteProduct('${prod.id}')">Delete</button>
+                            </div>
+                        </td>
                     </tr>
                 `;
             });
         }
 
-        async function deleteProduct(id) {
-            if(confirm("Are you sure you want to delete this product?")) {
-                await supabaseClient.from('products').delete().eq('id', id);
+        function escapeHtml(str) {
+            return str.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+        }
+
+        function openEditModal(id, title, price, desc, img1, img2) {
+            document.getElementById('editProdId').value = id;
+            document.getElementById('editProdTitle').value = title;
+            document.getElementById('editProdPrice').value = price;
+            document.getElementById('editProdDesc').value = desc;
+            document.getElementById('editProdImg1').value = img1;
+            document.getElementById('editProdImg2').value = img2;
+            document.getElementById('editProductModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editProductModal').style.display = 'none';
+        }
+
+        async function saveEditedProduct() {
+            const id = document.getElementById('editProdId').value;
+            const title = document.getElementById('editProdTitle').value.trim();
+            const price = document.getElementById('editProdPrice').value.trim();
+            const description = document.getElementById('editProdDesc').value.trim();
+            const image_url = document.getElementById('editProdImg1').value.trim();
+            const image_url_2 = document.getElementById('editProdImg2').value.trim();
+
+            if (!title || !price) {
+                alert("Title and price are required.");
+                return;
+            }
+
+            const { error } = await supabaseClient.from('products').update({
+                title, price: parseFloat(price), description, image_url, image_url_2
+            }).eq('id', id);
+
+            if (error) {
+                alert("Error updating product: " + error.message);
+            } else {
+                alert("Product updated successfully!");
+                closeEditModal();
                 fetchVendorProducts();
+            }
+        }
+
+        async function deleteProduct(id) {
+            if(confirm("Are you sure you want to delete this listing permanently?")) {
+                const { error } = await supabaseClient.from('products').delete().eq('id', id);
+                if (error) {
+                    alert("Error deleting product: " + error.message);
+                } else {
+                    fetchVendorProducts();
+                }
             }
         }
 
         async function fetchModerationQueue() {
             const { data } = await supabaseClient.from('feedback_moderation').select('*');
             const tableBody = document.getElementById('moderationTableBody');
-
             if (!data || data.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #666; font-style: italic;">No items in moderation queue.</td></tr>`;
                 return;
             }
-
             tableBody.innerHTML = "";
             data.forEach(item => {
                 tableBody.innerHTML += `
@@ -312,18 +411,16 @@
             await supabaseClient.from('feedback_moderation').update({ status: 'Approved' }).eq('id', id);
             await supabaseClient.from('commissions').insert([{ type: 'Amazon Review', link, amount: '$15.00', status: 'Approved' }]);
             fetchModerationQueue();
-            alert("Feedback approved and commission unlocked for reviewer!");
+            alert("Feedback approved!");
         }
 
         async function fetchPayoutQueue() {
             const { data } = await supabaseClient.from('payout_queue').select('*');
             const tableBody = document.getElementById('payoutsTableBody');
-
             if (!data || data.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #666; font-style: italic;">No pending payout requests.</td></tr>`;
                 return;
             }
-
             tableBody.innerHTML = "";
             data.forEach(payout => {
                 tableBody.innerHTML += `
@@ -341,18 +438,16 @@
         async function completePayout(id) {
             await supabaseClient.from('payout_queue').delete().eq('id', id);
             fetchPayoutQueue();
-            alert("Payout marked as completed successfully!");
+            alert("Payout marked as completed!");
         }
 
         async function fetchReviewerRecipients() {
             const { data } = await supabaseClient.from('vendors').select('*');
             const container = document.getElementById('vendorRecipientList');
-
             if (!data || data.length === 0) {
                 container.innerHTML = `<div style="padding: 15px; color: #666; font-size: 13px;">No chats available.</div>`;
                 return;
             }
-
             container.innerHTML = "";
             data.forEach(rec => {
                 container.innerHTML += `
@@ -374,7 +469,6 @@
             const input = document.getElementById('vendorChatInput');
             const text = input.value.trim();
             if(!text || !activeVendorChatId) return;
-
             await supabaseClient.from('messages').insert([{ text, type: 'standard', vendor_id: activeVendorChatId }]);
             input.value = '';
             fetchVendorMessages();
@@ -385,12 +479,10 @@
             const { data } = await supabaseClient.from('messages').select('*').eq('vendor_id', activeVendorChatId).order('created_at', { ascending: true });
             const container = document.getElementById('vendorChatMessages');
             container.innerHTML = "";
-
             if (!data || data.length === 0) {
-                container.innerHTML = `<div style="text-align: center; color: #666; margin-top: 20px;">No messages in this chat.</div>`;
+                container.innerHTML = `<div style="text-align: center; color: #666; margin-top: 20px;">No messages.</div>`;
                 return;
             }
-
             data.forEach(msg => {
                 const bubble = document.createElement('div');
                 bubble.className = `message-bubble ${msg.type}`;
