@@ -3,22 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Grid - Vendor Dashboard & Moderation</title>
-    <!-- Supabase JS Client CDN -->
+    <title>Echo Hub - Vendor Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #007bff;
             --success: #28a745;
-            --danger: #dc3545;
-            --warning: #ffc107;
             --dark: #1a1a1a;
             --bg-light: #f4f4f9;
             --sidebar-width: 270px;
         }
-
         body { font-family: Arial, sans-serif; background-color: var(--bg-light); margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }
-
         aside { width: var(--sidebar-width); background: var(--dark); color: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
         aside h2 { font-size: 20px; margin-top: 0; color: #00bcd4; }
         aside .nav-tag { font-size: 11px; text-transform: uppercase; background: #00bcd4; color: black; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
@@ -28,231 +23,112 @@
         aside .back-link:hover { color: white; }
 
         main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
-        .view-section { display: none; padding: 30px; box-sizing: border-box; width: 100%; }
-        .view-section.active { display: block; }
-
         header { background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 22px; margin: 0; }
+        .view-section { padding: 30px; box-sizing: border-box; width: 100%; max-width: 800px; }
 
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 15px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
-        th { background: #f8f9fa; font-weight: bold; }
-
-        button.btn { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .form-card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .form-group textarea { resize: vertical; height: 100px; }
+        button.btn { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; }
         button.btn:hover { opacity: 0.9; }
-        button.btn-success { background: var(--success); }
-        button.btn-danger { background: var(--danger); }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-card { background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .modal-card h3 { margin-top: 0; }
-        .modal-actions { margin-top: 20px; display: flex; justify-content: center; gap: 10px; }
     </style>
 </head>
 <body>
 
     <aside>
-        <h2>The Grid</h2>
-        <span class="nav-tag">Vendor Control Center</span>
+        <h2>Echo Hub</h2>
+        <span class="nav-tag">Vendor Dashboard</span>
         <nav>
-            <button onclick="switchView('vendorModView', this)" class="active">1. Feedback Approval Queue</button>
-            <button onclick="switchView('vendorQueueView', this)">2. Commission Payout Queue</button>
-            <button onclick="switchView('receiptView', this)">3. Upload Receipts Pipeline</button>
+            <button class="active">Create Product Listing</button>
         </nav>
         <a href="index.html" class="back-link">&larr; Switch to User Storefront</a>
     </aside>
 
     <main>
         <header>
-            <h1 id="pageTitle">Feedback Approval Queue</h1>
-            <span style="font-size: 13px; color: #666;">Vendor Portal Active</span>
+            <h1>Product Listing Manager</h1>
+            <span style="font-size: 13px; color: #666;">Logged in as Vendor</span>
         </header>
 
-        <section id="vendorModView" class="view-section active">
-            <h2>Feedback Moderation Dashboard</h2>
-            <p>Review incoming Amazon links submitted by platform reviewers. Approving unlocks database commissions.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Reviewer</th>
-                        <th>Feedback Link</th>
-                        <th>Status</th>
-                        <th>Moderation Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="vendorModTableBody">
-                    <tr><td colspan="4" style="text-align: center; color: #666;">Loading moderation queue...</td></tr>
-                </tbody>
-            </table>
-        </section>
+        <section class="view-section">
+            <div class="form-card">
+                <h3>Add New Product to the Grid</h3>
+                <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Fill out the controls below. Submitting will publish the listing live to the marketplace product grid and dispatch a notification to all reviewers.</p>
+                
+                <div class="form-group">
+                    <label for="productTitle">Product Title</label>
+                    <input type="text" id="productTitle" placeholder="e.g., Premium Amazon Review Scanner Bot">
+                </div>
 
-        <section id="vendorQueueView" class="view-section">
-            <h2>Commission Payout Queue</h2>
-            <p>Manage payment requests submitted by recipients awaiting external funds transfer.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Commission Type</th>
-                        <th>Recipient Name</th>
-                        <th>Amount</th>
-                        <th>Link</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="vendorQueueBody">
-                    <tr><td colspan="5" style="text-align: center; color: #666;">Loading payout queue...</td></tr>
-                </tbody>
-            </table>
-        </section>
+                <div class="form-group">
+                    <label for="productPrice">Price ($)</label>
+                    <input type="number" id="productPrice" step="0.01" placeholder="49.99">
+                </div>
 
-        <section id="receiptView" class="view-section">
-            <h2>Must Upload Receipt After Payment Transfer</h2>
-            <p>Track commissions that have cleared the active queue. Upload final transaction receipts here.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Recipient Name</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="receiptPipelineBody">
-                    <tr><td colspan="4" style="text-align: center; color: #666;">Loading receipt pipeline...</td></tr>
-                </tbody>
-            </table>
+                <div class="form-group">
+                    <label for="productCategory">Category</label>
+                    <input type="text" id="productCategory" placeholder="e.g., Automation / Software">
+                </div>
+
+                <div class="form-group">
+                    <label for="productDesc">Description</label>
+                    <textarea id="productDesc" placeholder="Enter full product details..."></textarea>
+                </div>
+
+                <button class="btn" onclick="submitProductListing()">Submit Listing</button>
+            </div>
         </section>
     </main>
 
     <script>
-        // Configured with your Supabase credentials
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        window.onload = function() {
-            fetchModerationQueue();
-            fetchPayoutQueue();
-            fetchReceiptPipeline();
-        };
+        async function submitProductListing() {
+            const title = document.getElementById('productTitle').value.trim();
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const category = document.getElementById('productCategory').value.trim();
+            const description = document.getElementById('productDesc').value.trim();
 
-        function switchView(viewId, btnElement) {
-            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('aside nav button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            btnElement.classList.add('active');
-            document.getElementById('pageTitle').innerText = btnElement.innerText;
-        }
-
-        async function fetchModerationQueue() {
-            const { data, error } = await supabaseClient.from('feedback_moderation').select('*').eq('status', 'Pending Review');
-            const tableBody = document.getElementById('vendorModTableBody');
-
-            if (error || !data || data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #666; font-style: italic;">No pending feedback submissions.</td></tr>`;
+            if (!title || isNaN(price)) {
+                alert("Please fill in at least the product title and a valid price.");
                 return;
             }
 
-            tableBody.innerHTML = "";
-            data.forEach((mod) => {
-                tableBody.innerHTML += `
-                    <tr>
-                        <td>${mod.reviewer}</td>
-                        <td><a href="#" target="_blank">${mod.link}</a></td>
-                        <td><span style="color: var(--warning); font-weight: bold;">${mod.status}</span></td>
-                        <td>
-                            <button class="btn btn-success" onclick="approveFeedback('${mod.id}', '${mod.link}')">Approve</button>
-                            <button class="btn btn-danger" onclick="denyFeedback('${mod.id}')">Deny</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        async function approveFeedback(id, link) {
-            await supabaseClient.from('feedback_moderation').delete().eq('id', id);
-
-            await supabaseClient.from('commissions').insert([{
-                type: 'Reviewer',
-                link: link,
-                amount: '$15.00',
-                status: 'Approved'
+            // 1. Insert product into database
+            const { error: prodError } = await supabaseClient.from('products').insert([{
+                title,
+                price,
+                category,
+                description
             }]);
 
-            fetchModerationQueue();
-            alert("Feedback Approved! Commission unlocked in database.");
-        }
-
-        async function denyFeedback(id) {
-            await supabaseClient.from('feedback_moderation').delete().eq('id', id);
-            fetchModerationQueue();
-            alert("Feedback submission denied and removed.");
-        }
-
-        async function fetchPayoutQueue() {
-            const { data, error } = await supabaseClient.from('payout_queue').select('*');
-            const queueBody = document.getElementById('vendorQueueBody');
-
-            if (error || !data || data.length === 0) {
-                queueBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #666; font-style: italic;">No pending payouts in queue.</td></tr>`;
+            if (prodError) {
+                alert("Error saving product: " + prodError.message);
                 return;
             }
 
-            queueBody.innerHTML = "";
-            data.forEach((item) => {
-                queueBody.innerHTML += `
-                    <tr>
-                        <td><b>${item.type}</b></td>
-                        <td>${item.recipient}</td>
-                        <td>${item.amount}</td>
-                        <td><a href="#" target="_blank">${item.link}</a></td>
-                        <td><button class="btn btn-success" onclick="payCommission('${item.id}', '${item.type}', '${item.recipient}', '${item.amount}')">Pay Now</button></td>
-                    </tr>
-                `;
-            });
-        }
+            // 2. Broadcast notification to all non-vendor users
+            const { error: notifError } = await supabaseClient.from('notifications').insert([{
+                title: 'New Product Available!',
+                message: `Vendor added a new listing: "${title}" for $${price.toFixed(2)}.`
+            }]);
 
-        async function payCommission(id, type, recipient, amount) {
-            await supabaseClient.from('payout_queue').delete().eq('id', id);
+            if (notifError) {
+                console.error("Error creating notification:", notifError);
+            }
+
+            alert("Product successfully published to the grid and notification broadcasted!");
             
-            await supabaseClient.from('receipt_pipeline').insert([{
-                recipient,
-                type,
-                amount,
-                status: 'Pending Receipt Upload'
-            }]);
-
-            fetchPayoutQueue();
-            fetchReceiptPipeline();
-            alert("Commission paid and transferred to receipt pipeline!");
-        }
-
-        async function fetchReceiptPipeline() {
-            const { data, error } = await supabaseClient.from('receipt_pipeline').select('*');
-            const receiptBody = document.getElementById('receiptPipelineBody');
-
-            if (error || !data || data.length === 0) {
-                receiptBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #666; font-style: italic;">No completed transfers pending receipts.</td></tr>`;
-                return;
-            }
-
-            receiptBody.innerHTML = "";
-            data.forEach((rec) => {
-                receiptBody.innerHTML += `
-                    <tr>
-                        <td>${rec.recipient}</td>
-                        <td>${rec.type}</td>
-                        <td>${rec.amount}</td>
-                        <td><button class="btn" onclick="uploadReceipt('${rec.id}')">Upload Receipt</button></td>
-                    </tr>
-                `;
-            });
-        }
-
-        async function uploadReceipt(id) {
-            await supabaseClient.from('receipt_pipeline').delete().eq('id', id);
-            fetchReceiptPipeline();
-            alert("Receipt uploaded successfully! Database audit trail completed.");
+            // Clear inputs
+            document.getElementById('productTitle').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productCategory').value = '';
+            document.getElementById('productDesc').value = '';
         }
     </script>
 </body>
