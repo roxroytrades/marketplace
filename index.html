@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Grid - Storefront & Messaging Hub</title>
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #007bff;
@@ -17,31 +19,26 @@
 
         body { font-family: Arial, sans-serif; background-color: var(--bg-light); margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }
 
-        /* Left Sidebar Navigation */
         aside { width: var(--sidebar-width); background: var(--dark); color: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
         aside h2 { font-size: 20px; margin-top: 0; color: #00bcd4; }
-        aside .nav-tag { font-size: 11px; text-transform: uppercase; background: #007bff; color: white; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+        aside .nav-tag { font-size: 11px; text-transform: uppercase; background: var(--primary); color: white; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
         aside nav button { background: none; border: none; color: #ccc; text-align: left; padding: 12px 10px; font-size: 14px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; width: 100%; transition: 0.2s; }
         aside nav button:hover, aside nav button.active { background: rgba(255,255,255,0.1); color: white; font-weight: bold; }
         aside .vendor-link { margin-top: auto; color: #00bcd4; text-decoration: none; font-size: 13px; padding-top: 15px; border-top: 1px solid #333; }
         aside .vendor-link:hover { text-decoration: underline; }
 
-        /* Main Content View Area */
         main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
         .view-section { display: none; padding: 30px; box-sizing: border-box; width: 100%; }
         .view-section.active { display: block; }
 
-        /* Header Bar */
         header { background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 22px; margin: 0; }
 
-        /* Grid View */
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 20px; }
         .product-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
         .product-card h3 { margin: 0 0 10px 0; }
         .product-card .price { font-size: 18px; color: var(--primary); font-weight: bold; margin-bottom: 15px; }
 
-        /* Messaging Hub Layout (WhatsApp Style) */
         .messaging-layout { display: flex; height: calc(100vh - 140px); background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow: hidden; }
         .chat-sidebar { width: 300px; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
         .search-box { padding: 15px; border-bottom: 1px solid #ddd; }
@@ -49,32 +46,25 @@
         .recipient-list { overflow-y: auto; flex: 1; }
         .recipient-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.1s; position: relative; }
         .recipient-item:hover, .recipient-item.active { background: #f1f3f5; }
-        .recipient-item .badge { float: right; background: var(--success); color: white; padding: 2px 6px; font-size: 11px; border-radius: 10px; }
         
         .chat-window { flex: 1; display: flex; flex-direction: column; background: #efeae2; }
         .chat-header { padding: 15px; background: #f0f2f5; border-bottom: 1px solid #ddd; font-weight: bold; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message-bubble { max-width: 60%; padding: 10px 14px; border-radius: 8px; font-size: 14px; position: relative; animation: fadeIn 0.3s ease; }
+        .message-bubble { max-width: 60%; padding: 10px 14px; border-radius: 8px; font-size: 14px; position: relative; }
         .message-bubble.standard { background: white; align-self: flex-start; }
         .message-bubble.feedback { background: #dcf8c6; align-self: flex-start; border-left: 4px solid var(--success); }
-        .message-bubble.system-denied { background: #f8d7da; color: #721c24; align-self: flex-start; border-left: 4px solid var(--danger); }
         .chat-input-area { padding: 15px; background: #f0f2f5; display: flex; gap: 10px; }
         .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Tables & Managers */
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 15px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
         th { background: #f8f9fa; font-weight: bold; }
 
-        /* Buttons & Actions */
         button.btn { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         button.btn:hover { opacity: 0.9; }
         button.btn-success { background: var(--success); }
         button.btn-danger { background: var(--danger); }
 
-        /* Modal Popup Overlay */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-card { background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .modal-card h3 { margin-top: 0; }
@@ -83,7 +73,6 @@
 </head>
 <body>
 
-    <!-- Left Sidebar Panel Navigation (User Only) -->
     <aside>
         <h2>The Grid</h2>
         <span class="nav-tag">User Portal</span>
@@ -95,14 +84,12 @@
         <a href="vendor.html" class="vendor-link">Switch to Vendor Portal &rarr;</a>
     </aside>
 
-    <!-- Main Dynamic Viewer Area -->
     <main>
         <header>
             <h1 id="pageTitle">Storefront - The Grid</h1>
             <span style="font-size: 13px; color: #666;">Welcome, Reviewer</span>
         </header>
 
-        <!-- VIEW 1: THE GRID STOREFRONT -->
         <section id="storeView" class="view-section active">
             <h2>Browse Marketplace Products</h2>
             <p>Explore verified tools and assets. Click 'Inquire' on any item to jump straight into the Messaging Hub workflow.</p>
@@ -126,37 +113,33 @@
             </div>
         </section>
 
-        <!-- VIEW 2: MESSAGING HUB -->
         <section id="messagingView" class="view-section">
             <div class="messaging-layout">
                 <div class="chat-sidebar">
                     <div class="search-box">
-                        <input type="text" id="smartSearch" placeholder="Search by name, ID, or feedback ID...">
+                        <input type="text" id="smartSearch" placeholder="Search chats...">
                     </div>
                     <div class="recipient-list">
-                        <div class="recipient-item active" onclick="selectChat('Vendor Alpha', 'ID: VEND-001')">
+                        <div class="recipient-item active">
                             <b>Vendor Alpha</b><br>
-                            <small>ID: VEND-001 | FB-8901</small>
+                            <small>ID: VEND-001 | Active</small>
                         </div>
                     </div>
                 </div>
                 <div class="chat-window">
                     <div class="chat-header" id="activeChatTitle">Chat with Vendor Alpha</div>
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="message-bubble standard">Hello! Interested in reviewing the Price Action Masterclass.</div>
-                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
                     <div class="chat-input-area">
-                        <input type="text" id="chatInput" placeholder="Type message or paste Amazon URL + Image...">
+                        <input type="text" id="chatInput" placeholder="Type message or paste Amazon URL...">
                         <button class="btn" onclick="sendMessage()">Send</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- VIEW 3: COMMISSIONS MANAGER (USER) -->
         <section id="commissionsView" class="view-section">
             <h2>Commissions Manager</h2>
-            <p>Track your approved feedback payouts, view specific links, and submit payment requests directly to vendors.</p>
+            <p>Track your approved feedback payouts and submit payment requests directly to vendors.</p>
             <table>
                 <thead>
                     <tr>
@@ -168,19 +151,16 @@
                     </tr>
                 </thead>
                 <tbody id="commissionsTableBody">
-                    <tr id="emptyCommissionsRow">
-                        <td colspan="5" style="text-align: center; color: #666; font-style: italic;">No approved commissions yet. Complete a feedback submission and wait for vendor approval.</td>
-                    </tr>
+                    <tr><td colspan="5" style="text-align: center; color: #666;">Loading commissions from database...</td></tr>
                 </tbody>
             </table>
         </section>
     </main>
 
-    <!-- FEEDBACK CONFIRMATION MODAL -->
     <div class="modal-overlay" id="feedbackModal">
         <div class="modal-card">
             <h3>Feedback Submission Detected</h3>
-            <p>You have pasted an Amazon link and image. Confirm this message as an official verified feedback item?</p>
+            <p>Confirm this message as an official verified feedback item for database tracking?</p>
             <div class="modal-actions">
                 <button class="btn btn-danger" onclick="closeFeedbackModal(false)">Cancel</button>
                 <button class="btn btn-success" onclick="closeFeedbackModal(true)">Confirm Feedback</button>
@@ -189,7 +169,16 @@
     </div>
 
     <script>
-        // Navigation Handler
+        // Configured with your Supabase credentials
+        const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        window.onload = function() {
+            fetchMessages();
+            fetchUserCommissions();
+        };
+
         function switchView(viewId, btnElement) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('aside nav button').forEach(btn => btn.classList.remove('active'));
@@ -213,37 +202,87 @@
                 pendingMessageText = text;
                 document.getElementById('feedbackModal').style.display = 'flex';
             } else {
-                appendChatMessage(text, 'standard');
+                saveMessageToDB(text, 'standard');
                 input.value = "";
             }
         }
 
-        function closeFeedbackModal(isConfirmed) {
+        async function closeFeedbackModal(isConfirmed) {
             document.getElementById('feedbackModal').style.display = 'none';
             const input = document.getElementById('chatInput');
+            
             if(isConfirmed) {
-                appendChatMessage(`[VERIFIED FEEDBACK PENDING] ${pendingMessageText}`, 'feedback');
-                alert("Feedback confirmed and dispatched to Vendor for moderation.");
+                const msgText = `[VERIFIED FEEDBACK PENDING] ${pendingMessageText}`;
+                await saveMessageToDB(msgText, 'feedback');
+                
+                await supabaseClient.from('feedback_moderation').insert([{
+                    reviewer: 'Roxroy Gough (ID: REV-777)',
+                    link: pendingMessageText,
+                    status: 'Pending Review'
+                }]);
+                alert("Feedback confirmed and saved to database for vendor review!");
             } else {
-                appendChatMessage(pendingMessageText, 'standard');
+                await saveMessageToDB(pendingMessageText, 'standard');
             }
             input.value = "";
             pendingMessageText = "";
         }
 
-        function appendChatMessage(text, type) {
+        async function saveMessageToDB(text, type) {
+            await supabaseClient.from('messages').insert([{ text, type }]);
+            fetchMessages();
+        }
+
+        async function fetchMessages() {
+            const { data, error } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
+            if (error) { console.error(error); return; }
+
             const container = document.getElementById('chatMessages');
-            const bubble = document.createElement('div');
-            bubble.className = `message-bubble ${type}`;
-            bubble.innerText = text;
-            container.appendChild(bubble);
+            container.innerHTML = "";
+            data.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = `message-bubble ${msg.type}`;
+                bubble.innerText = msg.text;
+                container.appendChild(bubble);
+            });
             container.scrollTop = container.scrollHeight;
         }
 
-        // User Payout Request Trigger
-        function requestPayout(buttonElement, type, amount, fbId) {
-            buttonElement.closest('tr').remove();
-            alert("Payment request successfully submitted to the vendor queue!");
+        async function fetchUserCommissions() {
+            const { data, error } = await supabaseClient.from('commissions').select('*').eq('status', 'Approved');
+            const tableBody = document.getElementById('commissionsTableBody');
+            
+            if (error || !data || data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #666; font-style: italic;">No approved commissions found in database.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = "";
+            data.forEach((comm) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td><b>${comm.type}</b></td>
+                        <td><a href="#" target="_blank">${comm.link}</a> (${comm.fb_id || 'FB-8901'})</td>
+                        <td>${comm.amount}</td>
+                        <td><span style="color: var(--success); font-weight: bold;">Approved</span></td>
+                        <td><button class="btn btn-success" onclick="requestPayout('${comm.id}', '${comm.type}', '${comm.amount}', '${comm.link}')">Submit Request</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function requestPayout(id, type, amount, link) {
+            await supabaseClient.from('payout_queue').insert([{
+                type,
+                recipient: 'Roxroy Gough (ID: REV-777)',
+                amount,
+                link,
+                status: 'Pending Transfer'
+            }]);
+
+            await supabaseClient.from('commissions').delete().eq('id', id);
+            fetchUserCommissions();
+            alert("Payment request successfully sent to the vendor queue via database!");
         }
     </script>
 </body>
