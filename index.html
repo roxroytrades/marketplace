@@ -28,7 +28,7 @@
             <input type="text" id="productName" placeholder="Enter product name..." required>
             <div id="dynamicFields">
                 <label for="message">Your Message</label>
-                <input type="text" id="message" placeholder="Ask a question about the product..." required>
+                <input type="text" id="message" placeholder="Ask a question..." required>
             </div>
             <button type="submit" id="submitBtn">Send to Seller</button>
         </form>
@@ -61,14 +61,15 @@
 
             const response = await _supabase
                 .from('submissions')
-                .insert([{ type: type, product_name: product, content: contentValue }]);
+                .insert([{ type: type, product_name: product, content: contentValue }])
+                .select();
 
-            console.log("Supabase Response Object:", response);
+            console.log("Saved Row Data:", response);
 
             if (response.error) {
                 alert('Database Error: ' + response.error.message);
             } else {
-                alert('Insert call completed. Check browser console (F12) for details.');
+                alert('Submitted! Check browser console (F12) to see the returned row.');
                 form.reset();
                 toggleFields();
             }
