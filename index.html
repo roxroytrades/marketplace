@@ -17,7 +17,7 @@
 </head>
 <body>
     <div class="form-container">
-        <h2>Submit to Seller (v2)</h2>
+        <h2>Submit to Seller</h2>
         <form id="submissionForm">
             <label for="submissionType">Submission Type</label>
             <select id="submissionType" onchange="toggleFields()">
@@ -55,11 +55,9 @@
             submitBtn.textContent = 'Saving...';
             submitBtn.disabled = true;
 
-            const type = document.getElementById('submissionType5').value || document.getElementById('submissionType').value;
+            const type = document.getElementById('submissionType').value;
             const product = document.getElementById('productName').value;
             const contentValue = type === 'inquiry' ? document.getElementById('message').value : document.getElementById('amazonUrl').value;
-
-            console.log("Submitting payload:", { type, product_name: product, content: contentValue });
 
             const response = await _supabase
                 .from('submissions')
