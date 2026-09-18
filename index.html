@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Inquiry & Verified Feedback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Submit to Seller</h2>
+        <form id="submissionForm">
+            
+            <label for="submissionType">Submission Type</label>
+            <select id="submissionType" onchange="toggleFields()">
+                <option value="inquiry">Regular Inquiry (Message)</option>
+                <option value="feedback">Product Feedback (Amazon URL + Image)</option>
+            </select>
+
+            <label for="productName">Product Name</label>
+            <input type="text" id="productName" placeholder="Enter product name..." required>
+
+            <!-- Dynamic field container -->
+            <div id="dynamicFields">
+                <!-- Default shows Inquiry field -->
+                <label for="message">Your Message</label>
+                <input type="text" id="message" placeholder="Ask a question about the product...">
+            </div>
+
+            <button type="submit">Send to Seller</button>
+        </form>
+    </div>
+
+    <script>
+        // This function changes the form fields depending on whether they select Inquiry or Feedback
+        function toggleFields() {
+            const type = document.getElementById('submissionType').value;
+            const container = document.getElementById('dynamicFields');
+
+            if (type === 'inquiry') {
+                container.innerHTML = `
+                    <label for="message">Your Message</label>
+                    <input type="text" id="message" placeholder="Ask a question about the product..." required>
+                `;
+            } else {
+                container.innerHTML = `
+                    <label for="amazonUrl">Amazon Product URL</label>
+                    <input type="url" id="amazonUrl" placeholder="https://amazon.com/dp/..." required>
+
+                    <label for="productImage">Upload Feedback Image / Screenshot</label>
+                    <input type="file" id="productImage" accept="image/*" required>
+                `;
+            }
+        }
+
+        // Handles the form submission click
+        const form = document.getElementById('submissionForm');
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const type = document.getElementById('submissionType').value;
+            const product = document.getElementById('productName').value;
+
+            if (type === 'inquiry') {
+                const msg = document.getElementById('message').value;
+                alert(`Inquiry sent for "${product}"! Message: "${msg}"`);
+            } else {
+                const url = document.getElementById('amazonUrl').value;
+                alert(`Feedback submitted for "${product}" with Amazon link and image! Waiting for seller approval.`);
+            }
+
+            form.reset();
+            toggleFields(); // Reset view back to default
+        });
+    </script>
+
+</body>
+</html>
