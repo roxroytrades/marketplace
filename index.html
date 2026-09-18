@@ -35,7 +35,7 @@
     </div>
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbndvbmtlcGd4aHRkbnhzcmp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2ODIwMDEsImV4cCI6MjEwNTI1ODAwMX0.y8LcCQpS_DqKuYibh3YLXYyQz6KUI0XZLLs77tYdSy8';
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         function toggleFields() {
@@ -69,7 +69,7 @@
             if (response.error) {
                 alert('Database Error: ' + response.error.message);
             } else {
-                alert('Submitted! Check browser console (F12) to see the returned row.');
+                alert('Submitted successfully!');
                 form.reset();
                 toggleFields();
             }
