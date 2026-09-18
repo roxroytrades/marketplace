@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Grid - Marketplace & Messaging Hub</title>
+    <title>The Grid - Storefront & Messaging Hub</title>
     <style>
         :root {
             --primary: #007bff;
@@ -12,7 +12,7 @@
             --warning: #ffc107;
             --dark: #1a1a1a;
             --bg-light: #f4f4f9;
-            --sidebar-width: 260px;
+            --sidebar-width: 270px;
         }
 
         body { font-family: Arial, sans-serif; background-color: var(--bg-light); margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }
@@ -20,8 +20,11 @@
         /* Left Sidebar Navigation */
         aside { width: var(--sidebar-width); background: var(--dark); color: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
         aside h2 { font-size: 20px; margin-top: 0; color: #00bcd4; }
-        aside nav button { background: none; border: none; color: #ccc; text-align: left; padding: 12px 10px; font-size: 15px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; width: 100%; transition: 0.2s; }
+        aside .nav-tag { font-size: 11px; text-transform: uppercase; background: #007bff; color: white; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+        aside nav button { background: none; border: none; color: #ccc; text-align: left; padding: 12px 10px; font-size: 14px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; width: 100%; transition: 0.2s; }
         aside nav button:hover, aside nav button.active { background: rgba(255,255,255,0.1); color: white; font-weight: bold; }
+        aside .vendor-link { margin-top: auto; color: #00bcd4; text-decoration: none; font-size: 13px; padding-top: 15px; border-top: 1px solid #333; }
+        aside .vendor-link:hover { text-decoration: underline; }
 
         /* Main Content View Area */
         main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
@@ -54,12 +57,13 @@
         .message-bubble { max-width: 60%; padding: 10px 14px; border-radius: 8px; font-size: 14px; position: relative; animation: fadeIn 0.3s ease; }
         .message-bubble.standard { background: white; align-self: flex-start; }
         .message-bubble.feedback { background: #dcf8c6; align-self: flex-start; border-left: 4px solid var(--success); }
+        .message-bubble.system-denied { background: #f8d7da; color: #721c24; align-self: flex-start; border-left: 4px solid var(--danger); }
         .chat-input-area { padding: 15px; background: #f0f2f5; display: flex; gap: 10px; }
         .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Tables & Commissions Manager */
+        /* Tables & Managers */
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 15px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
         th { background: #f8f9fa; font-weight: bold; }
@@ -79,29 +83,29 @@
 </head>
 <body>
 
-    <!-- Left Sidebar Panel Navigation -->
+    <!-- Left Sidebar Panel Navigation (User Only) -->
     <aside>
         <h2>The Grid</h2>
+        <span class="nav-tag">User Portal</span>
         <nav>
             <button onclick="switchView('storeView', this)" class="active">1. Storefront (The Grid)</button>
             <button onclick="switchView('messagingView', this)">2. Messaging Hub</button>
             <button onclick="switchView('commissionsView', this)">3. Commissions Manager</button>
-            <button onclick="switchView('vendorQueueView', this)">4. Vendor Payout Queue</button>
-            <button onclick="switchView('receiptView', this)">5. Upload Receipts Pipeline</button>
         </nav>
+        <a href="vendor.html" class="vendor-link">Switch to Vendor Portal &rarr;</a>
     </aside>
 
     <!-- Main Dynamic Viewer Area -->
     <main>
         <header>
             <h1 id="pageTitle">Storefront - The Grid</h1>
-            <span style="font-size: 13px; color: #666;">Ecosystem Active</span>
+            <span style="font-size: 13px; color: #666;">Welcome, Reviewer</span>
         </header>
 
         <!-- VIEW 1: THE GRID STOREFRONT -->
         <section id="storeView" class="view-section active">
             <h2>Browse Marketplace Products</h2>
-            <p>Explore verified tools and assets. Click 'Inquire' on any item to open the Messaging Hub workflow.</p>
+            <p>Explore verified tools and assets. Click 'Inquire' on any item to jump straight into the Messaging Hub workflow.</p>
             <div class="product-grid">
                 <div class="product-card">
                     <div>
@@ -127,21 +131,17 @@
             <div class="messaging-layout">
                 <div class="chat-sidebar">
                     <div class="search-box">
-                        <input type="text" id="smartSearch" placeholder="Search by name, ID, or feedback ID..." onkeyup="filterChats()">
+                        <input type="text" id="smartSearch" placeholder="Search by name, ID, or feedback ID...">
                     </div>
-                    <div class="recipient-list" id="recipientList">
+                    <div class="recipient-list">
                         <div class="recipient-item active" onclick="selectChat('Vendor Alpha', 'ID: VEND-001')">
-                            <b>Vendor Alpha</b> <span class="badge">New</span><br>
+                            <b>Vendor Alpha</b><br>
                             <small>ID: VEND-001 | FB-8901</small>
-                        </div>
-                        <div class="recipient-item" onclick="selectChat('Vendor Beta', 'ID: VEND-002')">
-                            <b>Vendor Beta</b><br>
-                            <small>ID: VEND-002 | FB-8902</small>
                         </div>
                     </div>
                 </div>
                 <div class="chat-window">
-                    <div class="chat-header" id="activeChatTitle">Chat with Vendor Alpha (ID: VEND-001)</div>
+                    <div class="chat-header" id="activeChatTitle">Chat with Vendor Alpha</div>
                     <div class="chat-messages" id="chatMessages">
                         <div class="message-bubble standard">Hello! Interested in reviewing the Price Action Masterclass.</div>
                     </div>
@@ -153,10 +153,10 @@
             </div>
         </section>
 
-        <!-- VIEW 3: COMMISSIONS MANAGER -->
+        <!-- VIEW 3: COMMISSIONS MANAGER (USER) -->
         <section id="commissionsView" class="view-section">
             <h2>Commissions Manager</h2>
-            <p>View your approved feedback payouts, track specific links, and submit payment requests directly to vendors.</p>
+            <p>Track your approved feedback payouts, view specific links, and submit payment requests directly to vendors.</p>
             <table>
                 <thead>
                     <tr>
@@ -168,65 +168,8 @@
                     </tr>
                 </thead>
                 <tbody id="commissionsTableBody">
-                    <tr>
-                        <td><b>Reviewer</b></td>
-                        <td><a href="#" target="_blank">amazon.com/dp/B08N5WRWNW</a> (FB-8901)</td>
-                        <td>$15.00</td>
-                        <td><span style="color: var(--success); font-weight: bold;">Approved</span></td>
-                        <td><button class="btn btn-success" onclick="requestPayout(this, 'Reviewer', '$15.00', 'FB-8901')">Submit Request</button></td>
-                    </tr>
-                    <tr>
-                        <td><b>Reviewer Inviter</b></td>
-                        <td>Downline Payout (FB-8901)</td>
-                        <td>$3.00</td>
-                        <td><span style="color: var(--success); font-weight: bold;">Approved</span></td>
-                        <td><button class="btn btn-success" onclick="requestPayout(this, 'Reviewer Inviter', '$3.00', 'FB-8901')">Submit Request</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <!-- VIEW 4: VENDOR PAYOUT QUEUE -->
-        <section id="vendorQueueView" class="view-section">
-            <h2>Vendor Commission Queue</h2>
-            <p>Incoming payment requests submitted by recipients awaiting settlement transfer.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Commission Type</th>
-                        <th>Recipient Name & ID</th>
-                        <th>Date Submitted</th>
-                        <th>Amount</th>
-                        <th>Feedback Link</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="vendorQueueBody">
-                    <!-- Dynamic rows will populate here when requested -->
-                    <tr id="emptyQueueRow">
-                        <td colspan="6" style="text-align: center; color: #666; font-style: italic;">No pending commissions in queue.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <!-- VIEW 5: UPLOAD RECEIPTS PIPELINE -->
-        <section id="receiptView" class="view-section">
-            <h2>Must Upload Receipt After Payment Transfer</h2>
-            <p>Commissions that have cleared the active queue after payment execution. Upload transaction receipts here.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Recipient Name</th>
-                        <th>Type</th>
-                        <th>Amount Paid</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="receiptPipelineBody">
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: #666; font-style: italic;">No completed transfers pending receipt upload.</td>
+                    <tr id="emptyCommissionsRow">
+                        <td colspan="5" style="text-align: center; color: #666; font-style: italic;">No approved commissions yet. Complete a feedback submission and wait for vendor approval.</td>
                     </tr>
                 </tbody>
             </table>
@@ -237,7 +180,7 @@
     <div class="modal-overlay" id="feedbackModal">
         <div class="modal-card">
             <h3>Feedback Submission Detected</h3>
-            <p>You have pasted an Amazon link and image. Would you like to confirm this message as an official verified feedback item?</p>
+            <p>You have pasted an Amazon link and image. Confirm this message as an official verified feedback item?</p>
             <div class="modal-actions">
                 <button class="btn btn-danger" onclick="closeFeedbackModal(false)">Cancel</button>
                 <button class="btn btn-success" onclick="closeFeedbackModal(true)">Confirm Feedback</button>
@@ -260,14 +203,12 @@
             document.getElementById('activeChatTitle').innerText = `Chat with ${product} (${vendorName})`;
         }
 
-        // Chat & Modal Logic
         let pendingMessageText = "";
         function sendMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if(!text) return;
 
-            // Check if input contains an amazon link pattern
             if(text.includes("amazon.com") || text.includes("http")) {
                 pendingMessageText = text;
                 document.getElementById('feedbackModal').style.display = 'flex';
@@ -281,8 +222,8 @@
             document.getElementById('feedbackModal').style.display = 'none';
             const input = document.getElementById('chatInput');
             if(isConfirmed) {
-                appendChatMessage(`[VERIFIED FEEDBACK] ${pendingMessageText}`, 'feedback');
-                alert("Feedback confirmed and dispatched to Vendor with urgent tag!");
+                appendChatMessage(`[VERIFIED FEEDBACK PENDING] ${pendingMessageText}`, 'feedback');
+                alert("Feedback confirmed and dispatched to Vendor for moderation.");
             } else {
                 appendChatMessage(pendingMessageText, 'standard');
             }
@@ -299,50 +240,10 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Commissions Payout Request Trigger
+        // User Payout Request Trigger
         function requestPayout(buttonElement, type, amount, fbId) {
-            const row = buttonElement.closest('tr');
-            row.remove(); // Clear from personal manager
-
-            // Add to Vendor Queue
-            const queueBody = document.getElementById('vendorQueueBody');
-            const emptyRow = document.getElementById('emptyQueueRow');
-            if(emptyRow) emptyRow.remove();
-
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><b>${type}</b></td>
-                <td>Roxroy Gough (ID: REV-777)</td>
-                <td>Sep 17, 2026</td>
-                <td>${amount}</td>
-                <td><a href="#" target="_blank">amazon.com/dp/B08N5WRWNW</a> (${fbId})</td>
-                <td><button class="btn btn-success" onclick="transferToReceiptQueue(this, '${type}', '${amount}')">Pay Now</button></td>
-            `;
-            queueBody.appendChild(newRow);
-            alert("Payment request successfully routed to vendor queue!");
-        }
-
-        // Vendor Pay Action & Receipt Pipeline Transfer
-        function transferToReceiptQueue(buttonElement, type, amount) {
-            const row = buttonElement.closest('tr');
-            row.remove();
-
-            const receiptBody = document.getElementById('receiptPipelineBody');
-            // Remove empty state text if present
-            if(receiptPipelineBody.innerText.includes("No completed transfers")) {
-                receiptPipelineBody.innerHTML = "";
-            }
-
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>Roxroy Gough</td>
-                <td>${type}</td>
-                <td>${amount}</td>
-                <td><span style="color: var(--warning); font-weight: bold;">Pending Receipt Upload</span></td>
-                <td><button class="btn" onclick="alert('Receipt uploaded successfully! Workflow complete.')">Upload Receipt</button></td>
-            `;
-            receiptBody.appendChild(newRow);
-            alert("Commission paid! Transferred to 'Must Upload Receipt After Payment Transfer' pipeline.");
+            buttonElement.closest('tr').remove();
+            alert("Payment request successfully submitted to the vendor queue!");
         }
     </script>
 </body>
