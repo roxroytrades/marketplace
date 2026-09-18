@@ -95,9 +95,10 @@
         <nav>
             <button onclick="switchView('addProductView', this)" class="active">1. Add New Product</button>
             <button onclick="switchView('manageProductsView', this)">2. Manage Products</button>
-            <button onclick="switchView('moderationView', this)">3. Feedback Moderation</button>
-            <button onclick="switchView('payoutsView', this)">4. Payout Requests</button>
-            <button onclick="switchView('vendorMessagingView', this)">5. Reviewer Messaging</button>
+            <button onclick="switchView('profileView', this)">3. Profile & Settings</button>
+            <button onclick="switchView('moderationView', this)">4. Feedback Moderation</button>
+            <button onclick="switchView('payoutsView', this)">5. Payout Requests</button>
+            <button onclick="switchView('vendorMessagingView', this)">6. Reviewer Messaging</button>
         </nav>
         <a href="index.html" class="store-link">&larr; Back to User Storefront</a>
     </aside>
@@ -105,7 +106,7 @@
     <main>
         <header>
             <h1 id="pageTitle">Add New Product</h1>
-            <span style="font-size: 13px; color: #666;">Vendor: Vendor Alpha</span>
+            <span style="font-size: 13px; color: #666;" id="headerVendorName">Vendor: Vendor Alpha</span>
         </header>
 
         <!-- 1. Add New Product View -->
@@ -157,7 +158,39 @@
             </div>
         </section>
 
-        <!-- 3. Feedback Moderation View -->
+        <!-- 3. Profile & Settings View -->
+        <section id="profileView" class="view-section">
+            <h2>Vendor Profile & Account Settings</h2>
+            <p>Update your business name, payment handles, contact info, and targeted offerings. Changes apply instantly across all platform instances.</p>
+            <div class="form-card">
+                <div class="form-group">
+                    <label>Vendor Business Name</label>
+                    <input type="text" id="vendorNameInput" placeholder="e.g. Vendor Alpha">
+                </div>
+                <div class="form-group">
+                    <label>PayPal Email (For Payouts)</label>
+                    <input type="email" id="vendorPaypalInput" placeholder="billing@vendoralpha.com">
+                </div>
+                <div class="form-group">
+                    <label>Primary Email Address</label>
+                    <input type="email" id="vendorEmailInput" placeholder="contact@vendoralpha.com">
+                </div>
+                <div class="form-group">
+                    <label>Products Interested in Offering</label>
+                    <input type="text" id="vendorInterestedInput" placeholder="e.g. Python Bots, Trading Scanners, eBooks">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="vendorPhoneInput" placeholder="+18765550192">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="saveVendorProfile()">Save Profile Data</button>
+                    <button class="btn btn-danger" onclick="deleteVendorAccount()">Delete Vendor Account</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Feedback Moderation View -->
         <section id="moderationView" class="view-section">
             <h2>Reviewer Feedback Moderation</h2>
             <div class="table-responsive">
@@ -177,7 +210,7 @@
             </div>
         </section>
 
-        <!-- 4. Payout Requests View -->
+        <!-- 5. Payout Requests View -->
         <section id="payoutsView" class="view-section">
             <h2>Pending Payout Requests</h2>
             <div class="table-responsive">
@@ -198,7 +231,7 @@
             </div>
         </section>
 
-        <!-- 5. Reviewer Messaging View -->
+        <!-- 6. Reviewer Messaging View -->
         <section id="vendorMessagingView" class="view-section">
             <div class="messaging-layout">
                 <div class="chat-sidebar">
@@ -257,9 +290,12 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Active testing vendor ID configuration
+        const CURRENT_VENDOR_ID = '00000000-0000-0000-0000-000000000001';
         let activeVendorChatId = null;
 
         window.onload = function() {
+            loadVendorProfile();
             fetchVendorProducts();
             fetchModerationQueue();
             fetchPayoutQueue();
@@ -274,12 +310,67 @@
             document.getElementById('pageTitle').innerText = btnElement.innerText;
         }
 
+        async function loadVendorProfile() {
+            const { data, error } = await supabaseClient.from('vendors').select('*').eq('id', CURRENT_VENDOR_ID).single();
+            if (data) {
+                document.getElementById('vendorNameInput').value = data.name || '';
+                document.getElementById('vendorPaypalInput').value = data.paypal_email || '';
+                document.getElementById('vendorEmailInput').value = data.email || '';
+                document.getElementById('vendorInterestedInput').value = data.interested_products || '';
+                document.getElementById('vendorPhoneInput').value = data.phone || '';
+                document.getElementById('headerVendorName').innerText = `Vendor: ${data.name}`;
+            }
+        }
+
+        async function saveVendorProfile() {
+            const name = document.getElementById('vendorNameInput').value.trim();
+            const paypal_email = document.getElementById('vendorPaypalInput').value.trim();
+            const email = document.getElementById('vendorEmailInput').value.trim();
+            const interested_products = document.getElementById('vendorInterestedInput').value.trim();
+            const phone = document.getElementById('vendorPhoneInput').value.trim();
+
+            if (!name) {
+                alert("Vendor business name is required.");
+                return;
+            }
+
+            // Update vendor profile and all related products vendor_name in tandem
+            const { error: profileError } = await supabaseClient.from('vendors').update({
+                name, paypal_email, email, interested_products, phone
+            }).eq('id', CURRENT_VENDOR_ID);
+
+            const { error: prodError } = await supabaseClient.from('products').update({
+                vendor_name: name
+            }).eq('vendor_id', CURRENT_VENDOR_ID);
+
+            if (profileError || prodError) {
+                alert("Error saving profile details: " + (profileError?.message || prodError?.message));
+            } else {
+                alert("Vendor profile data updated successfully across all instances!");
+                document.getElementById('headerVendorName').innerText = `Vendor: ${name}`;
+                fetchVendorProducts();
+            }
+        }
+
+        async function deleteVendorAccount() {
+            if (confirm("WARNING: Deleting your vendor profile will permanently remove your account and cascade-delete all your active product listings. Proceed?")) {
+                const { error } = await supabaseClient.from('vendors').delete().eq('id', CURRENT_VENDOR_ID);
+                if (error) {
+                    alert("Error deleting account: " + error.message);
+                } else {
+                    alert("Vendor profile and associated product listings have been deleted.");
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+
         async function handleAddProduct() {
             const title = document.getElementById('prodTitle').value.trim();
             const price = document.getElementById('prodPrice').value.trim();
             const description = document.getElementById('prodDesc').value.trim();
             const image_url = document.getElementById('prodImg1').value.trim();
             const image_url_2 = document.getElementById('prodImg2').value.trim();
+            const currentName = document.getElementById('vendorNameInput').value.trim() || 'Vendor Alpha';
 
             if (!title || !price) {
                 alert("Please fill in at least the product title and price.");
@@ -287,7 +378,7 @@
             }
 
             const { error } = await supabaseClient.from('products').insert([{
-                title, price: parseFloat(price), description, image_url, image_url_2, vendor_name: 'Vendor Alpha'
+                title, price: parseFloat(price), description, image_url, image_url_2, vendor_id: CURRENT_VENDOR_ID, vendor_name: currentName
             }]);
 
             if (error) {
@@ -304,7 +395,7 @@
         }
 
         async function fetchVendorProducts() {
-            const { data } = await supabaseClient.from('products').select('*').order('created_at', { ascending: false });
+            const { data } = await supabaseClient.from('products').select('*').eq('vendor_id', CURRENT_VENDOR_ID).order('created_at', { ascending: false });
             const tableBody = document.getElementById('vendorProductsTable');
 
             if (!data || data.length === 0) {
