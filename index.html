@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Shopper Dashboard & Commission Management</title>
+    <title>Echo Hub - Shopper & Reviewer Dashboard</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,69 +26,173 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter / Space Grotesk -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </style>
 </head>
-<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col">
-
-    <!-- Admin Quick-Return Bar (Appears when active admin session inspects shopper view) -->
-    <div class="bg-rose-900/40 border-b border-rose-500/30 px-6 py-2.5 flex items-center justify-between text-xs z-50">
-        <div class="flex items-center space-x-2 text-rose-300 font-medium">
-            <i class="fa-solid fa-user-shield"></i>
-            <span>Admin Control Mode: Inspecting Shopper Dashboard (index.html)</span>
-        </div>
-        <a href="admin.html" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow transition flex items-center space-x-1.5">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Return to Admin Panel</span>
-        </a>
-    </div>
+<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
     <!-- Top Navigation Bar -->
-    <header class="bg-cardBg border-b border-borderSlate sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+    <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <!-- EchoHub Brand Logo Icon -->
-            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/20 relative">
-                <i class="fa-solid fa-comment text-sm"></i>
-                <div class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-600 transform rotate-45"></div>
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+                eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">Echo<span class="text-blue-500">Hub</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Dashboard</span></span>
         </div>
         
-        <!-- Navigation Links / Tabs -->
-        <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-border-all"></i><span>Product Grid</span></a>
-            <a href="index.html" class="text-accentBlue font-semibold flex items-center space-x-2"><i class="fa-solid fa-wallet"></i><span>Commission Management</span></a>
-            <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Messaging Hub</span></a>
-            <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-headset"></i><span>Contact Admin</span></a>
-        </nav>
-
-        <!-- User Profile & Notifications -->
         <div class="flex items-center space-x-4">
-            <button class="relative bg-slate-800 p-2.5 rounded-full hover:bg-slate-700 transition text-slate-300">
-                <i class="fa-solid fa-bell"></i>
-                <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"></span>
-            </button>
-            <div class="flex items-center space-x-3 border-l border-borderSlate pl-4">
-                <div class="w-9 h-9 rounded-full bg-accentBlue/20 text-accentBlue flex items-center justify-center font-bold">RG</div>
-                <div class="hidden sm:block text-left">
-                    <p class="text-xs font-semibold text-white">Roxroy Gough</p>
-                    <p class="text-[10px] text-emerald-400 font-medium">Verified Shopper</p>
-                </div>
+            <div class="text-right hidden sm:block">
+                <p id="userFullName" class="text-xs font-semibold text-slate-200">Loading user...</p>
+                <p id="userEmailDisplay" class="text-[10px] text-slate-400"></p>
             </div>
+            <button onclick="handleLogout()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
-        <!-- Rest of the Shopper Dashboard contents remain here -->
+    <!-- Main Dashboard Container -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-8">
+        
+        <!-- Welcome Banner -->
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
+            <div class="space-y-1">
+                <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Shopper Portal</span>
+                <h1 class="text-2xl font-bold text-white">Welcome back to your review command center</h1>
+                <p class="text-xs text-slate-400">Claim new product review campaigns, monitor active tasks, and track your marketplace rewards.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="loadDashboardData()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Refresh Campaigns</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Overview Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
+                <span class="text-xs text-slate-400 font-medium">Active Reviews Claimed</span>
+                <h3 id="statActiveClaims" class="text-2xl font-bold text-white">0</h3>
+            </div>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
+                <span class="text-xs text-slate-400 font-medium">Completed Reviews</span>
+                <h3 id="statCompleted" class="text-2xl font-bold text-emerald-400">0</h3>
+            </div>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
+                <span class="text-xs text-slate-400 font-medium">Total Rewards Earned</span>
+                <h3 id="statEarnings" class="text-2xl font-bold text-blue-400">$0.00</h3>
+            </div>
+        </div>
+
+        <!-- Available Campaigns Section -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-white tracking-tight">Available Review Campaigns</h2>
+                <span class="text-xs text-slate-400">Live Database Feed</span>
+            </div>
+
+            <div id="campaignsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamic Card Placeholder -->
+                <div class="bg-cardBg border border-borderSlate rounded-xl p-6 text-center text-xs text-slate-400 col-span-full py-12">
+                    <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+                    <p>Loading available campaigns from Supabase...</p>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-borderSlate bg-cardBg py-6 mt-12 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. All rights reserved.</p>
+    <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Shopper Dashboard.</p>
     </footer>
 
+    <!-- Supabase Integration Script -->
+    <script>
+        const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Session Protection & Initialization
+        async function checkAuthAndLoad() {
+            const { data: { session }, error } = await _supabase.auth.getSession();
+            
+            if (error || !session) {
+                // If not logged in, redirect straight to login portal
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = session.user;
+            const fullName = user.user_metadata?.full_name || 'Valued Shopper';
+            
+            document.getElementById('userFullName').textContent = fullName;
+            document.getElementById('userEmailDisplay').textContent = user.email;
+
+            // Load dashboard data once session is confirmed
+            loadDashboardData();
+        }
+
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        async function loadDashboardData() {
+            const container = document.getElementById('campaignsContainer');
+            
+            try {
+                // Fetch products/campaigns from Supabase table
+                const { data, error } = await _supabase.from('products').select('*').limit(6);
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-cardBg border border-borderSlate rounded-xl p-8 text-center text-xs text-slate-400 col-span-full">
+                            <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-500"></i>
+                            <p>No active review campaigns are currently listed in the database.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.map(item => `
+                    <div class="bg-cardBg border border-borderSlate rounded-xl p-5 space-y-3 flex flex-col justify-between shadow-lg">
+                        <div class="space-y-1">
+                            <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">Active Campaign</span>
+                            <h3 class="font-bold text-white text-sm pt-2">${item.title || 'Product Review Offer'}</h3>
+                            <p class="text-xs text-slate-400 line-clamp-2">${item.description || 'Review this product and submit feedback to receive your commission reward.'}</p>
+                        </div>
+                        <div class="pt-3 border-t border-borderSlate flex items-center justify-between">
+                            <span class="text-xs font-semibold text-emerald-400">Reward: $${item.reward || '15.00'}</span>
+                            <button onclick="alert('Campaign claim feature connected to session.')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-200 px-3 py-1.5 rounded-lg transition">
+                                Claim Offer
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                container.innerHTML = `
+                    <div class="bg-cardBg border border-borderSlate rounded-xl p-8 text-center text-xs text-slate-400 col-span-full">
+                        <i class="fa-solid fa-triangle-exclamation text-xl mb-2 text-amber-400"></i>
+                        <p>Session active. Ready to display campaigns once table rows are added.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Run authentication check on load
+        checkAuthAndLoad();
+    </script>
 </body>
 </html>
