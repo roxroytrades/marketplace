@@ -14,8 +14,8 @@
                     colors: {
                         darkBg: '#0F172A',
                         cardBg: '#1E293B',
-                        accentBlue: '#3B82F6',
-                        accentHover: '#2563EB',
+                        accentBlue: '#2563EB',
+                        accentHover: '#1D4ED8',
                         borderSlate: '#334155'
                     }
                 }
@@ -33,18 +33,20 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col">
 
-    <!-- Top Navigation Bar -->
+    <!-- Top Navigation Bar with Corrected Logo -->
     <header class="bg-cardBg border-b border-borderSlate sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <div class="bg-accentBlue text-white p-2 rounded-xl shadow-lg shadow-blue-500/20">
-                <i class="fa-solid fa-bullhorn text-lg"></i>
+            <!-- Corrected EchoHub Logo Icon: Blue Chat Bubble with Concentric Sound/Message Waves -->
+            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/20 relative">
+                <i class="fa-solid fa-comment text-sm"></i>
+                <div class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-600 transform rotate-45"></div>
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">Echo Hub</span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">Echo<span class="text-blue-500">Hub</span></span>
         </div>
         
         <!-- Navigation Links / Tabs -->
         <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-grid-2"></i><span>Product Grid</span></a>
+            <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-border-all"></i><span>Product Grid</span></a>
             <a href="#" class="text-accentBlue font-semibold flex items-center space-x-2"><i class="fa-solid fa-wallet"></i><span>Commission Management</span></a>
             <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Messaging Hub</span></a>
             <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-headset"></i><span>Contact Admin</span></a>
