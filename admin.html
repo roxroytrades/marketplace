@@ -30,6 +30,8 @@
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </style>
+
+
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col">
 
@@ -51,7 +53,27 @@
             <a href="index.html" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-user"></i><span>Shopper View</span></a>
             <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Communications Hub</span></a>
         </nav>
-
+<!-- Navigation Links / Tabs -->
+        <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+            <a href="admin.html" class="text-accentBlue font-semibold flex items-center space-x-2"><i class="fa-solid fa-shield-halved"></i><span>Admin Dashboard</span></a>
+            <a href="seller.html" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-store"></i><span>Seller View</span></a>
+            <a href="index.html" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-user"></i><span>Shopper View</span></a>
+            
+            <!-- Quick-Access Registrations Dropdown -->
+            <div class="relative group">
+                <button class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2 py-2">
+                    <i class="fa-solid fa-user-plus"></i><span>Registration Pages <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i></span>
+                </button>
+                <div class="absolute left-0 mt-1 w-52 bg-cardBg border border-borderSlate rounded-xl shadow-xl py-2 hidden group-hover:block z-50">
+                    <a href="buyer-register.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center justify-between">
+                        <span>Buyer Registration</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-500"></i>
+                    </a>
+                    <a href="seller-register.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center justify-between">
+                        <span>Seller Invite Portal</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-500"></i>
+                    </a>
+                </div>
+            </div>
+        </nav>
         <!-- Master Accounts Switcher Dropdown & Session Indicator -->
         <div class="flex items-center space-x-4">
             <div class="relative">
