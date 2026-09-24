@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Private Seller & Vendor Registration</title>
+    <title>Echo Hub - Vendor Registration</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,6 +26,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter / Space Grotesk -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
@@ -33,122 +35,140 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Navigation Bar (Private Invite Badge) -->
+    <!-- Top Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/20 relative">
-                <i class="fa-solid fa-comment text-sm"></i>
-                <div class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-600 transform rotate-45"></div>
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+                eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">Echo<span class="text-blue-500">Hub</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-2">Private Vendor Invite</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Signup</span></span>
         </div>
-        <div class="text-xs text-slate-400">
-            Vendor Sign-In? <a href="login.html" class="text-accentBlue font-semibold hover:underline ml-1">Access Portal</a>
+        
+        <div class="flex items-center space-x-3">
+            <a href="seller.html" class="text-xs text-slate-400 hover:text-white transition flex items-center space-x-1">
+                <i class="fa-solid fa-arrow-left"></i><span>Back to Vendor Login</span>
+            </a>
         </div>
     </header>
 
     <!-- Main Registration Container -->
     <main class="flex-1 flex items-center justify-center px-4 py-12">
-        <div class="max-w-xl w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
+        <div class="max-w-md w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
             
+            <!-- Header Branding inside Card -->
             <div class="text-center space-y-2">
-                <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-1">
-                    <i class="fa-solid fa-key text-[10px]"></i> <span>Private Invite Link Verified</span>
+                <div class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-2 font-heading font-bold text-2xl">
+                    eh
                 </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Seller Store Onboarding</h1>
-                <p class="text-xs text-slate-400">Set up your vendor profile, define payout structures, and list your products securely.</p>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Create Vendor Account</h1>
+                <p class="text-xs text-slate-400">Register your business to manage review campaigns, list products, and monitor sales metrics.</p>
             </div>
 
-            <!-- Seller Registration Form -->
-            <form class="space-y-4" onsubmit="event.preventDefault(); alert('Seller store registered successfully!'); window.location.href='seller.html';">
-                
-                <!-- Name Row -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">First Name</label>
-                        <input type="text" required placeholder="Roxroy" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Last Name</label>
-                        <input type="text" required placeholder="Gough" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                </div>
+            <!-- Feedback Alert Box -->
+            <div id="formAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
 
-                <!-- Vendor Type Radio Select -->
-                <div class="space-y-2 pt-1">
-                    <label class="text-xs font-semibold text-slate-300">Vendor Type</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <label class="flex items-center space-x-3 p-3 rounded-xl border border-borderSlate bg-darkBg cursor-pointer hover:border-accentBlue transition">
-                            <input type="radio" name="vendorType" value="UPFRONT" required class="text-accentBlue focus:ring-0">
-                            <span class="text-xs font-medium text-slate-200">UPFRONT</span>
-                        </label>
-                        <label class="flex items-center space-x-3 p-3 rounded-xl border border-borderSlate bg-darkBg cursor-pointer hover:border-accentBlue transition">
-                            <input type="radio" name="vendorType" value="REFUND_AFTER_REVIEW" required class="text-accentBlue focus:ring-0">
-                            <span class="text-xs font-medium text-slate-200">REFUND AFTER REVIEW</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Commission Amount & Referral Code -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Commission Amount (USD) <span class="text-slate-500 font-normal">(Min $5.00)</span></label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 text-xs">$</span>
-                            <input type="number" min="5.00" step="0.01" required placeholder="5.00" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-8 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                        </div>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Referral Code <span class="text-slate-500 font-normal">(Optional)</span></label>
-                        <input type="text" id="sellerRefCode" placeholder="REF-XXXX" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                </div>
-
-                <!-- Offerings / Business Description -->
+            <!-- Registration Form -->
+            <form id="sellerRegisterForm" class="space-y-4">
                 <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Offerings / Business Description</label>
-                    <textarea rows="3" required placeholder="Describe your brand, Amazon product catalogs, and review campaign requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition resize-none"></textarea>
-                </div>
-
-                <!-- Emails Row -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Account Email (Vendor Login)</label>
-                        <input type="email" required placeholder="store@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">PayPal Email (Billing / Transfers)</label>
-                        <input type="email" required placeholder="store-billing@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    <label class="text-xs font-semibold text-slate-300">Company / Business Name</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-store text-xs"></i></span>
+                        <input type="text" id="companyName" required placeholder="Echo Ventures LLC" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
-                <!-- Password -->
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Business Email Address</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
+                        <input type="email" id="email" required placeholder="vendor@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                </div>
+
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">Password</label>
-                    <input type="password" required placeholder="••••••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
+                        <input type="password" id="password" required minlength="6" placeholder="••••••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                    <p class="text-[10px] text-slate-500 pl-1">Must be at least 6 characters long.</p>
                 </div>
 
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-emerald-600/25 transition flex items-center justify-center space-x-2 mt-4">
-                    <span>Initialize Seller Store Onboarding</span>
+                <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-2">
+                    <span>Create Vendor Account</span>
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </button>
             </form>
+
+            <p class="text-center text-xs text-slate-400 pt-2">
+                Already registered as a vendor? <a href="seller.html" class="text-accentBlue font-semibold hover:underline">Sign in</a>
+            </p>
 
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Private Vendor Onboarding.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Vendor Registration.</p>
     </footer>
 
+    <!-- Supabase Integration Script -->
     <script>
-        // Auto-capture referral code from URL query parameter ?ref=CODE
-        const urlParams = new URLSearchParams(window.location.search);
-        const refParam = urlParams.get('ref');
-        if (refParam) {
-            document.getElementById('sellerRefCode').value = refParam;
-        }
+        const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const form = document.getElementById('sellerRegisterForm');
+        const alertBox = document.getElementById('formAlert');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const companyName = document.getElementById('companyName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // UI Loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Registering Vendor...';
+            alertBox.classList.add('hidden');
+
+            try {
+                const { data, error } = await _supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            company_name: companyName,
+                            role: 'seller'
+                        }
+                    }
+                });
+
+                if (error) throw error;
+
+                // Success State
+                alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                alertBox.textContent = 'Vendor account created successfully! Redirecting to portal...';
+                alertBox.classList.remove('hidden');
+
+                setTimeout(() => {
+                    window.location.href = 'seller.html';
+                }, 1500);
+
+            } catch (err) {
+                // Error State
+                alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                alertBox.textContent = err.message || 'An error occurred during registration. Please try again.';
+                alertBox.classList.remove('hidden');
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Create Vendor Account</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>';
+            }
+        });
     </script>
 </body>
 </html>
