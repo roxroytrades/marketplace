@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Shopper & Reviewer Registration</title>
+    <title>Echo Hub - Buyer Registration</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,6 +26,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter / Space Grotesk -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
@@ -33,112 +35,140 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Navigation Bar -->
+    <!-- Top Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/20 relative">
-                <i class="fa-solid fa-comment text-sm"></i>
-                <div class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-600 transform rotate-45"></div>
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+                eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">Echo<span class="text-blue-500">Hub</span> <span class="text-xs bg-blue-500/10 text-accentBlue border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Portal</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-2">Buyer Signup</span></span>
         </div>
-        <div class="text-xs text-slate-400">
-            Already have an account? <a href="login.html" class="text-accentBlue font-semibold hover:underline ml-1">Sign In</a>
+        
+        <div class="flex items-center space-x-3">
+            <a href="login.html" class="text-xs text-slate-400 hover:text-white transition flex items-center space-x-1">
+                <i class="fa-solid fa-arrow-left"></i><span>Back to Login</span>
+            </a>
         </div>
     </header>
 
     <!-- Main Registration Container -->
     <main class="flex-1 flex items-center justify-center px-4 py-12">
-        <div class="max-w-xl w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
+        <div class="max-w-md w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
             
+            <!-- Header Branding inside Card -->
             <div class="text-center space-y-2">
-                <h1 class="text-2xl font-bold text-white tracking-tight">Create Shopper Account</h1>
-                <p class="text-xs text-slate-400">Register as a reviewer to claim products, submit review proofs, and earn commissions.</p>
+                <div class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-2 font-heading font-bold text-2xl">
+                    eh
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Create Buyer Account</h1>
+                <p class="text-xs text-slate-400">Join Echo Hub to start claiming product reviews, tracking rewards, and securing marketplace commissions.</p>
             </div>
 
-            <!-- Shopper Registration Form -->
-            <form class="space-y-4" onsubmit="event.preventDefault(); alert('Registration submitted successfully! Status: PENDING_VERIFICATION'); window.location.href='index.html';">
-                
-                <!-- Name Row -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">First Name</label>
-                        <input type="text" required placeholder="Roxroy" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Last Name</label>
-                        <input type="text" required placeholder="Gough" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+            <!-- Feedback Alert Box -->
+            <div id="formAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+
+            <!-- Registration Form -->
+            <form id="buyerRegisterForm" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Full Name</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user text-xs"></i></span>
+                        <input type="text" id="fullName" required placeholder="Roxroy Gough" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
-                <!-- Contact Row -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">WhatsApp Number</label>
-                        <input type="text" required placeholder="+18765550192" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Categories of Interest</label>
-                        <input type="text" required placeholder="Electronics, Fashion, Home" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Email Address</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
+                        <input type="email" id="email" required placeholder="shopper@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
-                <!-- Emails Row -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Account Email (Login)</label>
-                        <input type="email" required placeholder="roxroy@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
+                        <input type="password" id="password" required minlength="6" placeholder="••••••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">PayPal Email (Payouts)</label>
-                        <input type="email" required placeholder="roxroy-paypal@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
+                    <p class="text-[10px] text-slate-500 pl-1">Must be at least 6 characters long.</p>
                 </div>
 
-                <!-- Password & Referral Code -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Password</label>
-                        <input type="password" required placeholder="••••••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Referral / Inviter Code <span class="text-slate-500 font-normal">(Optional)</span></label>
-                        <input type="text" id="refCode" placeholder="REF-XXXX" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                </div>
-
-                <!-- Mandatory National ID Upload -->
-                <div class="space-y-1 pt-2">
-                    <label class="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                        <span>National ID File Upload <span class="text-rose-400">*Mandatory</span></span>
-                        <span class="text-[10px] text-amber-400 font-normal"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Triggers PENDING_VERIFICATION status</span>
-                    </label>
-                    <div class="border-2 border-dashed border-borderSlate hover:border-accentBlue rounded-xl p-4 text-center cursor-pointer bg-darkBg/50 transition">
-                        <input type="file" required class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-accentBlue file:text-white hover:file:bg-accentHover file:cursor-pointer">
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-4">
-                    <span>Complete Shopper Registration</span>
+                <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-2">
+                    <span>Create Account & Continue</span>
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </button>
             </form>
+
+            <p class="text-center text-xs text-slate-400 pt-2">
+                Already have a buyer account? <a href="login.html" class="text-accentBlue font-semibold hover:underline">Sign in</a>
+            </p>
 
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Secure Shopper Onboarding.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Buyer Registration.</p>
     </footer>
 
+    <!-- Supabase Integration Script -->
     <script>
-        // Auto-capture referral code from URL query parameter ?ref=CODE
-        const urlParams = new URLSearchParams(window.location.search);
-        const refParam = urlParams.get('ref');
-        if (refParam) {
-            document.getElementById('refCode').value = refParam;
-        }
+        const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const form = document.getElementById('buyerRegisterForm');
+        const alertBox = document.getElementById('formAlert');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // UI Loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating Account...';
+            alertBox.classList.add('hidden');
+
+            try {
+                const { data, error } = await _supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: fullName,
+                            role: 'shopper'
+                        }
+                    }
+                });
+
+                if (error) throw error;
+
+                // Success State
+                alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                alertBox.textContent = 'Account created successfully! Redirecting to your dashboard...';
+                alertBox.classList.remove('hidden');
+
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+
+            } catch (err) {
+                // Error State
+                alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                alertBox.textContent = err.message || 'An error occurred during registration. Please try again.';
+                alertBox.classList.remove('hidden');
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Create Account & Continue</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>';
+            }
+        });
     </script>
 </body>
 </html>
