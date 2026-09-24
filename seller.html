@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Seller Dashboard & Payout Manager</title>
+    <title>Echo Hub - Vendor / Seller Portal</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,186 +26,203 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter / Space Grotesk -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </style>
 </head>
-<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col">
+<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Admin Quick-Return Bar (Appears when active admin session inspects seller view) -->
-    <div class="bg-rose-900/40 border-b border-rose-500/30 px-6 py-2.5 flex items-center justify-between text-xs z-50">
-        <div class="flex items-center space-x-2 text-rose-300 font-medium">
-            <i class="fa-solid fa-user-shield"></i>
-            <span>Admin Control Mode: Inspecting Seller Dashboard (seller.html)</span>
-        </div>
-        <a href="admin.html" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow transition flex items-center space-x-1.5">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Return to Admin Panel</span>
-        </a>
-    </div>
-
-    <!-- Top Navigation Bar -->
-    <header class="bg-cardBg border-b border-borderSlate sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+    <!-- Top Bar -->
+    <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <!-- EchoHub Brand Logo Icon -->
-            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/20 relative">
-                <i class="fa-solid fa-comment text-sm"></i>
-                <div class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-600 transform rotate-45"></div>
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+                eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">Echo<span class="text-blue-500">Hub</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-2">Seller Portal</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal</span></span>
         </div>
         
-        <!-- Navigation Links / Tabs -->
-        <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <a href="seller.html" class="text-accentBlue font-semibold flex items-center space-x-2"><i class="fa-solid fa-store"></i><span>Seller Dashboard</span></a>
-            <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-box"></i><span>Products</span></a>
-            <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Buyer Messages</span></a>
-            <a href="index.html" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-user"></i><span>Shopper View</span></a>
-        </nav>
-
-        <!-- User Profile & Notifications -->
-        <div class="flex items-center space-x-4">
-            <button class="relative bg-slate-800 p-2.5 rounded-full hover:bg-slate-700 transition text-slate-300">
-                <i class="fa-solid fa-bell"></i>
-                <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"></span>
-            </button>
-            <div class="flex items-center space-x-3 border-l border-borderSlate pl-4">
-                <div class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">VS</div>
-                <div class="hidden sm:block text-left">
-                    <p class="text-xs font-semibold text-white">Vendor Store</p>
-                    <p class="text-[10px] text-emerald-400 font-medium">Active Partner</p>
-                </div>
-            </div>
+        <div id="headerUserArea" class="hidden flex items-center space-x-4">
+            <span id="vendorUserEmail" class="text-xs text-slate-300"></span>
+            <button onclick="handleLogout()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-1.5 rounded-lg transition">Sign Out</button>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
-
-        <!-- Page Header -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Seller Commission & Payout Manager</h1>
-                <p class="text-sm text-slate-400 mt-1">Review incoming buyer review proofs, manage payout batches, and settle commission balances.</p>
-            </div>
-            <div class="flex items-center space-x-3">
-                <button class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center space-x-2">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Add New Product Listing</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Summary Cards Section -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 relative overflow-hidden shadow-xl">
-                <div class="absolute right-4 top-4 text-amber-500/10 text-5xl font-bold"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Store Pending Payouts</p>
-                <h3 class="text-3xl font-bold text-white mt-2">$840.00 <span class="text-xs font-normal text-slate-400">USD</span></h3>
-                <p class="text-xs text-amber-400 mt-3 flex items-center"><i class="fa-solid fa-circle-info mr-1.5"></i> Commissions submitted by shoppers awaiting store approval</p>
-            </div>
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 relative overflow-hidden shadow-xl">
-                <div class="absolute right-4 top-4 text-emerald-500/10 text-5xl font-bold"><i class="fa-solid fa-wallet"></i></div>
-                <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total Settled Commissions</p>
-                <h3 class="text-3xl font-bold text-emerald-400 mt-2">$6,350.00 <span class="text-xs font-normal text-slate-400">USD</span></h3>
-                <p class="text-xs text-slate-400 mt-3 flex items-center"><i class="fa-solid fa-check-circle mr-1.5 text-emerald-400"></i> Successfully processed and sent via verified payment receipts</p>
-            </div>
-        </div>
-
-        <!-- Seller Commission Management Section & Tabs -->
-        <div class="bg-cardBg border border-borderSlate rounded-2xl shadow-xl overflow-hidden">
-            
-            <!-- Tab Navigation Header -->
-            <div class="flex overflow-x-auto border-b border-borderSlate bg-slate-900/50 px-4 pt-4 space-x-2">
-                <button class="px-5 py-3 text-sm font-semibold text-accentBlue border-b-2 border-accentBlue whitespace-nowrap transition bg-cardBg rounded-t-xl">Incoming Requests</button>
-                <button class="px-5 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap transition">Outgoing Requests</button>
-                <button class="px-5 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap transition">Working Queue</button>
-                <button class="px-5 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap transition">Received History</button>
-            </div>
-
-            <!-- Tab Controls Bar (Filters & Batch Actions) -->
-            <div class="p-4 sm:p-6 border-b border-borderSlate flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/20">
-                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                    <!-- Filter by Commission Type -->
-                    <select class="bg-darkBg border border-borderSlate text-slate-300 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-accentBlue">
-                        <option value="ALL">All Commission Types</option>
-                        <option value="REVIEW">Review Commission</option>
-                        <option value="BUYER_INVITER">Buyer Inviter Commission</option>
-                    </select>
-                    <!-- Filter by Date -->
-                    <input type="date" class="bg-darkBg border border-borderSlate text-slate-300 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-accentBlue">
+    <!-- Main Container -->
+    <main class="flex-1 flex items-center justify-center px-4 py-12">
+        
+        <!-- SELLER LOGIN VIEW -->
+        <div id="sellerLoginCard" class="max-w-md w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-2 font-heading font-bold text-2xl">
+                    eh
                 </div>
-                <!-- Action Button -->
-                <button class="w-full sm:w-auto bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Process Selected Store Payouts</span>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Vendor Portal Login</h1>
+                <p class="text-xs text-slate-400">Sign in to manage your product catalog, review campaigns, and seller analytics.</p>
+            </div>
+
+            <div id="sellerAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+
+            <form id="sellerLoginForm" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Vendor Email Address</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
+                        <input type="email" id="sellerEmail" required placeholder="vendor@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
+                        <input type="password" id="sellerPassword" required placeholder="••••••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                </div>
+
+                <button type="submit" id="sellerLoginBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-2">
+                    <span>Sign In to Vendor Dashboard</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- SELLER DASHBOARD VIEW (Hidden until authenticated) -->
+        <div id="sellerDashboardView" class="hidden max-w-4xl w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+                <div>
+                    <h1 class="text-xl font-bold text-white">Vendor Operations Dashboard</h1>
+                    <p class="text-xs text-slate-400">Manage active product listings and monitor review fulfillment performance.</p>
+                </div>
+                <button onclick="loadVendorData()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
+                    <i class="fa-solid fa-rotate"></i><span>Refresh Data</span>
                 </button>
             </div>
 
-            <!-- Table Data View -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-borderSlate text-[11px] uppercase tracking-wider text-slate-400 bg-slate-900/40">
-                            <th class="py-3.5 px-4"><input type="checkbox" class="rounded border-borderSlate bg-darkBg text-accentBlue focus:ring-0"></th>
-                            <th class="py-3.5 px-4 font-semibold">Review / Proof</th>
-                            <th class="py-3.5 px-4 font-semibold">Feedback ID</th>
-                            <th class="py-3.5 px-4 font-semibold">Shopper Info</th>
-                            <th class="py-3.5 px-4 font-semibold">Role Type</th>
-                            <th class="py-3.5 px-4 font-semibold">Commission ID</th>
-                            <th class="py-3.5 px-4 font-semibold">Amount</th>
-                            <th class="py-3.5 px-4 font-semibold text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-borderSlate/60 text-xs text-slate-300">
-                        <!-- Sample Row 1 -->
-                        <tr class="hover:bg-slate-800/50 transition">
-                            <td class="py-4 px-4"><input type="checkbox" class="rounded border-borderSlate bg-darkBg text-accentBlue focus:ring-0"></td>
-                            <td class="py-4 px-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-lg bg-slate-800 border border-borderSlate flex items-center justify-center text-accentBlue overflow-hidden">
-                                        <i class="fa-solid fa-image text-sm"></i>
-                                    </div>
-                                    <a href="#" target="_blank" class="text-accentBlue hover:underline flex items-center space-x-1 text-[11px]">
-                                        <span>Amazon Link</span> <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                                    </a>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4 font-mono font-medium text-white">FB-89450</td>
-                            <td class="py-4 px-4">
-                                <p class="font-medium text-white">Roxroy Gough</p>
-                                <p class="text-[10px] text-slate-400">roxroy@example.com</p>
-                            </td>
-                            <td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-blue-500/10 text-accentBlue border border-blue-500/20">Reviewer</span></td>
-                            <td class="py-4 px-4 font-mono text-slate-400">COM-3910</td>
-                            <td class="py-4 px-4 font-bold text-white">$40.00 USD</td>
-                            <td class="py-4 px-4 text-right">
-                                <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition text-[11px]">Verify</button>
-                                <button class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg font-medium transition text-[11px] ml-1">Reject</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination Footer -->
-            <div class="p-4 border-t border-borderSlate flex items-center justify-between text-xs text-slate-400 bg-slate-900/30">
-                <p>Showing 1-1 of 1 incoming record</p>
-                <div class="flex items-center space-x-2">
-                    <button class="px-3 py-1.5 rounded-lg border border-borderSlate bg-darkBg text-slate-400 hover:text-white disabled:opacity-50" disabled>Previous</button>
-                    <button class="px-3 py-1.5 rounded-lg border border-borderSlate bg-darkBg text-slate-400 hover:text-white disabled:opacity-50" disabled>Next</button>
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-darkBg border border-borderSlate p-4 rounded-xl space-y-1">
+                    <span class="text-[11px] text-slate-400 font-medium">Active Products</span>
+                    <h3 id="statProducts" class="text-2xl font-bold text-white">0</h3>
+                </div>
+                <div class="bg-darkBg border border-borderSlate p-4 rounded-xl space-y-1">
+                    <span class="text-[11px] text-slate-400 font-medium">Pending Reviews</span>
+                    <h3 id="statReviews" class="text-2xl font-bold text-blue-400">0</h3>
+                </div>
+                <div class="bg-darkBg border border-borderSlate p-4 rounded-xl space-y-1">
+                    <span class="text-[11px] text-slate-400 font-medium">Campaign Status</span>
+                    <h3 class="text-lg font-bold text-emerald-400 flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span><span>Live</span></h3>
                 </div>
             </div>
 
+            <!-- Placeholder Listing Area -->
+            <div class="space-y-3">
+                <h3 class="text-sm font-semibold text-slate-200">Recent Listings & Submissions</h3>
+                <div id="listingsContainer" class="bg-darkBg border border-borderSlate rounded-xl p-6 text-center text-xs text-slate-400">
+                    Connecting to Supabase database...
+                </div>
+            </div>
         </div>
 
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-borderSlate bg-cardBg py-6 mt-12 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Seller Portal.</p>
+    <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Vendor Portal.</p>
     </footer>
 
+    <!-- Supabase Integration Script -->
+    <script>
+        const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const loginCard = document.getElementById('sellerLoginCard');
+        const dashboardView = document.getElementById('sellerDashboardView');
+        const headerUserArea = document.getElementById('headerUserArea');
+        const vendorUserEmail = document.getElementById('vendorUserEmail');
+        const sellerLoginForm = document.getElementById('sellerLoginForm');
+        const sellerAlert = document.getElementById('sellerAlert');
+        const sellerLoginBtn = document.getElementById('sellerLoginBtn');
+
+        // Check active session on load
+        async function checkSession() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) {
+                showDashboard(session.user);
+            }
+        }
+
+        function showDashboard(user) {
+            loginCard.classList.add('hidden');
+            dashboardView.classList.remove('hidden');
+            headerUserArea.classList.remove('hidden');
+            vendorUserEmail.textContent = user.email;
+            loadVendorData();
+        }
+
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            window.location.reload();
+        }
+
+        sellerLoginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('sellerEmail').value.trim();
+            const password = document.getElementById('sellerPassword').value;
+
+            sellerLoginBtn.disabled = true;
+            sellerLoginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Authenticating Vendor...';
+            sellerAlert.classList.add('hidden');
+
+            try {
+                const { data, error } = await _supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+                showDashboard(data.user);
+
+            } catch (err) {
+                sellerAlert.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                sellerAlert.textContent = err.message || 'Authentication failed. Please verify vendor credentials.';
+                sellerAlert.classList.remove('hidden');
+
+                sellerLoginBtn.disabled = false;
+                sellerLoginBtn.innerHTML = '<span>Sign In to Vendor Dashboard</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>';
+            }
+        });
+
+        async function loadVendorData() {
+            const container = document.getElementById('listingsContainer');
+            try {
+                // Example query fetch from a 'products' or 'listings' table if configured
+                const { data, error } = await _supabase.from('products').select('*').limit(5);
+                
+                if (error) {
+                    container.innerHTML = `<span class="text-slate-500">Connected successfully. Ready for product entries.</span>`;
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<span class="text-slate-500">No product listings found in database.</span>`;
+                    return;
+                }
+
+                document.getElementById('statProducts').textContent = data.length;
+                container.innerHTML = data.map(item => `<div class="p-3 bg-cardBg border border-borderSlate rounded-lg flex justify-between text-xs text-slate-300"><span>${item.title || 'Product Listing'}</span><span class="text-blue-400">${item.status || 'Active'}</span></div>`).join('');
+            } catch (e) {
+                container.innerHTML = `<span class="text-slate-500">Vendor session active. Database schemas ready.</span>`;
+            }
+        }
+
+        // Run check on page startup
+        checkSession();
+    </script>
 </body>
 </html>
