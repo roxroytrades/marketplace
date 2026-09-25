@@ -26,6 +26,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter / Space Grotesk -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Official Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
@@ -63,7 +65,7 @@
             <!-- Mode Indicator -->
             <div class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl flex items-center space-x-1.5">
                 <i class="fa-solid fa-unlock-keyhole"></i>
-                <span>Direct Access Mode</span>
+                <span>SDK Managed Mode</span>
             </div>
         </div>
     </header>
@@ -244,10 +246,13 @@
         <p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
     </footer>
 
-    <!-- Direct REST API Integration Script with Dual Headers -->
+    <!-- Supabase SDK Integration Script -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+
+        // Initialize Supabase Client SDK
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allUsersList = [];
         let allProductsList = [];
@@ -273,25 +278,36 @@
 
         async function fetchAllAdminData(isPolling = false) {
             try {
-                const headers = {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json'
-                };
+                // Fetch Profiles using Supabase SDK
+                const { data: profiles, error: profErr } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (!profErr && profiles) allUsersList = profiles;
 
-                const profilesRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*&order=created_at.desc`, { headers });
-                if (profilesRes.ok) allUsersList = await profilesRes.json();
+                // Fetch Products using Supabase SDK
+                const { data: products, error: prodErr } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (!prodErr && products) allProductsList = products;
 
-                const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, { headers });
-                if (prodRes.ok) allProductsList = await prodRes.json();
+                // Fetch Commissions using Supabase SDK
+                const { data: commissions, error: commErr } = await supabaseClient
+                    .from('commissions')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (!commErr && commissions) allCommissionsList = commissions;
 
-                const commRes = await fetch(`${SUPABASE_URL}/rest/v1/commissions?select=*&order=created_at.desc`, { headers });
-                if (commRes.ok) allCommissionsList = await commRes.json();
+                // Fetch Messages using Supabase SDK
+                const { data: messages, error: msgErr } = await supabaseClient
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (!msgErr && messages) allMessagesList = messages;
 
-                const msgRes = await fetch(`${SUPABASE_URL}/rest/v1/messages?select=*&order=created_at.desc`, { headers });
-                if (msgRes.ok) allMessagesList = await msgRes.json();
             } catch (err) {
-                console.error("Error fetching admin data:", err.message);
+                console.error("Error fetching admin data via SDK:", err.message);
             }
 
             updateAdminMetrics();
@@ -391,18 +407,12 @@
 
         async function updateUserVerification(userId, newStatus) {
             try {
-                const headers = {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json'
-                };
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
-                    method: 'PATCH',
-                    headers,
-                    body: JSON.stringify({ verification_status: newStatus })
-                });
+                const { error } = await supabaseClient
+                    .from('profiles')
+                    .update({ verification_status: newStatus })
+                    .eq('id', userId);
 
-                if (!res.ok) throw new Error(await res.text());
+                if (error) throw error;
                 await fetchAllAdminData(true);
                 alert(`User verification status successfully updated to ${newStatus}.`);
             } catch (err) {
@@ -470,18 +480,12 @@
 
         async function updateProductStatus(productId, newStatus) {
             try {
-                const headers = {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json'
-                };
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
-                    method: 'PATCH',
-                    headers,
-                    body: JSON.stringify({ status: newStatus })
-                });
+                const { error } = await supabaseClient
+                    .from('products')
+                    .update({ status: newStatus })
+                    .eq('id', productId);
 
-                if (!res.ok) throw new Error(await res.text());
+                if (error) throw error;
                 await fetchAllAdminData(true);
                 alert(`Product status changed to ${newStatus}.`);
             } catch (err) {
