@@ -101,7 +101,7 @@
                     </div>
                 </div>
 
-                <!-- National ID File Upload -->
+                <!-- National ID File Upload (Encoded via Base64) -->
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">National ID Document</label>
                     <div class="relative">
@@ -169,6 +169,16 @@
         const alertBox = document.getElementById('formAlert');
         const submitBtn = document.getElementById('submitBtn');
 
+        // Helper function to convert uploaded file into a Base64 string
+        function convertFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -190,11 +200,14 @@
 
             // UI Loading state
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Setting up account...';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing registration...';
             alertBox.classList.add('hidden');
 
             try {
-                // Register user with Supabase Auth and attach extended metadata & PENDING_VERIFICATION status
+                // Convert National ID file to Base64
+                const idCardBase64 = await convertFileToBase64(fileInput.files[0]);
+
+                // Register user with Supabase Auth
                 const { data, error } = await _supabase.auth.signUp({
                     email: email,
                     password: password,
@@ -206,6 +219,7 @@
                             whatsapp: whatsappNumber,
                             categories: categoriesInterest,
                             paypal_email: paypalEmail,
+                            national_id_base64: idCardBase64,
                             verification_status: 'PENDING_VERIFICATION',
                             role: 'buyer'
                         }
@@ -214,15 +228,23 @@
 
                 if (error) throw error;
 
+                // Automatically sign them in since email verification is disabled
+                const { error: loginError } = await _supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (loginError) throw loginError;
+
                 // Success State
                 alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-                alertBox.textContent = 'Registration successful! Verification status pending. Redirecting to dashboard...';
+                alertBox.textContent = 'Account created successfully! Redirecting to marketplace...';
                 alertBox.classList.remove('hidden');
 
-                // Redirect to index.html with feature verification locks active
+                // Redirect to index.html
                 setTimeout(() => {
                     window.location.href = 'index.html';
-                }, 1500);
+                }, 1200);
 
             } catch (err) {
                 // Error State
