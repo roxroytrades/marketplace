@@ -63,7 +63,7 @@
             </div>
 
             <!-- Logout Button -->
-            <button onclick="window.handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
+            <button onclick="window.handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <span>Sign Out</span>
             </button>
@@ -114,10 +114,10 @@
 
         <!-- Admin Navigation Tabs -->
         <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-            <button onclick="window.switchAdminTab('accounts')" id="tabAccounts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2"><i class="fa-solid fa-users"></i><span>Accounts & Verification</span></button>
-            <button onclick="window.switchAdminTab('products')" id="tabProducts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-store"></i><span>Product Catalog</span></button>
-            <button onclick="window.switchAdminTab('commissions')" id="tabCommissions" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-wallet"></i><span>Master Commissions Ledger</span></button>
-            <button onclick="window.switchAdminTab('messages')" id="tabMessages" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Messaging Threads</span></button>
+            <button type="button" onclick="window.switchAdminTab('accounts')" id="tabAccounts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-users"></i><span>Accounts & Verification</span></button>
+            <button type="button" onclick="window.switchAdminTab('products')" id="tabProducts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-store"></i><span>Product Catalog</span></button>
+            <button type="button" onclick="window.switchAdminTab('commissions')" id="tabCommissions" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-wallet"></i><span>Master Commissions Ledger</span></button>
+            <button type="button" onclick="window.switchAdminTab('messages')" id="tabMessages" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-comments"></i><span>Messaging Threads</span></button>
         </div>
 
         <!-- ================= TAB CONTENT SECTIONS ================= -->
@@ -230,7 +230,7 @@
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-xl w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
                 <h3 class="text-lg font-bold text-white">National ID Verification Document</h3>
-                <button onclick="document.getElementById('idPreviewModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button type="button" onclick="document.getElementById('idPreviewModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="idModalContent" class="space-y-4">
                 <!-- Populated dynamically -->
@@ -336,10 +336,10 @@
                 if (sec && btn) {
                     if (t === tab) {
                         sec.classList.remove('hidden');
-                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2';
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2 cursor-pointer';
                     } else {
                         sec.classList.add('hidden');
-                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2';
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2 cursor-pointer';
                     }
                 }
             });
