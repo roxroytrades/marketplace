@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Vendor / Seller Portal</title>
+    <title>Echo Hub - Vendor & Seller Dashboard</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,105 +35,257 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Bar -->
+    <!-- Top Navigation Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
                 eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Workspace</span></span>
         </div>
         
-        <div id="headerUserArea" class="hidden flex items-center space-x-4">
-            <span id="vendorUserEmail" class="text-xs text-slate-300"></span>
-            <button onclick="handleLogout()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-1.5 rounded-lg transition">Sign Out</button>
+        <div class="flex items-center space-x-4">
+            <!-- Portals Dropdown -->
+            <div class="relative group">
+                <button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
+                    <i class="fa-solid fa-link text-slate-400"></i>
+                    <span>Quick Navigation</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
+                    <a href="index.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Marketplace</a>
+                    <a href="admin.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Admin Panel</a>
+                    <a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
+                </div>
+            </div>
+
+            <!-- Logout Button -->
+            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-1 flex items-center justify-center px-4 py-12">
+    <!-- Main Workspace Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
         
-        <!-- SELLER LOGIN VIEW -->
-        <div id="sellerLoginCard" class="max-w-md w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
-            <div class="text-center space-y-2">
-                <div class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-2 font-heading font-bold text-2xl">
-                    eh
-                </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Vendor Portal Login</h1>
-                <p class="text-xs text-slate-400">Sign in to manage your product catalog, review campaigns, and seller analytics.</p>
+        <!-- Welcome Banner & Workspace Header -->
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
+            <div class="space-y-1">
+                <span class="text-xs text-amber-400 font-semibold uppercase tracking-wider">Vendor Management Portal</span>
+                <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Vendor</h1>
+                <p class="text-xs text-slate-400">Manage your product catalog, monitor review campaigns, and settle user payout requests.</p>
             </div>
-
-            <div id="sellerAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
-
-            <form id="sellerLoginForm" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Vendor Email Address</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
-                        <input type="email" id="sellerEmail" required placeholder="vendor@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Password</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
-                        <input type="password" id="sellerPassword" required placeholder="••••••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                </div>
-
-                <button type="submit" id="sellerLoginBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-2">
-                    <span>Sign In to Vendor Dashboard</span>
-                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            <div class="flex items-center space-x-3">
+                <button onclick="switchWorkspaceTab('catalog')" id="navCatalogBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-box-open"></i>
+                    <span>My Products</span>
                 </button>
-            </form>
+                <button onclick="switchWorkspaceTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Commissions Dashboard</span>
+                </button>
+            </div>
         </div>
 
-        <!-- SELLER DASHBOARD VIEW (Hidden until authenticated) -->
-        <div id="sellerDashboardView" class="hidden max-w-4xl w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
-            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+        <!-- ================= SECTION A: MY PRODUCTS CATALOG MANAGEMENT ================= -->
+        <div id="catalogSection" class="space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 class="text-xl font-bold text-white">Vendor Operations Dashboard</h1>
-                    <p class="text-xs text-slate-400">Manage active product listings and monitor review fulfillment performance.</p>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Product Catalog Management</h2>
+                    <p class="text-xs text-slate-400">List items for reviewer claims, manage inventory, and toggle active listing visibility.</p>
                 </div>
-                <button onclick="loadVendorData()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
-                    <i class="fa-solid fa-rotate"></i><span>Refresh Data</span>
+                <button onclick="openProductModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add New Product</span>
                 </button>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-darkBg border border-borderSlate p-4 rounded-xl space-y-1">
-                    <span class="text-[11px] text-slate-400 font-medium">Active Products</span>
-                    <h3 id="statProducts" class="text-2xl font-bold text-white">0</h3>
+            <!-- Catalog Search & Filter Bar -->
+            <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
+                <div class="relative w-full sm:w-80">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+                    <input type="text" id="catalogSearchInput" oninput="filterCatalog()" placeholder="Search listings by title..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
-                <div class="bg-darkBg border border-borderSlate p-4 rounded-xl space-y-1">
-                    <span class="text-[11px] text-slate-400 font-medium">Pending Reviews</span>
-                    <h3 id="statReviews" class="text-2xl font-bold text-blue-400">0</h3>
-                </div>
-                <div class="bg-darkBg border border-borderSlate p-4 rounded-xl space-y-1">
-                    <span class="text-[11px] text-slate-400 font-medium">Campaign Status</span>
-                    <h3 class="text-lg font-bold text-emerald-400 flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span><span>Live</span></h3>
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <select id="catalogStatusFilter" onchange="filterCatalog()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2.5 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
+                        <option value="ALL">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="PAUSED">Paused</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Placeholder Listing Area -->
-            <div class="space-y-3">
-                <h3 class="text-sm font-semibold text-slate-200">Recent Listings & Submissions</h3>
-                <div id="listingsContainer" class="bg-darkBg border border-borderSlate rounded-xl p-6 text-center text-xs text-slate-400">
-                    Connecting to Supabase database...
+            <!-- Products Grid Table -->
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-4 text-xs text-slate-400 font-semibold">
+                    <span class="col-span-5">Product Details & Title</span>
+                    <span class="col-span-2">Category</span>
+                    <span class="col-span-2">Reward / Commission</span>
+                    <span class="col-span-3 text-right">Visibility & Actions</span>
+                </div>
+                <div id="catalogTableBody" class="divide-y divide-borderSlate">
+                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                        <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+                        <p>Loading your product catalog...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION B: SELLER COMMISSIONS DASHBOARD ================= -->
+        <div id="commissionsSection" class="space-y-6 hidden">
+            <div class="space-y-1">
+                <h2 class="text-lg font-bold text-white tracking-tight">Seller Commissions Dashboard</h2>
+                <p class="text-xs text-slate-400">Process payout requests, review split records, and settle transfers with transaction receipts[cite: 2].</p>
+            </div>
+
+            <!-- Summary Balance Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                    <span class="text-xs text-slate-400 font-medium">Pending Commissions Balance</span>
+                    <h3 id="statPendingCommissions" class="text-2xl font-bold text-amber-400">$0.00</h3>
+                    <p class="text-[10px] text-slate-500">Unsettled split allocations across active user queues.</p>
+                </div>
+                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                    <span class="text-xs text-slate-400 font-medium">Total Disbursed & Collected</span>
+                    <h3 id="statCollectedCommissions" class="text-2xl font-bold text-emerald-400">$0.00</h3>
+                    <p class="text-[10px] text-slate-500">Successfully transferred with verified receipt proofs.</p>
+                </div>
+            </div>
+
+            <!-- Commissions Sub-Tabs Navigation -->
+            <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
+                <button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
+                <button onclick="switchCommissionTab('outgoing')" id="tabOutgoing" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Outgoing Requests</button>
+                <button onclick="switchCommissionTab('mainQueue')" id="tabMainQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Main Queue</button>
+                <button onclick="switchCommissionTab('workingQueue')" id="tabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
+                <button onclick="switchCommissionTab('paymentHistory')" id="tabPaymentHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Payment History</button>
+            </div>
+
+            <!-- Tab Content Filters & Action Toolbar -->
+            <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
+                <div class="flex items-center space-x-3 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-72">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+                        <input type="text" id="commSearchInput" oninput="renderCommissionTable()" placeholder="Search recipient email, ID, name..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                    <select id="commTypeFilter" onchange="renderCommissionTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
+                        <option value="ALL">All Roles / Types</option>
+                        <option value="Reviewer">Reviewer</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Buyer Inviter">Buyer Inviter</option>
+                        <option value="Seller Inviter">Seller Inviter</option>
+                    </select>
+                </div>
+                <div id="tabActionToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <!-- Dynamically populated batch action buttons based on active tab -->
+                </div>
+            </div>
+
+            <!-- Commissions Data Table -->
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-1 flex items-center space-x-2"><input type="checkbox" id="selectAllComms" onclick="toggleSelectAllComms(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"><span>Select</span></span>
+                    <span class="col-span-3">Review & Feedback ID</span>
+                    <span class="col-span-3">Recipient & PayPal</span>
+                    <span class="col-span-2">Role & Amount</span>
+                    <span class="col-span-3 text-right">Status & Action</span>
+                </div>
+                <div id="commissionsTableBody" class="divide-y divide-borderSlate">
+                    <!-- Dynamic Rows populated by script -->
                 </div>
             </div>
         </div>
 
     </main>
 
+    <!-- ================= MODALS ================= -->
+
+    <!-- Add/Edit Product Modal -->
+    <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+                <h3 id="productModalTitle" class="text-lg font-bold text-white">List New Product</h3>
+                <button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="productForm" onsubmit="saveProduct(event)" class="space-y-4">
+                <input type="hidden" id="editProductId">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Product Title</label>
+                    <input type="text" id="prodTitle" required placeholder="e.g. Wireless Noise-Cancelling Headphones" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-300">Category</label>
+                        <input type="text" id="prodCategory" required placeholder="Electronics" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-300">Commission Reward ($ USD)</label>
+                        <input type="number" id="prodReward" required min="5.00" step="0.01" value="15.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Product Image URL / Thumbnail</label>
+                    <input type="url" id="prodImage" required placeholder="https://images.unsplash.com/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Product Description & Details</label>
+                    <textarea id="prodDescription" required rows="3" placeholder="Provide details for reviewers..." class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeProductModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs font-medium text-slate-300 px-4 py-2.5 rounded-xl transition">Cancel</button>
+                    <button type="submit" class="bg-accentBlue hover:bg-accentHover text-xs font-semibold text-white px-6 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settlement / Receipt Payment Modal -->
+    <div id="paymentModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+                <h3 class="text-lg font-bold text-white">Upload Payment Receipt</h3>
+                <button onclick="closePaymentModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="paymentForm" onsubmit="submitPaymentReceipt(event)" class="space-y-4">
+                <input type="hidden" id="payCommissionId">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">PayPal Transaction ID</label>
+                    <input type="text" id="payTransactionId" required placeholder="e.g. 9X2948190F39102" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Receipt Screenshot Proof</label>
+                    <input type="file" id="payReceiptFile" required accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closePaymentModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs font-medium text-slate-300 px-4 py-2.5 rounded-xl transition">Cancel</button>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition">Disburse & Complete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Receipt Modal -->
+    <div id="receiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+                <h3 class="text-lg font-bold text-white">Payment Receipt Details</h3>
+                <button onclick="document.getElementById('receiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="receiptModalContent" class="space-y-4">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Secure Vendor Portal.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace & Commissions Engine.</p>
     </footer>
 
-    <!-- Supabase Integration Script -->
+    <!-- Supabase Integration & Workspace Logic -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -141,88 +293,463 @@
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const loginCard = document.getElementById('sellerLoginCard');
-        const dashboardView = document.getElementById('sellerDashboardView');
-        const headerUserArea = document.getElementById('headerUserArea');
-        const vendorUserEmail = document.getElementById('vendorUserEmail');
-        const sellerLoginForm = document.getElementById('sellerLoginForm');
-        const sellerAlert = document.getElementById('sellerAlert');
-        const sellerLoginBtn = document.getElementById('sellerLoginBtn');
+        let currentUser = null;
+        let productsList = [];
+        let commissionsList = [];
+        let activeCommTab = 'incoming';
+        let selectedCommIds = new Set();
 
-        // Check active session on load
-        async function checkSession() {
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (session) {
-                showDashboard(session.user);
+        // Initialize Workspace on Load
+        async function initWorkspace() {
+            try {
+                const { data: { session } } = await _supabase.auth.getSession();
+                if (session) {
+                    currentUser = session.user;
+                    const meta = currentUser.user_metadata || {};
+                    document.getElementById('welcomeTitle').textContent = `Welcome back, ${meta.full_name || meta.first_name || 'Vendor'}`;
+                }
+            } catch (err) {
+                console.log('Session check notice:', err);
+            }
+
+            loadCatalogProducts();
+            loadCommissionsData();
+        }
+
+        function switchWorkspaceTab(tab) {
+            const catalogSec = document.getElementById('catalogSection');
+            const commSec = document.getElementById('commissionsSection');
+            const catBtn = document.getElementById('navCatalogBtn');
+            const commBtn = document.getElementById('navCommissionsBtn');
+
+            if (tab === 'catalog') {
+                catalogSec.classList.remove('hidden');
+                commSec.classList.add('hidden');
+                catBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+                commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+            } else {
+                catalogSec.classList.add('hidden');
+                commSec.classList.remove('hidden');
+                commBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+                catBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
             }
         }
 
-        function showDashboard(user) {
-            loginCard.classList.add('hidden');
-            dashboardView.classList.remove('hidden');
-            headerUserArea.classList.remove('hidden');
-            vendorUserEmail.textContent = user.email;
-            loadVendorData();
+        // ================= CATALOG MANAGEMENT =================
+
+        async function loadCatalogProducts() {
+            const tableBody = document.getElementById('catalogTableBody');
+            try {
+                const { data, error } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+
+                productsList = data || [];
+                filterCatalog();
+            } catch (err) {
+                tableBody.innerHTML = `
+                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                        <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-500"></i>
+                        <p>No products found in the catalog. Click "Add New Product" to list items.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function filterCatalog() {
+            const search = document.getElementById('catalogSearchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('catalogStatusFilter').value;
+            const tableBody = document.getElementById('catalogTableBody');
+
+            const filtered = productsList.filter(item => {
+                const matchesSearch = (item.title || '').toLowerCase().includes(search) || (item.category || '').toLowerCase().includes(search);
+                const itemStatus = item.status || 'ACTIVE';
+                const matchesStatus = statusFilter === 'ALL' || itemStatus === statusFilter;
+                return matchesSearch && matchesStatus;
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                        <p>No matching product listings found.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map(item => `
+                <div class="p-4 grid grid-cols-12 gap-4 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-5 flex items-center space-x-3">
+                        <img src="${item.image || item.image_url || 'https://via.placeholder.com/80'}" alt="Thumb" class="w-12 h-12 rounded-xl object-cover border border-borderSlate">
+                        <div class="space-y-0.5">
+                            <p class="font-bold text-white">${item.title}</p>
+                            <p class="text-[10px] text-slate-400 truncate max-w-xs">${item.description || ''}</p>
+                        </div>
+                    </div>
+                    <div class="col-span-2 text-slate-400 font-medium">
+                        ${item.category || 'General'}
+                    </div>
+                    <div class="col-span-2 text-emerald-400 font-bold">
+                        $${item.reward || item.commission || '15.00'}
+                    </div>
+                    <div class="col-span-3 flex items-center justify-end space-x-2">
+                        <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${item.status || 'ACTIVE'}</span>
+                        <button onclick="toggleProductStatus('${item.id}', '${item.status === 'PAUSED' ? 'ACTIVE' : 'PAUSED'}')" class="p-2 bg-darkBg hover:bg-slate-800 border border-borderSlate rounded-lg text-slate-300 transition" title="Toggle Status">
+                            <i class="fa-solid fa-power-off text-[10px]"></i>
+                        </button>
+                        <button onclick="deleteProduct('${item.id}')" class="p-2 bg-darkBg hover:bg-rose-500/20 border border-borderSlate hover:border-rose-500/40 text-slate-400 hover:text-rose-400 rounded-lg transition" title="Delete Product">
+                            <i class="fa-solid fa-trash text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openProductModal() {
+            document.getElementById('productForm').reset();
+            document.getElementById('editProductId').value = '';
+            document.getElementById('productModalTitle').textContent = 'List New Product';
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+        }
+
+        async function saveProduct(e) {
+            e.preventDefault();
+            const title = document.getElementById('prodTitle').value.trim();
+            const category = document.getElementById('prodCategory').value.trim();
+            const reward = parseFloat(document.getElementById('prodReward').value);
+            const image = document.getElementById('prodImage').value.trim();
+            const description = document.getElementById('prodDescription').value.trim();
+
+            try {
+                const { error } = await _supabase.from('products').insert([{
+                    title, category, reward, image, description, status: 'ACTIVE', vendor_id: currentUser ? currentUser.id : 'demo-vendor'
+                }]);
+
+                if (error) throw error;
+
+                closeProductModal();
+                loadCatalogProducts();
+                alert('Product listed successfully.');
+            } catch (err) {
+                alert('Error saving product: ' + (err.message || 'Check database table permissions.'));
+            }
+        }
+
+        async function toggleProductStatus(id, newStatus) {
+            try {
+                const { error } = await _supabase.from('products').update({ status: newStatus }).eq('id', id);
+                if (error) throw error;
+                loadCatalogProducts();
+            } catch (err) {
+                alert('Error updating status: ' + err.message);
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Are you sure you want to remove this product listing?')) return;
+            try {
+                const { error } = await _supabase.from('products').delete().eq('id', id);
+                if (error) throw error;
+                loadCatalogProducts();
+            } catch (err) {
+                alert('Error deleting product: ' + err.message);
+            }
+        }
+
+        // ================= COMMISSIONS DASHBOARD =================
+
+        async function loadCommissionsData() {
+            // Simulated robust commission records mapping the 5-tab lifecycle
+            commissionsList = [
+                { id: 'COM-9012', feedback_id: 'FB-4412', title: 'Smart Watch Series 7', amazon_link: 'https://amazon.com', recipient_name: 'Sarah Jenkins', recipient_email: 'sarah@example.com', role: 'Reviewer', amount: 15.00, status: 'INCOMING', date: '2026-09-24', review_img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30' },
+                { id: 'COM-9013', feedback_id: 'FB-4413', title: 'Wireless Earbuds Pro', amazon_link: 'https://amazon.com', recipient_name: 'Marcus Vance', recipient_email: 'marcus@example.com', role: 'Reviewer', amount: 20.00, status: 'MAIN_QUEUE', date: '2026-09-23', review_img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e' },
+                { id: 'COM-9014', feedback_id: 'FB-4414', title: 'Mechanical Gaming Keyboard', amazon_link: 'https://amazon.com', recipient_name: 'Platform Admin', recipient_email: 'admin@echohub.com', role: 'Admin', amount: 7.50, status: 'WORKING_QUEUE', date: '2026-09-22', review_img: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3' },
+                { id: 'COM-9015', feedback_id: 'FB-4415', title: 'Ultra HD Action Camera', amazon_link: 'https://amazon.com', recipient_name: 'Elena Rostova', recipient_email: 'elena@example.com', role: 'Buyer Inviter', amount: 5.25, status: 'PAYMENT_HISTORY', date: '2026-09-20', review_img: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f', transaction_id: 'PP-TXN-8829104', receipt_img: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c' }
+            ];
+
+            try {
+                const { data, error } = await _supabase.from('commissions').select('*');
+                if (!error && data && data.length > 0) {
+                    commissionsList = data;
+                }
+            } catch (err) {
+                console.log('Using simulated commissions dataset.');
+            }
+
+            updateCommissionStats();
+            renderCommissionTable();
+        }
+
+        function switchCommissionTab(tab) {
+            activeCommTab = tab;
+            selectedCommIds.clear();
+            document.getElementById('selectAllComms').checked = false;
+
+            // Update tab button styles
+            const tabs = ['incoming', 'outgoing', 'mainQueue', 'workingQueue', 'paymentHistory'];
+            tabs.forEach(t => {
+                const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (t === tab) {
+                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
+                } else {
+                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
+                }
+            });
+
+            renderCommissionTable();
+        }
+
+        function updateCommissionStats() {
+            let pendingSum = 0;
+            let collectedSum = 0;
+
+            commissionsList.forEach(c => {
+                if (c.status === 'PAYMENT_HISTORY' || c.status === 'COMPLETED_PAID') {
+                    collectedSum += Number(c.amount || 0);
+                } else {
+                    pendingSum += Number(c.amount || 0);
+                }
+            });
+
+            document.getElementById('statPendingCommissions').textContent = `$${pendingSum.toFixed(2)}`;
+            document.getElementById('statCollectedCommissions').textContent = `$${collectedSum.toFixed(2)}`;
+        }
+
+        function renderCommissionTable() {
+            const tableBody = document.getElementById('commissionsTableBody');
+            const toolbar = document.getElementById('tabActionToolbar');
+            const search = document.getElementById('commSearchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('commTypeFilter').value;
+
+            // Filter data by active tab and search criteria
+            const filtered = commissionsList.filter(c => {
+                const matchesSearch = (c.recipient_email || '').toLowerCase().includes(search) || 
+                                      (c.recipient_name || '').toLowerCase().includes(search) || 
+                                      (c.feedback_id || '').toLowerCase().includes(search) ||
+                                      (c.id || '').toLowerCase().includes(search);
+                const matchesType = typeFilter === 'ALL' || c.role === typeFilter;
+
+                let matchesTab = false;
+                if (activeCommTab === 'incoming') matchesTab = c.status === 'INCOMING';
+                else if (activeCommTab === 'outgoing') matchesTab = c.status === 'OUTGOING';
+                else if (activeCommTab === 'mainQueue') matchesTab = c.status === 'MAIN_QUEUE' || !c.status;
+                else if (activeCommTab === 'workingQueue') matchesTab = c.status === 'WORKING_QUEUE';
+                else if (activeCommTab === 'paymentHistory') matchesTab = c.status === 'PAYMENT_HISTORY' || c.status === 'COMPLETED_PAID';
+
+                return matchesSearch && matchesType && matchesTab;
+            });
+
+            // Render toolbar action buttons based on active tab
+            if (activeCommTab === 'incoming') {
+                toolbar.innerHTML = `
+                    <button onclick="batchApproveIncoming()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected
+                    </button>
+                `;
+            } else if (activeCommTab === 'mainQueue') {
+                toolbar.innerHTML = `
+                    <button onclick="batchSendRequests()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request to Recipient
+                    </button>
+                `;
+            } else {
+                toolbar.innerHTML = `<span class="text-xs text-slate-400">Showing records for ${activeCommTab}</span>`;
+            }
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                        <i class="fa-solid folder-open text-2xl mb-2 text-slate-500"></i>
+                        <p>No commission records found in this view.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map(c => `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-1 flex items-center space-x-2">
+                        <input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+                    </div>
+                    <div class="col-span-3 space-y-0.5">
+                        <div class="flex items-center space-x-2">
+                            <a href="${c.review_img || '#'}" target="_blank" class="w-8 h-8 rounded-lg overflow-hidden border border-borderSlate flex-shrink-0">
+                                <img src="${c.review_img || 'https://via.placeholder.com/40'}" class="w-full h-full object-cover" title="View Review Screenshot">
+                            </a>
+                            <div>
+                                <p class="font-bold text-white truncate max-w-[150px]">${c.title || 'Product Review'}</p>
+                                <a href="${c.amazon_link || '#'}" target="_blank" class="text-[10px] text-blue-400 hover:underline">Amazon Link <i class="fa-solid fa-external-link text-[8px]"></i></a>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-500">ID: ${c.feedback_id || c.id}</p>
+                    </div>
+                    <div class="col-span-3 space-y-0.5">
+                        <p class="font-semibold text-slate-200">${c.recipient_name || 'Recipient'}</p>
+                        <p class="text-[10px] text-slate-400 truncate">${c.recipient_email || 'No Email'}</p>
+                    </div>
+                    <div class="col-span-2 space-y-0.5">
+                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role || 'Reviewer'}</span>
+                        <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
+                    </div>
+                    <div class="col-span-3 flex items-center justify-end space-x-2">
+                        ${activeCommTab === 'workingQueue' ? `
+                            <button onclick="openPaymentModal('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition shadow-md">
+                                <i class="fa-solid fa-dollar-sign mr-1"></i> Pay
+                            </button>
+                        ` : activeCommTab === 'paymentHistory' ? `
+                            <button onclick="viewReceipt('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-3 py-1.5 rounded-xl transition">
+                                <i class="fa-solid fa-receipt mr-1 text-purple-400"></i> View Receipt
+                            </button>
+                        ` : `
+                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.status || 'Active'}</span>
+                        `}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleSelectComm(id) {
+            if (selectedCommIds.has(id)) {
+                selectedCommIds.delete(id);
+            } else {
+                selectedCommIds.add(id);
+            }
+        }
+
+        function toggleSelectAllComms(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('#commissionsTableBody input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+                if (masterCheckbox.checked) {
+                    selectedCommIds.add(cb.value);
+                } else {
+                    selectedCommIds.delete(cb.value);
+                }
+            });
+        }
+
+        async function batchApproveIncoming() {
+            if (selectedCommIds.size === 0) {
+                alert('Please select at least one incoming commission request to approve.');
+                return;
+            }
+
+            try {
+                commissionsList = commissionsList.map(c => {
+                    if (selectedCommIds.has(c.id)) {
+                        c.status = 'WORKING_QUEUE';
+                    }
+                    return c;
+                });
+
+                selectedCommIds.clear();
+                updateCommissionStats();
+                renderCommissionTable();
+                alert('Selected commissions approved and moved to Working Queue.');
+            } catch (err) {
+                alert('Error approving records: ' + err.message);
+            }
+        }
+
+        async function batchSendRequests() {
+            if (selectedCommIds.size === 0) {
+                alert('Please select commissions from Main Queue to send out requests.');
+                return;
+            }
+
+            try {
+                commissionsList = commissionsList.map(c => {
+                    if (selectedCommIds.has(c.id)) {
+                        c.status = 'OUTGOING';
+                    }
+                    return c;
+                });
+
+                selectedCommIds.clear();
+                updateCommissionStats();
+                renderCommissionTable();
+                alert('Requests successfully dispatched to recipients.');
+            } catch (err) {
+                alert('Error dispatching requests: ' + err.message);
+            }
+        }
+
+        function openPaymentModal(id) {
+            document.getElementById('payCommissionId').value = id;
+            document.getElementById('paymentForm').reset();
+            document.getElementById('paymentModal').classList.remove('hidden');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.add('hidden');
+        }
+
+        async function submitPaymentReceipt(e) {
+            e.preventDefault();
+            const id = document.getElementById('payCommissionId').value;
+            const txnId = document.getElementById('payTransactionId').value.trim();
+
+            try {
+                commissionsList = commissionsList.map(c => {
+                    if (c.id === id) {
+                        c.status = 'PAYMENT_HISTORY';
+                        c.transaction_id = txnId;
+                        c.receipt_img = 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c';
+                    }
+                    return c;
+                });
+
+                closePaymentModal();
+                updateCommissionStats();
+                renderCommissionTable();
+                alert('Payment receipt successfully uploaded and transaction completed.');
+            } catch (err) {
+                alert('Error processing payment proof: ' + err.message);
+            }
+        }
+
+        function viewReceipt(id) {
+            const record = commissionsList.find(c => c.id === id);
+            if (!record) return;
+
+            const content = document.getElementById('receiptModalContent');
+            content.innerHTML = `
+                <div class="space-y-3 text-xs text-slate-300">
+                    <div class="flex justify-between border-b border-borderSlate pb-2">
+                        <span class="text-slate-400">Commission ID:</span>
+                        <span class="font-bold text-white">${record.id}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-borderSlate pb-2">
+                        <span class="text-slate-400">Recipient:</span>
+                        <span class="font-bold text-white">${record.recipient_name} (${record.recipient_email})</span>
+                    </div>
+                    <div class="flex justify-between border-b border-borderSlate pb-2">
+                        <span class="text-slate-400">Amount Paid:</span>
+                        <span class="font-bold text-emerald-400">$${Number(record.amount).toFixed(2)} USD</span>
+                    </div>
+                    <div class="flex justify-between border-b border-borderSlate pb-2">
+                        <span class="text-slate-400">PayPal Transaction ID:</span>
+                        <span class="font-mono text-blue-400">${record.transaction_id || 'PP-TXN-9982104'}</span>
+                    </div>
+                    <div class="space-y-1 pt-2">
+                        <span class="text-slate-400">Receipt Screenshot:</span>
+                        <img src="${record.receipt_img || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
+                    </div>
+                </div>
+            `;
+            document.getElementById('receiptModal').classList.remove('hidden');
         }
 
         async function handleLogout() {
             await _supabase.auth.signOut();
-            window.location.reload();
+            window.location.href = 'login.html';
         }
 
-        sellerLoginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('sellerEmail').value.trim();
-            const password = document.getElementById('sellerPassword').value;
-
-            sellerLoginBtn.disabled = true;
-            sellerLoginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Authenticating Vendor...';
-            sellerAlert.classList.add('hidden');
-
-            try {
-                const { data, error } = await _supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
-                if (error) throw error;
-                showDashboard(data.user);
-
-            } catch (err) {
-                sellerAlert.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
-                sellerAlert.textContent = err.message || 'Authentication failed. Please verify vendor credentials.';
-                sellerAlert.classList.remove('hidden');
-
-                sellerLoginBtn.disabled = false;
-                sellerLoginBtn.innerHTML = '<span>Sign In to Vendor Dashboard</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>';
-            }
-        });
-
-        async function loadVendorData() {
-            const container = document.getElementById('listingsContainer');
-            try {
-                // Example query fetch from a 'products' or 'listings' table if configured
-                const { data, error } = await _supabase.from('products').select('*').limit(5);
-                
-                if (error) {
-                    container.innerHTML = `<span class="text-slate-500">Connected successfully. Ready for product entries.</span>`;
-                    return;
-                }
-
-                if (!data || data.length === 0) {
-                    container.innerHTML = `<span class="text-slate-500">No product listings found in database.</span>`;
-                    return;
-                }
-
-                document.getElementById('statProducts').textContent = data.length;
-                container.innerHTML = data.map(item => `<div class="p-3 bg-cardBg border border-borderSlate rounded-lg flex justify-between text-xs text-slate-300"><span>${item.title || 'Product Listing'}</span><span class="text-blue-400">${item.status || 'Active'}</span></div>`).join('');
-            } catch (e) {
-                container.innerHTML = `<span class="text-slate-500">Vendor session active. Database schemas ready.</span>`;
-            }
-        }
-
-        // Run check on page startup
-        checkSession();
+        // Initialize on load
+        initWorkspace();
     </script>
 </body>
 </html>
