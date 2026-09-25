@@ -202,7 +202,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Commissions Engine.</p>
     </footer>
 
-    <!-- Supabase Integration, Hardened SRE Profile Initialization & 10s Polling -->
+    <!-- Supabase Integration, Defensive Verification Guard & 10s Polling -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -218,12 +218,12 @@
         let selectedCommIds = new Set();
         let pollingInterval = null;
 
-        // Hardened SRE-grade initialization with atomic .upsert() self-healing fallback
+        // Rule A & Rule B: Defensive Auth Initialization & Auto-Profile Creation Fix
         async function initShopperWorkspace() {
             console.time('Shopper_Auth_And_Profile_Init');
-            const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+            const { data: { session }, error } = await _supabase.auth.getSession();
 
-            if (sessionError || !session) {
+            if (error || !session) {
                 console.timeEnd('Shopper_Auth_And_Profile_Init');
                 window.location.href = 'login.html';
                 return;
@@ -231,44 +231,46 @@
 
             currentUser = session.user;
 
-            // Fetch profile safely using maybeSingle
             let { data: profile, error: profileError } = await _supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', currentUser.id)
-                .maybeSingle();
+                .single();
 
-            // Self-healing fallback upsert to guarantee profile record existence
+            // Auto-create profile on the fly if it doesn't exist yet
             if (profileError || !profile) {
-                const fallbackName = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+                console.log('Profile missing. Auto-creating profile record for current user...');
+                const fullNameMeta = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
                 
-                const { data: upsertedProfile, error: upsertError } = await _supabase
+                const { data: newProfile, error: createError } = await _supabase
                     .from('profiles')
-                    .upsert({
+                    .insert([{
                         id: currentUser.id,
-                        full_name: fallbackName,
+                        full_name: fullNameMeta,
                         role: 'buyer',
                         verification_status: 'VERIFIED'
-                    }, { onConflict: 'id' })
+                    }])
                     .select()
                     .single();
 
-                if (upsertError) {
-                    console.error("Profile upsert failed:", upsertError.message);
-                    alert("Database Error: " + upsertError.message);
+                if (createError) {
+                    console.error("Auto-profile creation failed:", createError.message);
+                    alert("Error creating user profile: " + createError.message);
                     return;
                 }
-                profile = upsertedProfile;
+                profile = newProfile;
             }
 
             console.timeEnd('Shopper_Auth_And_Profile_Init');
+
             currentProfile = profile;
             
-            // Extract the user's first name and set personalized welcome greeting
+            // Extract the user's name from profile and set the personalized welcome greeting[cite: 1]
             const fullName = (profile.full_name || '').trim();
             const firstName = fullName ? fullName.split(' ')[0] : 'Shopper';
             document.getElementById('welcomeTitle').textContent = `Welcome back, ${firstName}!`;
 
+            // Rule B: Enforce Buyer National ID Verification Lock
             applyBuyerVerificationLock(profile);
 
             await loadMarketplaceProducts();

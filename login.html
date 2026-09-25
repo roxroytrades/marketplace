@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Sign In Portal</title>
+    <title>Echo Hub - Secure Sign In</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,53 +35,50 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Navigation Bar -->
+    <!-- Top Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
                 eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Sign In</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Authentication Portal</span></span>
         </div>
         <div class="flex items-center space-x-3">
-            <span class="text-xs text-slate-400">Need an account?</span>
-            <a href="buyer-register.html" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-200 px-3 py-2 rounded-xl transition font-semibold">Register Shopper</a>
-            <a href="seller-register.html" class="bg-accentBlue hover:bg-accentHover text-xs text-white px-3 py-2 rounded-xl transition font-semibold">Register Vendor</a>
+            <a href="buyer-register.html" class="text-xs text-slate-300 hover:text-white transition">Create Buyer Account</a>
+            <span class="text-slate-600">|</span>
+            <a href="seller-register.html" class="text-xs text-slate-300 hover:text-white transition">Create Vendor Account</a>
         </div>
     </header>
 
-    <!-- Main Login Card Container -->
-    <main class="flex-1 max-w-md w-full mx-auto px-4 py-12 flex items-center justify-center">
-        <div class="bg-cardBg border border-borderSlate rounded-3xl p-8 w-full space-y-6 shadow-2xl">
+    <!-- Main Form Container -->
+    <main class="flex-1 max-w-md w-full mx-auto px-4 py-12 flex flex-col justify-center">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl p-8 shadow-2xl space-y-6">
+            
             <div class="space-y-2 text-center">
-                <div class="w-12 h-12 bg-blue-600/10 border border-blue-500/20 text-blue-500 rounded-2xl mx-auto flex items-center justify-center text-xl mb-4">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-                <h1 class="text-xl font-bold text-white">Sign In to Echo Hub</h1>
-                <p class="text-xs text-slate-400">Enter your credentials to access your portal dashboard.</p>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Welcome Back</h1>
+                <p class="text-xs text-slate-400">Sign in to access your Echo Hub workspace, marketplace reviews, and commission tracking.</p>
             </div>
 
             <!-- Error Notification Banner -->
-            <div id="errorBanner" class="bg-rose-500/10 border border-rose-500/25 p-3 rounded-xl text-xs text-rose-400 hidden flex items-center space-x-2">
-                <i class="fa-solid fa-circle-exclamation text-sm"></i>
+            <div id="errorBanner" class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-400 hidden flex items-start space-x-2">
+                <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
                 <span id="errorMessage">Invalid login credentials provided.</span>
             </div>
 
-            <!-- Login Form -->
-            <form onsubmit="handleLogin(event)" class="space-y-4">
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-300">Email Address</label>
+                    <label class="text-xs font-medium text-slate-300">Email Address</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
-                        <input type="email" id="loginEmail" required placeholder="name@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <input type="email" id="emailInput" required placeholder="name@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
                 <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-300">Password</label>
+                    <label class="text-xs font-medium text-slate-300">Password</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-key text-xs"></i></span>
-                        <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
+                        <input type="password" id="passwordInput" required placeholder="••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
@@ -91,19 +88,18 @@
                 </button>
             </form>
 
-            <div class="border-t border-borderSlate pt-4 text-center space-y-2">
-                <p class="text-xs text-slate-400">Are you a vendor looking to list products?</p>
-                <a href="seller-register.html" class="text-xs text-blue-400 hover:text-blue-300 font-semibold transition block">Create a Vendor Account &rarr;</a>
+            <div class="border-t border-borderSlate pt-4 text-center text-xs text-slate-500">
+                <p>Don't have an account yet? <a href="buyer-register.html" class="text-blue-400 hover:underline">Register here</a></p>
             </div>
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Secure Authentication Gateway.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Authentication Engine.</p>
     </footer>
 
-    <!-- Supabase Auth Script & Referral Capture -->
+    <!-- Supabase Integration & Self-Healing Login Script -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -111,20 +107,10 @@
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Capture and persist referral query parameter (?ref=CODE) into sessionStorage
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const refCode = urlParams.get('ref');
-            if (refCode) {
-                sessionStorage.setItem('echo_hub_ref', refCode);
-                console.log('[Referral] Captured and stored referral code:', refCode);
-            }
-        });
-
         async function handleLogin(event) {
             event.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
             const btn = document.getElementById('submitBtn');
             const errorBanner = document.getElementById('errorBanner');
             const errorMessage = document.getElementById('errorMessage');
@@ -134,33 +120,46 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Authenticating...`;
 
             try {
-                console.time('Supabase_Sign_In');
+                // 1. Authenticate with Supabase Auth
                 const { data: authData, error: authError } = await _supabase.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
-                console.timeEnd('Supabase_Sign_In');
 
                 if (authError) throw authError;
-
                 const user = authData.user;
-                console.time('Fetch_User_Profile_Role');
-                const { data: profile, error: profileError } = await _supabase
+
+                // 2. Safely check or self-heal profile record using atomic upsert
+                let { data: profile, error: profileError } = await _supabase
                     .from('profiles')
-                    .select('role')
+                    .select('*')
                     .eq('id', user.id)
-                    .single();
-                console.timeEnd('Fetch_User_Profile_Role');
+                    .maybeSingle();
 
                 if (profileError || !profile) {
-                    throw new Error('User profile record not found in database.');
+                    console.warn("Profile missing on login. Auto-creating profile record...");
+                    const fallbackName = user.user_metadata?.full_name || email.split('@')[0];
+                    
+                    const { data: newProfile, error: upsertError } = await _supabase
+                        .from('profiles')
+                        .upsert({
+                            id: user.id,
+                            full_name: fallbackName,
+                            role: 'buyer',
+                            verification_status: 'VERIFIED'
+                        }, { onConflict: 'id' })
+                        .select()
+                        .single();
+
+                    if (upsertError) throw new Error("Failed to sync user profile: " + upsertError.message);
+                    profile = newProfile;
                 }
 
-                // Redirect based on role
-                const role = profile.role;
+                // 3. Route user based on role
+                const role = (profile.role || 'buyer').toLowerCase();
                 if (role === 'admin') {
                     window.location.href = 'admin.html';
-                } else if (role === 'seller') {
+                } else if (role === 'seller' || role === 'vendor') {
                     window.location.href = 'seller.html';
                 } else {
                     window.location.href = 'index.html';
