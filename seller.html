@@ -94,7 +94,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-white tracking-tight">Product Catalog Management</h2>
-                    <p class="text-xs text-slate-400">List items for reviewer claims, manage inventory, and toggle active listing visibility.</p>
+                    <p class="text-xs text-slate-400">List items for reviewer claims, manage inventory, and view active listings.</p>
                 </div>
                 <button onclick="openProductModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
                     <i class="fa-solid fa-plus"></i>
@@ -102,18 +102,11 @@
                 </button>
             </div>
 
-            <!-- Catalog Search & Filter Bar -->
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
-                <div class="relative w-full sm:w-80">
+            <!-- Catalog Search Bar -->
+            <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex items-center justify-between shadow-md">
+                <div class="relative w-full max-w-md">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
                     <input type="text" id="catalogSearchInput" oninput="filterCatalog()" placeholder="Search listings by title..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                </div>
-                <div class="flex items-center space-x-2 w-full sm:w-auto">
-                    <select id="catalogStatusFilter" onchange="filterCatalog()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2.5 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
-                        <option value="ALL">All Statuses</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="PAUSED">Paused</option>
-                    </select>
                 </div>
             </div>
 
@@ -121,8 +114,8 @@
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-4 text-xs text-slate-400 font-semibold">
                     <span class="col-span-6">Product Details & Title</span>
-                    <span class="col-span-3">Category</span>
-                    <span class="col-span-3 text-right">Visibility & Actions</span>
+                    <span class="col-span-4">Category</span>
+                    <span class="col-span-2 text-right">Actions</span>
                 </div>
                 <div id="catalogTableBody" class="divide-y divide-borderSlate">
                     <div class="p-8 text-center text-xs text-slate-400 col-span-full">
@@ -202,15 +195,14 @@
 
     <!-- ================= MODALS ================= -->
 
-    <!-- Add/Edit Product Modal -->
+    <!-- Add Product Modal -->
     <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-                <h3 id="productModalTitle" class="text-lg font-bold text-white">List New Product</h3>
+                <h3 class="text-lg font-bold text-white">List New Product</h3>
                 <button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="productForm" onsubmit="saveProduct(event)" class="space-y-4">
-                <input type="hidden" id="editProductId">
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">Product Title</label>
                     <input type="text" id="prodTitle" required placeholder="e.g. Wireless Noise-Cancelling Headphones" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
@@ -350,14 +342,11 @@
 
         function filterCatalog() {
             const search = document.getElementById('catalogSearchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('catalogStatusFilter').value;
             const tableBody = document.getElementById('catalogTableBody');
 
             const filtered = productsList.filter(item => {
                 const matchesSearch = (item.title || '').toLowerCase().includes(search) || (item.category || '').toLowerCase().includes(search);
-                const itemStatus = item.status || 'ACTIVE';
-                const matchesStatus = statusFilter === 'ALL' || itemStatus === statusFilter;
-                return matchesSearch && matchesStatus;
+                return matchesSearch;
             });
 
             if (filtered.length === 0) {
@@ -378,14 +367,10 @@
                             <p class="text-[10px] text-slate-400 truncate max-w-sm">${item.description || ''}</p>
                         </div>
                     </div>
-                    <div class="col-span-3 text-slate-400 font-medium">
+                    <div class="col-span-4 text-slate-400 font-medium">
                         ${item.category || 'General'}
                     </div>
-                    <div class="col-span-3 flex items-center justify-end space-x-2">
-                        <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${item.status || 'ACTIVE'}</span>
-                        <button onclick="toggleProductStatus('${item.id}', '${item.status === 'PAUSED' ? 'ACTIVE' : 'PAUSED'}')" class="p-2 bg-darkBg hover:bg-slate-800 border border-borderSlate rounded-lg text-slate-300 transition" title="Toggle Status">
-                            <i class="fa-solid fa-power-off text-[10px]"></i>
-                        </button>
+                    <div class="col-span-2 flex items-center justify-end space-x-2">
                         <button onclick="deleteProduct('${item.id}')" class="p-2 bg-darkBg hover:bg-rose-500/20 border border-borderSlate hover:border-rose-500/40 text-slate-400 hover:text-rose-400 rounded-lg transition" title="Delete Product">
                             <i class="fa-solid fa-trash text-[10px]"></i>
                         </button>
@@ -396,8 +381,6 @@
 
         function openProductModal() {
             document.getElementById('productForm').reset();
-            document.getElementById('editProductId').value = '';
-            document.getElementById('productModalTitle').textContent = 'List New Product';
             document.getElementById('productModal').classList.remove('hidden');
         }
 
@@ -414,7 +397,7 @@
 
             try {
                 const { error } = await _supabase.from('products').insert([{
-                    title, category, image, description, status: 'ACTIVE', vendor_id: currentUser ? currentUser.id : 'demo-vendor'
+                    title, category, image, description, vendor_id: currentUser ? currentUser.id : 'demo-vendor'
                 }]);
 
                 if (error) throw error;
@@ -424,16 +407,6 @@
                 alert('Product listed successfully.');
             } catch (err) {
                 alert('Error saving product: ' + (err.message || 'Check database table permissions.'));
-            }
-        }
-
-        async function toggleProductStatus(id, newStatus) {
-            try {
-                const { error } = await _supabase.from('products').update({ status: newStatus }).eq('id', id);
-                if (error) throw error;
-                loadCatalogProducts();
-            } catch (err) {
-                alert('Error updating status: ' + err.message);
             }
         }
 
