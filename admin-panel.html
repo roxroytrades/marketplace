@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Hub - Admin Panel & Oversight Hub</title>
+    <!-- Tailwind CSS CDN with Dark Mode Enabled -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0F172A',
+                        cardBg: '#1E293B',
+                        accentBlue: '#2563EB',
+                        accentHover: '#1D4ED8',
+                        borderSlate: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter / Space Grotesk -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-rose-500/20 font-heading font-bold text-lg">
+                eh
+            </div>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-rose-500">hub</span> <span class="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full ml-2">Admin Panel</span></span>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <!-- Portals Dropdown -->
+            <div class="relative group py-2">
+                <button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
+                    <i class="fa-solid fa-link text-slate-400"></i>
+                    <span>Quick Navigation</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+                </button>
+                <div class="absolute right-0 pt-1 w-48 hidden group-hover:block z-50">
+                    <div class="bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2">
+                        <a href="index.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Marketplace</a>
+                        <a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Dashboard</a>
+                        <a href="admin.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Admin Panel</a>
+                        <a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mode Indicator -->
+            <div class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl flex items-center space-x-1.5">
+                <i class="fa-solid fa-unlock-keyhole"></i>
+                <span>Direct Access Mode</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+        
+        <!-- Welcome Banner & System Status Header -->
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
+            <div class="space-y-1">
+                <span class="text-xs text-rose-400 font-semibold uppercase tracking-wider">System Administration & Oversight</span>
+                <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Admin Control Center</h1>
+                <p class="text-xs text-slate-400">Monitor system accounts, review National ID proofs, inspect product listings, and oversee master ledgers.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="bg-darkBg border border-borderSlate px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 text-slate-300">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Database Status: <strong class="text-white">Connected</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Master Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                <span class="text-xs text-slate-400 font-medium">Total Registered Accounts</span>
+                <h3 id="statTotalUsers" class="text-2xl font-bold text-white">0</h3>
+                <p class="text-[10px] text-slate-500">Shoppers, Vendors, and Admins</p>
+            </div>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                <span class="text-xs text-slate-400 font-medium">Pending ID Verifications</span>
+                <h3 id="statPendingIDs" class="text-2xl font-bold text-amber-400">0</h3>
+                <p class="text-[10px] text-slate-500">Awaiting administrator approval</p>
+            </div>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                <span class="text-xs text-slate-400 font-medium">Active Products</span>
+                <h3 id="statActiveProducts" class="text-2xl font-bold text-blue-400">0</h3>
+                <p class="text-[10px] text-slate-500">Live vendor marketplace listings</p>
+            </div>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                <span class="text-xs text-slate-400 font-medium">Master Commission Volume</span>
+                <h3 id="statTotalVolume" class="text-2xl font-bold text-emerald-400">$0.00</h3>
+                <p class="text-[10px] text-slate-500">Total ledger transaction value</p>
+            </div>
+        </div>
+
+        <!-- Admin Navigation Tabs -->
+        <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
+            <button type="button" onclick="switchAdminTab('accounts')" id="tabAccounts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-users"></i><span>Accounts & Verification</span></button>
+            <button type="button" onclick="switchAdminTab('products')" id="tabProducts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-store"></i><span>Product Catalog</span></button>
+            <button type="button" onclick="switchAdminTab('commissions')" id="tabCommissions" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-wallet"></i><span>Master Commissions Ledger</span></button>
+            <button type="button" onclick="switchAdminTab('messages')" id="tabMessages" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-comments"></i><span>Messaging Threads</span></button>
+        </div>
+
+        <!-- ================= TAB CONTENT SECTIONS ================= -->
+
+        <!-- 1. ACCOUNTS & VERIFICATION TAB -->
+        <div id="sectionAccounts" class="space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white tracking-tight">User Accounts & National ID Verification</h2>
+                    <p class="text-xs text-slate-400">Review uploaded identification documents and approve or reject user verification status.</p>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+                    <input type="text" id="accountSearchInput" oninput="renderAccountsTable()" placeholder="Search by name, email, role..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                </div>
+            </div>
+
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-3">User Details</span>
+                    <span class="col-span-2">Role</span>
+                    <span class="col-span-2">Verification Status</span>
+                    <span class="col-span-2">National ID Proof</span>
+                    <span class="col-span-3 text-right">Actions</span>
+                </div>
+                <div id="accountsTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. PRODUCT CATALOG OVERSIGHT TAB -->
+        <div id="sectionProducts" class="space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Marketplace Product Oversight</h2>
+                    <p class="text-xs text-slate-400">Monitor all vendor product submissions across the platform.</p>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+                    <input type="text" id="productSearchInput" oninput="renderProductsTable()" placeholder="Search product title..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                </div>
+            </div>
+
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-4">Product Title & ID</span>
+                    <span class="col-span-3">Vendor ID</span>
+                    <span class="col-span-2">Status</span>
+                    <span class="col-span-3 text-right">Moderation Actions</span>
+                </div>
+                <div id="productsTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MASTER COMMISSIONS LEDGER TAB -->
+        <div id="sectionCommissions" class="space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Master Commissions Ledger</h2>
+                    <p class="text-xs text-slate-400">Complete audit trail of all commission payouts, recipient roles, and transfer statuses.</p>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+                    <input type="text" id="commSearchInput" oninput="renderCommissionsTable()" placeholder="Search feedback ID, recipient..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                </div>
+            </div>
+
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-3">Feedback / Commission ID</span>
+                    <span class="col-span-3">Vendor & Recipient</span>
+                    <span class="col-span-2">Amount & Type</span>
+                    <span class="col-span-4 text-right">Status & Proof</span>
+                </div>
+                <div id="commissionsTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. MESSAGING THREADS TAB -->
+        <div id="sectionMessages" class="space-y-6 hidden">
+            <div class="space-y-1">
+                <h2 class="text-lg font-bold text-white tracking-tight">System Message Threads</h2>
+                <p class="text-xs text-slate-400">Review communication logs between shoppers and vendors.</p>
+            </div>
+
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-3">Thread / Product ID</span>
+                    <span class="col-span-3">Participants (Sender / Receiver)</span>
+                    <span class="col-span-4">Latest Message</span>
+                    <span class="col-span-2 text-right">Timestamp</span>
+                </div>
+                <div id="messagesTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- National ID Image Preview Modal -->
+    <div id="idPreviewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-xl w-full p-6 md:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+                <h3 class="text-lg font-bold text-white">National ID Verification Document</h3>
+                <button type="button" onclick="closeIdModal()" class="text-slate-400 hover:text-white transition cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="idModalContent" class="space-y-4">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="flex justify-end pt-2 border-t border-borderSlate">
+                <button type="button" onclick="closeIdModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer">Close Preview</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
+    </footer>
+
+    <!-- Direct REST API Integration Script with Valid Headers -->
+    <script>
+        const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+
+        let allUsersList = [];
+        let allProductsList = [];
+        let allCommissionsList = [];
+        let allMessagesList = [];
+        let activeAdminTab = 'accounts';
+        let pollingInterval = null;
+
+        async function initAdminPanel() {
+            try {
+                await fetchAllAdminData();
+
+                if (pollingInterval) clearInterval(pollingInterval);
+                pollingInterval = setInterval(pollAdminData, 10000);
+            } catch (err) {
+                console.error("Initialization error:", err);
+            }
+        }
+
+        async function pollAdminData() {
+            await fetchAllAdminData(true);
+        }
+
+        async function fetchAllAdminData(isPolling = false) {
+            try {
+                const headers = {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                };
+
+                const profilesRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*&order=created_at.desc`, { headers });
+                if (profilesRes.ok) allUsersList = await profilesRes.json();
+
+                const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, { headers });
+                if (prodRes.ok) allProductsList = await prodRes.json();
+
+                const commRes = await fetch(`${SUPABASE_URL}/rest/v1/commissions?select=*&order=created_at.desc`, { headers });
+                if (commRes.ok) allCommissionsList = await commRes.json();
+
+                const msgRes = await fetch(`${SUPABASE_URL}/rest/v1/messages?select=*&order=created_at.desc`, { headers });
+                if (msgRes.ok) allMessagesList = await msgRes.json();
+            } catch (err) {
+                console.error("Error fetching admin data:", err.message);
+            }
+
+            updateAdminMetrics();
+            renderActiveTabTable();
+        }
+
+        function updateAdminMetrics() {
+            const totalUsers = allUsersList.length;
+            const pendingIDs = allUsersList.filter(u => u.verification_status === 'PENDING' || u.verification_status === 'PENDING_VERIFICATION' || !u.verification_status).length;
+            const activeProducts = allProductsList.filter(p => p.status === 'ACTIVE' || !p.status).length;
+            
+            let totalVolume = 0;
+            allCommissionsList.forEach(c => {
+                totalVolume += Number(c.amount || 0);
+            });
+
+            if (document.getElementById('statTotalUsers')) document.getElementById('statTotalUsers').textContent = totalUsers;
+            if (document.getElementById('statPendingIDs')) document.getElementById('statPendingIDs').textContent = pendingIDs;
+            if (document.getElementById('statActiveProducts')) document.getElementById('statActiveProducts').textContent = activeProducts;
+            if (document.getElementById('statTotalVolume')) document.getElementById('statTotalVolume').textContent = `$${totalVolume.toFixed(2)}`;
+        }
+
+        function switchAdminTab(tab) {
+            activeAdminTab = tab;
+            const tabs = ['accounts', 'products', 'commissions', 'messages'];
+            
+            tabs.forEach(t => {
+                const sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
+                const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+
+                if (sec && btn) {
+                    if (t === tab) {
+                        sec.classList.remove('hidden');
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2 cursor-pointer';
+                    } else {
+                        sec.classList.add('hidden');
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2 cursor-pointer';
+                    }
+                }
+            });
+
+            renderActiveTabTable();
+        }
+
+        function renderActiveTabTable() {
+            if (activeAdminTab === 'accounts') renderAccountsTable();
+            else if (activeAdminTab === 'products') renderProductsTable();
+            else if (activeAdminTab === 'commissions') renderCommissionsTable();
+            else if (activeAdminTab === 'messages') renderMessagesTable();
+        }
+
+        function renderAccountsTable() {
+            const searchInput = document.getElementById('accountSearchInput');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
+            const tbody = document.getElementById('accountsTableBody');
+            if (!tbody) return;
+
+            const filtered = allUsersList.filter(u => {
+                return (u.full_name || '').toLowerCase().includes(search) || 
+                       (u.email || '').toLowerCase().includes(search) || 
+                       (u.role || '').toLowerCase().includes(search);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No user accounts found matching query.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(u => {
+                const safeName = (u.full_name || 'User').replace(/'/g, "\\'");
+                const idButtonHtml = u.national_id_url 
+                    ? `<button type="button" onclick="previewNationalID('${safeName}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1 cursor-pointer"><i class="fa-solid fa-id-card text-rose-400"></i><span>View ID</span></button>`
+                    : `<span class="text-[10px] text-slate-500 italic">No ID uploaded</span>`;
+
+                return `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-3 space-y-0.5">
+                        <span class="font-bold text-white">${u.full_name || 'Unnamed'}</span>
+                        <p class="text-[10px] text-slate-400 font-mono">${u.email || u.id.substring(0,12)}</p>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] uppercase font-semibold">${u.role || 'buyer'}</span>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="px-2.5 py-0.5 ${u.verification_status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : u.verification_status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'} border rounded-full text-[10px] font-semibold">${u.verification_status || 'PENDING'}</span>
+                    </div>
+                    <div class="col-span-2">
+                        ${idButtonHtml}
+                    </div>
+                    <div class="col-span-3 flex items-center justify-end space-x-2">
+                        <button type="button" onclick="updateUserVerification('${u.id}', 'VERIFIED')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-semibold transition shadow-md cursor-pointer">Verify</button>
+                        <button type="button" onclick="updateUserVerification('${u.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl font-semibold transition shadow-md cursor-pointer">Reject</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function updateUserVerification(userId, newStatus) {
+            try {
+                const headers = {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                };
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({ verification_status: newStatus })
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                await fetchAllAdminData(true);
+                alert(`User verification status successfully updated to ${newStatus}.`);
+            } catch (err) {
+                alert('Error updating user status: ' + err.message);
+            }
+        }
+
+        function previewNationalID(fullName, url) {
+            const modal = document.getElementById('idPreviewModal');
+            const content = document.getElementById('idModalContent');
+            if (!modal || !content) return;
+
+            content.innerHTML = `
+                <div class="space-y-3 text-xs text-slate-300">
+                    <p class="font-bold text-white text-sm">Account: ${fullName}</p>
+                    <div class="border border-borderSlate rounded-2xl overflow-hidden bg-darkBg p-2 flex items-center justify-center">
+                        <img src="${url}" class="w-full h-auto max-h-96 object-contain rounded-xl" alt="National ID Proof">
+                    </div>
+                    <p class="text-[10px] text-slate-400 break-all font-mono">Source URL: ${url}</p>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function closeIdModal() {
+            const modal = document.getElementById('idPreviewModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function renderProductsTable() {
+            const searchInput = document.getElementById('productSearchInput');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
+            const tbody = document.getElementById('productsTableBody');
+            if (!tbody) return;
+
+            const filtered = allProductsList.filter(p => {
+                return (p.title || '').toLowerCase().includes(search);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No products found matching search.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(p => `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-4 space-y-0.5">
+                        <span class="font-bold text-white">${p.title}</span>
+                        <p class="text-[10px] text-slate-500 font-mono">ID: ${p.id.substring(0,12)}...</p>
+                    </div>
+                    <div class="col-span-3">
+                        <p class="font-mono text-[11px] text-slate-400 truncate">${p.vendor_id || 'N/A'}</p>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="px-2.5 py-0.5 ${p.status === 'ACTIVE' || !p.status ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'} border rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
+                    </div>
+                    <div class="col-span-3 flex items-center justify-end space-x-2">
+                        <button type="button" onclick="updateProductStatus('${p.id}', '${p.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium cursor-pointer">
+                            ${p.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateProductStatus(productId, newStatus) {
+            try {
+                const headers = {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                };
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                await fetchAllAdminData(true);
+                alert(`Product status changed to ${newStatus}.`);
+            } catch (err) {
+                alert('Error updating product status: ' + err.message);
+            }
+        }
+
+        function renderCommissionsTable() {
+            const searchInput = document.getElementById('commSearchInput');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
+            const tbody = document.getElementById('commissionsTableBody');
+            if (!tbody) return;
+
+            const filtered = allCommissionsList.filter(c => {
+                return (c.feedback_id || '').toLowerCase().includes(search) || 
+                       (c.recipient_id || '').toLowerCase().includes(search) || 
+                       (c.vendor_id || '').toLowerCase().includes(search);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No commission ledger records found.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(c => `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-3 space-y-0.5">
+                        <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
+                        <p class="text-[10px] text-slate-500 font-mono">${c.id.substring(0,10)}...</p>
+                    </div>
+                    <div class="col-span-3 space-y-0.5">
+                        <p class="text-[10px] text-slate-400 truncate font-mono">V: ${c.vendor_id ? c.vendor_id.substring(0,8) : 'N/A'}...</p>
+                        <p class="text-[10px] text-slate-400 truncate font-mono">R: ${c.recipient_id ? c.recipient_id.substring(0,8) : 'N/A'}...</p>
+                    </div>
+                    <div class="col-span-2 space-y-0.5">
+                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
+                        <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
+                    </div>
+                    <div class="col-span-4 flex items-center justify-end space-x-2">
+                        <span class="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px] font-semibold">${c.status_tag || 'MAIN_QUEUE'}</span>
+                        ${c.receipt_url ? `<span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20"><i class="fa-solid fa-receipt mr-1"></i>Has Proof</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMessagesTable() {
+            const tbody = document.getElementById('messagesTableBody');
+            if (!tbody) return;
+
+            if (allMessagesList.length === 0) {
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No message threads found in database.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = allMessagesList.map(m => `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-3 space-y-0.5">
+                        <span class="font-bold text-white">Thread ID</span>
+                        <p class="text-[10px] text-slate-500 font-mono">${m.id.substring(0,12)}...</p>
+                    </div>
+                    <div class="col-span-3 space-y-0.5">
+                        <p class="text-[10px] text-slate-400 font-mono truncate">Sender: ${m.sender_id ? m.sender_id.substring(0,8) : 'N/A'}...</p>
+                        <p class="text-[10px] text-slate-400 font-mono truncate">Receiver: ${m.receiver_id ? m.receiver_id.substring(0,8) : 'N/A'}...</p>
+                    </div>
+                    <div class="col-span-4">
+                        <p class="text-xs text-slate-200 truncate">${m.message_text || ''}</p>
+                    </div>
+                    <div class="col-span-2 text-right text-[10px] text-slate-500">
+                        ${new Date(m.created_at || Date.now()).toLocaleTimeString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize admin panel on load directly
+        initAdminPanel();
+    </script>
+</body>
+</html>
