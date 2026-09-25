@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Shopper Registration Portal</title>
+    <title>Create Account — Set up your Echo Hub marketplace account</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,7 +35,7 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Navigation Bar -->
+    <!-- Top Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
@@ -43,172 +43,180 @@
             </div>
             <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Registration</span></span>
         </div>
-        <div class="flex items-center space-x-3">
-            <span class="text-xs text-slate-400">Already have an account?</span>
-            <a href="login.html" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-200 px-3 py-2 rounded-xl transition font-semibold">Sign In</a>
+        <div class="flex items-center space-x-2 text-xs text-slate-400">
+            <span>Already have an account?</span>
+            <a href="login.html" class="text-blue-400 hover:underline font-semibold">Sign in</a>
         </div>
     </header>
 
-    <!-- Main Registration Card Container -->
-    <main class="flex-1 max-w-lg w-full mx-auto px-4 py-12 flex items-center justify-center">
-        <div class="bg-cardBg border border-borderSlate rounded-3xl p-8 w-full space-y-6 shadow-2xl">
+    <!-- Main Registration Container -->
+    <main class="flex-1 max-w-xl w-full mx-auto px-4 py-12 flex flex-col justify-center">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl p-8 md:p-10 shadow-2xl space-y-6">
+            
             <div class="space-y-2 text-center">
-                <div class="w-12 h-12 bg-blue-600/10 border border-blue-500/20 text-blue-500 rounded-2xl mx-auto flex items-center justify-center text-xl mb-4">
-                    <i class="fa-solid fa-user-plus"></i>
-                </div>
-                <h1 class="text-xl font-bold text-white">Create Shopper Account</h1>
-                <p class="text-xs text-slate-400">Register to browse vetted marketplace review tasks and earn commissions.</p>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Create Account</h1>
+                <p class="text-xs text-slate-400">Set up your Echo Hub marketplace account to discover verified review opportunities.</p>
             </div>
 
             <!-- Error Notification Banner -->
-            <div id="errorBanner" class="bg-rose-500/10 border border-rose-500/25 p-3 rounded-xl text-xs text-rose-400 hidden flex items-center space-x-2">
-                <i class="fa-solid fa-circle-exclamation text-sm"></i>
-                <span id="errorMessage">Registration failed. Please check your details.</span>
+            <div id="errorBanner" class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-400 hidden flex items-start space-x-2">
+                <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                <span id="errorMessage">Please check your form inputs.</span>
             </div>
 
-            <!-- Registration Form -->
-            <form onsubmit="handleBuyerRegister(event)" class="space-y-4">
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-300">Full Name</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user text-xs"></i></span>
-                        <input type="text" id="regFullName" required placeholder="John Doe" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+            <form id="registerForm" onsubmit="handleShopperRegister(event)" class="space-y-4">
+                
+                <!-- First & Last Name -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">First Name</label>
+                        <input type="text" id="firstNameInput" required placeholder="John" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">Last Name</label>
+                        <input type="text" id="lastNameInput" required placeholder="Doe" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-300">Email Address</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
-                        <input type="email" id="regEmail" required placeholder="name@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                <!-- WhatsApp & Categories of Interest -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">WhatsApp Number</label>
+                        <input type="text" id="whatsappInput" required placeholder="+1234567890" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">Categories of Interest</label>
+                        <input type="text" id="categoriesInput" required placeholder="Electronics, Fashion, Food" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
+                <!-- National ID File Upload -->
                 <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-300">Password</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-key text-xs"></i></span>
-                        <input type="password" id="regPassword" required placeholder="••••••••" minlength="6" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    <label class="text-xs font-medium text-slate-300">National ID File Upload <span class="text-amber-400 text-[10px]">(Required for verification)</span></label>
+                    <input type="file" id="nationalIdInput" required accept="image/*,.pdf" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
+                </div>
+
+                <!-- PayPal Email & Account Email -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">PayPal Email (Payouts)</label>
+                        <input type="email" id="paypalEmailInput" required placeholder="paypal@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">Account Email (Login)</label>
+                        <input type="email" id="emailInput" required placeholder="name@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
+                <!-- Password -->
                 <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-300">National ID Document (Verification Proof)</label>
-                    <div class="border-2 border-dashed border-borderSlate rounded-2xl p-4 text-center hover:border-accentBlue transition bg-darkBg">
-                        <input type="file" id="regNationalIdFile" accept="image/*" required onchange="handleFilePreview(this)" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-accentHover file:cursor-pointer">
-                        <p id="filePreviewName" class="text-[10px] text-slate-500 mt-2">Upload a clear photo of your government-issued ID for admin review.</p>
-                    </div>
+                    <label class="text-xs font-medium text-slate-300">Password</label>
+                    <input type="password" id="passwordInput" required placeholder="••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
 
-                <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-user-check"></i>
-                    <span>Register Shopper Account</span>
+                <!-- Primary Action Button -->
+                <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2 mt-2">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Complete Registration</span>
                 </button>
             </form>
+
+            <div class="border-t border-borderSlate pt-4 text-center text-xs text-slate-500">
+                <p>Already have an account? <a href="login.html" class="text-blue-400 hover:underline">Sign in</a></p>
+            </div>
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Secure Shopper Registration Gateway.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Shopper Portal.</p>
     </footer>
 
-    <!-- Supabase Auth Script, Referral Retrieval & Base64 Encoding -->
+    <!-- Registration Script -->
     <script>
-        // Supabase configuration credentials
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let encodedNationalIdBase64 = '';
-
-        // Capture referral query parameter on load if present in URL search string
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const refCode = urlParams.get('ref');
-            if (refCode) {
-                sessionStorage.setItem('echo_hub_ref', refCode);
-                console.log('[Referral] Captured and stored reference code:', refCode);
-            }
-        });
-
-        // Handle file reader upload preview and base64 string conversion
-        function handleFilePreview(input) {
-            const file = input.files[0];
-            if (!file) return;
-
-            document.getElementById('filePreviewName').textContent = `Selected Document: ${file.name}`;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                encodedNationalIdBase64 = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Main submission handler for shopper registration
-        async function handleBuyerRegister(event) {
+        async function handleShopperRegister(event) {
             event.preventDefault();
-            const fullName = document.getElementById('regFullName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
+            const firstName = document.getElementById('firstNameInput').value.trim();
+            const lastName = document.getElementById('lastNameInput').value.trim();
+            const fullName = `${firstName} ${lastName}`;
+            const whatsapp = document.getElementById('whatsappInput').value.trim();
+            const categories = document.getElementById('categoriesInput').value.trim();
+            const paypalEmail = document.getElementById('paypalEmailInput').value.trim();
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const fileInput = document.getElementById('nationalIdInput');
+            
             const btn = document.getElementById('submitBtn');
             const errorBanner = document.getElementById('errorBanner');
             const errorMessage = document.getElementById('errorMessage');
 
-            if (!encodedNationalIdBase64) {
-                errorMessage.textContent = 'Please upload a valid National ID image document for verification.';
-                errorBanner.classList.remove('hidden');
-                return;
-            }
-
             errorBanner.classList.add('hidden');
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating Account & Storing Profile...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Registering Account...`;
 
             try {
-                console.time('Supabase_Shopper_Sign_Up');
+                // Convert National ID file to base64 for safe storage
+                let nationalIdBase64 = '';
+                if (fileInput.files && fileInput.files[0]) {
+                    const file = fileInput.files[0];
+                    nationalIdBase64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = error => reject(error);
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                // 1. Sign up user via Supabase Auth with metadata
                 const { data: authData, error: authError } = await _supabase.auth.signUp({
                     email: email,
-                    password: password
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: fullName,
+                            role: 'buyer'
+                        }
+                    }
                 });
-                console.timeEnd('Supabase_Shopper_Sign_Up');
 
                 if (authError) throw authError;
-
                 const user = authData.user;
-                if (!user) throw new Error('User creation succeeded but user object is missing.');
 
-                const refCode = sessionStorage.getItem('echo_hub_ref') || null;
+                if (user) {
+                    // 2. Attempt to create profile record if database trigger doesn't automatically insert it
+                    const { error: profileError } = await _supabase
+                        .from('profiles')
+                        .upsert([{
+                            id: user.id,
+                            full_name: fullName,
+                            role: 'buyer',
+                            whatsapp: whatsapp,
+                            categories_of_interest: categories,
+                            paypal_email: paypalEmail,
+                            national_id_url: nationalIdBase64,
+                            verification_status: 'PENDING_VERIFICATION'
+                        }], { onConflict: 'id' });
 
-                // Insert into profiles table with role 'buyer' and PENDING verification status
-                console.time('Supabase_Profile_Insert');
-                const { error: profileError } = await _supabase
-                    .from('profiles')
-                    .insert([{
-                        id: user.id,
-                        full_name: fullName,
-                        email: email,
-                        role: 'buyer',
-                        verification_status: 'PENDING',
-                        national_id_url: encodedNationalIdBase64,
-                        referred_by: refCode
-                    }]);
-                console.timeEnd('Supabase_Profile_Insert');
+                    if (profileError) {
+                        console.warn("Profile table write restricted by RLS (Handled by Auth trigger):", profileError.message);
+                    }
+                }
 
-                if (profileError) throw profileError;
-
-                alert('Registration successful! Your account is pending administrator verification. Redirecting to marketplace...');
+                // 3. Redirect to shopper portal with verification locks active
                 window.location.href = 'index.html';
 
             } catch (err) {
-                console.error("Registration failure:", err.message);
-                errorMessage.textContent = err.message || 'Registration failed. Please check your details.';
+                console.error("Registration error:", err.message);
+                errorMessage.textContent = err.message || 'Registration failed. Please try again.';
                 errorBanner.classList.remove('hidden');
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-user-check mr-2"></i> Register Shopper Account`;
+                btn.innerHTML = `<i class="fa-solid fa-user-plus mr-2"></i> Complete Registration`;
             }
         }
     </script>
