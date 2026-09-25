@@ -240,7 +240,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
     </footer>
 
-    <!-- Supabase Integration, Defensive Admin Verification & 10s Polling -->
+    <!-- Supabase Integration & 10s Polling (Direct Hyperlink Access Enabled) -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -249,7 +249,6 @@
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
-        let currentProfile = null;
         let allUsersList = [];
         let allProductsList = [];
         let allCommissionsList = [];
@@ -257,70 +256,42 @@
         let activeAdminTab = 'accounts';
         let pollingInterval = null;
 
-        // Defensive Admin Initialization & Access Verification
+        // Direct access initialization (No profile role check required)
         async function initAdminPanel() {
-            console.time('Admin_Auth_And_Profile_Init');
             const { data: { session }, error } = await _supabase.auth.getSession();
 
             if (error || !session) {
-                console.timeEnd('Admin_Auth_And_Profile_Init');
                 window.location.href = 'login.html';
                 return;
             }
 
             currentUser = session.user;
-
-            const { data: profile, error: profileError } = await _supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
-
-            console.timeEnd('Admin_Auth_And_Profile_Init');
-
-            if (profileError || !profile || profile.role !== 'admin') {
-                alert('Access Denied: Administrator privileges required.');
-                window.location.href = 'index.html';
-                return;
-            }
-
-            currentProfile = profile;
-            document.getElementById('welcomeTitle').textContent = `Admin Control Center (${profile.full_name || 'Admin'})`;
+            document.getElementById('welcomeTitle').textContent = `Admin Control Center (${currentUser.email})`;
 
             await fetchAllAdminData();
 
-            // Set up 10-second polling interval
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(pollAdminData, 10000);
         }
 
         async function pollAdminData() {
-            console.log('[Polling] Refreshing admin system datasets (10s interval)...');
             await fetchAllAdminData(true);
         }
 
         async function fetchAllAdminData(isPolling = false) {
-            if (!isPolling) console.time('Fetch_All_Admin_Data');
             try {
-                // 1. Fetch Users
                 const { data: usersData } = await _supabase.from('profiles').select('*').order('created_at', { ascending: false });
                 allUsersList = usersData || [];
 
-                // 2. Fetch Products
                 const { data: productsData } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
                 allProductsList = productsData || [];
 
-                // 3. Fetch Commissions
                 const { data: commsData } = await _supabase.from('commissions').select('*').order('created_at', { ascending: false });
                 allCommissionsList = commsData || [];
 
-                // 4. Fetch Messages
                 const { data: msgData } = await _supabase.from('messages').select('*').order('created_at', { ascending: false });
                 allMessagesList = msgData || [];
-
-                if (!isPolling) console.timeEnd('Fetch_All_Admin_Data');
             } catch (err) {
-                if (!isPolling) console.timeEnd('Fetch_All_Admin_Data');
                 console.error("Error fetching admin data:", err.message);
             }
 
@@ -371,8 +342,6 @@
             else if (activeAdminTab === 'messages') renderMessagesTable();
         }
 
-        // ================= 1. ACCOUNTS TABLE =================
-
         function renderAccountsTable() {
             const search = document.getElementById('accountSearchInput').value.toLowerCase();
             const tbody = document.getElementById('accountsTableBody');
@@ -395,14 +364,14 @@
                         <p class="text-[10px] text-slate-400 font-mono">${u.email || u.id.substring(0,12)}</p>
                     </div>
                     <div class="col-span-2">
-                        <span class="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] uppercase font-semibold">${u.role}</span>
+                        <span class="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] uppercase font-semibold">${u.role || 'buyer'}</span>
                     </div>
                     <div class="col-span-2">
                         <span class="px-2.5 py-0.5 ${u.verification_status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : u.verification_status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'} border rounded-full text-[10px] font-semibold">${u.verification_status || 'PENDING'}</span>
                     </div>
                     <div class="col-span-2">
                         ${u.national_id_url ? `
-                            <button onclick="previewNationalID('${u.full_name}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1">
+                            <button onclick="previewNationalID('${u.full_name \vert{}\vert{} 'User'}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1">
                                 <i class="fa-solid fa-id-card text-rose-400"></i>
                                 <span>View ID</span>
                             </button>
@@ -447,8 +416,6 @@
             `;
             modal.classList.remove('hidden');
         }
-
-        // ================= 2. PRODUCTS TABLE =================
 
         function renderProductsTable() {
             const search = document.getElementById('productSearchInput').value.toLowerCase();
@@ -499,8 +466,6 @@
             }
         }
 
-        // ================= 3. COMMISSIONS TABLE =================
-
         function renderCommissionsTable() {
             const search = document.getElementById('commSearchInput').value.toLowerCase();
             const tbody = document.getElementById('commissionsTableBody');
@@ -537,8 +502,6 @@
                 </div>
             `).join('');
         }
-
-        // ================= 4. MESSAGES TABLE =================
 
         function renderMessagesTable() {
             const tbody = document.getElementById('messagesTableBody');
