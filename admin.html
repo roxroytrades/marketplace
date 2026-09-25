@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Admin Control Center</title>
+    <title>Echo Hub - Admin Panel & Oversight Hub</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -38,130 +38,209 @@
     <!-- Top Navigation Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+            <div class="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-rose-500/20 font-heading font-bold text-lg">
                 eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full ml-2">Admin Command Center</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-rose-500">hub</span> <span class="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full ml-2">Admin Panel</span></span>
         </div>
         
         <div class="flex items-center space-x-4">
-            <!-- Dropdown Registration Links -->
+            <!-- Portals Dropdown -->
             <div class="relative group">
                 <button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
-                    <i class="fa-solid fa-user-plus text-slate-400"></i>
-                    <span>Portals & Links</span>
+                    <i class="fa-solid fa-link text-slate-400"></i>
+                    <span>Quick Navigation</span>
                     <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
                 </button>
                 <div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
-                    <a href="buyer-register.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Buyer Register</a>
-                    <a href="seller-register.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Seller Register</a>
-                    <a href="login.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Login</a>
-                    <a href="seller.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Portal</a>
+                    <a href="index.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Marketplace</a>
+                    <a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Dashboard</a>
+                    <a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
                 </div>
             </div>
 
-            <div class="text-right hidden sm:block border-l border-borderSlate pl-4">
-                <p id="adminEmailDisplay" class="text-xs font-semibold text-slate-200">Admin Mode (Direct Access)</p>
-                <p class="text-[10px] text-slate-400">Super Administrator</p>
-            </div>
+            <!-- Logout Button -->
+            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Workspace Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
         
-        <!-- Welcome Overview Card -->
+        <!-- Welcome Banner & System Status Header -->
         <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
             <div class="space-y-1">
-                <span class="text-xs text-purple-400 font-semibold uppercase tracking-wider">System Administration</span>
-                <h1 class="text-2xl font-bold text-white">Marketplace Oversight & Global Commission Controls</h1>
-                <p class="text-xs text-slate-400">Monitor active user registrations, product listings, review queues, and global commission splits.</p>
+                <span class="text-xs text-rose-400 font-semibold uppercase tracking-wider">System Administration & Oversight</span>
+                <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Admin Control Center</h1>
+                <p class="text-xs text-slate-400">Monitor system accounts, review National ID proofs, inspect product listings, and oversee master ledgers.</p>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="loadAdminData()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
-                    <i class="fa-solid fa-rotate"></i>
-                    <span>Refresh Metrics</span>
-                </button>
+                <div class="bg-darkBg border border-borderSlate px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 text-slate-300">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Database Status: <strong class="text-white">Connected</strong></span>
+                </div>
             </div>
         </div>
 
-        <!-- Metrics Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
-                <span class="text-xs text-slate-400 font-medium">Total Products</span>
-                <h3 id="statTotalProducts" class="text-2xl font-bold text-white">0</h3>
+        <!-- Master Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                <span class="text-xs text-slate-400 font-medium">Total Registered Accounts</span>
+                <h3 id="statTotalUsers" class="text-2xl font-bold text-white">0</h3>
+                <p class="text-[10px] text-slate-500">Shoppers, Vendors, and Admins</p>
             </div>
-            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
-                <span class="text-xs text-slate-400 font-medium">Pending Approvals</span>
-                <h3 id="statPending" class="text-2xl font-bold text-blue-400">0</h3>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                <span class="text-xs text-slate-400 font-medium">Pending ID Verifications</span>
+                <h3 id="statPendingIDs" class="text-2xl font-bold text-amber-400">0</h3>
+                <p class="text-[10px] text-slate-500">Awaiting administrator approval</p>
             </div>
-            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
-                <span class="text-xs text-slate-400 font-medium">System Status</span>
-                <h3 class="text-2xl font-bold text-emerald-400 flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span><span>Online</span></h3>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                <span class="text-xs text-slate-400 font-medium">Active Products</span>
+                <h3 id="statActiveProducts" class="text-2xl font-bold text-blue-400">0</h3>
+                <p class="text-[10px] text-slate-500">Live vendor marketplace listings</p>
             </div>
-            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
-                <span class="text-xs text-slate-400 font-medium">Database Security</span>
-                <h3 class="text-2xl font-bold text-purple-400">RLS Active</h3>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                <span class="text-xs text-slate-400 font-medium">Master Commission Volume</span>
+                <h3 id="statTotalVolume" class="text-2xl font-bold text-emerald-400">$0.00</h3>
+                <p class="text-[10px] text-slate-500">Total ledger transaction value</p>
             </div>
         </div>
 
-        <!-- Global Commission Oversight Panel -->
-        <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
-            <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+        <!-- Admin Navigation Tabs -->
+        <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
+            <button onclick="switchAdminTab('accounts')" id="tabAccounts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2"><i class="fa-solid fa-users"></i><span>Accounts & Verification</span></button>
+            <button onclick="switchAdminTab('products')" id="tabProducts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-store"></i><span>Product Catalog</span></button>
+            <button onclick="switchAdminTab('commissions')" id="tabCommissions" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-wallet"></i><span>Master Commissions Ledger</span></button>
+            <button onclick="switchAdminTab('messages')" id="tabMessages" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Messaging Threads</span></button>
+        </div>
+
+        <!-- ================= TAB CONTENT SECTIONS ================= -->
+
+        <!-- 1. ACCOUNTS & VERIFICATION TAB -->
+        <div id="sectionAccounts" class="space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 class="text-sm font-bold text-white">Global Commission & Split Configuration</h2>
-                    <p class="text-[11px] text-slate-400">Adjust baseline platform percentages and reviewer payout thresholds across all active vendor campaigns.</p>
+                    <h2 class="text-lg font-bold text-white tracking-tight">User Accounts & National ID Verification</h2>
+                    <p class="text-xs text-slate-400">Review uploaded identification documents and approve or reject user verification status.</p>
                 </div>
-                <span class="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full">Global Policy</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Platform Commission Split (%)</label>
-                    <input type="number" value="15" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+                    <input type="text" id="accountSearchInput" oninput="renderAccountsTable()" placeholder="Search by name, email, role..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
                 </div>
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Default Shopper Reward ($)</label>
-                    <input type="number" value="15.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                </div>
-                <div class="flex items-end">
-                    <button onclick="alert('Global commission policy updated successfully.')" class="w-full bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs font-medium text-slate-200 py-2 rounded-xl transition">
-                        Save Commission Policy
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Management Tables Section -->
-        <div class="space-y-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-lg font-bold text-white tracking-tight">Database Records & Catalog Feed</h2>
-                <span class="text-xs text-slate-400">Live Supabase Table: products</span>
             </div>
 
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-4 text-xs text-slate-400 font-semibold">
-                    <span class="col-span-4">Item Title / Details</span>
-                    <span class="col-span-3">Category / Vendor</span>
-                    <span class="col-span-2">Reward Amount</span>
-                    <span class="col-span-3 text-right">Status & Action</span>
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-3">User Details</span>
+                    <span class="col-span-2">Role</span>
+                    <span class="col-span-2">Verification Status</span>
+                    <span class="col-span-2">National ID Proof</span>
+                    <span class="col-span-3 text-right">Actions</span>
                 </div>
-                <div id="adminTableBody" class="divide-y divide-borderSlate">
-                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                        <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-                        <p>Connecting and loading records from Supabase...</p>
-                    </div>
+                <div id="accountsTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. PRODUCT CATALOG OVERSIGHT TAB -->
+        <div id="sectionProducts" class="space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Marketplace Product Oversight</h2>
+                    <p class="text-xs text-slate-400">Monitor all vendor product submissions across the platform.</p>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+                    <input type="text" id="productSearchInput" oninput="renderProductsTable()" placeholder="Search product title..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                </div>
+            </div>
+
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-4">Product Title & ID</span>
+                    <span class="col-span-3">Vendor ID</span>
+                    <span class="col-span-2">Status</span>
+                    <span class="col-span-3 text-right">Moderation Actions</span>
+                </div>
+                <div id="productsTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MASTER COMMISSIONS LEDGER TAB -->
+        <div id="sectionCommissions" class="space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Master Commissions Ledger</h2>
+                    <p class="text-xs text-slate-400">Complete audit trail of all commission payouts, recipient roles, and transfer statuses.</p>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+                    <input type="text" id="commSearchInput" oninput="renderCommissionsTable()" placeholder="Search feedback ID, recipient..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                </div>
+            </div>
+
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-3">Feedback / Commission ID</span>
+                    <span class="col-span-3">Vendor & Recipient</span>
+                    <span class="col-span-2">Amount & Type</span>
+                    <span class="col-span-4 text-right">Status & Proof</span>
+                </div>
+                <div id="commissionsTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. MESSAGING THREADS TAB -->
+        <div id="sectionMessages" class="space-y-6 hidden">
+            <div class="space-y-1">
+                <h2 class="text-lg font-bold text-white tracking-tight">System Message Threads</h2>
+                <p class="text-xs text-slate-400">Review communication logs between shoppers and vendors.</p>
+            </div>
+
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-3">Thread / Product ID</span>
+                    <span class="col-span-3">Participants (Sender / Receiver)</span>
+                    <span class="col-span-4">Latest Message</span>
+                    <span class="col-span-2 text-right">Timestamp</span>
+                </div>
+                <div id="messagesTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
                 </div>
             </div>
         </div>
 
     </main>
 
+    <!-- ================= MODALS ================= -->
+
+    <!-- National ID Image Preview Modal -->
+    <div id="idPreviewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-xl w-full p-6 md:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+                <h3 class="text-lg font-bold text-white">National ID Verification Document</h3>
+                <button onclick="document.getElementById('idPreviewModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="idModalContent" class="space-y-4">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Secure Admin Command Center.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
     </footer>
 
-    <!-- Supabase Integration Script -->
+    <!-- Supabase Integration, Defensive Admin Verification & 10s Polling -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -169,73 +248,333 @@
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Load admin data directly on startup without authentication checks or redirects
-        async function loadAdminData() {
-            const tableBody = document.getElementById('adminTableBody');
-            
+        let currentUser = null;
+        let currentProfile = null;
+        let allUsersList = [];
+        let allProductsList = [];
+        let allCommissionsList = [];
+        let allMessagesList = [];
+        let activeAdminTab = 'accounts';
+        let pollingInterval = null;
+
+        // Defensive Admin Initialization & Access Verification
+        async function initAdminPanel() {
+            console.time('Admin_Auth_And_Profile_Init');
+            const { data: { session }, error } = await _supabase.auth.getSession();
+
+            if (error || !session) {
+                console.timeEnd('Admin_Auth_And_Profile_Init');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentUser = session.user;
+
+            const { data: profile, error: profileError } = await _supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            console.timeEnd('Admin_Auth_And_Profile_Init');
+
+            if (profileError || !profile || profile.role !== 'admin') {
+                alert('Access Denied: Administrator privileges required.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentProfile = profile;
+            document.getElementById('welcomeTitle').textContent = `Admin Control Center (${profile.full_name || 'Admin'})`;
+
+            await fetchAllAdminData();
+
+            // Set up 10-second polling interval
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(pollAdminData, 10000);
+        }
+
+        async function pollAdminData() {
+            console.log('[Polling] Refreshing admin system datasets (10s interval)...');
+            await fetchAllAdminData(true);
+        }
+
+        async function fetchAllAdminData(isPolling = false) {
+            if (!isPolling) console.time('Fetch_All_Admin_Data');
             try {
-                const { data, error, count } = await _supabase.from('products').select('*', { count: 'exact' }).limit(15);
+                // 1. Fetch Users
+                const { data: usersData } = await _supabase.from('profiles').select('*').order('created_at', { ascending: false });
+                allUsersList = usersData || [];
 
-                if (error) throw error;
+                // 2. Fetch Products
+                const { data: productsData } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
+                allProductsList = productsData || [];
 
-                document.getElementById('statTotalProducts').textContent = count !== null ? count : (data ? data.length : 0);
-                document.getElementById('statPending').textContent = data ? data.filter(i => i.status === 'pending' || !i.status).length : 0;
+                // 3. Fetch Commissions
+                const { data: commsData } = await _supabase.from('commissions').select('*').order('created_at', { ascending: false });
+                allCommissionsList = commsData || [];
 
-                if (!data || data.length === 0) {
-                    tableBody.innerHTML = `
-                        <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                            <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-500"></i>
-                            <p>No product records found in the database.</p>
-                        </div>
-                    `;
-                    return;
+                // 4. Fetch Messages
+                const { data: msgData } = await _supabase.from('messages').select('*').order('created_at', { ascending: false });
+                allMessagesList = msgData || [];
+
+                if (!isPolling) console.timeEnd('Fetch_All_Admin_Data');
+            } catch (err) {
+                if (!isPolling) console.timeEnd('Fetch_All_Admin_Data');
+                console.error("Error fetching admin data:", err.message);
+            }
+
+            updateAdminMetrics();
+            renderActiveTabTable();
+        }
+
+        function updateAdminMetrics() {
+            const totalUsers = allUsersList.length;
+            const pendingIDs = allUsersList.filter(u => u.verification_status === 'PENDING').length;
+            const activeProducts = allProductsList.filter(p => p.status === 'ACTIVE').length;
+            
+            let totalVolume = 0;
+            allCommissionsList.forEach(c => {
+                totalVolume += Number(c.amount || 0);
+            });
+
+            document.getElementById('statTotalUsers').textContent = totalUsers;
+            document.getElementById('statPendingIDs').textContent = pendingIDs;
+            document.getElementById('statActiveProducts').textContent = activeProducts;
+            document.getElementById('statTotalVolume').textContent = `$${totalVolume.toFixed(2)}`;
+        }
+
+        function switchAdminTab(tab) {
+            activeAdminTab = tab;
+            const tabs = ['accounts', 'products', 'commissions', 'messages'];
+            
+            tabs.forEach(t => {
+                const sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
+                const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+
+                if (t === tab) {
+                    sec.classList.remove('hidden');
+                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2';
+                } else {
+                    sec.classList.add('hidden');
+                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2';
                 }
+            });
 
-                tableBody.innerHTML = data.map(item => `
-                    <div class="p-4 grid grid-cols-12 gap-4 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-                        <div class="col-span-4 space-y-0.5">
-                            <p class="font-bold text-white">${item.title || 'Untitled Listing'}</p>
-                            <p class="text-[10px] text-slate-400 truncate">ID: ${item.id}</p>
-                        </div>
-                        <div class="col-span-3 text-slate-400">
-                            ${item.category || 'General Marketplace'}
-                        </div>
-                        <div class="col-span-2 text-emerald-400 font-semibold">
-                            $${item.reward || '0.00'}
-                        </div>
-                        <div class="col-span-3 flex items-center justify-end space-x-2">
-                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${item.status || 'Active'}</span>
-                            <button onclick="deleteRecord('${item.id}')" class="bg-darkBg hover:bg-rose-500/20 border border-borderSlate hover:border-rose-500/40 text-slate-400 hover:text-rose-400 p-2 rounded-lg transition" title="Remove Item">
-                                <i class="fa-solid fa-trash text-[10px]"></i>
+            renderActiveTabTable();
+        }
+
+        function renderActiveTabTable() {
+            if (activeAdminTab === 'accounts') renderAccountsTable();
+            else if (activeAdminTab === 'products') renderProductsTable();
+            else if (activeAdminTab === 'commissions') renderCommissionsTable();
+            else if (activeAdminTab === 'messages') renderMessagesTable();
+        }
+
+        // ================= 1. ACCOUNTS TABLE =================
+
+        function renderAccountsTable() {
+            const search = document.getElementById('accountSearchInput').value.toLowerCase();
+            const tbody = document.getElementById('accountsTableBody');
+
+            const filtered = allUsersList.filter(u => {
+                return (u.full_name || '').toLowerCase().includes(search) || 
+                       (u.email || '').toLowerCase().includes(search) || 
+                       (u.role || '').toLowerCase().includes(search);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No user accounts found.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(u => `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-3 space-y-0.5">
+                        <span class="font-bold text-white">${u.full_name || 'Unnamed'}</span>
+                        <p class="text-[10px] text-slate-400 font-mono">${u.email || u.id.substring(0,12)}</p>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] uppercase font-semibold">${u.role}</span>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="px-2.5 py-0.5 ${u.verification_status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : u.verification_status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'} border rounded-full text-[10px] font-semibold">${u.verification_status || 'PENDING'}</span>
+                    </div>
+                    <div class="col-span-2">
+                        ${u.national_id_url ? `
+                            <button onclick="previewNationalID('${u.full_name}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1">
+                                <i class="fa-solid fa-id-card text-rose-400"></i>
+                                <span>View ID</span>
                             </button>
-                        </div>
+                        ` : `
+                            <span class="text-[10px] text-slate-500 italic">No ID uploaded</span>
+                        `}
                     </div>
-                `).join('');
-
-            } catch (err) {
-                tableBody.innerHTML = `
-                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                        <i class="fa-solid fa-database text-2xl mb-2 text-purple-400"></i>
-                        <p>Admin command center online and connected to Supabase.</p>
+                    <div class="col-span-3 flex items-center justify-end space-x-2">
+                        <button onclick="updateUserVerification('${u.id}', 'VERIFIED')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-semibold transition shadow-md">Verify</button>
+                        <button onclick="updateUserVerification('${u.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl font-semibold transition shadow-md">Reject</button>
                     </div>
-                `;
-            }
+                </div>
+            `).join('');
         }
 
-        async function deleteRecord(id) {
-            if (!confirm('Are you sure you want to remove this record from the database?')) return;
-            
+        async function updateUserVerification(userId, newStatus) {
             try {
-                const { error } = await _supabase.from('products').delete().eq('id', id);
+                const { error } = await _supabase
+                    .from('profiles')
+                    .update({ verification_status: newStatus })
+                    .eq('id', userId);
+
                 if (error) throw error;
-                loadAdminData();
+                await fetchAllAdminData(true);
+                alert(`User verification status updated to ${newStatus}.`);
             } catch (err) {
-                alert('Error removing record: ' + (err.message || 'Check Supabase RLS policies.'));
+                alert('Error updating user status: ' + err.message);
             }
         }
 
-        // Initialize table data on load
-        loadAdminData();
+        function previewNationalID(fullName, url) {
+            const modal = document.getElementById('idPreviewModal');
+            const content = document.getElementById('idModalContent');
+
+            content.innerHTML = `
+                <div class="space-y-3 text-xs text-slate-300">
+                    <p class="font-bold text-white text-sm">Account: ${fullName}</p>
+                    <div class="border border-borderSlate rounded-2xl overflow-hidden bg-darkBg p-2">
+                        <img src="${url}" class="w-full h-auto max-h-96 object-contain rounded-xl" alt="National ID Proof">
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        // ================= 2. PRODUCTS TABLE =================
+
+        function renderProductsTable() {
+            const search = document.getElementById('productSearchInput').value.toLowerCase();
+            const tbody = document.getElementById('productsTableBody');
+
+            const filtered = allProductsList.filter(p => {
+                return (p.title || '').toLowerCase().includes(search);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No products found.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(p => `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-4 space-y-0.5">
+                        <span class="font-bold text-white">${p.title}</span>
+                        <p class="text-[10px] text-slate-500 font-mono">ID: ${p.id.substring(0,12)}...</p>
+                    </div>
+                    <div class="col-span-3">
+                        <p class="font-mono text-[11px] text-slate-400 truncate">${p.vendor_id}</p>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="px-2.5 py-0.5 ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'} border rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
+                    </div>
+                    <div class="col-span-3 flex items-center justify-end space-x-2">
+                        <button onclick="updateProductStatus('${p.id}', '${p.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium">
+                            ${p.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateProductStatus(productId, newStatus) {
+            try {
+                const { error } = await _supabase
+                    .from('products')
+                    .update({ status: newStatus })
+                    .eq('id', productId);
+
+                if (error) throw error;
+                await fetchAllAdminData(true);
+                alert(`Product status changed to ${newStatus}.`);
+            } catch (err) {
+                alert('Error updating product status: ' + err.message);
+            }
+        }
+
+        // ================= 3. COMMISSIONS TABLE =================
+
+        function renderCommissionsTable() {
+            const search = document.getElementById('commSearchInput').value.toLowerCase();
+            const tbody = document.getElementById('commissionsTableBody');
+
+            const filtered = allCommissionsList.filter(c => {
+                return (c.feedback_id || '').toLowerCase().includes(search) || 
+                       (c.recipient_id || '').toLowerCase().includes(search) || 
+                       (c.vendor_id || '').toLowerCase().includes(search);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No commission records found.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(c => `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-3 space-y-0.5">
+                        <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
+                        <p class="text-[10px] text-slate-500 font-mono">${c.id.substring(0,10)}...</p>
+                    </div>
+                    <div class="col-span-3 space-y-0.5">
+                        <p class="text-[10px] text-slate-400 truncate font-mono">V: ${c.vendor_id.substring(0,8)}...</p>
+                        <p class="text-[10px] text-slate-400 truncate font-mono">R: ${c.recipient_id.substring(0,8)}...</p>
+                    </div>
+                    <div class="col-span-2 space-y-0.5">
+                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role}</span>
+                        <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
+                    </div>
+                    <div class="col-span-4 flex items-center justify-end space-x-2">
+                        <span class="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px] font-semibold">${c.status_tag || 'MAIN_QUEUE'}</span>
+                        ${c.receipt_url ? `<span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20"><i class="fa-solid fa-receipt mr-1"></i>Has Proof</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ================= 4. MESSAGES TABLE =================
+
+        function renderMessagesTable() {
+            const tbody = document.getElementById('messagesTableBody');
+            if (allMessagesList.length === 0) {
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No message threads found.</div>`;
+                return;
+            }
+
+            tbody.innerHTML = allMessagesList.map(m => `
+                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                    <div class="col-span-3 space-y-0.5">
+                        <span class="font-bold text-white">Thread ID</span>
+                        <p class="text-[10px] text-slate-500 font-mono">${m.id.substring(0,12)}...</p>
+                    </div>
+                    <div class="col-span-3 space-y-0.5">
+                        <p class="text-[10px] text-slate-400 font-mono truncate">Sender: ${m.sender_id.substring(0,8)}...</p>
+                        <p class="text-[10px] text-slate-400 font-mono truncate">Receiver: ${m.receiver_id.substring(0,8)}...</p>
+                    </div>
+                    <div class="col-span-4">
+                        <p class="text-xs text-slate-200 truncate">${m.message_text}</p>
+                    </div>
+                    <div class="col-span-2 text-right text-[10px] text-slate-500">
+                        ${new Date(m.created_at || Date.now()).toLocaleTimeString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function handleLogout() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            await _supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Initialize admin panel on load
+        initAdminPanel();
     </script>
 </body>
 </html>
