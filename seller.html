@@ -94,7 +94,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-white tracking-tight">Product Catalog Management</h2>
-                    <p class="text-xs text-slate-400">List items for reviewer claims, manage inventory, and view active listings.</p>
+                    <p class="text-xs text-slate-400">List items for reviewer claims, manage inventory, and toggle active listing visibility.</p>
                 </div>
                 <button onclick="openProductModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
                     <i class="fa-solid fa-plus"></i>
@@ -102,11 +102,19 @@
                 </button>
             </div>
 
-            <!-- Catalog Search Bar -->
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex items-center justify-between shadow-md">
-                <div class="relative w-full max-w-md">
+            <!-- Catalog Search & Filter Bar -->
+            <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
+                <div class="relative w-full sm:w-80">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
                     <input type="text" id="catalogSearchInput" oninput="filterCatalog()" placeholder="Search listings by title..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <select id="catalogStatusFilter" onchange="filterCatalog()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2.5 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
+                        <option value="ALL">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="PAUSED">Paused</option>
+                        <option value="OUT_OF_STOCK">Out of Stock</option>
+                    </select>
                 </div>
             </div>
 
@@ -114,8 +122,8 @@
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-4 text-xs text-slate-400 font-semibold">
                     <span class="col-span-6">Product Details & Title</span>
-                    <span class="col-span-4">Category</span>
-                    <span class="col-span-2 text-right">Actions</span>
+                    <span class="col-span-3">Status</span>
+                    <span class="col-span-3 text-right">Visibility & Actions</span>
                 </div>
                 <div id="catalogTableBody" class="divide-y divide-borderSlate">
                     <div class="p-8 text-center text-xs text-slate-400 col-span-full">
@@ -165,10 +173,10 @@
                     </div>
                     <select id="commTypeFilter" onchange="renderCommissionTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
                         <option value="ALL">All Roles / Types</option>
-                        <option value="Reviewer">Reviewer</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Buyer Inviter">Buyer Inviter</option>
-                        <option value="Seller Inviter">Seller Inviter</option>
+                        <option value="REVIEWER">Reviewer</option>
+                        <option value="ADMIN">Admin</option>
+                        <option value="BUYER_INVITER">Buyer Inviter</option>
+                        <option value="SELLER_INVITER">Seller Inviter</option>
                     </select>
                 </div>
                 <div id="tabActionToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
@@ -180,8 +188,8 @@
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
                     <span class="col-span-1 flex items-center space-x-2"><input type="checkbox" id="selectAllComms" onclick="toggleSelectAllComms(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"><span>Select</span></span>
-                    <span class="col-span-3">Review & Feedback ID</span>
-                    <span class="col-span-3">Recipient & PayPal</span>
+                    <span class="col-span-3">Feedback ID</span>
+                    <span class="col-span-3">Recipient ID / Details</span>
                     <span class="col-span-2">Role & Amount</span>
                     <span class="col-span-3 text-right">Status & Action</span>
                 </div>
@@ -195,24 +203,21 @@
 
     <!-- ================= MODALS ================= -->
 
-    <!-- Add Product Modal -->
+    <!-- Add/Edit Product Modal -->
     <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-                <h3 class="text-lg font-bold text-white">List New Product</h3>
+                <h3 id="productModalTitle" class="text-lg font-bold text-white">List New Product</h3>
                 <button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="productForm" onsubmit="saveProduct(event)" class="space-y-4">
+                <input type="hidden" id="editProductId">
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">Product Title</label>
                     <input type="text" id="prodTitle" required placeholder="e.g. Wireless Noise-Cancelling Headphones" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Category</label>
-                    <input type="text" id="prodCategory" required placeholder="Electronics" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Product Image URL / Thumbnail</label>
+                    <label class="text-xs font-semibold text-slate-300">Product Image URL (`image_url`)</label>
                     <input type="url" id="prodImage" required placeholder="https://images.unsplash.com/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
                 <div class="space-y-1">
@@ -237,12 +242,12 @@
             <form id="paymentForm" onsubmit="submitPaymentReceipt(event)" class="space-y-4">
                 <input type="hidden" id="payCommissionId">
                 <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">PayPal Transaction ID</label>
+                    <label class="text-xs font-semibold text-slate-300">PayPal Transaction ID (`paypal_tx_id`)</label>
                     <input type="text" id="payTransactionId" required placeholder="e.g. 9X2948190F39102" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Receipt Screenshot Proof</label>
-                    <input type="file" id="payReceiptFile" required accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
+                    <label class="text-xs font-semibold text-slate-300">Receipt Screenshot URL / Proof (`receipt_url`)</label>
+                    <input type="url" id="payReceiptUrl" required placeholder="https://images.unsplash.com/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
                 <div class="flex items-center justify-end space-x-3 pt-2">
                     <button type="button" onclick="closePaymentModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs font-medium text-slate-300 px-4 py-2.5 rounded-xl transition">Cancel</button>
@@ -270,7 +275,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace & Commissions Engine.</p>
     </footer>
 
-    <!-- Supabase Integration & Workspace Logic -->
+    <!-- Supabase Integration & Defensive Workspace Logic -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -279,23 +284,36 @@
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
+        let currentProfile = null;
         let productsList = [];
         let commissionsList = [];
         let activeCommTab = 'incoming';
         let selectedCommIds = new Set();
 
-        // Initialize Workspace on Load
+        // Rule A: Defensive Auth Initialization on Page Load
         async function initWorkspace() {
-            try {
-                const { data: { session } } = await _supabase.auth.getSession();
-                if (session) {
-                    currentUser = session.user;
-                    const meta = currentUser.user_metadata || {};
-                    document.getElementById('welcomeTitle').textContent = `Welcome back, ${meta.full_name || meta.first_name || 'Vendor'}`;
-                }
-            } catch (err) {
-                console.log('Session check notice:', err);
+            const { data: { session }, error } = await _supabase.auth.getSession();
+
+            if (error || !session) {
+                window.location.href = 'login.html';
+                return;
             }
+
+            currentUser = session.user;
+
+            const { data: profile, error: profileError } = await _supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (profileError || !profile) {
+                console.error("Profile fetch error:", profileError);
+                return;
+            }
+
+            currentProfile = profile;
+            document.getElementById('welcomeTitle').textContent = `Welcome back, ${profile.full_name || 'Vendor'}`;
 
             loadCatalogProducts();
             loadCommissionsData();
@@ -325,7 +343,12 @@
         async function loadCatalogProducts() {
             const tableBody = document.getElementById('catalogTableBody');
             try {
-                const { data, error } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
+                const { data, error } = await _supabase
+                    .from('products')
+                    .select('*')
+                    .eq('vendor_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
                 if (error) throw error;
 
                 productsList = data || [];
@@ -334,7 +357,7 @@
                 tableBody.innerHTML = `
                     <div class="p-8 text-center text-xs text-slate-400 col-span-full">
                         <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-500"></i>
-                        <p>No products found in the catalog. Click "Add New Product" to list items.</p>
+                        <p>No products found in your catalog. Click "Add New Product" to list items.</p>
                     </div>
                 `;
             }
@@ -342,11 +365,14 @@
 
         function filterCatalog() {
             const search = document.getElementById('catalogSearchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('catalogStatusFilter').value;
             const tableBody = document.getElementById('catalogTableBody');
 
             const filtered = productsList.filter(item => {
-                const matchesSearch = (item.title || '').toLowerCase().includes(search) || (item.category || '').toLowerCase().includes(search);
-                return matchesSearch;
+                const matchesSearch = (item.title || '').toLowerCase().includes(search) || (item.description || '').toLowerCase().includes(search);
+                const itemStatus = item.status || 'ACTIVE';
+                const matchesStatus = statusFilter === 'ALL' || itemStatus === statusFilter;
+                return matchesSearch && matchesStatus;
             });
 
             if (filtered.length === 0) {
@@ -361,16 +387,19 @@
             tableBody.innerHTML = filtered.map(item => `
                 <div class="p-4 grid grid-cols-12 gap-4 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
                     <div class="col-span-6 flex items-center space-x-3">
-                        <img src="${item.image || item.image_url || 'https://via.placeholder.com/80'}" alt="Thumb" class="w-12 h-12 rounded-xl object-cover border border-borderSlate">
+                        <img src="${item.image_url || 'https://via.placeholder.com/80'}" alt="Thumb" class="w-12 h-12 rounded-xl object-cover border border-borderSlate">
                         <div class="space-y-0.5">
                             <p class="font-bold text-white">${item.title}</p>
                             <p class="text-[10px] text-slate-400 truncate max-w-sm">${item.description || ''}</p>
                         </div>
                     </div>
-                    <div class="col-span-4 text-slate-400 font-medium">
-                        ${item.category || 'General'}
+                    <div class="col-span-3">
+                        <span class="px-2.5 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px] font-semibold">${item.status || 'ACTIVE'}</span>
                     </div>
-                    <div class="col-span-2 flex items-center justify-end space-x-2">
+                    <div class="col-span-3 flex items-center justify-end space-x-2">
+                        <button onclick="toggleProductStatus('${item.id}', '${item.status === 'PAUSED' ? 'ACTIVE' : 'PAUSED'}')" class="p-2 bg-darkBg hover:bg-slate-800 border border-borderSlate rounded-lg text-slate-300 transition" title="Toggle Status">
+                            <i class="fa-solid fa-power-off text-[10px]"></i>
+                        </button>
                         <button onclick="deleteProduct('${item.id}')" class="p-2 bg-darkBg hover:bg-rose-500/20 border border-borderSlate hover:border-rose-500/40 text-slate-400 hover:text-rose-400 rounded-lg transition" title="Delete Product">
                             <i class="fa-solid fa-trash text-[10px]"></i>
                         </button>
@@ -391,13 +420,12 @@
         async function saveProduct(e) {
             e.preventDefault();
             const title = document.getElementById('prodTitle').value.trim();
-            const category = document.getElementById('prodCategory').value.trim();
-            const image = document.getElementById('prodImage').value.trim();
+            const image_url = document.getElementById('prodImage').value.trim();
             const description = document.getElementById('prodDescription').value.trim();
 
             try {
                 const { error } = await _supabase.from('products').insert([{
-                    title, category, image, description, vendor_id: currentUser ? currentUser.id : 'demo-vendor'
+                    title, image_url, description, status: 'ACTIVE', vendor_id: currentUser.id
                 }]);
 
                 if (error) throw error;
@@ -406,7 +434,17 @@
                 loadCatalogProducts();
                 alert('Product listed successfully.');
             } catch (err) {
-                alert('Error saving product: ' + (err.message || 'Check database table permissions.'));
+                alert('Error saving product: ' + (err.message || 'Check database table schema & RLS policies.'));
+            }
+        }
+
+        async function toggleProductStatus(id, newStatus) {
+            try {
+                const { error } = await _supabase.from('products').update({ status: newStatus }).eq('id', id);
+                if (error) throw error;
+                loadCatalogProducts();
+            } catch (err) {
+                alert('Error updating status: ' + err.message);
             }
         }
 
@@ -424,20 +462,17 @@
         // ================= COMMISSIONS DASHBOARD =================
 
         async function loadCommissionsData() {
-            commissionsList = [
-                { id: 'COM-9012', feedback_id: 'FB-4412', title: 'Smart Watch Series 7', amazon_link: 'https://amazon.com', recipient_name: 'Sarah Jenkins', recipient_email: 'sarah@example.com', role: 'Reviewer', amount: 15.00, status: 'INCOMING', date: '2026-09-24', review_img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30' },
-                { id: 'COM-9013', feedback_id: 'FB-4413', title: 'Wireless Earbuds Pro', amazon_link: 'https://amazon.com', recipient_name: 'Marcus Vance', recipient_email: 'marcus@example.com', role: 'Reviewer', amount: 20.00, status: 'MAIN_QUEUE', date: '2026-09-23', review_img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e' },
-                { id: 'COM-9014', feedback_id: 'FB-4414', title: 'Mechanical Gaming Keyboard', amazon_link: 'https://amazon.com', recipient_name: 'Platform Admin', recipient_email: 'admin@echohub.com', role: 'Admin', amount: 7.50, status: 'WORKING_QUEUE', date: '2026-09-22', review_img: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3' },
-                { id: 'COM-9015', feedback_id: 'FB-4415', title: 'Ultra HD Action Camera', amazon_link: 'https://amazon.com', recipient_name: 'Elena Rostova', recipient_email: 'elena@example.com', role: 'Buyer Inviter', amount: 5.25, status: 'PAYMENT_HISTORY', date: '2026-09-20', review_img: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f', transaction_id: 'PP-TXN-8829104', receipt_img: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c' }
-            ];
-
             try {
-                const { data, error } = await _supabase.from('commissions').select('*');
-                if (!error && data && data.length > 0) {
-                    commissionsList = data;
-                }
+                const { data, error } = await _supabase
+                    .from('commissions')
+                    .select('*')
+                    .eq('vendor_id', currentUser.id);
+
+                if (error) throw error;
+                commissionsList = data || [];
             } catch (err) {
-                console.log('Using simulated commissions dataset.');
+                console.log('Using fallback local commissions state dataset.');
+                commissionsList = [];
             }
 
             updateCommissionStats();
@@ -467,7 +502,7 @@
             let collectedSum = 0;
 
             commissionsList.forEach(c => {
-                if (c.status === 'PAYMENT_HISTORY' || c.status === 'COMPLETED_PAID') {
+                if (c.status_tag === 'COMPLETED_PAID') {
                     collectedSum += Number(c.amount || 0);
                 } else {
                     pendingSum += Number(c.amount || 0);
@@ -485,43 +520,43 @@
             const typeFilter = document.getElementById('commTypeFilter').value;
 
             const filtered = commissionsList.filter(c => {
-                const matchesSearch = (c.recipient_email || '').toLowerCase().includes(search) || 
-                                      (c.recipient_name || '').toLowerCase().includes(search) || 
-                                      (c.feedback_id || '').toLowerCase().includes(search) ||
+                const matchesSearch = (c.recipient_id || '').toLowerCase().includes(search) || 
+                                      (c.feedback_id || '').toLowerCase().includes(search) || 
                                       (c.id || '').toLowerCase().includes(search);
-                const matchesType = typeFilter === 'ALL' || c.role === typeFilter;
+                const matchesType = typeFilter === 'ALL' || c.recipient_role === typeFilter;
 
                 let matchesTab = false;
-                if (activeCommTab === 'incoming') matchesTab = c.status === 'INCOMING';
-                else if (activeCommTab === 'outgoing') matchesTab = c.status === 'OUTGOING';
-                else if (activeCommTab === 'mainQueue') matchesTab = c.status === 'MAIN_QUEUE' || !c.status;
-                else if (activeCommTab === 'workingQueue') matchesTab = c.status === 'WORKING_QUEUE';
-                else if (activeCommTab === 'paymentHistory') matchesTab = c.status === 'PAYMENT_HISTORY' || c.status === 'COMPLETED_PAID';
+                if (activeCommTab === 'incoming') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
+                else if (activeCommTab === 'outgoing') matchesTab = c.status_tag === 'OFFERED_BY_VENDOR' || c.status_tag === 'MAIN_QUEUE';
+                else if (activeCommTab === 'mainQueue') matchesTab = c.status_tag === 'MAIN_QUEUE' || !c.status_tag;
+                else if (activeCommTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
+                else if (activeCommTab === 'paymentHistory') matchesTab = c.status_tag === 'COMPLETED_PAID';
 
                 return matchesSearch && matchesType && matchesTab;
             });
 
+            // Rule D: Action toolbar configuration
             if (activeCommTab === 'incoming') {
                 toolbar.innerHTML = `
-                    <button onclick="batchApproveIncoming()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected
+                    <button onclick="batchUpdateStatus('APPROVED_IN_WORKING')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected to Working Queue
                     </button>
                 `;
             } else if (activeCommTab === 'mainQueue') {
                 toolbar.innerHTML = `
-                    <button onclick="batchSendRequests()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request to Recipient
+                    <button onclick="batchUpdateStatus('OFFERED_BY_VENDOR')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request
                     </button>
                 `;
             } else {
-                toolbar.innerHTML = `<span class="text-xs text-slate-400">Showing records for ${activeCommTab}</span>`;
+                toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Viewing Tab: ${activeCommTab}</span>`;
             }
 
             if (filtered.length === 0) {
                 tableBody.innerHTML = `
                     <div class="p-8 text-center text-xs text-slate-400 col-span-full">
                         <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
-                        <p>No commission records found in this view.</p>
+                        <p>No records found in this view.</p>
                     </div>
                 `;
                 return;
@@ -533,23 +568,15 @@
                         <input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
                     </div>
                     <div class="col-span-3 space-y-0.5">
-                        <div class="flex items-center space-x-2">
-                            <a href="${c.review_img || '#'}" target="_blank" class="w-8 h-8 rounded-lg overflow-hidden border border-borderSlate flex-shrink-0">
-                                <img src="${c.review_img || 'https://via.placeholder.com/40'}" class="w-full h-full object-cover" title="View Review Screenshot">
-                            </a>
-                            <div>
-                                <p class="font-bold text-white truncate max-w-[150px]">${c.title || 'Product Review'}</p>
-                                <a href="${c.amazon_link || '#'}" target="_blank" class="text-[10px] text-blue-400 hover:underline">Amazon Link <i class="fa-solid fa-external-link text-[8px]"></i></a>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-slate-500">ID: ${c.feedback_id || c.id}</p>
+                        <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
+                        <p class="text-[10px] text-slate-500 font-mono">ID: ${c.id.substring(0,8)}...</p>
                     </div>
                     <div class="col-span-3 space-y-0.5">
-                        <p class="font-semibold text-slate-200">${c.recipient_name || 'Recipient'}</p>
-                        <p class="text-[10px] text-slate-400 truncate">${c.recipient_email || 'No Email'}</p>
+                        <p class="font-semibold text-slate-200 truncate">Recipient UUID</p>
+                        <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_id}</p>
                     </div>
                     <div class="col-span-2 space-y-0.5">
-                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role || 'Reviewer'}</span>
+                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role}</span>
                         <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
                     </div>
                     <div class="col-span-3 flex items-center justify-end space-x-2">
@@ -562,7 +589,7 @@
                                 <i class="fa-solid fa-receipt mr-1 text-purple-400"></i> View Receipt
                             </button>
                         ` : `
-                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.status || 'Active'}</span>
+                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.status_tag || 'MAIN_QUEUE'}</span>
                         `}
                     </div>
                 </div>
@@ -589,49 +616,28 @@
             });
         }
 
-        async function batchApproveIncoming() {
+        // Rule D: Non-Destructive Status Transition Updates
+        async function batchUpdateStatus(newStatusTag) {
             if (selectedCommIds.size === 0) {
-                alert('Please select at least one incoming commission request to approve.');
+                alert('Please select at least one record.');
                 return;
             }
 
             try {
-                commissionsList = commissionsList.map(c => {
-                    if (selectedCommIds.has(c.id)) {
-                        c.status = 'WORKING_QUEUE';
-                    }
-                    return c;
-                });
+                for (const id of selectedCommIds) {
+                    const { error } = await _supabase
+                        .from('commissions')
+                        .update({ status_tag: newStatusTag })
+                        .eq('id', id);
+
+                    if (error) throw error;
+                }
 
                 selectedCommIds.clear();
-                updateCommissionStats();
-                renderCommissionTable();
-                alert('Selected commissions approved and moved to Working Queue.');
+                await loadCommissionsData();
+                alert('Selected commission records successfully updated.');
             } catch (err) {
-                alert('Error approving records: ' + err.message);
-            }
-        }
-
-        async function batchSendRequests() {
-            if (selectedCommIds.size === 0) {
-                alert('Please select commissions from Main Queue to send out requests.');
-                return;
-            }
-
-            try {
-                commissionsList = commissionsList.map(c => {
-                    if (selectedCommIds.has(c.id)) {
-                        c.status = 'OUTGOING';
-                    }
-                    return c;
-                });
-
-                selectedCommIds.clear();
-                updateCommissionStats();
-                renderCommissionTable();
-                alert('Requests successfully dispatched to recipients.');
-            } catch (err) {
-                alert('Error dispatching requests: ' + err.message);
+                alert('Action failed: ' + err.message);
             }
         }
 
@@ -648,22 +654,25 @@
         async function submitPaymentReceipt(e) {
             e.preventDefault();
             const id = document.getElementById('payCommissionId').value;
-            const txnId = document.getElementById('payTransactionId').value.trim();
+            const paypal_tx_id = document.getElementById('payTransactionId').value.trim();
+            const receipt_url = document.getElementById('payReceiptUrl').value.trim();
 
             try {
-                commissionsList = commissionsList.map(c => {
-                    if (c.id === id) {
-                        c.status = 'PAYMENT_HISTORY';
-                        c.transaction_id = txnId;
-                        c.receipt_img = 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c';
-                    }
-                    return c;
-                });
+                // Rule D: Non-destructive status update to COMPLETED_PAID
+                const { error } = await _supabase
+                    .from('commissions')
+                    .update({
+                        status_tag: 'COMPLETED_PAID',
+                        paypal_tx_id: paypal_tx_id,
+                        receipt_url: receipt_url
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
 
                 closePaymentModal();
-                updateCommissionStats();
-                renderCommissionTable();
-                alert('Payment receipt successfully uploaded and transaction completed.');
+                await loadCommissionsData();
+                alert('Payment receipt uploaded and record moved to Payment History.');
             } catch (err) {
                 alert('Error processing payment proof: ' + err.message);
             }
@@ -681,20 +690,20 @@
                         <span class="font-bold text-white">${record.id}</span>
                     </div>
                     <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">Recipient:</span>
-                        <span class="font-bold text-white">${record.recipient_name} (${record.recipient_email})</span>
+                        <span class="text-slate-400">Recipient UUID:</span>
+                        <span class="font-mono text-white">${record.recipient_id}</span>
                     </div>
                     <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">Amount Paid:</span>
+                        <span class="text-slate-400">Amount Disbursed:</span>
                         <span class="font-bold text-emerald-400">$${Number(record.amount).toFixed(2)} USD</span>
                     </div>
                     <div class="flex justify-between border-b border-borderSlate pb-2">
                         <span class="text-slate-400">PayPal Transaction ID:</span>
-                        <span class="font-mono text-blue-400">${record.transaction_id || 'PP-TXN-9982104'}</span>
+                        <span class="font-mono text-blue-400">${record.paypal_tx_id || 'N/A'}</span>
                     </div>
                     <div class="space-y-1 pt-2">
-                        <span class="text-slate-400">Receipt Screenshot:</span>
-                        <img src="${record.receipt_img || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
+                        <span class="text-slate-400">Receipt Proof Image:</span>
+                        <img src="${record.receipt_url || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
                     </div>
                 </div>
             `;
@@ -706,6 +715,7 @@
             window.location.href = 'login.html';
         }
 
+        // Initialize application workspace on load
         initWorkspace();
     </script>
 </body>
