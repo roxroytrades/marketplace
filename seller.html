@@ -120,9 +120,8 @@
             <!-- Products Grid Table -->
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-4 text-xs text-slate-400 font-semibold">
-                    <span class="col-span-5">Product Details & Title</span>
-                    <span class="col-span-2">Category</span>
-                    <span class="col-span-2">Reward / Commission</span>
+                    <span class="col-span-6">Product Details & Title</span>
+                    <span class="col-span-3">Category</span>
                     <span class="col-span-3 text-right">Visibility & Actions</span>
                 </div>
                 <div id="catalogTableBody" class="divide-y divide-borderSlate">
@@ -138,7 +137,7 @@
         <div id="commissionsSection" class="space-y-6 hidden">
             <div class="space-y-1">
                 <h2 class="text-lg font-bold text-white tracking-tight">Seller Commissions Dashboard</h2>
-                <p class="text-xs text-slate-400">Process payout requests, review split records, and settle transfers with transaction receipts[cite: 2].</p>
+                <p class="text-xs text-slate-400">Process payout requests, review split records, and settle transfers with transaction receipts.</p>
             </div>
 
             <!-- Summary Balance Cards -->
@@ -216,15 +215,9 @@
                     <label class="text-xs font-semibold text-slate-300">Product Title</label>
                     <input type="text" id="prodTitle" required placeholder="e.g. Wireless Noise-Cancelling Headphones" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Category</label>
-                        <input type="text" id="prodCategory" required placeholder="Electronics" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-300">Commission Reward ($ USD)</label>
-                        <input type="number" id="prodReward" required min="5.00" step="0.01" value="15.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Category</label>
+                    <input type="text" id="prodCategory" required placeholder="Electronics" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">Product Image URL / Thumbnail</label>
@@ -378,18 +371,15 @@
 
             tableBody.innerHTML = filtered.map(item => `
                 <div class="p-4 grid grid-cols-12 gap-4 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-                    <div class="col-span-5 flex items-center space-x-3">
+                    <div class="col-span-6 flex items-center space-x-3">
                         <img src="${item.image || item.image_url || 'https://via.placeholder.com/80'}" alt="Thumb" class="w-12 h-12 rounded-xl object-cover border border-borderSlate">
                         <div class="space-y-0.5">
                             <p class="font-bold text-white">${item.title}</p>
-                            <p class="text-[10px] text-slate-400 truncate max-w-xs">${item.description || ''}</p>
+                            <p class="text-[10px] text-slate-400 truncate max-w-sm">${item.description || ''}</p>
                         </div>
                     </div>
-                    <div class="col-span-2 text-slate-400 font-medium">
+                    <div class="col-span-3 text-slate-400 font-medium">
                         ${item.category || 'General'}
-                    </div>
-                    <div class="col-span-2 text-emerald-400 font-bold">
-                        $${item.reward || item.commission || '15.00'}
                     </div>
                     <div class="col-span-3 flex items-center justify-end space-x-2">
                         <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${item.status || 'ACTIVE'}</span>
@@ -419,13 +409,12 @@
             e.preventDefault();
             const title = document.getElementById('prodTitle').value.trim();
             const category = document.getElementById('prodCategory').value.trim();
-            const reward = parseFloat(document.getElementById('prodReward').value);
             const image = document.getElementById('prodImage').value.trim();
             const description = document.getElementById('prodDescription').value.trim();
 
             try {
                 const { error } = await _supabase.from('products').insert([{
-                    title, category, reward, image, description, status: 'ACTIVE', vendor_id: currentUser ? currentUser.id : 'demo-vendor'
+                    title, category, image, description, status: 'ACTIVE', vendor_id: currentUser ? currentUser.id : 'demo-vendor'
                 }]);
 
                 if (error) throw error;
@@ -462,7 +451,6 @@
         // ================= COMMISSIONS DASHBOARD =================
 
         async function loadCommissionsData() {
-            // Simulated robust commission records mapping the 5-tab lifecycle
             commissionsList = [
                 { id: 'COM-9012', feedback_id: 'FB-4412', title: 'Smart Watch Series 7', amazon_link: 'https://amazon.com', recipient_name: 'Sarah Jenkins', recipient_email: 'sarah@example.com', role: 'Reviewer', amount: 15.00, status: 'INCOMING', date: '2026-09-24', review_img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30' },
                 { id: 'COM-9013', feedback_id: 'FB-4413', title: 'Wireless Earbuds Pro', amazon_link: 'https://amazon.com', recipient_name: 'Marcus Vance', recipient_email: 'marcus@example.com', role: 'Reviewer', amount: 20.00, status: 'MAIN_QUEUE', date: '2026-09-23', review_img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e' },
@@ -488,7 +476,6 @@
             selectedCommIds.clear();
             document.getElementById('selectAllComms').checked = false;
 
-            // Update tab button styles
             const tabs = ['incoming', 'outgoing', 'mainQueue', 'workingQueue', 'paymentHistory'];
             tabs.forEach(t => {
                 const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
@@ -524,7 +511,6 @@
             const search = document.getElementById('commSearchInput').value.toLowerCase();
             const typeFilter = document.getElementById('commTypeFilter').value;
 
-            // Filter data by active tab and search criteria
             const filtered = commissionsList.filter(c => {
                 const matchesSearch = (c.recipient_email || '').toLowerCase().includes(search) || 
                                       (c.recipient_name || '').toLowerCase().includes(search) || 
@@ -542,7 +528,6 @@
                 return matchesSearch && matchesType && matchesTab;
             });
 
-            // Render toolbar action buttons based on active tab
             if (activeCommTab === 'incoming') {
                 toolbar.innerHTML = `
                     <button onclick="batchApproveIncoming()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
@@ -562,7 +547,7 @@
             if (filtered.length === 0) {
                 tableBody.innerHTML = `
                     <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                        <i class="fa-solid folder-open text-2xl mb-2 text-slate-500"></i>
+                        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
                         <p>No commission records found in this view.</p>
                     </div>
                 `;
@@ -748,7 +733,6 @@
             window.location.href = 'login.html';
         }
 
-        // Initialize on load
         initWorkspace();
     </script>
 </body>
