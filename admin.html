@@ -127,7 +127,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-white tracking-tight">User Accounts & National ID Verification</h2>
-                    <p class="text-xs text-slate-400">Review uploaded identification documents and approve or reject user verification status.</p>
+                    <p class="text-xs text-slate-400">Review uploaded identification documents on-demand and approve or reject user verification status.</p>
                 </div>
                 <div class="relative w-full sm:w-72">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
@@ -233,7 +233,7 @@
                 <button type="button" onclick="closeIdModal()" class="text-slate-400 hover:text-white transition cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="idModalContent" class="space-y-4">
-                <!-- Populated dynamically -->
+                <!-- Populated dynamically on-demand -->
             </div>
             <div class="flex justify-end pt-2 border-t border-borderSlate">
                 <button type="button" onclick="closeIdModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer">Close Preview</button>
@@ -278,10 +278,10 @@
 
         async function fetchAllAdminData(isPolling = false) {
             try {
-                // Fetch Profiles using Supabase SDK
+                // Bug Risk 1.1 Fix: Light Query for Admin Accounts Table (Excludes multi-megabyte national_id_base64 string)
                 const { data: profiles, error: profErr } = await supabaseClient
                     .from('profiles')
-                    .select('*')
+                    .select('id, full_name, email, role, verification_status, created_at')
                     .order('created_at', { ascending: false });
                 if (!profErr && profiles) allUsersList = profiles;
 
@@ -378,9 +378,8 @@
 
             tbody.innerHTML = filtered.map(u => {
                 const safeName = (u.full_name || 'User').replace(/'/g, "\\'");
-                const idButtonHtml = u.national_id_url 
-                    ? `<button type="button" onclick="previewNationalID('${safeName}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1 cursor-pointer"><i class="fa-solid fa-id-card text-rose-400"></i><span>View ID</span></button>`
-                    : `<span class="text-[10px] text-slate-500 italic">No ID uploaded</span>`;
+                // Bug Risk 1.1 Fix: Trigger on-demand modal fetch using user ID instead of embedding heavy Base64 strings in the list HTML
+                const idButtonHtml = `<button type="button" onclick="previewNationalID('${u.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1 cursor-pointer"><i class="fa-solid fa-id-card text-rose-400"></i><span>View ID</span></button>`;
 
                 return `
                 <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
@@ -420,21 +419,35 @@
             }
         }
 
-        function previewNationalID(fullName, url) {
+        // Bug Risk 1.1 Fix: On-Demand Fetch for Modal Preview Only
+        async function previewNationalID(userId) {
             const modal = document.getElementById('idPreviewModal');
             const content = document.getElementById('idModalContent');
             if (!modal || !content) return;
 
+            content.innerHTML = `<div class="p-6 text-center text-xs text-slate-400">Loading National ID document on-demand...</div>`;
+            modal.classList.remove('hidden');
+
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('full_name, national_id_base64')
+                .eq('id', userId)
+                .single();
+
+            if (error || !data || !data.national_id_base64) {
+                content.innerHTML = `<div class="p-6 text-center text-xs text-rose-400">Unable to load ID document or none uploaded for this user.</div>`;
+                return;
+            }
+
             content.innerHTML = `
                 <div class="space-y-3 text-xs text-slate-300">
-                    <p class="font-bold text-white text-sm">Account: ${fullName}</p>
+                    <p class="font-bold text-white text-sm">Account: ${data.full_name || 'User'}</p>
                     <div class="border border-borderSlate rounded-2xl overflow-hidden bg-darkBg p-2 flex items-center justify-center">
-                        <img src="${url}" class="w-full h-auto max-h-96 object-contain rounded-xl" alt="National ID Proof">
+                        <img src="${data.national_id_base64}" class="w-full h-auto max-h-96 object-contain rounded-xl" alt="National ID Proof">
                     </div>
-                    <p class="text-[10px] text-slate-400 break-all font-mono">Source URL: ${url}</p>
+                    <p class="text-[10px] text-slate-400 break-all font-mono">Payload: Base64 Data URL loaded successfully</p>
                 </div>
             `;
-            modal.classList.remove('hidden');
         }
 
         function closeIdModal() {
