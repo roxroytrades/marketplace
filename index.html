@@ -67,7 +67,7 @@
         </div>
     </header>
 
-    <!-- Verification Banner Warning (Rule B) -->
+    <!-- Verification Banner Warning -->
     <div id="verificationBanner" class="bg-amber-500/10 border-b border-amber-500/20 px-6 py-3 text-center text-xs text-amber-300 hidden">
         <i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account is currently <strong>pending verification</strong>. Interactive features (Inquire, Submit Review, Request Payout) will unlock once your National ID is reviewed and approved by an administrator.
     </div>
@@ -246,7 +246,7 @@
 
             currentProfile = profile;
             
-            // Extract first name from full_name if available
+            // Extract the user's name from profile and set the personalized welcome greeting
             const fullName = (profile.full_name || '').trim();
             const firstName = fullName ? fullName.split(' ')[0] : 'Shopper';
             document.getElementById('welcomeTitle').textContent = `Welcome back, ${firstName}!`;
