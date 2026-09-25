@@ -45,6 +45,14 @@
         </div>
         
         <div class="flex items-center space-x-4">
+            <!-- Logged-in User Badge -->
+            <div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
+                <div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
+                    <i class="fa-solid fa-user text-[10px]"></i>
+                </div>
+                <span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
+            </div>
+
             <!-- Portals Dropdown -->
             <div class="relative group">
                 <button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
@@ -218,7 +226,7 @@
         let selectedCommIds = new Set();
         let pollingInterval = null;
 
-        // Safe workspace initialization without client-side profile upserts
+        // Initialize workspace & header user metadata display
         async function initShopperWorkspace() {
             const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
 
@@ -229,33 +237,35 @@
 
             currentUser = session.user;
 
-            // Safely fetch profile record (bypassing any write operations)
+            // Extract display name instantly from Auth Metadata or fallback to email handle
+            const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+            const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+            // Update Header & Welcome Banner with User's Name
+            document.getElementById('headerUserName').textContent = fullName;
+            document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
+
+            // Read role & verification status safely without write queries
             let userRole = 'buyer';
             let verificationStatus = 'VERIFIED';
-            let fullName = currentUser.email.split('@')[0];
 
             try {
                 const { data: profile } = await _supabase
                     .from('profiles')
-                    .select('*')
+                    .select('role, verification_status')
                     .eq('id', currentUser.id)
                     .maybeSingle();
 
                 if (profile) {
                     if (profile.role) userRole = profile.role;
                     if (profile.verification_status) verificationStatus = profile.verification_status;
-                    if (profile.full_name) fullName = profile.full_name;
                 }
             } catch (err) {
-                console.warn("Profile fetch skipped, using default session metadata.");
+                console.warn("Profile read skipped, using session defaults.");
             }
 
             currentProfile = { role: userRole, verification_status: verificationStatus, full_name: fullName };
             
-            // Set personalized greeting
-            const firstName = fullName.trim().split(' ')[0] || 'Shopper';
-            document.getElementById('welcomeTitle').textContent = `Welcome back, ${firstName}!`;
-
             applyBuyerVerificationLock(currentProfile);
 
             await loadMarketplaceProducts();
