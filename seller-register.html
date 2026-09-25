@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Vendor Registration</title>
+    <title>Echo Hub - Vendor & Seller Registration</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,79 +35,130 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Bar -->
+    <!-- Top Bar (Private Invite Gateway - Excludes Role Switching Dropdown) -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
                 eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Signup</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal Invite</span></span>
         </div>
         
         <div class="flex items-center space-x-3">
-            <a href="seller.html" class="text-xs text-slate-400 hover:text-white transition flex items-center space-x-1">
-                <i class="fa-solid fa-arrow-left"></i><span>Back to Vendor Portal</span>
+            <a href="login.html" class="text-xs text-slate-400 hover:text-white transition flex items-center space-x-1">
+                <i class="fa-solid fa-arrow-left"></i><span>Back to Sign In</span>
             </a>
         </div>
     </header>
 
     <!-- Main Registration Container -->
     <main class="flex-1 flex items-center justify-center px-4 py-12">
-        <div class="max-w-md w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
+        <div class="max-w-xl w-full bg-cardBg border border-borderSlate rounded-3xl shadow-2xl p-8 md:p-10 space-y-6">
             
-            <!-- Header Branding inside Card -->
+            <!-- Header Branding & Page Title Specification -->
             <div class="text-center space-y-2">
-                <div class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-2 font-heading font-bold text-2xl">
+                <div class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-1 font-heading font-bold text-2xl">
                     eh
                 </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Create Vendor Account</h1>
-                <p class="text-xs text-slate-400">Register your brand to manage review campaigns, list products, and scale your marketplace sales.</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Create Account</h1>
+                <p class="text-xs text-slate-400">Set up your Echo Hub marketplace account to manage inventory and campaigns.</p>
             </div>
 
             <!-- Feedback Alert Box -->
             <div id="formAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
 
-            <!-- Registration Form -->
+            <!-- Detailed Vendor Registration Form -->
             <form id="sellerRegisterForm" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Company / Store Name</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-store text-xs"></i></span>
-                        <input type="text" id="companyName" required placeholder="Echo Ventures LLC" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                
+                <!-- First Name & Last Name (Side by side grid) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-300">First Name</label>
+                        <input type="text" id="firstName" required placeholder="Roxroy" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-300">Last Name</label>
+                        <input type="text" id="lastName" required placeholder="Gough" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
+                <!-- Vendor Type Selection (Radio Group) -->
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-300">Vendor Type</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 p-3 bg-darkBg border border-borderSlate rounded-xl cursor-pointer hover:border-accentBlue transition">
+                            <input type="radio" name="vendorType" value="UPFRONT" checked class="text-blue-600 focus:ring-0">
+                            <span class="text-xs text-slate-200 font-medium">UPFRONT</span>
+                        </label>
+                        <label class="flex items-center space-x-2 p-3 bg-darkBg border border-borderSlate rounded-xl cursor-pointer hover:border-accentBlue transition">
+                            <input type="radio" name="vendorType" value="REFUND_AFTER_REVIEW" class="text-blue-600 focus:ring-0">
+                            <span class="text-xs text-slate-200 font-medium">REFUND AFTER REVIEW</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Commission Amount (USD) -->
                 <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Business Email Address</label>
+                    <label class="text-xs font-semibold text-slate-300">Commission Amount (USD)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-dollar-sign text-xs"></i></span>
+                        <input type="number" id="commissionAmount" required min="5.00" step="0.01" value="15.00" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                    <p class="text-[10px] text-slate-500 pl-1">Enforced minimum of $5.00 USD per review.</p>
+                </div>
+
+                <!-- What will you be interested in offering? (Business & Product Description) -->
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">What will you be interested in offering?</label>
+                    <textarea id="businessDescription" required rows="3" placeholder="Describe your business, brand catalog, and products..." class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition resize-none"></textarea>
+                </div>
+
+                <!-- Referral Code (Optional) -->
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Referral Code <span class="text-slate-500 font-normal">(Optional)</span></label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-ticket text-xs"></i></span>
+                        <input type="text" id="referralCode" placeholder="REF-XXXXX" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                </div>
+
+                <!-- PayPal Email for Billing and Transfers -->
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">PayPal Email (Billing & Transfers)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-brands fa-paypal text-xs"></i></span>
+                        <input type="email" id="paypalEmail" required placeholder="billing@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    </div>
+                </div>
+
+                <!-- Account Email -->
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Account Email (Vendor Portal Login)</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
-                        <input type="email" id="email" required placeholder="vendor@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <input type="email" id="accountEmail" required placeholder="vendor@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
+                <!-- Password -->
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">Password</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
                         <input type="password" id="password" required minlength="6" placeholder="••••••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
-                    <p class="text-[10px] text-slate-500 pl-1">Must be at least 6 characters long.</p>
                 </div>
 
-                <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-2">
-                    <span>Create Vendor Account</span>
+                <!-- Primary Action Button -->
+                <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3.5 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-4">
+                    <span>Complete Registration</span>
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </button>
             </form>
 
-            <div class="relative flex py-2 items-center">
-                <div class="flex-grow border-t border-borderSlate"></div>
-                <span class="flex-shrink mx-4 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Secure Portal</span>
-                <div class="flex-grow border-t border-borderSlate"></div>
-            </div>
-
+            <!-- Footer Navigation: Already have an account? Sign in -->
             <p class="text-center text-xs text-slate-400 pt-2">
-                Already registered as a vendor? <a href="seller.html" class="text-accentBlue font-semibold hover:underline">Sign in</a>
+                Already have an account? <a href="login.html" class="text-accentBlue font-semibold hover:underline">Sign in</a>
             </p>
 
         </div>
@@ -115,7 +166,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Secure Vendor Registration Portal.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Vendor Portal Registration Gateway.</p>
     </footer>
 
     <!-- Supabase Integration Script -->
@@ -133,22 +184,43 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const companyName = document.getElementById('companyName').value.trim();
-            const email = document.getElementById('email').value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const vendorType = document.querySelector('input[name="vendorType"]:checked').value;
+            const commissionAmount = parseFloat(document.getElementById('commissionAmount').value);
+            const businessDescription = document.getElementById('businessDescription').value.trim();
+            const referralCode = document.getElementById('referralCode').value.trim();
+            const paypalEmail = document.getElementById('paypalEmail').value.trim();
+            const email = document.getElementById('accountEmail').value.trim();
             const password = document.getElementById('password').value;
+
+            if (commissionAmount < 5.00) {
+                alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                alertBox.textContent = 'Commission amount must be at least $5.00 USD.';
+                alertBox.classList.remove('hidden');
+                return;
+            }
 
             // UI Loading state
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Registering Vendor...';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating vendor profile...';
             alertBox.classList.add('hidden');
 
             try {
+                // Register vendor with Supabase Auth including complete metadata
                 const { data, error } = await _supabase.auth.signUp({
                     email: email,
                     password: password,
                     options: {
                         data: {
-                            company_name: companyName,
+                            first_name: firstName,
+                            last_name: lastName,
+                            full_name: `${firstName} ${lastName}`,
+                            vendor_type: vendorType,
+                            commission_amount: commissionAmount,
+                            business_description: businessDescription,
+                            referral_code: referralCode || null,
+                            paypal_email: paypalEmail,
                             role: 'seller'
                         }
                     }
@@ -156,14 +228,23 @@
 
                 if (error) throw error;
 
+                // Automatically sign them in since email verification is disabled
+                const { error: loginError } = await _supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (loginError) throw loginError;
+
                 // Success State
                 alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-                alertBox.textContent = 'Vendor account created successfully! Redirecting to login portal...';
+                alertBox.textContent = 'Vendor profile created successfully! Unlocking workspace...';
                 alertBox.classList.remove('hidden');
 
+                // Redirect to seller.html workspace
                 setTimeout(() => {
                     window.location.href = 'seller.html';
-                }, 1500);
+                }, 1200);
 
             } catch (err) {
                 // Error State
@@ -172,7 +253,7 @@
                 alertBox.classList.remove('hidden');
                 
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<span>Create Vendor Account</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>';
+                submitBtn.innerHTML = '<span>Complete Registration</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>';
             }
         });
     </script>
