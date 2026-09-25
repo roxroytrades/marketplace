@@ -63,7 +63,7 @@
             </div>
 
             <!-- Logout Button -->
-            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
+            <button onclick="window.handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <span>Sign Out</span>
             </button>
@@ -114,10 +114,10 @@
 
         <!-- Admin Navigation Tabs -->
         <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-            <button onclick="switchAdminTab('accounts')" id="tabAccounts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2"><i class="fa-solid fa-users"></i><span>Accounts & Verification</span></button>
-            <button onclick="switchAdminTab('products')" id="tabProducts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-store"></i><span>Product Catalog</span></button>
-            <button onclick="switchAdminTab('commissions')" id="tabCommissions" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-wallet"></i><span>Master Commissions Ledger</span></button>
-            <button onclick="switchAdminTab('messages')" id="tabMessages" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Messaging Threads</span></button>
+            <button onclick="window.switchAdminTab('accounts')" id="tabAccounts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2"><i class="fa-solid fa-users"></i><span>Accounts & Verification</span></button>
+            <button onclick="window.switchAdminTab('products')" id="tabProducts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-store"></i><span>Product Catalog</span></button>
+            <button onclick="window.switchAdminTab('commissions')" id="tabCommissions" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-wallet"></i><span>Master Commissions Ledger</span></button>
+            <button onclick="window.switchAdminTab('messages')" id="tabMessages" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Messaging Threads</span></button>
         </div>
 
         <!-- ================= TAB CONTENT SECTIONS ================= -->
@@ -131,7 +131,7 @@
                 </div>
                 <div class="relative w-full sm:w-72">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                    <input type="text" id="accountSearchInput" oninput="renderAccountsTable()" placeholder="Search by name, email, role..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                    <input type="text" id="accountSearchInput" oninput="window.renderAccountsTable()" placeholder="Search by name, email, role..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
                 </div>
             </div>
 
@@ -158,7 +158,7 @@
                 </div>
                 <div class="relative w-full sm:w-72">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                    <input type="text" id="productSearchInput" oninput="renderProductsTable()" placeholder="Search product title..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                    <input type="text" id="productSearchInput" oninput="window.renderProductsTable()" placeholder="Search product title..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
                 </div>
             </div>
 
@@ -184,7 +184,7 @@
                 </div>
                 <div class="relative w-full sm:w-72">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                    <input type="text" id="commSearchInput" oninput="renderCommissionsTable()" placeholder="Search feedback ID, recipient..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                    <input type="text" id="commSearchInput" oninput="window.renderCommissionsTable()" placeholder="Search feedback ID, recipient..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
                 </div>
             </div>
 
@@ -261,20 +261,27 @@
 
         // Direct access initialization
         async function initAdminPanel() {
-            const { data: { session }, error } = await _supabase.auth.getSession();
+            try {
+                const { data: { session }, error } = await _supabase.auth.getSession();
 
-            if (error || !session) {
-                window.location.href = 'login.html';
-                return;
+                if (error || !session) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                currentUser = session.user;
+                const titleEl = document.getElementById('welcomeTitle');
+                if (titleEl) {
+                    titleEl.textContent = `Admin Control Center (${currentUser.email})`;
+                }
+
+                await fetchAllAdminData();
+
+                if (pollingInterval) clearInterval(pollingInterval);
+                pollingInterval = setInterval(pollAdminData, 10000);
+            } catch (err) {
+                console.error("Initialization error:", err);
             }
-
-            currentUser = session.user;
-            document.getElementById('welcomeTitle').textContent = `Admin Control Center (${currentUser.email})`;
-
-            await fetchAllAdminData();
-
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(pollAdminData, 10000);
         }
 
         async function pollAdminData() {
@@ -312,10 +319,10 @@
                 totalVolume += Number(c.amount || 0);
             });
 
-            document.getElementById('statTotalUsers').textContent = totalUsers;
-            document.getElementById('statPendingIDs').textContent = pendingIDs;
-            document.getElementById('statActiveProducts').textContent = activeProducts;
-            document.getElementById('statTotalVolume').textContent = `$${totalVolume.toFixed(2)}`;
+            if (document.getElementById('statTotalUsers')) document.getElementById('statTotalUsers').textContent = totalUsers;
+            if (document.getElementById('statPendingIDs')) document.getElementById('statPendingIDs').textContent = pendingIDs;
+            if (document.getElementById('statActiveProducts')) document.getElementById('statActiveProducts').textContent = activeProducts;
+            if (document.getElementById('statTotalVolume')) document.getElementById('statTotalVolume').textContent = `$${totalVolume.toFixed(2)}`;
         }
 
         function switchAdminTab(tab) {
@@ -326,12 +333,14 @@
                 const sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
                 const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
 
-                if (t === tab) {
-                    sec.classList.remove('hidden');
-                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2';
-                } else {
-                    sec.classList.add('hidden');
-                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2';
+                if (sec && btn) {
+                    if (t === tab) {
+                        sec.classList.remove('hidden');
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white shadow-md transition flex items-center space-x-2';
+                    } else {
+                        sec.classList.add('hidden');
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2';
+                    }
                 }
             });
 
@@ -376,7 +385,7 @@
                     </div>
                     <div class="col-span-2">
                         ${u.national_id_url ? `
-                            <button onclick="previewNationalID('${(u.full_name \vert{}\vert{} 'User').replace(/'/g, "\\'")}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1">
+                            <button type="button" onclick="window.previewNationalID('${(u.full_name \vert{}\vert{} 'User').replace(/'/g, "\\'")}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1 cursor-pointer">
                                 <i class="fa-solid fa-id-card text-rose-400"></i>
                                 <span>View ID</span>
                             </button>
@@ -385,8 +394,8 @@
                         `}
                     </div>
                     <div class="col-span-3 flex items-center justify-end space-x-2">
-                        <button onclick="updateUserVerification('${u.id}', 'VERIFIED')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-semibold transition shadow-md">Verify</button>
-                        <button onclick="updateUserVerification('${u.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl font-semibold transition shadow-md">Reject</button>
+                        <button type="button" onclick="window.updateUserVerification('${u.id}', 'VERIFIED')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-semibold transition shadow-md cursor-pointer">Verify</button>
+                        <button type="button" onclick="window.updateUserVerification('${u.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl font-semibold transition shadow-md cursor-pointer">Reject</button>
                     </div>
                 </div>
             `).join('');
@@ -410,6 +419,7 @@
         function previewNationalID(fullName, url) {
             const modal = document.getElementById('idPreviewModal');
             const content = document.getElementById('idModalContent');
+            if (!modal || !content) return;
 
             content.innerHTML = `
                 <div class="space-y-3 text-xs text-slate-300">
@@ -450,7 +460,7 @@
                         <span class="px-2.5 py-0.5 ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'} border rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
                     </div>
                     <div class="col-span-3 flex items-center justify-end space-x-2">
-                        <button onclick="updateProductStatus('${p.id}', '${p.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium">
+                        <button type="button" onclick="window.updateProductStatus('${p.id}', '${p.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium cursor-pointer">
                             ${p.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
                         </button>
                     </div>
@@ -547,7 +557,7 @@
             window.location.href = 'login.html';
         }
 
-        // Expose functions globally to ensure inline onclick handlers work smoothly
+        // Expose functions globally to guarantee button responsiveness
         window.switchAdminTab = switchAdminTab;
         window.renderAccountsTable = renderAccountsTable;
         window.renderProductsTable = renderProductsTable;
