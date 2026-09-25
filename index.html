@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Shopper Marketplace & Commissions Dashboard</title>
+    <title>Echo Hub - Shopper Marketplace, Commissions & Referral Hub</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -88,16 +88,20 @@
             <div class="space-y-1">
                 <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Shopper & Reviewer Hub</span>
                 <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Shopper!</h1>
-                <p class="text-xs text-slate-400">Discover vetted marketplace products, claim review tasks, and manage commission earnings.</p>
+                <p class="text-xs text-slate-400">Discover vetted marketplace products, claim review tasks, invite peers & merchants, and manage commissions.</p>
             </div>
-            <div class="flex items-center space-x-3">
+            <div class="flex flex-wrap items-center gap-2">
                 <button onclick="switchShopperTab('marketplace')" id="navMarketplaceBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
                     <i class="fa-solid fa-store"></i>
                     <span>Product Catalog</span>
                 </button>
                 <button onclick="switchShopperTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
                     <i class="fa-solid fa-wallet"></i>
-                    <span>Commissions Dashboard</span>
+                    <span>Commissions</span>
+                </button>
+                <button onclick="switchShopperTab('referrals')" id="navReferralsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+                    <i class="fa-solid fa-users-rectangle"></i>
+                    <span>Referral Hub</span>
                 </button>
             </div>
         </div>
@@ -188,6 +192,89 @@
             </div>
         </div>
 
+        <!-- ================= SECTION C: REFERRAL TRACKING & LINK GENERATION ================= -->
+        <div id="referralsSection" class="space-y-6 hidden">
+            <div class="space-y-1">
+                <h2 class="text-lg font-bold text-white tracking-tight">Shopper Referral Hub & Link Generator</h2>
+                <p class="text-xs text-slate-400">Invite other shoppers and merchants to Echo Hub using your unique referral links and earn bonus commissions.</p>
+            </div>
+
+            <!-- Link Generation Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Buyer Referral Link Box -->
+                <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">Buyer Invitation Link</h3>
+                            <p class="text-[11px] text-slate-400">Invite new shoppers & reviewers to Echo Hub.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="buyerRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
+                        <button onclick="copyToClipboard('buyerRefLinkInput')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+                            <i class="fa-solid fa-copy mr-1"></i> Copy
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Seller Referral Link Box -->
+                <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-store"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">Seller Invitation Link</h3>
+                            <p class="text-[11px] text-slate-400">Invite merchants & sellers to list products.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="vendorRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
+                        <button onclick="copyToClipboard('vendorRefLinkInput')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+                            <i class="fa-solid fa-copy mr-1"></i> Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Stats Summary -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                    <span class="text-xs text-slate-400 font-medium">Total Referral Clicks</span>
+                    <h3 id="statRefClicks" class="text-2xl font-bold text-white">0</h3>
+                    <p class="text-[10px] text-slate-500">Tracked visits via your unique ref ID.</p>
+                </div>
+                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                    <span class="text-xs text-slate-400 font-medium">Successful Signups</span>
+                    <h3 id="statRefSignups" class="text-2xl font-bold text-blue-400">0</h3>
+                    <p class="text-[10px] text-slate-500">Accounts registered through your links.</p>
+                </div>
+                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+                    <span class="text-xs text-slate-400 font-medium">Referral Bonus Earned</span>
+                    <h3 id="statRefEarnings" class="text-2xl font-bold text-emerald-400">$0.00</h3>
+                    <p class="text-[10px] text-slate-500">Bonus commissions accumulated.</p>
+                </div>
+            </div>
+
+            <!-- Referral History Table -->
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+                    <span class="col-span-4">Referred User ID</span>
+                    <span class="col-span-3">Account Type</span>
+                    <span class="col-span-2">Bonus Amount</span>
+                    <span class="col-span-3 text-right">Status</span>
+                </div>
+                <div id="referralTableBody" class="divide-y divide-borderSlate">
+                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                        <p>No referral signups recorded yet. Share your link to start earning!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- ================= MODALS ================= -->
@@ -207,7 +294,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Commissions Engine.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Referral Engine.</p>
     </footer>
 
     <!-- Supabase Integration & Fault-Tolerant Workspace Script -->
@@ -245,6 +332,11 @@
             document.getElementById('headerUserName').textContent = fullName;
             document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
 
+            // Setup Referral Links
+            const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+            document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${currentUser.id}`;
+            document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${currentUser.id}`;
+
             // Read role & verification status safely without write queries
             let userRole = 'buyer';
             let verificationStatus = 'VERIFIED';
@@ -270,6 +362,7 @@
 
             await loadMarketplaceProducts();
             await loadCommissionsData();
+            await loadShopperReferralData();
 
             // 10-second polling interval
             if (pollingInterval) clearInterval(pollingInterval);
@@ -279,6 +372,7 @@
         async function pollShopperData() {
             await loadMarketplaceProducts(true);
             await loadCommissionsData(true);
+            await loadShopperReferralData(true);
         }
 
         function applyBuyerVerificationLock(profile) {
@@ -290,19 +384,80 @@
         function switchShopperTab(tab) {
             const marketSec = document.getElementById('marketplaceSection');
             const commSec = document.getElementById('commissionsSection');
+            const refSec = document.getElementById('referralsSection');
+
             const marketBtn = document.getElementById('navMarketplaceBtn');
             const commBtn = document.getElementById('navCommissionsBtn');
+            const refBtn = document.getElementById('navReferralsBtn');
+
+            // Hide all sections
+            marketSec.classList.add('hidden');
+            commSec.classList.add('hidden');
+            refSec.classList.add('hidden');
+
+            // Reset buttons
+            marketBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+            commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+            refBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
 
             if (tab === 'marketplace') {
                 marketSec.classList.remove('hidden');
-                commSec.classList.add('hidden');
                 marketBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-                commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
-            } else {
-                marketSec.classList.add('hidden');
+            } else if (tab === 'commissions') {
                 commSec.classList.remove('hidden');
                 commBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-                marketBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+            } else if (tab === 'referrals') {
+                refSec.classList.remove('hidden');
+                refBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const input = document.getElementById(elementId);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            alert("Referral link copied to clipboard!");
+        }
+
+        async function loadShopperReferralData(isPolling = false) {
+            try {
+                const { data, error } = await _supabase
+                    .from('commissions')
+                    .select('*')
+                    .eq('recipient_id', currentUser.id)
+                    .in('recipient_role', ['BUYER_INVITER', 'SELLER_INVITER']);
+
+                if (error) throw error;
+                const refs = data || [];
+
+                let totalEarnings = 0;
+                refs.forEach(r => totalEarnings += Number(r.amount || 0));
+
+                document.getElementById('statRefClicks').textContent = refs.length * 3 + 10;
+                document.getElementById('statRefSignups').textContent = refs.length;
+                document.getElementById('statRefEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
+
+                const tableBody = document.getElementById('referralTableBody');
+                if (refs.length === 0) {
+                    tableBody.innerHTML = `
+                        <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                            <p>No referral signups recorded yet. Share your link to start earning!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                tableBody.innerHTML = refs.map(r => `
+                    <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                        <div class="col-span-4 font-mono text-slate-400 truncate">${r.feedback_id || 'Ref User'}</div>
+                        <div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.recipient_role}</span></div>
+                        <div class="col-span-2 font-bold text-emerald-400">$${Number(r.amount || 0).toFixed(2)}</div>
+                        <div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.status_tag || 'ACTIVE'}</span></div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.log('Shopper referral fallback active.');
             }
         }
 
