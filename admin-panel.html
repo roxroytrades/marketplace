@@ -244,7 +244,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
     </footer>
 
-    <!-- Direct REST API Integration Script with Valid Headers -->
+    <!-- Direct REST API Integration Script with Dual Headers -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -275,6 +275,7 @@
             try {
                 const headers = {
                     'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
                     'Content-Type': 'application/json'
                 };
 
@@ -392,6 +393,7 @@
             try {
                 const headers = {
                     'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
                     'Content-Type': 'application/json'
                 };
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
@@ -470,6 +472,7 @@
             try {
                 const headers = {
                     'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
                     'Content-Type': 'application/json'
                 };
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
