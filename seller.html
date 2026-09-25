@@ -169,7 +169,7 @@
                 <div class="flex items-center space-x-3 w-full sm:w-auto">
                     <div class="relative w-full sm:w-72">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                        <input type="text" id="commSearchInput" oninput="renderCommissionTable()" placeholder="Search recipient email, ID, name..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <input type="text" id="commSearchInput" oninput="renderCommissionTable()" placeholder="Search recipient ID, feedback ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                     <select id="commTypeFilter" onchange="renderCommissionTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
                         <option value="ALL">All Roles / Types</option>
@@ -189,7 +189,7 @@
                 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
                     <span class="col-span-1 flex items-center space-x-2"><input type="checkbox" id="selectAllComms" onclick="toggleSelectAllComms(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"><span>Select</span></span>
                     <span class="col-span-3">Feedback ID</span>
-                    <span class="col-span-3">Recipient ID / Details</span>
+                    <span class="col-span-3">Recipient UUID</span>
                     <span class="col-span-2">Role & Amount</span>
                     <span class="col-span-3 text-right">Status & Action</span>
                 </div>
@@ -203,22 +203,21 @@
 
     <!-- ================= MODALS ================= -->
 
-    <!-- Add/Edit Product Modal -->
+    <!-- Add Product Modal (Base64 Image Upload) -->
     <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-                <h3 id="productModalTitle" class="text-lg font-bold text-white">List New Product</h3>
+                <h3 class="text-lg font-bold text-white">List New Product</h3>
                 <button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="productForm" onsubmit="saveProduct(event)" class="space-y-4">
-                <input type="hidden" id="editProductId">
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">Product Title</label>
                     <input type="text" id="prodTitle" required placeholder="e.g. Wireless Noise-Cancelling Headphones" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Product Image URL (`image_url`)</label>
-                    <input type="url" id="prodImage" required placeholder="https://images.unsplash.com/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    <label class="text-xs font-semibold text-slate-300">Product Thumbnail (Image File)</label>
+                    <input type="file" id="prodImageFile" required accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
                 </div>
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-slate-300">Product Description & Details</label>
@@ -232,7 +231,7 @@
         </div>
     </div>
 
-    <!-- Settlement / Receipt Payment Modal -->
+    <!-- Settlement / Receipt Payment Modal (Base64 Receipt Upload) -->
     <div id="paymentModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
@@ -246,8 +245,8 @@
                     <input type="text" id="payTransactionId" required placeholder="e.g. 9X2948190F39102" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Receipt Screenshot URL / Proof (`receipt_url`)</label>
-                    <input type="url" id="payReceiptUrl" required placeholder="https://images.unsplash.com/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    <label class="text-xs font-semibold text-slate-300">Receipt Screenshot Proof (Image File)</label>
+                    <input type="file" id="payReceiptFile" required accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
                 </div>
                 <div class="flex items-center justify-end space-x-3 pt-2">
                     <button type="button" onclick="closePaymentModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs font-medium text-slate-300 px-4 py-2.5 rounded-xl transition">Cancel</button>
@@ -275,7 +274,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace & Commissions Engine.</p>
     </footer>
 
-    <!-- Supabase Integration & Defensive Workspace Logic -->
+    <!-- Supabase Integration, Performance Metering & 10s Polling -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -289,12 +288,25 @@
         let commissionsList = [];
         let activeCommTab = 'incoming';
         let selectedCommIds = new Set();
+        let pollingInterval = null;
 
-        // Rule A: Defensive Auth Initialization on Page Load
+        // Helper: Convert File to Base64 String
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Rule A: Defensive Auth Initialization & Performance Tracking
         async function initWorkspace() {
+            console.time('Auth_And_Profile_Init');
             const { data: { session }, error } = await _supabase.auth.getSession();
 
             if (error || !session) {
+                console.timeEnd('Auth_And_Profile_Init');
                 window.location.href = 'login.html';
                 return;
             }
@@ -307,6 +319,8 @@
                 .eq('id', currentUser.id)
                 .single();
 
+            console.timeEnd('Auth_And_Profile_Init');
+
             if (profileError || !profile) {
                 console.error("Profile fetch error:", profileError);
                 return;
@@ -315,8 +329,19 @@
             currentProfile = profile;
             document.getElementById('welcomeTitle').textContent = `Welcome back, ${profile.full_name || 'Vendor'}`;
 
-            loadCatalogProducts();
-            loadCommissionsData();
+            await loadCatalogProducts();
+            await loadCommissionsData();
+
+            // Set up 10-second polling interval (replacing realtime channels on free tier)
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(pollDashboardData, 10000);
+        }
+
+        // Periodic Polling Function with Performance Metering
+        async function pollDashboardData() {
+            console.log('[Polling] Refreshing dashboard data (10s interval)...');
+            await loadCatalogProducts(true);
+            await loadCommissionsData(true);
         }
 
         function switchWorkspaceTab(tab) {
@@ -340,8 +365,9 @@
 
         // ================= CATALOG MANAGEMENT =================
 
-        async function loadCatalogProducts() {
+        async function loadCatalogProducts(isPolling = false) {
             const tableBody = document.getElementById('catalogTableBody');
+            if (!isPolling) console.time('Fetch_Products_Query');
             try {
                 const { data, error } = await _supabase
                     .from('products')
@@ -349,17 +375,22 @@
                     .eq('vendor_id', currentUser.id)
                     .order('created_at', { ascending: false });
 
+                if (!isPolling) console.timeEnd('Fetch_Products_Query');
                 if (error) throw error;
 
                 productsList = data || [];
                 filterCatalog();
             } catch (err) {
-                tableBody.innerHTML = `
-                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                        <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-500"></i>
-                        <p>No products found in your catalog. Click "Add New Product" to list items.</p>
-                    </div>
-                `;
+                if (!isPolling) console.timeEnd('Fetch_Products_Query');
+                console.error("Error loading products:", err.message);
+                if (productsList.length === 0) {
+                    tableBody.innerHTML = `
+                        <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                            <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-500"></i>
+                            <p>No products found in your catalog. Click "Add New Product" to list items.</p>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -420,19 +451,30 @@
         async function saveProduct(e) {
             e.preventDefault();
             const title = document.getElementById('prodTitle').value.trim();
-            const image_url = document.getElementById('prodImage').value.trim();
             const description = document.getElementById('prodDescription').value.trim();
+            const fileInput = document.getElementById('prodImageFile').files[0];
+
+            if (!fileInput) {
+                alert('Please select an image file for the product.');
+                return;
+            }
 
             try {
+                console.time('Convert_Product_Image_Base64');
+                const image_url = await fileToBase64(fileInput);
+                console.timeEnd('Convert_Product_Image_Base64');
+
+                console.time('Insert_Product_Query');
                 const { error } = await _supabase.from('products').insert([{
                     title, image_url, description, status: 'ACTIVE', vendor_id: currentUser.id
                 }]);
+                console.timeEnd('Insert_Product_Query');
 
                 if (error) throw error;
 
                 closeProductModal();
-                loadCatalogProducts();
-                alert('Product listed successfully.');
+                await loadCatalogProducts();
+                alert('Product listed successfully with Base64 image encoding.');
             } catch (err) {
                 alert('Error saving product: ' + (err.message || 'Check database table schema & RLS policies.'));
             }
@@ -442,7 +484,7 @@
             try {
                 const { error } = await _supabase.from('products').update({ status: newStatus }).eq('id', id);
                 if (error) throw error;
-                loadCatalogProducts();
+                await loadCatalogProducts();
             } catch (err) {
                 alert('Error updating status: ' + err.message);
             }
@@ -453,7 +495,7 @@
             try {
                 const { error } = await _supabase.from('products').delete().eq('id', id);
                 if (error) throw error;
-                loadCatalogProducts();
+                await loadCatalogProducts();
             } catch (err) {
                 alert('Error deleting product: ' + err.message);
             }
@@ -461,18 +503,20 @@
 
         // ================= COMMISSIONS DASHBOARD =================
 
-        async function loadCommissionsData() {
+        async function loadCommissionsData(isPolling = false) {
+            if (!isPolling) console.time('Fetch_Commissions_Query');
             try {
                 const { data, error } = await _supabase
                     .from('commissions')
                     .select('*')
                     .eq('vendor_id', currentUser.id);
 
+                if (!isPolling) console.timeEnd('Fetch_Commissions_Query');
                 if (error) throw error;
                 commissionsList = data || [];
             } catch (err) {
+                if (!isPolling) console.timeEnd('Fetch_Commissions_Query');
                 console.log('Using fallback local commissions state dataset.');
-                commissionsList = [];
             }
 
             updateCommissionStats();
@@ -527,7 +571,7 @@
 
                 let matchesTab = false;
                 if (activeCommTab === 'incoming') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
-                else if (activeCommTab === 'outgoing') matchesTab = c.status_tag === 'OFFERED_BY_VENDOR' || c.status_tag === 'MAIN_QUEUE';
+                else if (activeCommTab === 'outgoing') matchesTab = c.status_tag === 'OFFERED_BY_VENDOR';
                 else if (activeCommTab === 'mainQueue') matchesTab = c.status_tag === 'MAIN_QUEUE' || !c.status_tag;
                 else if (activeCommTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
                 else if (activeCommTab === 'paymentHistory') matchesTab = c.status_tag === 'COMPLETED_PAID';
@@ -535,11 +579,13 @@
                 return matchesSearch && matchesType && matchesTab;
             });
 
-            // Rule D: Action toolbar configuration
             if (activeCommTab === 'incoming') {
                 toolbar.innerHTML = `
                     <button onclick="batchUpdateStatus('APPROVED_IN_WORKING')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
                         <i class="fa-solid fa-check mr-1.5"></i> Approve Selected to Working Queue
+                    </button>
+                    <button onclick="batchUpdateStatus('REJECTED_TO_MAIN')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-xmark mr-1.5"></i> Deny & Revert
                     </button>
                 `;
             } else if (activeCommTab === 'mainQueue') {
@@ -616,7 +662,7 @@
             });
         }
 
-        // Rule D: Non-Destructive Status Transition Updates
+        // Rule D: Non-Destructive Status Transition Updates with Performance Metering
         async function batchUpdateStatus(newStatusTag) {
             if (selectedCommIds.size === 0) {
                 alert('Please select at least one record.');
@@ -624,6 +670,7 @@
             }
 
             try {
+                console.time('Batch_Update_Commissions_Status');
                 for (const id of selectedCommIds) {
                     const { error } = await _supabase
                         .from('commissions')
@@ -632,11 +679,13 @@
 
                     if (error) throw error;
                 }
+                console.timeEnd('Batch_Update_Commissions_Status');
 
                 selectedCommIds.clear();
                 await loadCommissionsData();
                 alert('Selected commission records successfully updated.');
             } catch (err) {
+                console.timeEnd('Batch_Update_Commissions_Status');
                 alert('Action failed: ' + err.message);
             }
         }
@@ -655,10 +704,19 @@
             e.preventDefault();
             const id = document.getElementById('payCommissionId').value;
             const paypal_tx_id = document.getElementById('payTransactionId').value.trim();
-            const receipt_url = document.getElementById('payReceiptUrl').value.trim();
+            const fileInput = document.getElementById('payReceiptFile').files[0];
+
+            if (!fileInput) {
+                alert('Please upload a payment receipt screenshot.');
+                return;
+            }
 
             try {
-                // Rule D: Non-destructive status update to COMPLETED_PAID
+                console.time('Convert_Receipt_Image_Base64');
+                const receipt_url = await fileToBase64(fileInput);
+                console.timeEnd('Convert_Receipt_Image_Base64');
+
+                console.time('Complete_Payment_Query');
                 const { error } = await _supabase
                     .from('commissions')
                     .update({
@@ -667,12 +725,13 @@
                         receipt_url: receipt_url
                     })
                     .eq('id', id);
+                console.timeEnd('Complete_Payment_Query');
 
                 if (error) throw error;
 
                 closePaymentModal();
                 await loadCommissionsData();
-                alert('Payment receipt uploaded and record moved to Payment History.');
+                alert('Payment receipt uploaded with Base64 encoding and record moved to Payment History.');
             } catch (err) {
                 alert('Error processing payment proof: ' + err.message);
             }
@@ -702,8 +761,8 @@
                         <span class="font-mono text-blue-400">${record.paypal_tx_id || 'N/A'}</span>
                     </div>
                     <div class="space-y-1 pt-2">
-                        <span class="text-slate-400">Receipt Proof Image:</span>
-                        <img src="${record.receipt_url || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
+                        <span class="text-slate-400">Receipt Proof Image (Base64 Rendered):</span>
+                        <img src="${record.receipt_url || 'https://via.placeholder.com/300'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
                     </div>
                 </div>
             `;
@@ -711,6 +770,7 @@
         }
 
         async function handleLogout() {
+            if (pollingInterval) clearInterval(pollingInterval);
             await _supabase.auth.signOut();
             window.location.href = 'login.html';
         }
