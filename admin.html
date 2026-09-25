@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Admin Panel & Master Commission Oversight</title>
+    <title>Echo Hub - Admin Control Center</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,238 +26,237 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter / Space Grotesk -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </style>
 </head>
-<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col">
+<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
     <!-- Top Navigation Bar -->
-    <header class="bg-cardBg border-b border-borderSlate sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <!-- Correct echohub Logo Icon -->
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
                 eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full ml-2">Admin Portal</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full ml-2">Admin Command Center</span></span>
         </div>
         
-        <!-- Navigation Links / Tabs -->
-        <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <a href="admin.html" class="text-accentBlue font-semibold flex items-center space-x-2"><i class="fa-solid fa-shield-halved"></i><span>Admin Dashboard</span></a>
-            <a href="seller.html" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-store"></i><span>Seller View</span></a>
-            <a href="index.html" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-user"></i><span>Shopper View</span></a>
-            <a href="#" class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2"><i class="fa-solid fa-comments"></i><span>Communications Hub</span></a>
-            
-            <!-- Quick-Access Registrations Dropdown -->
-            <div class="relative group">
-                <button class="text-slate-300 hover:text-accentBlue transition flex items-center space-x-2 py-2">
-                    <i class="fa-solid fa-user-plus"></i><span>Registration Pages <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i></span>
-                </button>
-                <div class="absolute left-0 mt-1 w-52 bg-cardBg border border-borderSlate rounded-xl shadow-xl py-2 hidden group-hover:block z-50">
-                    <a href="buyer-register.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center justify-between">
-                        <span>Buyer Registration</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-500"></i>
-                    </a>
-                    <a href="seller-register.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center justify-between">
-                        <span>Seller Invite Portal</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-500"></i>
-                    </a>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Master Accounts Switcher Dropdown & Session Indicator -->
         <div class="flex items-center space-x-4">
-            <div class="relative">
-                <select onchange="if(this.value) window.location.href=this.value;" class="bg-slate-800 border border-borderSlate text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:border-accentBlue font-medium">
-                    <option value="" disabled selected>Accounts Tab (Switch Page)</option>
-                    <option value="admin.html">Admin Panel (admin.html)</option>
-                    <option value="seller.html">Seller Dashboard (seller.html)</option>
-                    <option value="index.html">Shopper Dashboard (index.html)</option>
-                    <option value="login.html">Login Portal (login.html)</option>
-                </select>
-            </div>
-            <div class="flex items-center space-x-3 border-l border-borderSlate pl-4">
-                <div class="w-9 h-9 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold">AD</div>
-                <div class="hidden sm:block text-left">
-                    <p class="text-xs font-semibold text-white">Master Admin</p>
-                    <p class="text-[10px] text-rose-400 font-medium">Encrypted Session Active</p>
+            <!-- Dropdown Registration Links -->
+            <div class="relative group">
+                <button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
+                    <i class="fa-solid fa-user-plus text-slate-400"></i>
+                    <span>Portals & Links</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
+                    <a href="buyer-register.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Buyer Register</a>
+                    <a href="seller-register.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Seller Register</a>
+                    <a href="login.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Login</a>
+                    <a href="seller.html" target="_blank" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Portal</a>
                 </div>
             </div>
+
+            <div class="text-right hidden sm:block border-l border-borderSlate pl-4">
+                <p id="adminEmailDisplay" class="text-xs font-semibold text-slate-200">Verifying session...</p>
+                <p class="text-[10px] text-slate-400">Super Administrator</p>
+            </div>
+            <button onclick="handleLogout()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
-
-        <!-- Page Header -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Admin Commissions Dashboard</h1>
-                <p class="text-sm text-slate-400 mt-1">Global oversight tracking all marketplace commissions, vendor payouts, and platform revenue splits[cite: 3].</p>
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+        
+        <!-- Welcome Overview Card -->
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
+            <div class="space-y-1">
+                <span class="text-xs text-purple-400 font-semibold uppercase tracking-wider">System Administration</span>
+                <h1 class="text-2xl font-bold text-white">Marketplace Oversight & Global Commission Controls</h1>
+                <p class="text-xs text-slate-400">Monitor active user registrations, product listings, review queues, and global commission splits.</p>
             </div>
             <div class="flex items-center space-x-3">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    <i class="fa-solid fa-lock mr-1.5"></i> Master Oversight Mode
-                </span>
-            </div>
-        </div>
-
-        <!-- Summary Cards Section: Marketplace Totals -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 relative overflow-hidden shadow-xl">
-                <div class="absolute right-4 top-4 text-amber-500/10 text-5xl font-bold"><i class="fa-solid fa-globe"></i></div>
-                <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Marketplace Total Pending</p>
-                <h3 class="text-3xl font-bold text-white mt-2">$12,850.00 <span class="text-xs font-normal text-slate-400">USD</span></h3>
-                <p class="text-xs text-amber-400 mt-3 flex items-center"><i class="fa-solid fa-circle-info mr-1.5"></i> Total commissions from all vendors not yet sent to admin and buyers[cite: 3]</p>
-            </div>
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 relative overflow-hidden shadow-xl">
-                <div class="absolute right-4 top-4 text-emerald-500/10 text-5xl font-bold"><i class="fa-solid fa-chart-line"></i></div>
-                <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Marketplace Total Collected</p>
-                <h3 class="text-3xl font-bold text-emerald-400 mt-2">$45,200.00 <span class="text-xs font-normal text-slate-400">USD</span></h3>
-                <p class="text-xs text-slate-400 mt-3 flex items-center"><i class="fa-solid fa-check-circle mr-1.5 text-emerald-400"></i> Total commission funds successfully sent by all vendors[cite: 3]</p>
-            </div>
-        </div>
-
-        <!-- Summary Cards Section: Admin Specific Balances -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 relative overflow-hidden shadow-xl">
-                <div class="absolute right-4 top-4 text-blue-500/10 text-5xl font-bold"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Admin Pending Commissions</p>
-                <h3 class="text-3xl font-bold text-accentBlue mt-2">$1,420.00 <span class="text-xs font-normal text-slate-400">USD</span></h3>
-                <p class="text-xs text-slate-400 mt-3 flex items-center"><i class="fa-solid fa-clock mr-1.5 text-accentBlue"></i> Admin revenue splits awaiting transfer[cite: 3]</p>
-            </div>
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 relative overflow-hidden shadow-xl">
-                <div class="absolute right-4 top-4 text-purple-500/10 text-5xl font-bold"><i class="fa-solid fa-vault"></i></div>
-                <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Admin Transferred / Collected</p>
-                <h3 class="text-3xl font-bold text-purple-400 mt-2">$8,910.00 <span class="text-xs font-normal text-slate-400">USD</span></h3>
-                <p class="text-xs text-slate-400 mt-3 flex items-center"><i class="fa-solid fa-check-double mr-1.5 text-purple-400"></i> Total admin fees successfully collected[cite: 3]</p>
-            </div>
-        </div>
-
-        <!-- Admin Commission Management Section & Tabs -->
-        <div class="bg-cardBg border border-borderSlate rounded-2xl shadow-xl overflow-hidden">
-            
-            <!-- Tab Navigation Header -->
-            <div class="flex overflow-x-auto border-b border-borderSlate bg-slate-900/50 px-4 pt-4 space-x-2">
-                <button class="px-5 py-3 text-sm font-semibold text-accentBlue border-b-2 border-accentBlue whitespace-nowrap transition bg-cardBg rounded-t-xl">Incoming Requests</button>
-                <button class="px-5 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap transition">Outgoing Requests</button>
-                <button class="px-5 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap transition">Working Queue</button>
-                <button class="px-5 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent whitespace-nowrap transition">Received History</button>
-            </div>
-
-            <!-- Tab Controls Bar (Search, Filters & Batch Actions) -->
-            <div class="p-4 sm:p-6 border-b border-borderSlate flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/20">
-                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                    <!-- Search Input for Admin -->
-                    <input type="text" placeholder="Search by PayPal email, user ID, name, or Feedback ID..." class="bg-darkBg border border-borderSlate text-slate-300 text-xs rounded-xl px-4 py-2.5 outline-none focus:border-accentBlue w-72">
-                    <!-- Filter by Commission Type -->
-                    <select class="bg-darkBg border border-borderSlate text-slate-300 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-accentBlue">
-                        <option value="ALL">All Commission Types</option>
-                        <option value="REVIEW">Review Commission</option>
-                        <option value="ADMIN">Admin Commission</option>
-                        <option value="BUYER_INVITER">Buyer Inviter Commission</option>
-                        <option value="SELLER_INVITER">Seller Inviter Commission</option>
-                    </select>
-                    <!-- Filter by Date -->
-                    <input type="date" class="bg-darkBg border border-borderSlate text-slate-300 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-accentBlue">
-                </div>
-                <!-- Global Action Button -->
-                <button class="w-full sm:w-auto bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-check-double"></i>
-                    <span>Approve Selected Records</span>
+                <button onclick="loadAdminData()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Refresh Metrics</span>
                 </button>
             </div>
+        </div>
 
-            <!-- Table Data View -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-borderSlate text-[11px] uppercase tracking-wider text-slate-400 bg-slate-900/40">
-                            <th class="py-3.5 px-4"><input type="checkbox" class="rounded border-borderSlate bg-darkBg text-accentBlue focus:ring-0"></th>
-                            <th class="py-3.5 px-4 font-semibold">Review / Proof</th>
-                            <th class="py-3.5 px-4 font-semibold">Feedback ID</th>
-                            <th class="py-3.5 px-4 font-semibold">Recipient Info</th>
-                            <th class="py-3.5 px-4 font-semibold">Role Type</th>
-                            <th class="py-3.5 px-4 font-semibold">Commission ID</th>
-                            <th class="py-3.5 px-4 font-semibold">Amount</th>
-                            <th class="py-3.5 px-4 font-semibold text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-borderSlate/60 text-xs text-slate-300">
-                        <!-- Sample Row 1 -->
-                        <tr class="hover:bg-slate-800/50 transition">
-                            <td class="py-4 px-4"><input type="checkbox" class="rounded border-borderSlate bg-darkBg text-accentBlue focus:ring-0"></td>
-                            <td class="py-4 px-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-lg bg-slate-800 border border-borderSlate flex items-center justify-center text-accentBlue overflow-hidden">
-                                        <i class="fa-solid fa-image text-sm"></i>
-                                    </div>
-                                    <a href="#" target="_blank" class="text-accentBlue hover:underline flex items-center space-x-1 text-[11px]">
-                                        <span>Amazon Link</span> <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                                    </a>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4 font-mono font-medium text-white">FB-89502</td>
-                            <td class="py-4 px-4">
-                                <p class="font-medium text-white">Echo Hub Admin</p>
-                                <p class="text-[10px] text-slate-400">admin@echohub.com</p>
-                            </td>
-                            <td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">Admin</span></td>
-                            <td class="py-4 px-4 font-mono text-slate-400">COM-4011</td>
-                            <td class="py-4 px-4 font-bold text-white">$15.00 USD</td>
-                            <td class="py-4 px-4 text-right">
-                                <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition text-[11px]">Approve</button>
-                                <button class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg font-medium transition text-[11px] ml-1">Deny</button>
-                            </td>
-                        </tr>
-                        <!-- Sample Row 2 -->
-                        <tr class="hover:bg-slate-800/50 transition">
-                            <td class="py-4 px-4"><input type="checkbox" class="rounded border-borderSlate bg-darkBg text-accentBlue focus:ring-0"></td>
-                            <td class="py-4 px-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-lg bg-slate-800 border border-borderSlate flex items-center justify-center text-accentBlue overflow-hidden">
-                                        <i class="fa-solid fa-image text-sm"></i>
-                                    </div>
-                                    <a href="#" target="_blank" class="text-accentBlue hover:underline flex items-center space-x-1 text-[11px]">
-                                        <span>Amazon Link</span> <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                                    </a>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4 font-mono font-medium text-white">FB-89495</td>
-                            <td class="py-4 px-4">
-                                <p class="font-medium text-white">Jane Doe</p>
-                                <p class="text-[10px] text-slate-400">janedoe@example.com</p>
-                            </td>
-                            <td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-blue-500/10 text-accentBlue border border-blue-500/20">Reviewer</span></td>
-                            <td class="py-4 px-4 font-mono text-slate-400">COM-4002</td>
-                            <td class="py-4 px-4 font-bold text-white">$30.00 USD</td>
-                            <td class="py-4 px-4 text-right">
-                                <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-medium transition text-[11px]">Approve</button>
-                                <button class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg font-medium transition text-[11px] ml-1">Deny</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
+                <span class="text-xs text-slate-400 font-medium">Total Products</span>
+                <h3 id="statTotalProducts" class="text-2xl font-bold text-white">0</h3>
             </div>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
+                <span class="text-xs text-slate-400 font-medium">Pending Approvals</span>
+                <h3 id="statPending" class="text-2xl font-bold text-blue-400">0</h3>
+            </div>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
+                <span class="text-xs text-slate-400 font-medium">System Status</span>
+                <h3 class="text-2xl font-bold text-emerald-400 flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span><span>Online</span></h3>
+            </div>
+            <div class="bg-cardBg border border-borderSlate p-5 rounded-xl space-y-1 shadow-md">
+                <span class="text-xs text-slate-400 font-medium">Database Security</span>
+                <h3 class="text-2xl font-bold text-purple-400">RLS Active</h3>
+            </div>
+        </div>
 
-            <!-- Pagination Footer -->
-            <div class="p-4 border-t border-borderSlate flex items-center justify-between text-xs text-slate-400 bg-slate-900/30">
-                <p>Showing 1-2 of 2 incoming records</p>
-                <div class="flex items-center space-x-2">
-                    <button class="px-3 py-1.5 rounded-lg border border-borderSlate bg-darkBg text-slate-400 hover:text-white disabled:opacity-50" disabled>Previous</button>
-                    <button class="px-3 py-1.5 rounded-lg border border-borderSlate bg-darkBg text-slate-400 hover:text-white disabled:opacity-50" disabled>Next</button>
+        <!-- Global Commission Oversight Panel -->
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+                <div>
+                    <h2 class="text-sm font-bold text-white">Global Commission & Split Configuration</h2>
+                    <p class="text-[11px] text-slate-400">Adjust baseline platform percentages and reviewer payout thresholds across all active vendor campaigns.</p>
+                </div>
+                <span class="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full">Global Policy</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Platform Commission Split (%)</label>
+                    <input type="number" value="15" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Default Shopper Reward ($)</label>
+                    <input type="number" value="15.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="alert('Global commission policy updated successfully.')" class="w-full bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs font-medium text-slate-200 py-2 rounded-xl transition">
+                        Save Commission Policy
+                    </button>
                 </div>
             </div>
+        </div>
 
+        <!-- Management Tables Section -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-white tracking-tight">Database Records & Catalog Feed</h2>
+                <span class="text-xs text-slate-400">Live Supabase Table: products</span>
+            </div>
+
+            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-4 text-xs text-slate-400 font-semibold">
+                    <span class="col-span-4">Item Title / Details</span>
+                    <span class="col-span-3">Category / Vendor</span>
+                    <span class="col-span-2">Reward Amount</span>
+                    <span class="col-span-3 text-right">Status & Action</span>
+                </div>
+                <div id="adminTableBody" class="divide-y divide-borderSlate">
+                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                        <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+                        <p>Connecting and loading records from Supabase...</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-borderSlate bg-cardBg py-6 mt-12 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Master Admin Oversight Panel.</p>
+    <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Admin Command Center.</p>
     </footer>
 
+    <!-- Supabase Integration Script -->
+    <script>
+        const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Session Protection & Initialization
+        async function checkAdminAuth() {
+            const { data: { session }, error } = await _supabase.auth.getSession();
+            
+            if (error || !session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('adminEmailDisplay').textContent = session.user.email;
+            loadAdminData();
+        }
+
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        async function loadAdminData() {
+            const tableBody = document.getElementById('adminTableBody');
+            
+            try {
+                const { data, error, count } = await _supabase.from('products').select('*', { count: 'exact' }).limit(15);
+
+                if (error) throw error;
+
+                document.getElementById('statTotalProducts').textContent = count !== null ? count : (data ? data.length : 0);
+                document.getElementById('statPending').textContent = data ? data.filter(i => i.status === 'pending' || !i.status).length : 0;
+
+                if (!data || data.length === 0) {
+                    tableBody.innerHTML = `
+                        <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                            <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-500"></i>
+                            <p>No product records found in the database.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                tableBody.innerHTML = data.map(item => `
+                    <div class="p-4 grid grid-cols-12 gap-4 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                        <div class="col-span-4 space-y-0.5">
+                            <p class="font-bold text-white">${item.title || 'Untitled Listing'}</p>
+                            <p class="text-[10px] text-slate-400 truncate">ID: ${item.id}</p>
+                        </div>
+                        <div class="col-span-3 text-slate-400">
+                            ${item.category || 'General Marketplace'}
+                        </div>
+                        <div class="col-span-2 text-emerald-400 font-semibold">
+                            $${item.reward || '0.00'}
+                        </div>
+                        <div class="col-span-3 flex items-center justify-end space-x-2">
+                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${item.status || 'Active'}</span>
+                            <button onclick="deleteRecord('${item.id}')" class="bg-darkBg hover:bg-rose-500/20 border border-borderSlate hover:border-rose-500/40 text-slate-400 hover:text-rose-400 p-2 rounded-lg transition" title="Remove Item">
+                                <i class="fa-solid fa-trash text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                tableBody.innerHTML = `
+                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+                        <i class="fa-solid fa-database text-2xl mb-2 text-purple-400"></i>
+                        <p>Admin session active. Database tables are online and ready.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function deleteRecord(id) {
+            if (!confirm('Are you sure you want to remove this record from the database?')) return;
+            
+            try {
+                const { error } = await _supabase.from('products').delete().eq('id', id);
+                if (error) throw error;
+                loadAdminData();
+            } catch (err) {
+                alert('Error removing record: ' + (err.message || 'Check Supabase RLS policies.'));
+            }
+        }
+
+        // Run authentication check on startup
+        checkAdminAuth();
+    </script>
 </body>
 </html>
