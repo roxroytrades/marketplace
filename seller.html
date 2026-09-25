@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Vendor & Seller Dashboard</title>
+    <title>Echo Hub - Vendor Workspace & Commissions Dashboard</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -41,10 +41,18 @@
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
                 eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Workspace</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal</span></span>
         </div>
         
         <div class="flex items-center space-x-4">
+            <!-- Logged-in User Badge -->
+            <div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
+                <div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
+                    <i class="fa-solid fa-store text-[10px]"></i>
+                </div>
+                <span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
+            </div>
+
             <!-- Portals Dropdown -->
             <div class="relative group">
                 <button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
@@ -70,66 +78,43 @@
     <!-- Main Workspace Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
         
-        <!-- Welcome Banner & Workspace Header -->
+        <!-- Welcome Banner & Section Switcher -->
         <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
             <div class="space-y-1">
-                <span class="text-xs text-amber-400 font-semibold uppercase tracking-wider">Vendor Management Portal</span>
-                <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Vendor</h1>
-                <p class="text-xs text-slate-400">Manage your product catalog, monitor review campaigns, and settle user payout requests.</p>
+                <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Vendor Management Workspace</span>
+                <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Vendor!</h1>
+                <p class="text-xs text-slate-400">Manage your product catalog, review listings, and settle commission disbursements.</p>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="switchWorkspaceTab('catalog')" id="navCatalogBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
-                    <i class="fa-solid fa-box-open"></i>
-                    <span>My Products</span>
+                <button onclick="switchVendorTab('catalog')" id="navCatalogBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span>Product Catalog</span>
                 </button>
-                <button onclick="switchWorkspaceTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
-                    <i class="fa-solid fa-wallet"></i>
-                    <span>Commissions Dashboard</span>
+                <button onclick="switchVendorTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Commissions & Payouts</span>
                 </button>
             </div>
         </div>
 
-        <!-- ================= SECTION A: MY PRODUCTS CATALOG MANAGEMENT ================= -->
+        <!-- ================= SECTION A: PRODUCT CATALOG MANAGEMENT ================= -->
         <div id="catalogSection" class="space-y-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 class="text-lg font-bold text-white tracking-tight">Product Catalog Management</h2>
-                    <p class="text-xs text-slate-400">List items for reviewer claims, manage inventory, and toggle active listing visibility.</p>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Your Product Inventory</h2>
+                    <p class="text-xs text-slate-400">Add, pause, or remove review products displayed on the public marketplace.</p>
                 </div>
-                <button onclick="openProductModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+                <button onclick="openProductModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
                     <i class="fa-solid fa-plus"></i>
                     <span>Add New Product</span>
                 </button>
             </div>
 
-            <!-- Catalog Search & Filter Bar -->
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
-                <div class="relative w-full sm:w-80">
-                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                    <input type="text" id="catalogSearchInput" oninput="filterCatalog()" placeholder="Search listings by title..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                </div>
-                <div class="flex items-center space-x-2 w-full sm:w-auto">
-                    <select id="catalogStatusFilter" onchange="filterCatalog()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2.5 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
-                        <option value="ALL">All Statuses</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="PAUSED">Paused</option>
-                        <option value="OUT_OF_STOCK">Out of Stock</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Products Grid Table -->
-            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-4 text-xs text-slate-400 font-semibold">
-                    <span class="col-span-6">Product Details & Title</span>
-                    <span class="col-span-3">Status</span>
-                    <span class="col-span-3 text-right">Visibility & Actions</span>
-                </div>
-                <div id="catalogTableBody" class="divide-y divide-borderSlate">
-                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                        <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-                        <p>Loading your product catalog...</p>
-                    </div>
+            <!-- Product Grid -->
+            <div id="vendorProductGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+                    <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+                    <p>Loading your product inventory...</p>
                 </div>
             </div>
         </div>
@@ -137,64 +122,41 @@
         <!-- ================= SECTION B: SELLER COMMISSIONS DASHBOARD ================= -->
         <div id="commissionsSection" class="space-y-6 hidden">
             <div class="space-y-1">
-                <h2 class="text-lg font-bold text-white tracking-tight">Seller Commissions Dashboard</h2>
-                <p class="text-xs text-slate-400">Process payout requests, review split records, and settle transfers with transaction receipts.</p>
+                <h2 class="text-lg font-bold text-white tracking-tight">Vendor Commissions & Disbursement Dashboard</h2>
+                <p class="text-xs text-slate-400">Process incoming requests, manage active working queues, and upload payout receipts.</p>
             </div>
 
-            <!-- Summary Balance Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-                    <span class="text-xs text-slate-400 font-medium">Pending Commissions Balance</span>
-                    <h3 id="statPendingCommissions" class="text-2xl font-bold text-amber-400">$0.00</h3>
-                    <p class="text-[10px] text-slate-500">Unsettled split allocations across active user queues.</p>
-                </div>
-                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-                    <span class="text-xs text-slate-400 font-medium">Total Disbursed & Collected</span>
-                    <h3 id="statCollectedCommissions" class="text-2xl font-bold text-emerald-400">$0.00</h3>
-                    <p class="text-[10px] text-slate-500">Successfully transferred with verified receipt proofs.</p>
-                </div>
-            </div>
-
-            <!-- Commissions Sub-Tabs Navigation -->
+            <!-- Commissions Sub-Tabs -->
             <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-                <button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
-                <button onclick="switchCommissionTab('outgoing')" id="tabOutgoing" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Outgoing Requests</button>
-                <button onclick="switchCommissionTab('mainQueue')" id="tabMainQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Main Queue</button>
-                <button onclick="switchCommissionTab('workingQueue')" id="tabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
-                <button onclick="switchCommissionTab('paymentHistory')" id="tabPaymentHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Payment History</button>
+                <button onclick="switchCommSubTab('incoming')" id="subTabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
+                <button onclick="switchCommSubTab('workingQueue')" id="subTabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
+                <button onclick="switchCommSubTab('history')" id="subTabHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Payment History</button>
             </div>
 
-            <!-- Tab Content Filters & Action Toolbar -->
+            <!-- Action Toolbar -->
             <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
                 <div class="flex items-center space-x-3 w-full sm:w-auto">
                     <div class="relative w-full sm:w-72">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                        <input type="text" id="commSearchInput" oninput="renderCommissionTable()" placeholder="Search recipient ID, feedback ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <input type="text" id="sellerCommSearch" oninput="renderSellerCommissions()" placeholder="Search feedback ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
-                    <select id="commTypeFilter" onchange="renderCommissionTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
-                        <option value="ALL">All Roles / Types</option>
-                        <option value="REVIEWER">Reviewer</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="BUYER_INVITER">Buyer Inviter</option>
-                        <option value="SELLER_INVITER">Seller Inviter</option>
-                    </select>
                 </div>
-                <div id="tabActionToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                    <!-- Dynamically populated batch action buttons based on active tab -->
+                <div id="sellerToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <!-- Dynamic action buttons -->
                 </div>
             </div>
 
-            <!-- Commissions Data Table -->
+            <!-- Commissions Table -->
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
-                    <span class="col-span-1 flex items-center space-x-2"><input type="checkbox" id="selectAllComms" onclick="toggleSelectAllComms(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"><span>Select</span></span>
+                    <span class="col-span-1"><input type="checkbox" id="selectAllSellerComms" onclick="toggleSelectAllSeller(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"></span>
                     <span class="col-span-3">Feedback ID</span>
-                    <span class="col-span-3">Recipient UUID</span>
-                    <span class="col-span-2">Role & Amount</span>
+                    <span class="col-span-3">Recipient</span>
+                    <span class="col-span-2">Amount</span>
                     <span class="col-span-3 text-right">Status & Action</span>
                 </div>
-                <div id="commissionsTableBody" class="divide-y divide-borderSlate">
-                    <!-- Dynamic Rows populated by script -->
+                <div id="sellerCommsTableBody" class="divide-y divide-borderSlate">
+                    <!-- Populated dynamically -->
                 </div>
             </div>
         </div>
@@ -203,78 +165,71 @@
 
     <!-- ================= MODALS ================= -->
 
-    <!-- Add Product Modal (Base64 Image Upload) -->
+    <!-- Add/Edit Product Modal -->
     <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-                <h3 class="text-lg font-bold text-white">List New Product</h3>
+                <h3 id="productModalTitle" class="text-lg font-bold text-white">Add New Marketplace Product</h3>
                 <button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="productForm" onsubmit="saveProduct(event)" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Product Title</label>
-                    <input type="text" id="prodTitle" required placeholder="e.g. Wireless Noise-Cancelling Headphones" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+            <form id="productForm" onsubmit="handleSaveProduct(event)" class="space-y-4">
+                <input type="hidden" id="editingProductId">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Product Title</label>
+                    <input type="text" id="prodTitle" required placeholder="e.g., Wireless Gaming Keyboard" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Product Thumbnail (Image File)</label>
-                    <input type="file" id="prodImageFile" required accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Description</label>
+                    <textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Product Description & Details</label>
-                    <textarea id="prodDescription" required rows="3" placeholder="Provide details for reviewers..." class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition resize-none"></textarea>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Product Thumbnail (Image File / Base64)</label>
+                    <input type="file" id="prodImageFile" accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
                 </div>
-                <div class="flex items-center justify-end space-x-3 pt-2">
-                    <button type="button" onclick="closeProductModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs font-medium text-slate-300 px-4 py-2.5 rounded-xl transition">Cancel</button>
-                    <button type="submit" class="bg-accentBlue hover:bg-accentHover text-xs font-semibold text-white px-6 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition">Save Product</button>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Listing Status</label>
+                    <select id="prodStatus" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <option value="ACTIVE">ACTIVE (Visible on Marketplace)</option>
+                        <option value="PAUSED">PAUSED (Hidden)</option>
+                    </select>
                 </div>
+                <button type="submit" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
+                    Save Product Listing
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- Settlement / Receipt Payment Modal (Base64 Receipt Upload) -->
-    <div id="paymentModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <!-- Upload Receipt Modal -->
+    <div id="receiptUploadModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
                 <h3 class="text-lg font-bold text-white">Upload Payment Receipt</h3>
-                <button onclick="closePaymentModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="document.getElementById('receiptUploadModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="paymentForm" onsubmit="submitPaymentReceipt(event)" class="space-y-4">
-                <input type="hidden" id="payCommissionId">
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">PayPal Transaction ID (`paypal_tx_id`)</label>
-                    <input type="text" id="payTransactionId" required placeholder="e.g. 9X2948190F39102" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+            <form onsubmit="handleUploadReceiptSubmit(event)" class="space-y-4">
+                <input type="hidden" id="receiptTargetCommId">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">PayPal Transaction ID</label>
+                    <input type="text" id="paypalTxId" required placeholder="e.g., 9X123456AB7890" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Receipt Screenshot Proof (Image File)</label>
-                    <input type="file" id="payReceiptFile" required accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Receipt Image / Screenshot</label>
+                    <input type="file" id="receiptImageFile" required accept="image/*,.pdf" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
                 </div>
-                <div class="flex items-center justify-end space-x-3 pt-2">
-                    <button type="button" onclick="closePaymentModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs font-medium text-slate-300 px-4 py-2.5 rounded-xl transition">Cancel</button>
-                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition">Disburse & Complete</button>
-                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
+                    Complete & Transfer to History
+                </button>
             </form>
-        </div>
-    </div>
-
-    <!-- View Receipt Modal -->
-    <div id="receiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-                <h3 class="text-lg font-bold text-white">Payment Receipt Details</h3>
-                <button onclick="document.getElementById('receiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div id="receiptModalContent" class="space-y-4">
-                <!-- Populated dynamically -->
-            </div>
         </div>
     </div>
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace & Commissions Engine.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace Engine.</p>
     </footer>
 
-    <!-- Supabase Integration, Performance Metering & 10s Polling -->
+    <!-- Vendor Workspace Script -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -283,91 +238,65 @@
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
-        let currentProfile = null;
-        let productsList = [];
-        let commissionsList = [];
-        let activeCommTab = 'incoming';
-        let selectedCommIds = new Set();
+        let vendorProducts = [];
+        let vendorCommissions = [];
+        let activeSubTab = 'incoming';
+        let selectedSellerCommIds = new Set();
         let pollingInterval = null;
 
-        // Helper: Convert File to Base64 String
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
+        async function initVendorWorkspace() {
+            const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
 
-        // Rule A: Defensive Auth Initialization & Performance Tracking
-        async function initWorkspace() {
-            console.time('Auth_And_Profile_Init');
-            const { data: { session }, error } = await _supabase.auth.getSession();
-
-            if (error || !session) {
-                console.timeEnd('Auth_And_Profile_Init');
+            if (sessionError || !session) {
                 window.location.href = 'login.html';
                 return;
             }
 
             currentUser = session.user;
 
-            const { data: profile, error: profileError } = await _supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
+            // Extract display name instantly from Auth Metadata or fallback to email handle
+            const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+            const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
 
-            console.timeEnd('Auth_And_Profile_Init');
+            // Update Header & Welcome Banner with User's Name
+            document.getElementById('headerUserName').textContent = fullName;
+            document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
 
-            if (profileError || !profile) {
-                console.error("Profile fetch error:", profileError);
-                return;
-            }
+            await loadVendorProducts();
+            await loadVendorCommissions();
 
-            currentProfile = profile;
-            document.getElementById('welcomeTitle').textContent = `Welcome back, ${profile.full_name || 'Vendor'}`;
-
-            await loadCatalogProducts();
-            await loadCommissionsData();
-
-            // Set up 10-second polling interval (replacing realtime channels on free tier)
             if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(pollDashboardData, 10000);
+            pollingInterval = setInterval(pollVendorData, 10000);
         }
 
-        // Periodic Polling Function with Performance Metering
-        async function pollDashboardData() {
-            console.log('[Polling] Refreshing dashboard data (10s interval)...');
-            await loadCatalogProducts(true);
-            await loadCommissionsData(true);
+        async function pollVendorData() {
+            await loadVendorProducts(true);
+            await loadVendorCommissions(true);
         }
 
-        function switchWorkspaceTab(tab) {
+        function switchVendorTab(tab) {
             const catalogSec = document.getElementById('catalogSection');
             const commSec = document.getElementById('commissionsSection');
-            const catBtn = document.getElementById('navCatalogBtn');
+            const catalogBtn = document.getElementById('navCatalogBtn');
             const commBtn = document.getElementById('navCommissionsBtn');
 
             if (tab === 'catalog') {
                 catalogSec.classList.remove('hidden');
                 commSec.classList.add('hidden');
-                catBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+                catalogBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
                 commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
             } else {
                 catalogSec.classList.add('hidden');
                 commSec.classList.remove('hidden');
                 commBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-                catBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+                catalogBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
             }
         }
 
-        // ================= CATALOG MANAGEMENT =================
+        // ================= PRODUCT CATALOG MANAGEMENT =================
 
-        async function loadCatalogProducts(isPolling = false) {
-            const tableBody = document.getElementById('catalogTableBody');
-            if (!isPolling) console.time('Fetch_Products_Query');
+        async function loadVendorProducts(isPolling = false) {
+            const grid = document.getElementById('vendorProductGrid');
             try {
                 const { data, error } = await _supabase
                     .from('products')
@@ -375,71 +304,42 @@
                     .eq('vendor_id', currentUser.id)
                     .order('created_at', { ascending: false });
 
-                if (!isPolling) console.timeEnd('Fetch_Products_Query');
                 if (error) throw error;
+                vendorProducts = data || [];
 
-                productsList = data || [];
-                filterCatalog();
-            } catch (err) {
-                if (!isPolling) console.timeEnd('Fetch_Products_Query');
-                console.error("Error loading products:", err.message);
-                if (productsList.length === 0) {
-                    tableBody.innerHTML = `
-                        <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                            <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-500"></i>
-                            <p>No products found in your catalog. Click "Add New Product" to list items.</p>
+                if (vendorProducts.length === 0) {
+                    grid.innerHTML = `
+                        <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+                            <p>You have not listed any products yet. Click "Add New Product" above to begin.</p>
                         </div>
                     `;
+                    return;
                 }
-            }
-        }
 
-        function filterCatalog() {
-            const search = document.getElementById('catalogSearchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('catalogStatusFilter').value;
-            const tableBody = document.getElementById('catalogTableBody');
-
-            const filtered = productsList.filter(item => {
-                const matchesSearch = (item.title || '').toLowerCase().includes(search) || (item.description || '').toLowerCase().includes(search);
-                const itemStatus = item.status || 'ACTIVE';
-                const matchesStatus = statusFilter === 'ALL' || itemStatus === statusFilter;
-                return matchesSearch && matchesStatus;
-            });
-
-            if (filtered.length === 0) {
-                tableBody.innerHTML = `
-                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                        <p>No matching product listings found.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            tableBody.innerHTML = filtered.map(item => `
-                <div class="p-4 grid grid-cols-12 gap-4 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-                    <div class="col-span-6 flex items-center space-x-3">
-                        <img src="${item.image_url || 'https://via.placeholder.com/80'}" alt="Thumb" class="w-12 h-12 rounded-xl object-cover border border-borderSlate">
-                        <div class="space-y-0.5">
-                            <p class="font-bold text-white">${item.title}</p>
-                            <p class="text-[10px] text-slate-400 truncate max-w-sm">${item.description || ''}</p>
+                grid.innerHTML = vendorProducts.map(p => `
+                    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
+                        <div>
+                            <img src="${p.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
+                            <div class="p-5 space-y-2">
+                                <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status}</span>
+                                <h3 class="font-bold text-white text-base">${p.title}</h3>
+                                <p class="text-xs text-slate-400 line-clamp-2">${p.description || ''}</p>
+                            </div>
+                        </div>
+                        <div class="p-5 pt-0 flex space-x-2">
+                            <button onclick="editProduct('${p.id}')" class="flex-1 bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition">Edit</button>
+                            <button onclick="deleteProduct('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold px-4 py-2.5 rounded-xl transition"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
-                    <div class="col-span-3">
-                        <span class="px-2.5 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px] font-semibold">${item.status || 'ACTIVE'}</span>
-                    </div>
-                    <div class="col-span-3 flex items-center justify-end space-x-2">
-                        <button onclick="toggleProductStatus('${item.id}', '${item.status === 'PAUSED' ? 'ACTIVE' : 'PAUSED'}')" class="p-2 bg-darkBg hover:bg-slate-800 border border-borderSlate rounded-lg text-slate-300 transition" title="Toggle Status">
-                            <i class="fa-solid fa-power-off text-[10px]"></i>
-                        </button>
-                        <button onclick="deleteProduct('${item.id}')" class="p-2 bg-darkBg hover:bg-rose-500/20 border border-borderSlate hover:border-rose-500/40 text-slate-400 hover:text-rose-400 rounded-lg transition" title="Delete Product">
-                            <i class="fa-solid fa-trash text-[10px]"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (err) {
+                console.error("Error loading products:", err);
+            }
         }
 
         function openProductModal() {
+            document.getElementById('productModalTitle').textContent = 'Add New Marketplace Product';
+            document.getElementById('editingProductId').value = '';
             document.getElementById('productForm').reset();
             document.getElementById('productModal').classList.remove('hidden');
         }
@@ -448,161 +348,139 @@
             document.getElementById('productModal').classList.add('hidden');
         }
 
-        async function saveProduct(e) {
-            e.preventDefault();
-            const title = document.getElementById('prodTitle').value.trim();
-            const description = document.getElementById('prodDescription').value.trim();
-            const fileInput = document.getElementById('prodImageFile').files[0];
+        async function editProduct(id) {
+            const prod = vendorProducts.find(p => p.id === id);
+            if (!prod) return;
 
-            if (!fileInput) {
-                alert('Please select an image file for the product.');
-                return;
-            }
-
-            try {
-                console.time('Convert_Product_Image_Base64');
-                const image_url = await fileToBase64(fileInput);
-                console.timeEnd('Convert_Product_Image_Base64');
-
-                console.time('Insert_Product_Query');
-                const { error } = await _supabase.from('products').insert([{
-                    title, image_url, description, status: 'ACTIVE', vendor_id: currentUser.id
-                }]);
-                console.timeEnd('Insert_Product_Query');
-
-                if (error) throw error;
-
-                closeProductModal();
-                await loadCatalogProducts();
-                alert('Product listed successfully with Base64 image encoding.');
-            } catch (err) {
-                alert('Error saving product: ' + (err.message || 'Check database table schema & RLS policies.'));
-            }
+            document.getElementById('productModalTitle').textContent = 'Edit Product Listing';
+            document.getElementById('editingProductId').value = prod.id;
+            document.getElementById('prodTitle').value = prod.title;
+            document.getElementById('prodDesc').value = prod.description || '';
+            document.getElementById('prodStatus').value = prod.status || 'ACTIVE';
+            document.getElementById('productModal').classList.remove('hidden');
         }
 
-        async function toggleProductStatus(id, newStatus) {
+        async function handleSaveProduct(event) {
+            event.preventDefault();
+            const id = document.getElementById('editingProductId').value;
+            const title = document.getElementById('prodTitle').value.trim();
+            const description = document.getElementById('prodDesc').value.trim();
+            const status = document.getElementById('prodStatus').value;
+            const fileInput = document.getElementById('prodImageFile');
+
+            let imageUrl = 'https://via.placeholder.com/300';
+            if (id) {
+                const existing = vendorProducts.find(p => p.id === id);
+                if (existing) imageUrl = existing.image_url;
+            }
+
+            if (fileInput.files && fileInput.files[0]) {
+                imageUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                    reader.readAsDataURL(fileInput.files[0]);
+                });
+            }
+
             try {
-                const { error } = await _supabase.from('products').update({ status: newStatus }).eq('id', id);
-                if (error) throw error;
-                await loadCatalogProducts();
+                if (id) {
+                    const { error } = await _supabase
+                        .from('products')
+                        .update({ title, description, status, image_url: imageUrl })
+                        .eq('id', id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await _supabase
+                        .from('products')
+                        .insert([{ vendor_id: currentUser.id, title, description, status, image_url: imageUrl }]);
+                    if (error) throw error;
+                }
+
+                closeProductModal();
+                await loadVendorProducts();
             } catch (err) {
-                alert('Error updating status: ' + err.message);
+                alert('Error saving product: ' + err.message);
             }
         }
 
         async function deleteProduct(id) {
-            if (!confirm('Are you sure you want to remove this product listing?')) return;
+            if (!confirm('Are you sure you want to delete this product?')) return;
             try {
                 const { error } = await _supabase.from('products').delete().eq('id', id);
                 if (error) throw error;
-                await loadCatalogProducts();
+                await loadVendorProducts();
             } catch (err) {
                 alert('Error deleting product: ' + err.message);
             }
         }
 
-        // ================= COMMISSIONS DASHBOARD =================
+        // ================= SELLER COMMISSIONS DISBURSEMENT =================
 
-        async function loadCommissionsData(isPolling = false) {
-            if (!isPolling) console.time('Fetch_Commissions_Query');
+        async function loadVendorCommissions(isPolling = false) {
             try {
                 const { data, error } = await _supabase
                     .from('commissions')
                     .select('*')
                     .eq('vendor_id', currentUser.id);
 
-                if (!isPolling) console.timeEnd('Fetch_Commissions_Query');
                 if (error) throw error;
-                commissionsList = data || [];
+                vendorCommissions = data || [];
             } catch (err) {
-                if (!isPolling) console.timeEnd('Fetch_Commissions_Query');
-                console.log('Using fallback local commissions state dataset.');
+                console.log('Using local vendor commissions fallback.');
             }
-
-            updateCommissionStats();
-            renderCommissionTable();
+            renderSellerCommissions();
         }
 
-        function switchCommissionTab(tab) {
-            activeCommTab = tab;
-            selectedCommIds.clear();
-            document.getElementById('selectAllComms').checked = false;
+        function switchCommSubTab(subTab) {
+            activeSubTab = subTab;
+            selectedSellerCommIds.clear();
+            document.getElementById('selectAllSellerComms').checked = false;
 
-            const tabs = ['incoming', 'outgoing', 'mainQueue', 'workingQueue', 'paymentHistory'];
+            const tabs = ['incoming', 'workingQueue', 'history'];
             tabs.forEach(t => {
-                const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-                if (t === tab) {
+                const btn = document.getElementById('subTab' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (t === subTab) {
                     btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
                 } else {
                     btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
                 }
             });
 
-            renderCommissionTable();
+            renderSellerCommissions();
         }
 
-        function updateCommissionStats() {
-            let pendingSum = 0;
-            let collectedSum = 0;
+        function renderSellerCommissions() {
+            const tableBody = document.getElementById('sellerCommsTableBody');
+            const toolbar = document.getElementById('sellerToolbar');
+            const search = document.getElementById('sellerCommSearch').value.toLowerCase();
 
-            commissionsList.forEach(c => {
-                if (c.status_tag === 'COMPLETED_PAID') {
-                    collectedSum += Number(c.amount || 0);
-                } else {
-                    pendingSum += Number(c.amount || 0);
-                }
-            });
-
-            document.getElementById('statPendingCommissions').textContent = `$${pendingSum.toFixed(2)}`;
-            document.getElementById('statCollectedCommissions').textContent = `$${collectedSum.toFixed(2)}`;
-        }
-
-        function renderCommissionTable() {
-            const tableBody = document.getElementById('commissionsTableBody');
-            const toolbar = document.getElementById('tabActionToolbar');
-            const search = document.getElementById('commSearchInput').value.toLowerCase();
-            const typeFilter = document.getElementById('commTypeFilter').value;
-
-            const filtered = commissionsList.filter(c => {
-                const matchesSearch = (c.recipient_id || '').toLowerCase().includes(search) || 
-                                      (c.feedback_id || '').toLowerCase().includes(search) || 
-                                      (c.id || '').toLowerCase().includes(search);
-                const matchesType = typeFilter === 'ALL' || c.recipient_role === typeFilter;
-
+            const filtered = vendorCommissions.filter(c => {
+                const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) || (c.id || '').toLowerCase().includes(search);
+                
                 let matchesTab = false;
-                if (activeCommTab === 'incoming') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
-                else if (activeCommTab === 'outgoing') matchesTab = c.status_tag === 'OFFERED_BY_VENDOR';
-                else if (activeCommTab === 'mainQueue') matchesTab = c.status_tag === 'MAIN_QUEUE' || !c.status_tag;
-                else if (activeCommTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
-                else if (activeCommTab === 'paymentHistory') matchesTab = c.status_tag === 'COMPLETED_PAID';
+                if (activeSubTab === 'incoming') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
+                else if (activeSubTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
+                else if (activeSubTab === 'history') matchesTab = c.status_tag === 'COMPLETED_PAID';
 
-                return matchesSearch && matchesType && matchesTab;
+                return matchesSearch && matchesTab;
             });
 
-            if (activeCommTab === 'incoming') {
+            if (activeSubTab === 'incoming') {
                 toolbar.innerHTML = `
-                    <button onclick="batchUpdateStatus('APPROVED_IN_WORKING')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected to Working Queue
-                    </button>
-                    <button onclick="batchUpdateStatus('REJECTED_TO_MAIN')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-xmark mr-1.5"></i> Deny & Revert
-                    </button>
-                `;
-            } else if (activeCommTab === 'mainQueue') {
-                toolbar.innerHTML = `
-                    <button onclick="batchUpdateStatus('OFFERED_BY_VENDOR')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request
+                    <button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-check mr-1.5"></i> Approve to Working Queue
                     </button>
                 `;
             } else {
-                toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Viewing Tab: ${activeCommTab}</span>`;
+                toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">SubTab: ${activeSubTab}</span>`;
             }
 
             if (filtered.length === 0) {
                 tableBody.innerHTML = `
                     <div class="p-8 text-center text-xs text-slate-400 col-span-full">
                         <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
-                        <p>No records found in this view.</p>
+                        <p>No disbursement records found in this view.</p>
                     </div>
                 `;
                 return;
@@ -610,163 +488,114 @@
 
             tableBody.innerHTML = filtered.map(c => `
                 <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-                    <div class="col-span-1 flex items-center space-x-2">
-                        <input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+                    <div class="col-span-1">
+                        <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
                     </div>
                     <div class="col-span-3 space-y-0.5">
                         <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
-                        <p class="text-[10px] text-slate-500 font-mono">ID: ${c.id.substring(0,8)}...</p>
+                        <p class="text-[10px] text-slate-500 font-mono">${c.id.substring(0,8)}...</p>
                     </div>
                     <div class="col-span-3 space-y-0.5">
-                        <p class="font-semibold text-slate-200 truncate">Recipient UUID</p>
-                        <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_id}</p>
-                    </div>
-                    <div class="col-span-2 space-y-0.5">
                         <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role}</span>
+                        <p class="text-[10px] text-slate-400 font-mono truncate">Recipient ID</p>
+                    </div>
+                    <div class="col-span-2">
                         <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
                     </div>
                     <div class="col-span-3 flex items-center justify-end space-x-2">
-                        ${activeCommTab === 'workingQueue' ? `
-                            <button onclick="openPaymentModal('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition shadow-md">
-                                <i class="fa-solid fa-dollar-sign mr-1"></i> Pay
+                        ${activeSubTab === 'workingQueue' ? `
+                            <button onclick="openReceiptUploadModal('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition">
+                                <i class="fa-solid fa-upload mr-1"></i> Upload Receipt
                             </button>
-                        ` : activeCommTab === 'paymentHistory' ? `
-                            <button onclick="viewReceipt('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-3 py-1.5 rounded-xl transition">
-                                <i class="fa-solid fa-receipt mr-1 text-purple-400"></i> View Receipt
-                            </button>
+                        ` : activeSubTab === 'history' ? `
+                            <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">PAID & LOGGED</span>
                         ` : `
-                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.status_tag || 'MAIN_QUEUE'}</span>
+                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">PENDING APPROVAL</span>
                         `}
                     </div>
                 </div>
             `).join('');
         }
 
-        function toggleSelectComm(id) {
-            if (selectedCommIds.has(id)) {
-                selectedCommIds.delete(id);
+        function toggleSelectSellerComm(id) {
+            if (selectedSellerCommIds.has(id)) {
+                selectedSellerCommIds.delete(id);
             } else {
-                selectedCommIds.add(id);
+                selectedSellerCommIds.add(id);
             }
         }
 
-        function toggleSelectAllComms(masterCheckbox) {
-            const checkboxes = document.querySelectorAll('#commissionsTableBody input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = masterCheckbox.checked;
-                if (masterCheckbox.checked) {
-                    selectedCommIds.add(cb.value);
-                } else {
-                    selectedCommIds.delete(cb.value);
-                }
+        function toggleSelectAllSeller(master) {
+            const boxes = document.querySelectorAll('#sellerCommsTableBody input[type="checkbox"]');
+            boxes.forEach(b => {
+                b.checked = master.checked;
+                if (master.checked) selectedSellerCommIds.add(b.value);
+                else selectedSellerCommIds.delete(b.value);
             });
         }
 
-        // Rule D: Non-Destructive Status Transition Updates with Performance Metering
-        async function batchUpdateStatus(newStatusTag) {
-            if (selectedCommIds.size === 0) {
+        async function batchVendorApprove() {
+            if (selectedSellerCommIds.size === 0) {
                 alert('Please select at least one record.');
                 return;
             }
-
             try {
-                console.time('Batch_Update_Commissions_Status');
-                for (const id of selectedCommIds) {
+                for (const id of selectedSellerCommIds) {
                     const { error } = await _supabase
                         .from('commissions')
-                        .update({ status_tag: newStatusTag })
+                        .update({ status_tag: 'APPROVED_IN_WORKING' })
                         .eq('id', id);
-
                     if (error) throw error;
                 }
-                console.timeEnd('Batch_Update_Commissions_Status');
-
-                selectedCommIds.clear();
-                await loadCommissionsData();
-                alert('Selected commission records successfully updated.');
+                selectedSellerCommIds.clear();
+                await loadVendorCommissions();
+                alert('Selected requests moved to Working Queue.');
             } catch (err) {
-                console.timeEnd('Batch_Update_Commissions_Status');
                 alert('Action failed: ' + err.message);
             }
         }
 
-        function openPaymentModal(id) {
-            document.getElementById('payCommissionId').value = id;
-            document.getElementById('paymentForm').reset();
-            document.getElementById('paymentModal').classList.remove('hidden');
+        function openReceiptUploadModal(commId) {
+            document.getElementById('receiptTargetCommId').value = commId;
+            document.getElementById('paypalTxId').value = '';
+            document.getElementById('receiptImageFile').value = '';
+            document.getElementById('receiptUploadModal').classList.remove('hidden');
         }
 
-        function closePaymentModal() {
-            document.getElementById('paymentModal').classList.add('hidden');
-        }
+        async function handleUploadReceiptSubmit(event) {
+            event.preventDefault();
+            const commId = document.getElementById('receiptTargetCommId').value;
+            const paypalTxId = document.getElementById('paypalTxId').value.trim();
+            const fileInput = document.getElementById('receiptImageFile');
 
-        async function submitPaymentReceipt(e) {
-            e.preventDefault();
-            const id = document.getElementById('payCommissionId').value;
-            const paypal_tx_id = document.getElementById('payTransactionId').value.trim();
-            const fileInput = document.getElementById('payReceiptFile').files[0];
-
-            if (!fileInput) {
-                alert('Please upload a payment receipt screenshot.');
-                return;
+            let receiptBase64 = '';
+            if (fileInput.files && fileInput.files[0]) {
+                receiptBase64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                    reader.readAsDataURL(fileInput.files[0]);
+                });
             }
 
             try {
-                console.time('Convert_Receipt_Image_Base64');
-                const receipt_url = await fileToBase64(fileInput);
-                console.timeEnd('Convert_Receipt_Image_Base64');
-
-                console.time('Complete_Payment_Query');
                 const { error } = await _supabase
                     .from('commissions')
                     .update({
                         status_tag: 'COMPLETED_PAID',
-                        paypal_tx_id: paypal_tx_id,
-                        receipt_url: receipt_url
+                        paypal_tx_id: paypalTxId,
+                        receipt_url: receiptBase64
                     })
-                    .eq('id', id);
-                console.timeEnd('Complete_Payment_Query');
+                    .eq('id', commId);
 
                 if (error) throw error;
 
-                closePaymentModal();
-                await loadCommissionsData();
-                alert('Payment receipt uploaded with Base64 encoding and record moved to Payment History.');
+                document.getElementById('receiptUploadModal').classList.add('hidden');
+                await loadVendorCommissions();
+                alert('Payment receipt successfully uploaded and logged to history!');
             } catch (err) {
-                alert('Error processing payment proof: ' + err.message);
+                alert('Error uploading receipt: ' + err.message);
             }
-        }
-
-        function viewReceipt(id) {
-            const record = commissionsList.find(c => c.id === id);
-            if (!record) return;
-
-            const content = document.getElementById('receiptModalContent');
-            content.innerHTML = `
-                <div class="space-y-3 text-xs text-slate-300">
-                    <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">Commission ID:</span>
-                        <span class="font-bold text-white">${record.id}</span>
-                    </div>
-                    <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">Recipient UUID:</span>
-                        <span class="font-mono text-white">${record.recipient_id}</span>
-                    </div>
-                    <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">Amount Disbursed:</span>
-                        <span class="font-bold text-emerald-400">$${Number(record.amount).toFixed(2)} USD</span>
-                    </div>
-                    <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">PayPal Transaction ID:</span>
-                        <span class="font-mono text-blue-400">${record.paypal_tx_id || 'N/A'}</span>
-                    </div>
-                    <div class="space-y-1 pt-2">
-                        <span class="text-slate-400">Receipt Proof Image (Base64 Rendered):</span>
-                        <img src="${record.receipt_url || 'https://via.placeholder.com/300'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
-                    </div>
-                </div>
-            `;
-            document.getElementById('receiptModal').classList.remove('hidden');
         }
 
         async function handleLogout() {
@@ -775,8 +604,8 @@
             window.location.href = 'login.html';
         }
 
-        // Initialize application workspace on load
-        initWorkspace();
+        // Initialize vendor workspace on load
+        initVendorWorkspace();
     </script>
 </body>
 </html>
