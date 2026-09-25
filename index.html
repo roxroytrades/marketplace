@@ -79,7 +79,7 @@
         <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
             <div class="space-y-1">
                 <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Shopper & Reviewer Hub</span>
-                <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back...</h1>
+                <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Shopper!</h1>
                 <p class="text-xs text-slate-400">Discover vetted marketplace products, claim review tasks, and manage commission earnings.</p>
             </div>
             <div class="flex items-center space-x-3">
@@ -202,7 +202,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Commissions Engine.</p>
     </footer>
 
-    <!-- Supabase Integration, Defensive Verification Guard & 10s Polling -->
+    <!-- Supabase Integration & Fault-Tolerant Workspace Script -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -218,71 +218,55 @@
         let selectedCommIds = new Set();
         let pollingInterval = null;
 
-        // Rule A & Rule B: Defensive Auth Initialization & Auto-Profile Creation Fix
+        // Safe workspace initialization without client-side profile upserts
         async function initShopperWorkspace() {
-            console.time('Shopper_Auth_And_Profile_Init');
-            const { data: { session }, error } = await _supabase.auth.getSession();
+            const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
 
-            if (error || !session) {
-                console.timeEnd('Shopper_Auth_And_Profile_Init');
+            if (sessionError || !session) {
                 window.location.href = 'login.html';
                 return;
             }
 
             currentUser = session.user;
 
-            let { data: profile, error: profileError } = await _supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
+            // Safely fetch profile record (bypassing any write operations)
+            let userRole = 'buyer';
+            let verificationStatus = 'VERIFIED';
+            let fullName = currentUser.email.split('@')[0];
 
-            // Auto-create profile on the fly if it doesn't exist yet
-            if (profileError || !profile) {
-                console.log('Profile missing. Auto-creating profile record for current user...');
-                const fullNameMeta = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
-                
-                const { data: newProfile, error: createError } = await _supabase
+            try {
+                const { data: profile } = await _supabase
                     .from('profiles')
-                    .insert([{
-                        id: currentUser.id,
-                        full_name: fullNameMeta,
-                        role: 'buyer',
-                        verification_status: 'VERIFIED'
-                    }])
-                    .select()
-                    .single();
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
 
-                if (createError) {
-                    console.error("Auto-profile creation failed:", createError.message);
-                    alert("Error creating user profile: " + createError.message);
-                    return;
+                if (profile) {
+                    if (profile.role) userRole = profile.role;
+                    if (profile.verification_status) verificationStatus = profile.verification_status;
+                    if (profile.full_name) fullName = profile.full_name;
                 }
-                profile = newProfile;
+            } catch (err) {
+                console.warn("Profile fetch skipped, using default session metadata.");
             }
 
-            console.timeEnd('Shopper_Auth_And_Profile_Init');
-
-            currentProfile = profile;
+            currentProfile = { role: userRole, verification_status: verificationStatus, full_name: fullName };
             
-            // Extract the user's name from profile and set the personalized welcome greeting[cite: 1]
-            const fullName = (profile.full_name || '').trim();
-            const firstName = fullName ? fullName.split(' ')[0] : 'Shopper';
+            // Set personalized greeting
+            const firstName = fullName.trim().split(' ')[0] || 'Shopper';
             document.getElementById('welcomeTitle').textContent = `Welcome back, ${firstName}!`;
 
-            // Rule B: Enforce Buyer National ID Verification Lock
-            applyBuyerVerificationLock(profile);
+            applyBuyerVerificationLock(currentProfile);
 
             await loadMarketplaceProducts();
             await loadCommissionsData();
 
-            // Set up 10-second polling interval
+            // 10-second polling interval
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(pollShopperData, 10000);
         }
 
         async function pollShopperData() {
-            console.log('[Polling] Refreshing shopper marketplace and commission queues (10s interval)...');
             await loadMarketplaceProducts(true);
             await loadCommissionsData(true);
         }
@@ -316,7 +300,6 @@
 
         async function loadMarketplaceProducts(isPolling = false) {
             const grid = document.getElementById('marketplaceGrid');
-            if (!isPolling) console.time('Fetch_Marketplace_Products');
             try {
                 const { data, error } = await _supabase
                     .from('products')
@@ -324,14 +307,11 @@
                     .eq('status', 'ACTIVE')
                     .order('created_at', { ascending: false });
 
-                if (!isPolling) console.timeEnd('Fetch_Marketplace_Products');
                 if (error) throw error;
 
                 marketplaceProducts = data || [];
                 filterMarketplaceProducts();
             } catch (err) {
-                if (!isPolling) console.timeEnd('Fetch_Marketplace_Products');
-                console.error("Error loading marketplace products:", err.message);
                 if (marketplaceProducts.length === 0) {
                     grid.innerHTML = `
                         <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
@@ -424,18 +404,15 @@
         // ================= COMMISSIONS DASHBOARD (SHOPPER) =================
 
         async function loadCommissionsData(isPolling = false) {
-            if (!isPolling) console.time('Fetch_Shopper_Commissions');
             try {
                 const { data, error } = await _supabase
                     .from('commissions')
                     .select('*')
                     .eq('recipient_id', currentUser.id);
 
-                if (!isPolling) console.timeEnd('Fetch_Shopper_Commissions');
                 if (error) throw error;
                 commissionsList = data || [];
             } catch (err) {
-                if (!isPolling) console.timeEnd('Fetch_Shopper_Commissions');
                 console.log('Using local shopper commissions dataset fallback.');
             }
 
@@ -582,7 +559,6 @@
             }
 
             try {
-                console.time('Shopper_Batch_Status_Update');
                 for (const id of selectedCommIds) {
                     const { error } = await _supabase
                         .from('commissions')
@@ -591,13 +567,11 @@
 
                     if (error) throw error;
                 }
-                console.timeEnd('Shopper_Batch_Status_Update');
 
                 selectedCommIds.clear();
                 await loadCommissionsData();
                 alert('Commission request successfully updated.');
             } catch (err) {
-                console.timeEnd('Shopper_Batch_Status_Update');
                 alert('Action failed: ' + err.message);
             }
         }
