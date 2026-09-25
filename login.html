@@ -99,7 +99,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Secure Authentication Engine.</p>
     </footer>
 
-    <!-- Supabase Integration & Simplified Login Script -->
+    <!-- Supabase Integration & Fault-Tolerant Login Script -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -129,22 +129,24 @@
                 if (authError) throw authError;
                 const user = authData.user;
 
-                // 2. Fetch user profile
-                let { data: profile, error: profileError } = await _supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .maybeSingle();
+                // 2. Safely attempt profile lookup (defaulting safely to buyer workspace if unreadable)
+                let userRole = 'buyer';
+                try {
+                    const { data: profile } = await _supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', user.id)
+                        .maybeSingle();
 
-                if (profileError) throw profileError;
-
-                // Fallback if profile row is somehow missing
-                if (!profile) {
-                    profile = { role: 'buyer' };
+                    if (profile && profile.role) {
+                        userRole = profile.role;
+                    }
+                } catch (profileLookupErr) {
+                    console.warn("Profile lookup bypassed, falling back to shopper workspace:", profileLookupErr);
                 }
 
                 // 3. Route user based on role
-                const role = (profile.role || 'buyer').toLowerCase();
+                const role = userRole.toLowerCase();
                 if (role === 'admin') {
                     window.location.href = 'admin.html';
                 } else if (role === 'seller' || role === 'vendor') {
