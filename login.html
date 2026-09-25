@@ -99,7 +99,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Secure Authentication Engine.</p>
     </footer>
 
-    <!-- Supabase Integration & Self-Healing Login Script -->
+    <!-- Supabase Integration & Simplified Login Script -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -129,30 +129,18 @@
                 if (authError) throw authError;
                 const user = authData.user;
 
-                // 2. Safely check or self-heal profile record using atomic upsert
+                // 2. Fetch user profile
                 let { data: profile, error: profileError } = await _supabase
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
                     .maybeSingle();
 
-                if (profileError || !profile) {
-                    console.warn("Profile missing on login. Auto-creating profile record...");
-                    const fallbackName = user.user_metadata?.full_name || email.split('@')[0];
-                    
-                    const { data: newProfile, error: upsertError } = await _supabase
-                        .from('profiles')
-                        .upsert({
-                            id: user.id,
-                            full_name: fallbackName,
-                            role: 'buyer',
-                            verification_status: 'VERIFIED'
-                        }, { onConflict: 'id' })
-                        .select()
-                        .single();
+                if (profileError) throw profileError;
 
-                    if (upsertError) throw new Error("Failed to sync user profile: " + upsertError.message);
-                    profile = newProfile;
+                // Fallback if profile row is somehow missing
+                if (!profile) {
+                    profile = { role: 'buyer' };
                 }
 
                 // 3. Route user based on role
