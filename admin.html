@@ -45,17 +45,20 @@
         </div>
         
         <div class="flex items-center space-x-4">
-            <!-- Portals Dropdown -->
-            <div class="relative group">
+            <!-- Portals Dropdown with Hover Bridge Fix -->
+            <div class="relative group py-2">
                 <button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
                     <i class="fa-solid fa-link text-slate-400"></i>
                     <span>Quick Navigation</span>
                     <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
                 </button>
-                <div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
-                    <a href="index.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Marketplace</a>
-                    <a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Dashboard</a>
-                    <a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
+                <div class="absolute right-0 pt-1 w-48 hidden group-hover:block z-50">
+                    <div class="bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2">
+                        <a href="index.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Marketplace</a>
+                        <a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Dashboard</a>
+                        <a href="admin.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Admin Panel</a>
+                        <a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
+                    </div>
                 </div>
             </div>
 
@@ -240,7 +243,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
     </footer>
 
-    <!-- Supabase Integration & 10s Polling (Direct Hyperlink Access Enabled) -->
+    <!-- Supabase Integration & Global Function Bindings -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -256,7 +259,7 @@
         let activeAdminTab = 'accounts';
         let pollingInterval = null;
 
-        // Direct access initialization (No profile role check required)
+        // Direct access initialization
         async function initAdminPanel() {
             const { data: { session }, error } = await _supabase.auth.getSession();
 
@@ -343,8 +346,10 @@
         }
 
         function renderAccountsTable() {
-            const search = document.getElementById('accountSearchInput').value.toLowerCase();
+            const searchInput = document.getElementById('accountSearchInput');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
             const tbody = document.getElementById('accountsTableBody');
+            if (!tbody) return;
 
             const filtered = allUsersList.filter(u => {
                 return (u.full_name || '').toLowerCase().includes(search) || 
@@ -371,7 +376,7 @@
                     </div>
                     <div class="col-span-2">
                         ${u.national_id_url ? `
-                            <button onclick="previewNationalID('${u.full_name \vert{}\vert{} 'User'}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1">
+                            <button onclick="previewNationalID('${(u.full_name \vert{}\vert{} 'User').replace(/'/g, "\\'")}', '${u.national_id_url}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1">
                                 <i class="fa-solid fa-id-card text-rose-400"></i>
                                 <span>View ID</span>
                             </button>
@@ -418,8 +423,10 @@
         }
 
         function renderProductsTable() {
-            const search = document.getElementById('productSearchInput').value.toLowerCase();
+            const searchInput = document.getElementById('productSearchInput');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
             const tbody = document.getElementById('productsTableBody');
+            if (!tbody) return;
 
             const filtered = allProductsList.filter(p => {
                 return (p.title || '').toLowerCase().includes(search);
@@ -467,8 +474,10 @@
         }
 
         function renderCommissionsTable() {
-            const search = document.getElementById('commSearchInput').value.toLowerCase();
+            const searchInput = document.getElementById('commSearchInput');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
             const tbody = document.getElementById('commissionsTableBody');
+            if (!tbody) return;
 
             const filtered = allCommissionsList.filter(c => {
                 return (c.feedback_id || '').toLowerCase().includes(search) || 
@@ -505,6 +514,8 @@
 
         function renderMessagesTable() {
             const tbody = document.getElementById('messagesTableBody');
+            if (!tbody) return;
+
             if (allMessagesList.length === 0) {
                 tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No message threads found.</div>`;
                 return;
@@ -535,6 +546,16 @@
             await _supabase.auth.signOut();
             window.location.href = 'login.html';
         }
+
+        // Expose functions globally to ensure inline onclick handlers work smoothly
+        window.switchAdminTab = switchAdminTab;
+        window.renderAccountsTable = renderAccountsTable;
+        window.renderProductsTable = renderProductsTable;
+        window.renderCommissionsTable = renderCommissionsTable;
+        window.updateUserVerification = updateUserVerification;
+        window.previewNationalID = previewNationalID;
+        window.updateProductStatus = updateProductStatus;
+        window.handleLogout = handleLogout;
 
         // Initialize admin panel on load
         initAdminPanel();
