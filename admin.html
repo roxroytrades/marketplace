@@ -26,8 +26,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter / Space Grotesk -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <!-- Supabase JS Client CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
@@ -246,29 +244,10 @@
         <p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
     </footer>
 
-    <!-- Supabase Integration & Global Function Bindings -->
+    <!-- Direct REST API Integration Script -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
-
-        // Clear any lingering session keys from local storage to prevent 401 token errors
-        try {
-            localStorage.removeItem('sb-mjnwonkepgxhtdnxsrjw-auth-token');
-        } catch (e) {}
-
-        const { createClient } = supabase;
-        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: false,
-                autoRefreshToken: false,
-                detectSessionInUrl: false
-            },
-            global: {
-                headers: {
-                    'x-client-info': 'echo-hub-admin'
-                }
-            }
-        });
 
         let allUsersList = [];
         let allProductsList = [];
@@ -294,17 +273,23 @@
 
         async function fetchAllAdminData(isPolling = false) {
             try {
-                const { data: usersData, error: usersErr } = await _supabase.from('profiles').select('*').order('created_at', { ascending: false });
-                if (!usersErr) allUsersList = usersData || [];
+                const headers = {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json'
+                };
 
-                const { data: productsData, error: prodErr } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
-                if (!prodErr) allProductsList = productsData || [];
+                const profilesRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*&order=created_at.desc`, { headers });
+                if (profilesRes.ok) allUsersList = await profilesRes.json();
 
-                const { data: commsData, error: commsErr } = await _supabase.from('commissions').select('*').order('created_at', { ascending: false });
-                if (!commsErr) allCommissionsList = commsData || [];
+                const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, { headers });
+                if (prodRes.ok) allProductsList = await prodRes.json();
 
-                const { data: msgData, error: msgErr } = await _supabase.from('messages').select('*').order('created_at', { ascending: false });
-                if (!msgErr) allMessagesList = msgData || [];
+                const commRes = await fetch(`${SUPABASE_URL}/rest/v1/commissions?select=*&order=created_at.desc`, { headers });
+                if (commRes.ok) allCommissionsList = await commRes.json();
+
+                const msgRes = await fetch(`${SUPABASE_URL}/rest/v1/messages?select=*&order=created_at.desc`, { headers });
+                if (msgRes.ok) allMessagesList = await msgRes.json();
             } catch (err) {
                 console.error("Error fetching admin data:", err.message);
             }
@@ -406,12 +391,19 @@
 
         async function updateUserVerification(userId, newStatus) {
             try {
-                const { error } = await _supabase
-                    .from('profiles')
-                    .update({ verification_status: newStatus })
-                    .eq('id', userId);
+                const headers = {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                };
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({ verification_status: newStatus })
+                });
 
-                if (error) throw error;
+                if (!res.ok) throw new Error(await res.text());
                 await fetchAllAdminData(true);
                 alert(`User verification status successfully updated to ${newStatus}.`);
             } catch (err) {
@@ -479,12 +471,19 @@
 
         async function updateProductStatus(productId, newStatus) {
             try {
-                const { error } = await _supabase
-                    .from('products')
-                    .update({ status: newStatus })
-                    .eq('id', productId);
+                const headers = {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                };
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({ status: newStatus })
+                });
 
-                if (error) throw error;
+                if (!res.ok) throw new Error(await res.text());
                 await fetchAllAdminData(true);
                 alert(`Product status changed to ${newStatus}.`);
             } catch (err) {
