@@ -330,7 +330,7 @@
 
         function updateAdminMetrics() {
             const totalUsers = allUsersList.length;
-            const pendingIDs = allUsersList.filter(u => u.verification_status === 'PENDING').length;
+            const pendingIDs = allUsersList.filter(u => u.verification_status === 'PENDING' || u.verification_status === 'PENDING_VERIFICATION').length;
             const activeProducts = allProductsList.filter(p => p.status === 'ACTIVE').length;
             
             let totalVolume = 0;
@@ -523,8 +523,8 @@
                         <p class="text-[10px] text-slate-500 font-mono">${c.id.substring(0,10)}...</p>
                     </div>
                     <div class="col-span-3 space-y-0.5">
-                        <p class="text-[10px] text-slate-400 truncate font-mono">V: ${c.vendor_id.substring(0,8)}...</p>
-                        <p class="text-[10px] text-slate-400 truncate font-mono">R: ${c.recipient_id.substring(0,8)}...</p>
+                        <p class="text-[10px] text-slate-400 truncate font-mono">V: ${c.vendor_id ? c.vendor_id.substring(0,8) : 'N/A'}...</p>
+                        <p class="text-[10px] text-slate-400 truncate font-mono">R: ${c.recipient_id ? c.recipient_id.substring(0,8) : 'N/A'}...</p>
                     </div>
                     <div class="col-span-2 space-y-0.5">
                         <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role}</span>
@@ -554,8 +554,8 @@
                         <p class="text-[10px] text-slate-500 font-mono">${m.id.substring(0,12)}...</p>
                     </div>
                     <div class="col-span-3 space-y-0.5">
-                        <p class="text-[10px] text-slate-400 font-mono truncate">Sender: ${m.sender_id.substring(0,8)}...</p>
-                        <p class="text-[10px] text-slate-400 font-mono truncate">Receiver: ${m.receiver_id.substring(0,8)}...</p>
+                        <p class="text-[10px] text-slate-400 font-mono truncate">Sender: ${m.sender_id ? m.sender_id.substring(0,8) : 'N/A'}...</p>
+                        <p class="text-[10px] text-slate-400 font-mono truncate">Receiver: ${m.receiver_id ? m.receiver_id.substring(0,8) : 'N/A'}...</p>
                     </div>
                     <div class="col-span-4">
                         <p class="text-xs text-slate-200 truncate">${m.message_text}</p>
