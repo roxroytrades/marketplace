@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Shopper & Reviewer Sign In</title>
+    <title>Echo Hub - Sign In Portal</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,95 +35,75 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Bar -->
+    <!-- Top Navigation Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
                 eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Portal</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Sign In</span></span>
         </div>
-        
         <div class="flex items-center space-x-3">
-            <a href="index.html" class="text-xs text-slate-400 hover:text-white transition flex items-center space-x-1">
-                <i class="fa-solid fa-arrow-left"></i><span>Back to Shopper Dashboard</span>
-            </a>
+            <span class="text-xs text-slate-400">Need an account?</span>
+            <a href="buyer-register.html" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-200 px-3 py-2 rounded-xl transition font-semibold">Register Shopper</a>
+            <a href="seller-register.html" class="bg-accentBlue hover:bg-accentHover text-xs text-white px-3 py-2 rounded-xl transition font-semibold">Register Vendor</a>
         </div>
     </header>
 
-    <!-- Main Authentication Container -->
-    <main class="flex-1 flex items-center justify-center px-4 py-12">
-        <div class="max-w-md w-full bg-cardBg border border-borderSlate rounded-2xl shadow-2xl p-8 space-y-6">
-            
-            <!-- Header Branding inside Card -->
-            <div class="text-center space-y-2">
-                <div class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-2 font-heading font-bold text-2xl">
-                    eh
+    <!-- Main Login Card Container -->
+    <main class="flex-1 max-w-md w-full mx-auto px-4 py-12 flex items-center justify-center">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl p-8 w-full space-y-6 shadow-2xl">
+            <div class="space-y-2 text-center">
+                <div class="w-12 h-12 bg-blue-600/10 border border-blue-500/20 text-blue-500 rounded-2xl mx-auto flex items-center justify-center text-xl mb-4">
+                    <i class="fa-solid fa-lock"></i>
                 </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Shopper Portal Login</h1>
-                <p class="text-xs text-slate-400">Sign in to manage your marketplace commissions, product reviews, and rewards.</p>
+                <h1 class="text-xl font-bold text-white">Sign In to Echo Hub</h1>
+                <p class="text-xs text-slate-400">Enter your credentials to access your portal dashboard.</p>
             </div>
 
-            <!-- Feedback Alert Box -->
-            <div id="loginAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+            <!-- Error Notification Banner -->
+            <div id="errorBanner" class="bg-rose-500/10 border border-rose-500/25 p-3 rounded-xl text-xs text-rose-400 hidden flex items-center space-x-2">
+                <i class="fa-solid fa-circle-exclamation text-sm"></i>
+                <span id="errorMessage">Invalid login credentials provided.</span>
+            </div>
 
             <!-- Login Form -->
-            <form id="loginForm" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-300">Buyer Email Address</label>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-300">Email Address</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
-                        <input type="email" id="loginEmail" required placeholder="shopper@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <input type="email" id="loginEmail" required placeholder="name@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
-                <div class="space-y-1">
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-semibold text-slate-300">Password</label>
-                        <a href="#" class="text-[11px] text-accentBlue hover:underline">Forgot password?</a>
-                    </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-300">Password</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
-                        <input type="password" id="loginPassword" required placeholder="••••••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-key text-xs"></i></span>
+                        <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
 
-                <button type="submit" id="loginBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-2">
-                    <span>Sign In to Shopper Dashboard</span>
-                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Sign In to Dashboard</span>
                 </button>
             </form>
 
-            <div class="relative flex py-2 items-center">
-                <div class="flex-grow border-t border-borderSlate"></div>
-                <span class="flex-shrink mx-4 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Or continue with</span>
-                <div class="flex-grow border-t border-borderSlate"></div>
+            <div class="border-t border-borderSlate pt-4 text-center space-y-2">
+                <p class="text-xs text-slate-400">Are you a vendor looking to list products?</p>
+                <a href="seller-register.html" class="text-xs text-blue-400 hover:text-blue-300 font-semibold transition block">Create a Vendor Account &rarr;</a>
             </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button type="button" class="bg-darkBg hover:bg-slate-800 border border-borderSlate py-2.5 rounded-xl text-xs font-medium text-slate-300 transition flex items-center justify-center space-x-2">
-                    <i class="fa-brands fa-google text-slate-400"></i>
-                    <span>Google</span>
-                </button>
-                <button type="button" class="bg-darkBg hover:bg-slate-800 border border-borderSlate py-2.5 rounded-xl text-xs font-medium text-slate-300 transition flex items-center justify-center space-x-2">
-                    <i class="fa-brands fa-discord text-blue-400"></i>
-                    <span>Discord</span>
-                </button>
-            </div>
-
-            <p class="text-center text-xs text-slate-400 pt-2">
-                Don't have a buyer account? <a href="buyer-register.html" class="text-accentBlue font-semibold hover:underline">Create an account</a>
-            </p>
-
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Secure Shopper Portal.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Authentication Gateway.</p>
     </footer>
 
-    <!-- Supabase Integration Script -->
+    <!-- Supabase Auth Script & Referral Capture -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -131,48 +111,69 @@
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const loginForm = document.getElementById('loginForm');
-        const loginAlert = document.getElementById('loginAlert');
-        const loginBtn = document.getElementById('loginBtn');
+        // Capture and persist referral query parameter (?ref=CODE) into sessionStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            if (refCode) {
+                sessionStorage.setItem('echo_hub_ref', refCode);
+                console.log('[Referral] Captured and stored referral code:', refCode);
+            }
+        });
 
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
+        async function handleLogin(event) {
+            event.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('submitBtn');
+            const errorBanner = document.getElementById('errorBanner');
+            const errorMessage = document.getElementById('errorMessage');
 
-            // UI Loading state
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Signing In...';
-            loginAlert.classList.add('hidden');
+            errorBanner.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Authenticating...`;
 
             try {
-                const { data, error } = await _supabase.auth.signInWithPassword({
+                console.time('Supabase_Sign_In');
+                const { data: authData, error: authError } = await _supabase.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
+                console.timeEnd('Supabase_Sign_In');
 
-                if (error) throw error;
+                if (authError) throw authError;
 
-                // Success State
-                loginAlert.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-                loginAlert.textContent = 'Login successful! Redirecting to dashboard...';
-                loginAlert.classList.remove('hidden');
+                const user = authData.user;
+                console.time('Fetch_User_Profile_Role');
+                const { data: profile, error: profileError } = await _supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                console.timeEnd('Fetch_User_Profile_Role');
 
-                setTimeout(() => {
+                if (profileError || !profile) {
+                    throw new Error('User profile record not found in database.');
+                }
+
+                // Redirect based on role
+                const role = profile.role;
+                if (role === 'admin') {
+                    window.location.href = 'admin.html';
+                } else if (role === 'seller') {
+                    window.location.href = 'seller.html';
+                } else {
                     window.location.href = 'index.html';
-                }, 1000);
+                }
 
             } catch (err) {
-                // Error State
-                loginAlert.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
-                loginAlert.textContent = err.message || 'Invalid email or password. Please try again.';
-                loginAlert.classList.remove('hidden');
-
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '<span>Sign In to Shopper Dashboard</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>';
+                console.error("Login failure:", err.message);
+                errorMessage.textContent = err.message || 'Invalid login credentials provided.';
+                errorBanner.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket mr-2"></i> Sign In to Dashboard`;
             }
-        });
+        }
     </script>
 </body>
 </html>
