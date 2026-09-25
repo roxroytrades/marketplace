@@ -251,8 +251,24 @@
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 
+        // Clear any lingering session keys from local storage to prevent 401 token errors
+        try {
+            localStorage.removeItem('sb-mjnwonkepgxhtdnxsrjw-auth-token');
+        } catch (e) {}
+
         const { createClient } = supabase;
-        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+            },
+            global: {
+                headers: {
+                    'x-client-info': 'echo-hub-admin'
+                }
+            }
+        });
 
         let allUsersList = [];
         let allProductsList = [];
@@ -263,7 +279,6 @@
 
         async function initAdminPanel() {
             try {
-                // Direct access allowed without session redirects
                 await fetchAllAdminData();
 
                 if (pollingInterval) clearInterval(pollingInterval);
@@ -545,7 +560,7 @@
             `).join('');
         }
 
-        // Initialize admin panel on load directly without session checks
+        // Initialize admin panel on load directly
         initAdminPanel();
     </script>
 </body>
