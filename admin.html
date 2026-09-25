@@ -62,11 +62,11 @@
                 </div>
             </div>
 
-            <!-- Logout Button -->
-            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Sign Out</span>
-            </button>
+            <!-- Mode Indicator -->
+            <div class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl flex items-center space-x-1.5">
+                <i class="fa-solid fa-unlock-keyhole"></i>
+                <span>Direct Access Mode</span>
+            </div>
         </div>
     </header>
 
@@ -230,10 +230,13 @@
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-xl w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
                 <h3 class="text-lg font-bold text-white">National ID Verification Document</h3>
-                <button type="button" onclick="document.getElementById('idPreviewModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button type="button" onclick="closeIdModal()" class="text-slate-400 hover:text-white transition cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="idModalContent" class="space-y-4">
                 <!-- Populated dynamically -->
+            </div>
+            <div class="flex justify-end pt-2 border-t border-borderSlate">
+                <button type="button" onclick="closeIdModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer">Close Preview</button>
             </div>
         </div>
     </div>
@@ -251,7 +254,6 @@
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let currentUser = null;
         let allUsersList = [];
         let allProductsList = [];
         let allCommissionsList = [];
@@ -261,19 +263,7 @@
 
         async function initAdminPanel() {
             try {
-                const { data: { session }, error } = await _supabase.auth.getSession();
-
-                if (error || !session) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                currentUser = session.user;
-                const titleEl = document.getElementById('welcomeTitle');
-                if (titleEl) {
-                    titleEl.textContent = `Admin Control Center (${currentUser.email})`;
-                }
-
+                // Direct access allowed without session redirects
                 await fetchAllAdminData();
 
                 if (pollingInterval) clearInterval(pollingInterval);
@@ -289,17 +279,17 @@
 
         async function fetchAllAdminData(isPolling = false) {
             try {
-                const { data: usersData } = await _supabase.from('profiles').select('*').order('created_at', { ascending: false });
-                allUsersList = usersData || [];
+                const { data: usersData, error: usersErr } = await _supabase.from('profiles').select('*').order('created_at', { ascending: false });
+                if (!usersErr) allUsersList = usersData || [];
 
-                const { data: productsData } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
-                allProductsList = productsData || [];
+                const { data: productsData, error: prodErr } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
+                if (!prodErr) allProductsList = productsData || [];
 
-                const { data: commsData } = await _supabase.from('commissions').select('*').order('created_at', { ascending: false });
-                allCommissionsList = commsData || [];
+                const { data: commsData, error: commsErr } = await _supabase.from('commissions').select('*').order('created_at', { ascending: false });
+                if (!commsErr) allCommissionsList = commsData || [];
 
-                const { data: msgData } = await _supabase.from('messages').select('*').order('created_at', { ascending: false });
-                allMessagesList = msgData || [];
+                const { data: msgData, error: msgErr } = await _supabase.from('messages').select('*').order('created_at', { ascending: false });
+                if (!msgErr) allMessagesList = msgData || [];
             } catch (err) {
                 console.error("Error fetching admin data:", err.message);
             }
@@ -310,8 +300,8 @@
 
         function updateAdminMetrics() {
             const totalUsers = allUsersList.length;
-            const pendingIDs = allUsersList.filter(u => u.verification_status === 'PENDING' || u.verification_status === 'PENDING_VERIFICATION').length;
-            const activeProducts = allProductsList.filter(p => p.status === 'ACTIVE').length;
+            const pendingIDs = allUsersList.filter(u => u.verification_status === 'PENDING' || u.verification_status === 'PENDING_VERIFICATION' || !u.verification_status).length;
+            const activeProducts = allProductsList.filter(p => p.status === 'ACTIVE' || !p.status).length;
             
             let totalVolume = 0;
             allCommissionsList.forEach(c => {
@@ -366,7 +356,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No user accounts found.</div>`;
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No user accounts found matching query.</div>`;
                 return;
             }
 
@@ -408,7 +398,7 @@
 
                 if (error) throw error;
                 await fetchAllAdminData(true);
-                alert(`User verification status updated to ${newStatus}.`);
+                alert(`User verification status successfully updated to ${newStatus}.`);
             } catch (err) {
                 alert('Error updating user status: ' + err.message);
             }
@@ -422,12 +412,18 @@
             content.innerHTML = `
                 <div class="space-y-3 text-xs text-slate-300">
                     <p class="font-bold text-white text-sm">Account: ${fullName}</p>
-                    <div class="border border-borderSlate rounded-2xl overflow-hidden bg-darkBg p-2">
+                    <div class="border border-borderSlate rounded-2xl overflow-hidden bg-darkBg p-2 flex items-center justify-center">
                         <img src="${url}" class="w-full h-auto max-h-96 object-contain rounded-xl" alt="National ID Proof">
                     </div>
+                    <p class="text-[10px] text-slate-400 break-all font-mono">Source URL: ${url}</p>
                 </div>
             `;
             modal.classList.remove('hidden');
+        }
+
+        function closeIdModal() {
+            const modal = document.getElementById('idPreviewModal');
+            if (modal) modal.classList.add('hidden');
         }
 
         function renderProductsTable() {
@@ -441,7 +437,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No products found.</div>`;
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No products found matching search.</div>`;
                 return;
             }
 
@@ -452,10 +448,10 @@
                         <p class="text-[10px] text-slate-500 font-mono">ID: ${p.id.substring(0,12)}...</p>
                     </div>
                     <div class="col-span-3">
-                        <p class="font-mono text-[11px] text-slate-400 truncate">${p.vendor_id}</p>
+                        <p class="font-mono text-[11px] text-slate-400 truncate">${p.vendor_id || 'N/A'}</p>
                     </div>
                     <div class="col-span-2">
-                        <span class="px-2.5 py-0.5 ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'} border rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
+                        <span class="px-2.5 py-0.5 ${p.status === 'ACTIVE' || !p.status ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'} border rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
                     </div>
                     <div class="col-span-3 flex items-center justify-end space-x-2">
                         <button type="button" onclick="updateProductStatus('${p.id}', '${p.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium cursor-pointer">
@@ -494,7 +490,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No commission records found.</div>`;
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No commission ledger records found.</div>`;
                 return;
             }
 
@@ -509,7 +505,7 @@
                         <p class="text-[10px] text-slate-400 truncate font-mono">R: ${c.recipient_id ? c.recipient_id.substring(0,8) : 'N/A'}...</p>
                     </div>
                     <div class="col-span-2 space-y-0.5">
-                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role}</span>
+                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
                         <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
                     </div>
                     <div class="col-span-4 flex items-center justify-end space-x-2">
@@ -525,7 +521,7 @@
             if (!tbody) return;
 
             if (allMessagesList.length === 0) {
-                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No message threads found.</div>`;
+                tbody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No message threads found in database.</div>`;
                 return;
             }
 
@@ -540,7 +536,7 @@
                         <p class="text-[10px] text-slate-400 font-mono truncate">Receiver: ${m.receiver_id ? m.receiver_id.substring(0,8) : 'N/A'}...</p>
                     </div>
                     <div class="col-span-4">
-                        <p class="text-xs text-slate-200 truncate">${m.message_text}</p>
+                        <p class="text-xs text-slate-200 truncate">${m.message_text || ''}</p>
                     </div>
                     <div class="col-span-2 text-right text-[10px] text-slate-500">
                         ${new Date(m.created_at || Date.now()).toLocaleTimeString()}
@@ -549,13 +545,7 @@
             `).join('');
         }
 
-        async function handleLogout() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            await _supabase.auth.signOut();
-            window.location.href = 'login.html';
-        }
-
-        // Initialize admin panel on load
+        // Initialize admin panel on load without authentication redirects
         initAdminPanel();
     </script>
 </body>
