@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account — Set up your Echo Hub marketplace account</title>
+    <title>Echo Hub - Shopper & Reviewer Registration</title>
     <!-- Tailwind CSS CDN with Dark Mode Enabled -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter / Space Grotesk -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <!-- Supabase JS Client CDN -->
+    <!-- Official Supabase JS Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -35,146 +35,172 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Top Bar -->
+    <!-- Top Navigation Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+            <div class="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-rose-500/20 font-heading font-bold text-lg">
                 eh
             </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Registration</span></span>
+            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-rose-500">hub</span> <span class="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Gateway</span></span>
         </div>
-        <div class="flex items-center space-x-2 text-xs text-slate-400">
-            <span>Already have an account?</span>
-            <a href="login.html" class="text-blue-400 hover:underline font-semibold">Sign in</a>
+        <div class="flex items-center space-x-3">
+            <a href="login.html" class="text-xs text-slate-400 hover:text-white transition">Already have an account? Sign In</a>
         </div>
     </header>
 
     <!-- Main Registration Container -->
-    <main class="flex-1 max-w-xl w-full mx-auto px-4 py-12 flex flex-col justify-center">
-        <div class="bg-cardBg border border-borderSlate rounded-3xl p-8 md:p-10 shadow-2xl space-y-6">
-            
+    <main class="flex-1 max-w-2xl w-full mx-auto px-4 py-12">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl p-8 shadow-2xl space-y-8">
             <div class="space-y-2 text-center">
-                <h1 class="text-2xl font-bold text-white tracking-tight">Create Account</h1>
-                <p class="text-xs text-slate-400">Set up your Echo Hub marketplace account to discover verified review opportunities.</p>
+                <span class="text-xs text-rose-400 font-semibold uppercase tracking-wider">Public Registration Portal</span>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Create Reviewer Account</h1>
+                <p class="text-xs text-slate-400">Join the Echo Hub marketplace network to browse exclusive opportunities, submit review links, and earn commission payouts.</p>
             </div>
 
-            <!-- Error Notification Banner -->
-            <div id="errorBanner" class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-400 hidden flex items-start space-x-2">
-                <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
-                <span id="errorMessage">Please check your form inputs.</span>
-            </div>
-
-            <form id="registerForm" onsubmit="handleShopperRegister(event)" class="space-y-4">
+            <form id="buyerRegisterForm" onsubmit="handleBuyerRegistration(event)" class="space-y-6">
                 
-                <!-- First & Last Name -->
+                <!-- Name Fields -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="space-y-1.5">
-                        <label class="text-xs font-medium text-slate-300">First Name</label>
-                        <input type="text" id="firstNameInput" required placeholder="John" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <label class="text-xs font-semibold text-slate-300">First Name <span class="text-rose-500">*</span></label>
+                        <input type="text" id="firstName" required placeholder="Roxroy" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
                     </div>
                     <div class="space-y-1.5">
-                        <label class="text-xs font-medium text-slate-300">Last Name</label>
-                        <input type="text" id="lastNameInput" required placeholder="Doe" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <label class="text-xs font-semibold text-slate-300">Last Name <span class="text-rose-500">*</span></label>
+                        <input type="text" id="lastName" required placeholder="Gough" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
                     </div>
                 </div>
 
-                <!-- WhatsApp & Categories of Interest -->
+                <!-- WhatsApp & PayPal -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="space-y-1.5">
-                        <label class="text-xs font-medium text-slate-300">WhatsApp Number</label>
-                        <input type="text" id="whatsappInput" required placeholder="+1234567890" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <label class="text-xs font-semibold text-slate-300">WhatsApp Number <span class="text-rose-500">*</span></label>
+                        <input type="text" id="whatsapp" required placeholder="+18765550192" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                        <p class="text-[10px] text-slate-500">International format with country code[cite: 3].</p>
                     </div>
                     <div class="space-y-1.5">
-                        <label class="text-xs font-medium text-slate-300">Categories of Interest</label>
-                        <input type="text" id="categoriesInput" required placeholder="Electronics, Fashion, Food" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <label class="text-xs font-semibold text-slate-300">PayPal Email (For Payouts) <span class="text-rose-500">*</span></label>
+                        <input type="email" id="paypalEmail" required placeholder="payouts@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
                     </div>
                 </div>
 
-                <!-- National ID File Upload -->
+                <!-- Categories of Interest -->
                 <div class="space-y-1.5">
-                    <label class="text-xs font-medium text-slate-300">National ID File Upload <span class="text-amber-400 text-[10px]">(Required for verification)</span></label>
-                    <input type="file" id="nationalIdInput" required accept="image/*,.pdf" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
+                    <label class="text-xs font-semibold text-slate-300">Categories of Interest <span class="text-rose-500">*</span></label>
+                    <input type="text" id="categories" required placeholder="Electronics, Home & Kitchen, Gadgets" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
                 </div>
 
-                <!-- PayPal Email & Account Email -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-medium text-slate-300">PayPal Email (Payouts)</label>
-                        <input type="email" id="paypalEmailInput" required placeholder="paypal@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-medium text-slate-300">Account Email (Login)</label>
-                        <input type="email" id="emailInput" required placeholder="name@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                </div>
-
-                <!-- Password -->
+                <!-- National ID File Upload (Canvas Compressed Base64) -->
                 <div class="space-y-1.5">
-                    <label class="text-xs font-medium text-slate-300">Password</label>
-                    <input type="password" id="passwordInput" required placeholder="••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    <label class="text-xs font-semibold text-slate-300">National ID Document Proof <span class="text-rose-500">*</span></label>
+                    <input type="file" id="nationalIdFile" accept="image/*" required onchange="processNationalIdFile(event)" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-rose-500/10 file:text-rose-400 hover:file:bg-rose-500/20 transition cursor-pointer">
+                    <p class="text-[10px] text-slate-500">Upload a clear photo of your government-issued ID (Passport, Driver's License, National ID)[cite: 3].</p>
+                    <div id="idPreviewContainer" class="hidden pt-2">
+                        <img id="idPreviewImg" class="w-32 h-20 object-cover rounded-xl border border-borderSlate" alt="ID Preview">
+                    </div>
                 </div>
 
-                <!-- Primary Action Button -->
-                <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2 mt-2">
+                <!-- Credentials -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-borderSlate pt-6">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-300">Account Email <span class="text-rose-500">*</span></label>
+                        <input type="email" id="email" required placeholder="user@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-300">Account Password <span class="text-rose-500">*</span></label>
+                        <input type="password" id="password" required placeholder="••••••••" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button type="submit" id="submitBtn" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-heading font-bold py-3.5 rounded-xl transition shadow-lg shadow-rose-600/20 text-sm cursor-pointer flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-user-plus"></i>
-                    <span>Complete Registration</span>
+                    <span>Register Shopper Account</span>
                 </button>
             </form>
-
-            <div class="border-t border-borderSlate pt-4 text-center text-xs text-slate-500">
-                <p>Already have an account? <a href="login.html" class="text-blue-400 hover:underline">Sign in</a></p>
-            </div>
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Secure Shopper Portal.</p>
+        <p>&copy; 2026 Echo Hub Marketplace. Secure Shopper Registration Gateway[cite: 3].</p>
     </footer>
 
-    <!-- Registration Script -->
+    <!-- Supabase SDK & Registration Logic Script -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const { createClient } = supabase;
-        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let compressedIdBase64 = '';
 
-        async function handleShopperRegister(event) {
+        // HTML5 Canvas Compression Strategy for National ID (Max 1200px)[cite: 3]
+        function processNationalIdFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 1200;
+
+                    if (width > height && width > maxDim) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else if (height > maxDim) {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    compressedIdBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                    
+                    const previewContainer = document.getElementById('idPreviewContainer');
+                    const previewImg = document.getElementById('idPreviewImg');
+                    previewImg.src = compressedIdBase64;
+                    previewContainer.classList.remove('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function handleBuyerRegistration(event) {
             event.preventDefault();
-            const firstName = document.getElementById('firstNameInput').value.trim();
-            const lastName = document.getElementById('lastNameInput').value.trim();
-            const fullName = `${firstName} ${lastName}`;
-            const whatsapp = document.getElementById('whatsappInput').value.trim();
-            const categories = document.getElementById('categoriesInput').value.trim();
-            const paypalEmail = document.getElementById('paypalEmailInput').value.trim();
-            const email = document.getElementById('emailInput').value.trim();
-            const password = document.getElementById('passwordInput').value;
-            const fileInput = document.getElementById('nationalIdInput');
+            const submitBtn = document.getElementById('submitBtn');
             
-            const btn = document.getElementById('submitBtn');
-            const errorBanner = document.getElementById('errorBanner');
-            const errorMessage = document.getElementById('errorMessage');
+            if (!compressedIdBase64) {
+                alert('Please upload a valid National ID document proof.');
+                return;
+            }
 
-            errorBanner.classList.add('hidden');
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Registering Account...`;
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const fullName = `${firstName} ${lastName}`;
+            const whatsapp = document.getElementById('whatsapp').value.trim();
+            const paypalEmail = document.getElementById('paypalEmail').value.trim();
+            const categories = document.getElementById('categories').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            // Capture optional referral query parameter if present
+            const urlParams = new URLSearchParams(window.location.search);
+            const referredBy = urlParams.get('ref') || null;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Creating Account...</span>`;
 
             try {
-                // Convert National ID file to base64 for safe storage
-                let nationalIdBase64 = '';
-                if (fileInput.files && fileInput.files[0]) {
-                    const file = fileInput.files[0];
-                    nationalIdBase64 = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result);
-                        reader.onerror = error => reject(error);
-                        reader.readAsDataURL(file);
-                    });
-                }
-
-                // 1. Sign up user via Supabase Auth with metadata
-                const { data: authData, error: authError } = await _supabase.auth.signUp({
+                // 1. Sign up user via Supabase Auth
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password,
                     options: {
@@ -186,37 +212,38 @@
                 });
 
                 if (authError) throw authError;
-                const user = authData.user;
+                const userId = authData.user ? authData.user.id : null;
 
-                if (user) {
-                    // 2. Attempt to create profile record if database trigger doesn't automatically insert it
-                    const { error: profileError } = await _supabase
-                        .from('profiles')
-                        .upsert([{
-                            id: user.id,
-                            full_name: fullName,
-                            role: 'buyer',
-                            whatsapp: whatsapp,
-                            categories_of_interest: categories,
-                            paypal_email: paypalEmail,
-                            national_id_url: nationalIdBase64,
-                            verification_status: 'PENDING_VERIFICATION'
-                        }], { onConflict: 'id' });
-
-                    if (profileError) {
-                        console.warn("Profile table write restricted by RLS (Handled by Auth trigger):", profileError.message);
-                    }
+                if (!userId) {
+                    throw new Error('User registration failed to return an authenticated ID.');
                 }
 
-                // 3. Redirect to shopper portal with verification locks active
+                // 2. Insert profile record with initial PENDING_VERIFICATION state[cite: 3]
+                const { error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .upsert({
+                        id: userId,
+                        full_name: fullName,
+                        email: email,
+                        whatsapp: whatsapp,
+                        paypal_email: paypalEmail,
+                        categories: categories,
+                        national_id_base64: compressedIdBase64,
+                        role: 'buyer',
+                        verification_status: 'PENDING_VERIFICATION',
+                        referred_by: referredBy,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (profileError) throw profileError;
+
+                alert('Shopper account successfully created! Your National ID is pending admin verification. Redirecting to Reviewer Hub...');
                 window.location.href = 'index.html';
 
             } catch (err) {
-                console.error("Registration error:", err.message);
-                errorMessage.textContent = err.message || 'Registration failed. Please try again.';
-                errorBanner.classList.remove('hidden');
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-user-plus mr-2"></i> Complete Registration`;
+                alert('Registration Error: ' + err.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i><span>Register Shopper Account</span>`;
             }
         }
     </script>
