@@ -525,9 +525,12 @@
             const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
 
             grid.innerHTML = filtered.map(item => `
-                <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
+                <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group">
                     <div>
-                        <img src="${item.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
+                        <!-- FIXED: Switched to object-contain inside a neutral dark background container to prevent image cropping -->
+                        <div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 overflow-hidden">
+                            <img src="${item.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300">
+                        </div>
                         <div class="p-5 space-y-2">
                             <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">Verified Listing</span>
                             <h3 class="font-bold text-white text-base">${item.title}</h3>
