@@ -127,19 +127,20 @@
             </div>
         </div>
 
-        <!-- ================= SECTION B: SELLER COMMISSIONS DASHBOARD ================= -->
+        <!-- ================= SECTION B: 5-TAB COMMISSIONS DISBURSEMENT DASHBOARD ================= -->
         <div id="commissionsSection" class="space-y-6 hidden">
             <div class="space-y-1">
                 <h2 class="text-lg font-bold text-white tracking-tight">Vendor Commissions & Disbursement Dashboard</h2>
-                <p class="text-xs text-slate-400">Process incoming requests, manage active working queues, and upload payout receipts.</p>
+                <p class="text-xs text-slate-400">Process incoming bottom-up claims, top-down offers, working queue settlements, and master history logs.</p>
             </div>
 
-            <!-- Commissions Sub-Tabs (4-Tier) -->
+            <!-- Commissions 5-Tab Pipeline Navigation -->
             <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-                <button onclick="switchCommSubTab('incoming')" id="subTabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
-                <button onclick="switchCommSubTab('workingQueue')" id="subTabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
-                <button onclick="switchCommSubTab('readyForPayout')" id="subTabReadyForPayout" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Ready for Payout</button>
-                <button onclick="switchCommSubTab('history')" id="subTabHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Payment History</button>
+                <button onclick="switchCommSubTab('incoming')" id="subTabIncoming" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
+                <button onclick="switchCommSubTab('mainQueue')" id="subTabMainQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Main Queue</button>
+                <button onclick="switchCommSubTab('outgoing')" id="subTabOutgoing" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Outgoing Requests</button>
+                <button onclick="switchCommSubTab('workingQueue')" id="subTabWorkingQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
+                <button onclick="switchCommSubTab('history')" id="subTabHistory" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Payment History</button>
             </div>
 
             <!-- Action Toolbar -->
@@ -159,8 +160,8 @@
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
                     <span class="col-span-1"><input type="checkbox" id="selectAllSellerComms" onclick="toggleSelectAllSeller(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"></span>
-                    <span class="col-span-3">Feedback ID</span>
-                    <span class="col-span-3">Recipient</span>
+                    <span class="col-span-3">Feedback / Ref ID</span>
+                    <span class="col-span-3">Recipient Role & Target</span>
                     <span class="col-span-2">Amount</span>
                     <span class="col-span-3 text-right">Status & Action</span>
                 </div>
@@ -279,25 +280,92 @@
         </div>
     </div>
 
-    <!-- Upload Receipt Modal -->
-    <div id="receiptUploadModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <!-- Pay & Settle Modal (Working Queue Settlement) -->
+    <div id="settlementModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-                <h3 class="text-lg font-bold text-white">Upload Payment Receipt</h3>
-                <button onclick="document.getElementById('receiptUploadModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <h3 class="text-lg font-bold text-white">Execute Payout Settlement</h3>
+                <button onclick="document.getElementById('settlementModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form onsubmit="handleUploadReceiptSubmit(event)" class="space-y-4">
-                <input type="hidden" id="receiptTargetCommId">
+            <form onsubmit="handleSettlementSubmit(event)" class="space-y-4">
+                <input type="hidden" id="settleTargetCommId">
                 <div class="space-y-1.5">
-                    <label class="text-xs font-medium text-slate-300">PayPal Transaction ID</label>
-                    <input type="text" id="paypalTxId" required placeholder="e.g., 9X123456AB7890" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    <label class="text-xs font-medium text-slate-300">Verified Recipient PayPal Address</label>
+                    <input type="text" id="settlePaypalEmail" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-400 outline-none font-mono">
                 </div>
                 <div class="space-y-1.5">
-                    <label class="text-xs font-medium text-slate-300">Receipt Image / Screenshot (Auto-Compressed)</label>
-                    <input type="file" id="receiptImageFile" required accept="image/*,.pdf" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
+                    <label class="text-xs font-medium text-slate-300">Mandatory 17-Character PayPal Transaction ID</label>
+                    <input type="text" id="settleTxId" required minlength="17" maxlength="17" placeholder="e.g., 9X123456AB7890123" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition font-mono">
+                    <p class="text-[10px] text-slate-500">Must be exactly 17 alphanumeric characters.</p>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Payment Receipt Proof Screenshot</label>
+                    <input type="file" id="settleReceiptFile" required accept="image/*,.pdf" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
                 </div>
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
-                    Complete & Transfer to History
+                    Complete & Archive to History
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inspect Receipt Modal (Payment History Audit) -->
+    <div id="inspectReceiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+                <h3 class="text-lg font-bold text-white">Payment Receipt Audit Proof</h3>
+                <button onclick="document.getElementById('inspectReceiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1">
+                        <span class="text-slate-500">PayPal Transaction ID</span>
+                        <p id="inspectModalTxId" class="font-mono font-bold text-white">-</p>
+                    </div>
+                    <div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1">
+                        <span class="text-slate-500">Settled Amount</span>
+                        <p id="inspectModalAmount" class="font-bold text-emerald-400">-</p>
+                    </div>
+                </div>
+                <div class="space-y-1.5">
+                    <span class="text-xs text-slate-400">Attached Receipt Image Proof</span>
+                    <div class="bg-darkBg border border-borderSlate rounded-xl p-2 text-center max-h-64 overflow-y-auto">
+                        <img id="inspectModalImage" src="" alt="Receipt Proof" class="mx-auto rounded object-contain max-h-56">
+                    </div>
+                </div>
+                <button onclick="document.getElementById('inspectReceiptModal').classList.add('hidden')" class="w-full bg-darkBg hover:bg-slate-800 border border-borderSlate text-white text-xs font-semibold py-3 rounded-xl transition">
+                    Close Inspector
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proactive Top-Down Offer Modal (Main Queue) -->
+    <div id="topDownOfferModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+                <h3 class="text-lg font-bold text-white">Initiate Top-Down Commission Offer</h3>
+                <button onclick="document.getElementById('topDownOfferModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleTopDownOfferSubmit(event)" class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Recipient Email or User ID</label>
+                    <input type="text" id="offerRecipientId" required placeholder="recipient@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Recipient Role</label>
+                    <select id="offerRecipientRole" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <option value="REVIEWER">REVIEWER</option>
+                        <option value="BUYER_INVITER">BUYER_INVITER</option>
+                        <option value="SELLER_INVITER">SELLER_INVITER</option>
+                    </select>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Commission Amount ($ USD)</label>
+                    <input type="number" step="0.01" id="offerAmount" required placeholder="20.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <button type="submit" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
+                    Send Offer to Outgoing Requests
                 </button>
             </form>
         </div>
@@ -522,7 +590,7 @@
             }
         }
 
-        // ================= 4-TIER COMMISSIONS DISBURSEMENT =================
+        // ================= 5-TAB COMMISSIONS ARCHITECTURE =================
         async function loadVendorCommissions(isPolling = false) {
             try {
                 const { data, error } = await _supabase
@@ -543,13 +611,13 @@
             selectedSellerCommIds.clear();
             document.getElementById('selectAllSellerComms').checked = false;
 
-            const tabs = ['incoming', 'workingQueue', 'readyForPayout', 'history'];
+            const tabs = ['incoming', 'mainQueue', 'outgoing', 'workingQueue', 'history'];
             tabs.forEach(t => {
                 const btn = document.getElementById('subTab' + t.charAt(0).toUpperCase() + t.slice(1));
                 if (t === subTab) {
-                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
+                    btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
                 } else {
-                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
+                    btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
                 }
             });
 
@@ -566,8 +634,9 @@
                 
                 let matchesTab = false;
                 if (activeSubTab === 'incoming') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
+                else if (activeSubTab === 'mainQueue') matchesTab = c.status_tag === 'UNREQUESTED_BALANCE';
+                else if (activeSubTab === 'outgoing') matchesTab = c.status_tag === 'OFFERED_AWAITING_ACCEPTANCE';
                 else if (activeSubTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
-                else if (activeSubTab === 'readyForPayout') matchesTab = c.status_tag === 'READY_FOR_PAYOUT';
                 else if (activeSubTab === 'history') matchesTab = c.status_tag === 'COMPLETED_PAID';
 
                 return matchesSearch && matchesTab;
@@ -576,18 +645,24 @@
             if (activeSubTab === 'incoming') {
                 toolbar.innerHTML = `
                     <button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-check mr-1.5"></i> Approve to Working Queue
+                        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected
+                    </button>
+                `;
+            } else if (activeSubTab === 'mainQueue') {
+                toolbar.innerHTML = `
+                    <button onclick="document.getElementById('topDownOfferModal').classList.remove('hidden')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-paper-plane mr-1.5"></i> Proactive Offer
                     </button>
                 `;
             } else {
-                toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">SubTab: ${activeSubTab}</span>`;
+                toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab View: ${activeSubTab}</span>`;
             }
 
             if (filtered.length === 0) {
                 tableBody.innerHTML = `
                     <div class="p-8 text-center text-xs text-slate-400 col-span-full">
                         <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
-                        <p>No disbursement records found in this view.</p>
+                        <p>No records found in this view.</p>
                     </div>
                 `;
                 return;
@@ -599,29 +674,32 @@
                         <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
                     </div>
                     <div class="col-span-3 space-y-0.5">
-                        <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
-                        <p class="text-[10px] text-slate-500 font-mono">${c.id.substring(0,8)}...</p>
+                        <span class="font-bold text-white">${c.feedback_id ? 'FB ID: ' + c.feedback_id : 'Ref ID: ' + c.id.substring(0,8)}</span>
+                        <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
                     </div>
                     <div class="col-span-3 space-y-0.5">
-                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'Reviewer'}</span>
-                        <p class="text-[10px] text-slate-400 font-mono truncate">Recipient ID</p>
+                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
+                        <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
                     </div>
                     <div class="col-span-2">
                         <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
                     </div>
                     <div class="col-span-3 flex items-center justify-end space-x-2">
-                        ${activeSubTab === 'workingQueue' ? `
-                            <button onclick="moveCommToPayout('${c.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition">
-                                <i class="fa-solid fa-arrow-right mr-1"></i> Ready Payout
-                            </button>
-                        ` : activeSubTab === 'readyForPayout' ? `
-                            <button onclick="openReceiptUploadModal('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition">
-                                <i class="fa-solid fa-upload mr-1"></i> Upload Receipt
+                        ${activeSubTab === 'incoming' ? `
+                            <button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
+                            <button onclick="denySingleComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
+                        ` : activeSubTab === 'workingQueue' ? `
+                            <button onclick="openSettlementModal('${c.id}', '${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
+                                <i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
                             </button>
                         ` : activeSubTab === 'history' ? `
-                            <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">PAID & LOGGED</span>
+                            <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}', '${c.amount \vert{}\vert{} 0}', '${c.receipt_url || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
+                                <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
+                            </button>
+                        ` : activeSubTab === 'outgoing' ? `
+                            <span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px]">AWAITING ACCEPTANCE</span>
                         ` : `
-                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">PENDING APPROVAL</span>
+                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">UNREQUESTED</span>
                         `}
                     </div>
                 </div>
@@ -660,37 +738,86 @@
                 }
                 selectedSellerCommIds.clear();
                 await loadVendorCommissions();
-                alert('Selected requests moved to Working Queue.');
+                alert('Selected requests successfully moved to Working Queue.');
             } catch (err) {
                 alert('Action failed: ' + err.message);
             }
         }
 
-        async function moveCommToPayout(id) {
+        async function approveSingleComm(id) {
             try {
                 const { error } = await _supabase
                     .from('commissions')
-                    .update({ status_tag: 'READY_FOR_PAYOUT' })
+                    .update({ status_tag: 'APPROVED_IN_WORKING' })
                     .eq('id', id);
                 if (error) throw error;
                 await loadVendorCommissions();
             } catch (err) {
-                alert('Error updating status: ' + err.message);
+                alert('Approval failed: ' + err.message);
             }
         }
 
-        function openReceiptUploadModal(commId) {
-            document.getElementById('receiptTargetCommId').value = commId;
-            document.getElementById('paypalTxId').value = '';
-            document.getElementById('receiptImageFile').value = '';
-            document.getElementById('receiptUploadModal').classList.remove('hidden');
+        async function denySingleComm(id) {
+            if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
+            try {
+                const { error } = await _supabase
+                    .from('commissions')
+                    .update({ status_tag: 'UNREQUESTED_BALANCE' })
+                    .eq('id', id);
+                if (error) throw error;
+                await loadVendorCommissions();
+                alert('Claim reversed back to recipient queue.');
+            } catch (err) {
+                alert('Reversal failed: ' + err.message);
+            }
         }
 
-        async function handleUploadReceiptSubmit(event) {
+        async function handleTopDownOfferSubmit(event) {
             event.preventDefault();
-            const commId = document.getElementById('receiptTargetCommId').value;
-            const paypalTxId = document.getElementById('paypalTxId').value.trim();
-            const fileInput = document.getElementById('receiptImageFile');
+            const recipientEmail = document.getElementById('offerRecipientId').value.trim();
+            const recipientRole = document.getElementById('offerRecipientRole').value;
+            const amount = parseFloat(document.getElementById('offerAmount').value);
+
+            try {
+                const { error } = await _supabase
+                    .from('commissions')
+                    .insert([{
+                        vendor_id: currentUser.id,
+                        recipient_email: recipientEmail,
+                        recipient_role: recipientRole,
+                        amount: amount,
+                        status_tag: 'OFFERED_AWAITING_ACCEPTANCE'
+                    }]);
+
+                if (error) throw error;
+                document.getElementById('topDownOfferModal').classList.add('hidden');
+                document.getElementById('offerRecipientId').value = '';
+                document.getElementById('offerAmount').value = '';
+                await loadVendorCommissions();
+                alert('Top-down commission offer sent successfully to Outgoing Requests.');
+            } catch (err) {
+                alert('Error creating offer: ' + err.message);
+            }
+        }
+
+        function openSettlementModal(commId, recipientEmail) {
+            document.getElementById('settleTargetCommId').value = commId;
+            document.getElementById('settlePaypalEmail').value = recipientEmail;
+            document.getElementById('settleTxId').value = '';
+            document.getElementById('settleReceiptFile').value = '';
+            document.getElementById('settlementModal').classList.remove('hidden');
+        }
+
+        async function handleSettlementSubmit(event) {
+            event.preventDefault();
+            const commId = document.getElementById('settleTargetCommId').value;
+            const txId = document.getElementById('settleTxId').value.trim();
+            const fileInput = document.getElementById('settleReceiptFile');
+
+            if (txId.length !== 17) {
+                alert('PayPal Transaction ID must be exactly 17 characters.');
+                return;
+            }
 
             let receiptBase64 = '';
             if (fileInput.files && fileInput.files[0]) {
@@ -702,19 +829,26 @@
                     .from('commissions')
                     .update({
                         status_tag: 'COMPLETED_PAID',
-                        paypal_tx_id: paypalTxId,
+                        paypal_tx_id: txId,
                         receipt_url: receiptBase64
                     })
                     .eq('id', commId);
 
                 if (error) throw error;
 
-                document.getElementById('receiptUploadModal').classList.add('hidden');
+                document.getElementById('settlementModal').classList.add('hidden');
                 await loadVendorCommissions();
-                alert('Payment receipt successfully uploaded and logged to history!');
+                alert('Payment successfully settled and archived to Payment History!');
             } catch (err) {
-                alert('Error uploading receipt: ' + err.message);
+                alert('Settlement execution failed: ' + err.message);
             }
+        }
+
+        function inspectReceipt(txId, amount, receiptUrl) {
+            document.getElementById('inspectModalTxId').textContent = txId;
+            document.getElementById('inspectModalAmount').textContent = `$${Number(amount).toFixed(2)}`;
+            document.getElementById('inspectModalImage').src = receiptUrl || 'https://via.placeholder.com/300?text=No+Receipt+Image';
+            document.getElementById('inspectReceiptModal').classList.remove('hidden');
         }
 
         // ================= MESSAGING HUB IMPLEMENTATION =================
@@ -728,7 +862,6 @@
 
                 if (error) throw error;
                 
-                // Group by conversation partner
                 const threadMap = {};
                 (data || []).forEach(m => {
                     const partnerId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
@@ -784,7 +917,6 @@
 
             document.getElementById('activeChatTitle').textContent = `Chat with User (${activeThreadId.substring(0,6)}...)`;
             
-            // Sort messages chronological
             const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
 
             container.innerHTML = sorted.map(m => {
