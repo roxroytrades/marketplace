@@ -88,7 +88,7 @@
             </div>
         </div>
 
-        <!-- Master Metric Cards -->
+        <!-- Master Metric Cards (System Statistics Row - Section 4) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
                 <span class="text-xs text-slate-400 font-medium">Total Registered Accounts</span>
@@ -180,11 +180,31 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-white tracking-tight">Master Commissions Ledger</h2>
-                    <p class="text-xs text-slate-400">Complete audit trail of all commission payouts, recipient roles, and transfer statuses.</p>
+                    <p class="text-xs text-slate-400">Complete audit trail of all commission payouts, recipient roles, and transfer statuses[cite: 3].</p>
                 </div>
                 <div class="relative w-full sm:w-72">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
                     <input type="text" id="commSearchInput" oninput="renderCommissionsTable()" placeholder="Search feedback ID, recipient..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
+                </div>
+            </div>
+
+            <!-- Four Financial Oversight Summary Cards (Mandatory per Section 4) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl space-y-1 shadow-md">
+                    <span class="text-[11px] text-slate-400 font-medium">Total Pending Marketplace</span>
+                    <h4 id="cardTotalPendingMkt" class="text-xl font-bold text-amber-400">$0.00</h4>
+                </div>
+                <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl space-y-1 shadow-md">
+                    <span class="text-[11px] text-slate-400 font-medium">Total Collected Marketplace</span>
+                    <h4 id="cardTotalCollectedMkt" class="text-xl font-bold text-emerald-400">$0.00</h4>
+                </div>
+                <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl space-y-1 shadow-md">
+                    <span class="text-[11px] text-slate-400 font-medium">Admin Pending</span>
+                    <h4 id="cardAdminPending" class="text-xl font-bold text-blue-400">$0.00</h4>
+                </div>
+                <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl space-y-1 shadow-md">
+                    <span class="text-[11px] text-slate-400 font-medium">Admin Collected</span>
+                    <h4 id="cardAdminCollected" class="text-xl font-bold text-purple-400">$0.00</h4>
                 </div>
             </div>
 
@@ -205,7 +225,7 @@
         <div id="sectionMessages" class="space-y-6 hidden">
             <div class="space-y-1">
                 <h2 class="text-lg font-bold text-white tracking-tight">System Message Threads</h2>
-                <p class="text-xs text-slate-400">Review communication logs between shoppers and vendors.</p>
+                <p class="text-xs text-slate-400">Review communication logs between shoppers and vendors[cite: 3].</p>
             </div>
 
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
@@ -251,7 +271,7 @@
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 
-        // Initialize Supabase Client SDK
+        // Initialize Supabase Client SDK[cite: 3]
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allUsersList = [];
@@ -278,28 +298,28 @@
 
         async function fetchAllAdminData(isPolling = false) {
             try {
-                // Safe query using * to avoid schema mismatches on specific column names/tables
+                // Fetch Profiles
                 const { data: profiles, error: profErr } = await supabaseClient
                     .from('profiles')
                     .select('*')
                     .order('created_at', { ascending: false });
                 if (!profErr && profiles) allUsersList = profiles;
 
-                // Fetch Products using Supabase SDK
+                // Fetch Products using Supabase SDK[cite: 3]
                 const { data: products, error: prodErr } = await supabaseClient
                     .from('products')
                     .select('*')
                     .order('created_at', { ascending: false });
                 if (!prodErr && products) allProductsList = products;
 
-                // Fetch Commissions using Supabase SDK
+                // Fetch Commissions using Supabase SDK[cite: 3]
                 const { data: commissions, error: commErr } = await supabaseClient
                     .from('commissions')
                     .select('*')
                     .order('created_at', { ascending: false });
                 if (!commErr && commissions) allCommissionsList = commissions;
 
-                // Fetch Messages using Supabase SDK
+                // Fetch Messages using Supabase SDK[cite: 3]
                 const { data: messages, error: msgErr } = await supabaseClient
                     .from('messages')
                     .select('*')
@@ -320,14 +340,41 @@
             const activeProducts = allProductsList.filter(p => p.status === 'ACTIVE' || !p.status).length;
             
             let totalVolume = 0;
+            let pendingMkt = 0;
+            let collectedMkt = 0;
+            let adminPending = 0;
+            let adminCollected = 0;
+
             allCommissionsList.forEach(c => {
-                totalVolume += Number(c.amount || 0);
+                const amt = Number(c.amount || 0);
+                totalVolume += amt;
+                
+                // Categorize based on status/role tags
+                if (c.recipient_role === 'ADMIN' || c.recipient_id === 'admin') {
+                    if (c.status_tag === 'COMPLETED_PAID' || c.receipt_url) {
+                        adminCollected += amt;
+                    } else {
+                        adminPending += amt;
+                    }
+                } else {
+                    if (c.status_tag === 'COMPLETED_PAID' || c.receipt_url) {
+                        collectedMkt += amt;
+                    } else {
+                        pendingMkt += amt;
+                    }
+                }
             });
 
             if (document.getElementById('statTotalUsers')) document.getElementById('statTotalUsers').textContent = totalUsers;
             if (document.getElementById('statPendingIDs')) document.getElementById('statPendingIDs').textContent = pendingIDs;
             if (document.getElementById('statActiveProducts')) document.getElementById('statActiveProducts').textContent = activeProducts;
             if (document.getElementById('statTotalVolume')) document.getElementById('statTotalVolume').textContent = `$${totalVolume.toFixed(2)}`;
+
+            // Update Section 4 Commission Oversight Cards
+            if (document.getElementById('cardTotalPendingMkt')) document.getElementById('cardTotalPendingMkt').textContent = `$${pendingMkt.toFixed(2)}`;
+            if (document.getElementById('cardTotalCollectedMkt')) document.getElementById('cardTotalCollectedMkt').textContent = `$${collectedMkt.toFixed(2)}`;
+            if (document.getElementById('cardAdminPending')) document.getElementById('cardAdminPending').textContent = `$${adminPending.toFixed(2)}`;
+            if (document.getElementById('cardAdminCollected')) document.getElementById('cardAdminCollected').textContent = `$${adminCollected.toFixed(2)}`;
         }
 
         function switchAdminTab(tab) {
@@ -377,7 +424,6 @@
             }
 
             tbody.innerHTML = filtered.map(u => {
-                const safeName = (u.full_name || 'User').replace(/'/g, "\\'");
                 const idButtonHtml = `<button type="button" onclick="previewNationalID('${u.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-1.5 rounded-xl transition font-medium flex items-center space-x-1 cursor-pointer"><i class="fa-solid fa-id-card text-rose-400"></i><span>View ID</span></button>`;
 
                 return `
@@ -418,7 +464,7 @@
             }
         }
 
-        // On-Demand Fetch for Modal Preview Only
+        // On-Demand Fetch for Modal Preview Only (Section 4 optimization)[cite: 3]
         async function previewNationalID(userId) {
             const modal = document.getElementById('idPreviewModal');
             const content = document.getElementById('idModalContent');
