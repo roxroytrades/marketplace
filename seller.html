@@ -668,42 +668,53 @@
                 return;
             }
 
-            tableBody.innerHTML = filtered.map(c => `
-                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-                    <div class="col-span-1">
-                        <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+            tableBody.innerHTML = filtered.map(c => {
+                let actionHtml = '';
+                if (activeSubTab === 'incoming') {
+                    actionHtml = `
+                        <button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
+                        <button onclick="denySingleComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
+                    `;
+                } else if (activeSubTab === 'workingQueue') {
+                    actionHtml = `
+                        <button onclick="openSettlementModal('${c.id}', '${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
+                            <i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
+                        </button>
+                    `;
+                } else if (activeSubTab === 'history') {
+                    actionHtml = `
+                        <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}', '${c.amount || 0}', '${c.receipt_url || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
+                            <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
+                        </button>
+                    `;
+                } else if (activeSubTab === 'outgoing') {
+                    actionHtml = `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px]">AWAITING ACCEPTANCE</span>`;
+                } else {
+                    actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">UNREQUESTED</span>`;
+                }
+
+                return `
+                    <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+                        <div class="col-span-1">
+                            <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+                        </div>
+                        <div class="col-span-3 space-y-0.5">
+                            <span class="font-bold text-white">${c.feedback_id ? 'FB ID: ' + c.feedback_id : 'Ref ID: ' + c.id.substring(0,8)}</span>
+                            <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
+                        </div>
+                        <div class="col-span-3 space-y-0.5">
+                            <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
+                            <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
+                        </div>
+                        <div class="col-span-3 flex items-center justify-end space-x-2">
+                            ${actionHtml}
+                        </div>
                     </div>
-                    <div class="col-span-3 space-y-0.5">
-                        <span class="font-bold text-white">${c.feedback_id ? 'FB ID: ' + c.feedback_id : 'Ref ID: ' + c.id.substring(0,8)}</span>
-                        <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
-                    </div>
-                    <div class="col-span-3 space-y-0.5">
-                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
-                        <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
-                    </div>
-                    <div class="col-span-2">
-                        <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
-                    </div>
-                    <div class="col-span-3 flex items-center justify-end space-x-2">
-                        ${activeSubTab === 'incoming' ? `
-                            <button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
-                            <button onclick="denySingleComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
-                        ` : activeSubTab === 'workingQueue' ? `
-                            <button onclick="openSettlementModal('${c.id}', '${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
-                                <i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
-                            </button>
-                        ` : activeSubTab === 'history' ? `
-                            <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}', '${c.amount \vert{}\vert{} 0}', '${c.receipt_url || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
-                                <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
-                            </button>
-                        ` : activeSubTab === 'outgoing' ? `
-                            <span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px]">AWAITING ACCEPTANCE</span>
-                        ` : `
-                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">UNREQUESTED</span>
-                        `}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function toggleSelectSellerComm(id) {
