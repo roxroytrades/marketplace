@@ -884,15 +884,18 @@
                 
                 const threadMap = {};
                 (data || []).forEach(m => {
+                    // Safe fallback for message text to prevent undefined
+                    const text = m.message_text || m.message || m.content || m.body || '';
                     const partnerId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
                     if (!threadMap[partnerId]) {
                         threadMap[partnerId] = {
                             partnerId: partnerId,
-                            lastMessage: m.message_text,
+                            lastMessage: text,
                             updatedAt: m.created_at,
                             messages: []
                         };
                     }
+                    m._normalizedText = text;
                     threadMap[partnerId].messages.push(m);
                 });
 
@@ -941,10 +944,11 @@
 
             container.innerHTML = sorted.map(m => {
                 const isMe = m.sender_id === currentUser.id;
+                const text = m._normalizedText || m.message_text || m.message || m.content || m.body || '';
                 return `
                     <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
                         <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs ${isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-                            ${m.message_text}
+                            ${text}
                         </div>
                         <span class="text-[9px] text-slate-500 mt-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                     </div>
