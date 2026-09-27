@@ -263,6 +263,10 @@
                     <textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
                 </div>
                 <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-300">Retail Price ($ USD) *</label>
+                    <input type="number" id="prodPrice" step="0.01" min="0" required placeholder="0.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                </div>
+                <div class="space-y-1.5">
                     <label class="text-xs font-medium text-slate-300">Product Thumbnail (Auto-Compressed)</label>
                     <input type="file" id="prodImageFile" accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
                 </div>
@@ -501,7 +505,10 @@
                         <div>
                             <img src="${p.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
                             <div class="p-5 space-y-2">
-                                <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status}</span>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status}</span>
+                                    <span class="text-xs font-bold text-emerald-400">Price: $${Number(p.price || 0).toFixed(2)}</span>
+                                </div>
                                 <h3 class="font-bold text-white text-base">${p.title}</h3>
                                 <p class="text-xs text-slate-400 line-clamp-2">${p.description || ''}</p>
                             </div>
@@ -536,6 +543,7 @@
             document.getElementById('editingProductId').value = prod.id;
             document.getElementById('prodTitle').value = prod.title;
             document.getElementById('prodDesc').value = prod.description || '';
+            document.getElementById('prodPrice').value = prod.price !== undefined ? Number(prod.price).toFixed(2) : '0.00';
             document.getElementById('prodStatus').value = prod.status || 'ACTIVE';
             document.getElementById('productModal').classList.remove('hidden');
         }
@@ -545,6 +553,7 @@
             const id = document.getElementById('editingProductId').value;
             const title = document.getElementById('prodTitle').value.trim();
             const description = document.getElementById('prodDesc').value.trim();
+            const price = parseFloat(document.getElementById('prodPrice').value) || 0.00;
             const status = document.getElementById('prodStatus').value;
             const fileInput = document.getElementById('prodImageFile');
 
@@ -562,13 +571,13 @@
                 if (id) {
                     const { error } = await _supabase
                         .from('products')
-                        .update({ title, description, status, image_url: imageUrl })
+                        .update({ title, description, price, status, image_url: imageUrl })
                         .eq('id', id);
                     if (error) throw error;
                 } else {
                     const { error } = await _supabase
                         .from('products')
-                        .insert([{ vendor_id: currentUser.id, title, description, status, image_url: imageUrl }]);
+                        .insert([{ vendor_id: currentUser.id, title, description, price, status, image_url: imageUrl }]);
                     if (error) throw error;
                 }
 
