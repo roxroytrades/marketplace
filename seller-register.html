@@ -70,6 +70,16 @@
             <!-- Detailed Vendor Registration Form -->
             <form id="sellerRegisterForm" class="space-y-4">
                 
+                <!-- Invitation Token Validation Field -->
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Invitation Token</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-key text-xs"></i></span>
+                        <input type="text" id="inviteToken" required placeholder="Enter your unique invite token" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition font-mono">
+                    </div>
+                    <p class="text-[10px] text-slate-500 pl-1">Required: Vendor registration is invitation-gated.</p>
+                </div>
+
                 <!-- First Name & Last Name (Side by side grid) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="space-y-1">
@@ -169,7 +179,7 @@
         <p>&copy; 2026 Echo Hub Marketplace. Secure Vendor Portal Registration Gateway.</p>
     </footer>
 
-    <!-- Supabase Integration Script -->
+    <!-- Supabase Integration Script with Architectural Alignment Checks -->
     <script>
         const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -181,9 +191,19 @@
         const alertBox = document.getElementById('formAlert');
         const submitBtn = document.getElementById('submitBtn');
 
+        // Auto-populate invite token from URL query params if present (e.g., ?token=XYZ)
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenParam = urlParams.get('token');
+            if (tokenParam) {
+                document.getElementById('inviteToken').value = tokenParam.trim();
+            }
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const inviteToken = document.getElementById('inviteToken').value.trim();
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const vendorType = document.querySelector('input[name="vendorType"]:checked').value;
@@ -194,19 +214,40 @@
             const email = document.getElementById('accountEmail').value.trim();
             const password = document.getElementById('password').value;
 
+            // Architectural Check: $5.00 Minimum Commission Rule
             if (commissionAmount < 5.00) {
                 alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
-                alertBox.textContent = 'Commission amount must be at least $5.00 USD.';
+                alertBox.textContent = 'Commission amount must be at least $5.00 USD per review.';
+                alertBox.classList.remove('hidden');
+                return;
+            }
+
+            // Architectural Check: Invitation Token Validation
+            if (!inviteToken) {
+                alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                alertBox.textContent = 'An invitation token is required to register as a vendor.';
                 alertBox.classList.remove('hidden');
                 return;
             }
 
             // UI Loading state
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating vendor profile...';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Verifying token & creating vendor profile...';
             alertBox.classList.add('hidden');
 
             try {
+                // Verify invitation token against backend / database table check
+                const { data: tokenData, error: tokenError } = await _supabase
+                    .from('vendor_invites')
+                    .select('*')
+                    .eq('token', inviteToken)
+                    .eq('is_used', false)
+                    .maybeSingle();
+
+                if (tokenError || !tokenData) {
+                    throw new Error('Invalid or already used invitation token.');
+                }
+
                 // Register vendor with Supabase Auth including complete metadata
                 const { data, error } = await _supabase.auth.signUp({
                     email: email,
@@ -221,12 +262,19 @@
                             business_description: businessDescription,
                             referral_code: referralCode || null,
                             paypal_email: paypalEmail,
+                            invite_token: inviteToken,
                             role: 'seller'
                         }
                     }
                 });
 
                 if (error) throw error;
+
+                // Mark invitation token as used
+                await _supabase
+                    .from('vendor_invites')
+                    .update({ is_used: true, used_by: email })
+                    .eq('token', inviteToken);
 
                 // Automatically sign them in since email verification is disabled
                 const { error: loginError } = await _supabase.auth.signInWithPassword({
