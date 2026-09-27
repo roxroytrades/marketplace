@@ -502,10 +502,10 @@
                 grid.innerHTML = vendorProducts.map(p => `
                     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
                         <div>
-                            <img src="${p.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
+                            <img src="${p.image_url || p.image || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
                             <div class="p-5 space-y-2">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status}</span>
+                                    <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status || 'ACTIVE'}</span>
                                     <span class="text-xs font-bold text-emerald-400">Price: $${Number(p.price || 0).toFixed(2)}</span>
                                 </div>
                                 <h3 class="font-bold text-white text-base">${p.title}</h3>
@@ -535,7 +535,8 @@
         }
 
         async function editProduct(id) {
-            const prod = vendorProducts.find(p => p.id === id);
+            // FIX APPLIED: Robust type-safe ID comparison for bigint vs string IDs
+            const prod = vendorProducts.find(p => String(p.id) === String(id));
             if (!prod) return;
 
             document.getElementById('productModalTitle').textContent = 'Edit Product Listing';
@@ -558,8 +559,8 @@
 
             let imageUrl = 'https://via.placeholder.com/300';
             if (id) {
-                const existing = vendorProducts.find(p => p.id === id);
-                if (existing) imageUrl = existing.image_url;
+                const existing = vendorProducts.find(p => String(p.id) === String(id));
+                if (existing) imageUrl = existing.image_url || existing.image;
             }
 
             if (fileInput.files && fileInput.files[0]) {
@@ -570,13 +571,13 @@
                 if (id) {
                     const { error } = await _supabase
                         .from('products')
-                        .update({ title, description, price, status, image_url: imageUrl })
+                        .update({ title, description, price, status, image_url: imageUrl, image: imageUrl })
                         .eq('id', id);
                     if (error) throw error;
                 } else {
                     const { error } = await _supabase
                         .from('products')
-                        .insert([{ vendor_id: currentUser.id, title, description, price, status, image_url: imageUrl }]);
+                        .insert([{ vendor_id: currentUser.id, title, description, price, status, image_url: imageUrl, image: imageUrl }]);
                     if (error) throw error;
                 }
 
@@ -648,12 +649,15 @@
             const filtered = vendorCommissions.filter(c => {
                 const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) || (c.id || '').toLowerCase().includes(search);
                 
+                // FIX APPLIED: Robust status check supporting both status_tag and status columns
+                const currentStatus = c.status_tag || c.status || 'UNREQUESTED_BALANCE';
+
                 let matchesTab = false;
-                if (activeSubTab === 'incoming') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
-                else if (activeSubTab === 'mainQueue') matchesTab = c.status_tag === 'UNREQUESTED_BALANCE';
-                else if (activeSubTab === 'outgoing') matchesTab = c.status_tag === 'OFFERED_AWAITING_ACCEPTANCE';
-                else if (activeSubTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
-                else if (activeSubTab === 'history') matchesTab = c.status_tag === 'COMPLETED_PAID';
+                if (activeSubTab === 'incoming') matchesTab = currentStatus === 'REQUESTED_BY_RECIPIENT';
+                else if (activeSubTab === 'mainQueue') matchesTab = currentStatus === 'UNREQUESTED_BALANCE';
+                else if (activeSubTab === 'outgoing') matchesTab = currentStatus === 'OFFERED_AWAITING_ACCEPTANCE';
+                else if (activeSubTab === 'workingQueue') matchesTab = currentStatus === 'APPROVED_IN_WORKING';
+                else if (activeSubTab === 'history') matchesTab = currentStatus === 'COMPLETED_PAID';
 
                 return matchesSearch && matchesTab;
             });
@@ -693,13 +697,13 @@
                     `;
                 } else if (activeSubTab === 'workingQueue') {
                     actionHtml = `
-                        <button onclick="openSettlementModal('${c.id}', '${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
+                        <button onclick="openSettlementModal('${c.id}', '${c.recipient_email || c.recipient || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
                             <i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
                         </button>
                     `;
                 } else if (activeSubTab === 'history') {
                     actionHtml = `
-                        <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}', '${c.amount || 0}', '${c.receipt_url || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
+                        <button onclick="inspectReceipt('${c.paypal_tx_id || c.link || 'N/A'}', '${c.amount || 0}', '${c.receipt_url || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
                             <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
                         </button>
                     `;
@@ -719,8 +723,8 @@
                             <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
                         </div>
                         <div class="col-span-3 space-y-0.5">
-                            <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
-                            <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
+                            <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || c.type || 'REVIEWER'}</span>
+                            <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || c.recipient || 'Recipient'}</p>
                         </div>
                         <div class="col-span-2">
                             <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
@@ -759,7 +763,7 @@
                 for (const id of selectedSellerCommIds) {
                     const { error } = await _supabase
                         .from('commissions')
-                        .update({ status_tag: 'APPROVED_IN_WORKING' })
+                        .update({ status_tag: 'APPROVED_IN_WORKING', status: 'APPROVED_IN_WORKING' })
                         .eq('id', id);
                     if (error) throw error;
                 }
@@ -775,7 +779,7 @@
             try {
                 const { error } = await _supabase
                     .from('commissions')
-                    .update({ status_tag: 'APPROVED_IN_WORKING' })
+                    .update({ status_tag: 'APPROVED_IN_WORKING', status: 'APPROVED_IN_WORKING' })
                     .eq('id', id);
                 if (error) throw error;
                 await loadVendorCommissions();
@@ -789,7 +793,7 @@
             try {
                 const { error } = await _supabase
                     .from('commissions')
-                    .update({ status_tag: 'UNREQUESTED_BALANCE' })
+                    .update({ status_tag: 'UNREQUESTED_BALANCE', status: 'UNREQUESTED_BALANCE' })
                     .eq('id', id);
                 if (error) throw error;
                 await loadVendorCommissions();
@@ -811,9 +815,12 @@
                     .insert([{
                         vendor_id: currentUser.id,
                         recipient_email: recipientEmail,
+                        recipient: recipientEmail,
                         recipient_role: recipientRole,
+                        type: recipientRole,
                         amount: amount,
-                        status_tag: 'OFFERED_AWAITING_ACCEPTANCE'
+                        status_tag: 'OFFERED_AWAITING_ACCEPTANCE',
+                        status: 'OFFERED_AWAITING_ACCEPTANCE'
                     }]);
 
                 if (error) throw error;
@@ -856,7 +863,9 @@
                     .from('commissions')
                     .update({
                         status_tag: 'COMPLETED_PAID',
+                        status: 'COMPLETED_PAID',
                         paypal_tx_id: txId,
+                        link: txId,
                         receipt_url: receiptBase64
                     })
                     .eq('id', commId);
@@ -884,7 +893,7 @@
                 const { data, error } = await _supabase
                     .from('messages')
                     .select('*')
-                    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+                    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -892,7 +901,7 @@
                 const threadMap = {};
                 (data || []).forEach(m => {
                     const text = m.message_text || m.message || m.content || m.body || m.text || '';
-                    const partnerId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
+                    const partnerId = (m.sender_id === currentUser.id) ? (m.receiver_id || 'support') : (m.sender_id || m.vendor_id || 'support');
                     if (!threadMap[partnerId]) {
                         threadMap[partnerId] = {
                             partnerId: partnerId,
@@ -925,7 +934,7 @@
                 return `
                     <div onclick="selectThread('${t.partnerId}')" class="p-3 bg-darkBg border ${activeThreadId === t.partnerId ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-200">Reviewer / User</span>
+                            <span class="text-xs font-semibold text-slate-200">User (${t.partnerId.substring(0,6)}...)</span>
                             <span class="text-[10px] text-slate-500">${timeString}</span>
                         </div>
                         <p class="text-xs text-slate-400 truncate">${t.lastMessage}</p>
@@ -979,7 +988,9 @@
                     .insert([{
                         sender_id: currentUser.id,
                         receiver_id: activeThreadId,
-                        message_text: text
+                        vendor_id: currentUser.id,
+                        message_text: text,
+                        text: text
                     }]);
 
                 if (error) {
@@ -988,7 +999,8 @@
                         .insert([{
                             sender_id: currentUser.id,
                             receiver_id: activeThreadId,
-                            message: text
+                            message: text,
+                            text: text
                         }]);
                     if (altInsert.error) throw altInsert.error;
                 }
