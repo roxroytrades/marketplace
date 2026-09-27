@@ -601,7 +601,6 @@
         // ================= 5-TAB COMMISSIONS ARCHITECTURE =================
         async function loadVendorCommissions(isPolling = false) {
             try {
-                // Safely handle table queries trying both seller_id and vendor_id variants to fix 400 Bad Request
                 let { data, error } = await _supabase
                     .from('commissions')
                     .select('*')
@@ -892,7 +891,6 @@
                 
                 const threadMap = {};
                 (data || []).forEach(m => {
-                    // Extract exact message text across different potential column schema titles
                     const text = m.message_text || m.message || m.content || m.body || m.text || '';
                     const partnerId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
                     if (!threadMap[partnerId]) {
@@ -955,7 +953,6 @@
 
             container.innerHTML = sorted.map(m => {
                 const isMe = m.sender_id === currentUser.id;
-                // Explicitly pull exact message text so it displays full text bubbles instead of empty placeholders
                 const text = m._normalizedText || m.message_text || m.message || m.content || m.body || m.text || '';
                 const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
                 return `
@@ -977,7 +974,6 @@
             if (!text || !activeThreadId) return;
 
             try {
-                // Try inserting with standard column names (message_text or message)
                 let { error } = await _supabase
                     .from('messages')
                     .insert([{
