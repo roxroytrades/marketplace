@@ -313,7 +313,7 @@
         let selectedCommIds = new Set();
         let pollingInterval = null;
 
-        // Initialize workspace & header user metadata display
+        // Initialize workspace & header user metadata display with robust real-time session checking
         async function initShopperWorkspace() {
             const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
 
@@ -337,47 +337,65 @@
             document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${currentUser.id}`;
             document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${currentUser.id}`;
 
-            // Read role & verification status safely without write queries
-            let userRole = 'buyer';
-            let verificationStatus = 'VERIFIED';
-
-            try {
-                const { data: profile } = await _supabase
-                    .from('profiles')
-                    .select('role, verification_status')
-                    .eq('id', currentUser.id)
-                    .maybeSingle();
-
-                if (profile) {
-                    if (profile.role) userRole = profile.role;
-                    if (profile.verification_status) verificationStatus = profile.verification_status;
-                }
-            } catch (err) {
-                console.warn("Profile read skipped, using session defaults.");
-            }
-
-            currentProfile = { role: userRole, verification_status: verificationStatus, full_name: fullName };
-            
-            applyBuyerVerificationLock(currentProfile);
+            // Read role & verification status safely with profile fallback checks and live polling sync
+            await fetchAndUpdateProfileState();
 
             await loadMarketplaceProducts();
             await loadCommissionsData();
             await loadShopperReferralData();
 
-            // 10-second polling interval
+            // 10-second polling interval for real-time verification and data sync
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(pollShopperData, 10000);
         }
 
+        async function fetchAndUpdateProfileState() {
+            let userRole = 'buyer';
+            let verificationStatus = 'VERIFIED';
+
+            try {
+                const { data: profile, error } = await _supabase
+                    .from('profiles')
+                    .select('role, verification_status, referral_code, full_name')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (profile) {
+                    if (profile.role) userRole = profile.role;
+                    if (profile.verification_status) verificationStatus = profile.verification_status;
+                    if (profile.referral_code) {
+                        const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                        document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${profile.referral_code}`;
+                    }
+                }
+            } catch (err) {
+                console.warn("Profile fetch warning, preserving active session fallback state:", err.message);
+            }
+
+            currentProfile = { role: userRole, verification_status: verificationStatus, full_name: currentUser.user_metadata?.full_name || 'Shopper' };
+            applyBuyerVerificationLock(currentProfile);
+        }
+
         async function pollShopperData() {
+            await fetchAndUpdateProfileState();
             await loadMarketplaceProducts(true);
             await loadCommissionsData(true);
             await loadShopperReferralData(true);
         }
 
         function applyBuyerVerificationLock(profile) {
+            const banner = document.getElementById('verificationBanner');
             if (profile.role === 'buyer' && profile.verification_status !== 'VERIFIED') {
-                document.getElementById('verificationBanner').classList.remove('hidden');
+                banner.classList.remove('hidden');
+                if (profile.verification_status === 'REJECTED') {
+                    banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account verification was <strong>rejected</strong>. Please re-upload your National ID document.`;
+                } else {
+                    banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account is currently <strong>pending verification</strong>. Interactive features will unlock once approved.`;
+                }
+            } else {
+                banner.classList.add('hidden');
             }
         }
 
@@ -504,7 +522,7 @@
                 return;
             }
 
-            const isLocked = currentProfile && currentProfile.verification_status !== 'VERIFIED';
+            const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
 
             grid.innerHTML = filtered.map(item => `
                 <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
@@ -527,7 +545,7 @@
         }
 
         async function handleInquireClick(productId, vendorId) {
-            if (currentProfile.verification_status !== 'VERIFIED') {
+            if (currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED') {
                 alert("Account locked: National ID verification required before interacting with vendors.");
                 return;
             }
