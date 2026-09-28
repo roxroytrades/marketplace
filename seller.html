@@ -831,6 +831,7 @@
             const amount = parseFloat(document.getElementById('offerAmount').value);
 
             try {
+                // FIXED: Included 'link' and 'type' to satisfy database NOT NULL constraints
                 const { error } = await _supabase
                     .from('commissions')
                     .insert([{
@@ -839,7 +840,9 @@
                         recipient_role: recipientRole,
                         amount: amount,
                         status_tag: 'OFFERED_AWAITING_ACCEPTANCE',
-                        status: 'OFFERED_AWAITING_ACCEPTANCE'
+                        status: 'OFFERED_AWAITING_ACCEPTANCE',
+                        link: 'N/A',
+                        type: 'TOP_DOWN_OFFER'
                     }]);
 
                 if (error) throw error;
@@ -1129,13 +1132,19 @@
             }
 
             try {
-                // Execute the backend RPC function
+                // FIXED: Extract review link and pass p_link & p_type to prevent database constraint violations
+                const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
+                const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
+                const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
+
                 const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
                     p_message_id: String(messageId),
                     p_vendor_id: currentUser.id,
                     p_reviewer_id: reviewerId,
                     p_commission_amount: Number(commissionAmount),
-                    p_platform_fee: 10.00
+                    p_platform_fee: 10.00,
+                    p_link: reviewLink,
+                    p_type: 'REVIEW_COMMISSION'
                 });
 
                 if (rpcError) throw rpcError;
