@@ -1006,6 +1006,17 @@
             document.getElementById('chatSendBtn').disabled = false;
         }
 
+        // --- Helper functions for review/submission validation ---
+        function hasAmazonUrl(text) {
+            return text && (text.includes('amazon.com') || text.includes('amzn.to'));
+        }
+
+        function hasImageAttachment(msg) {
+            return (msg._normalizedImage && msg._normalizedImage.trim() !== '') || 
+                   (msg.file_url && msg.file_url.trim() !== '') ||
+                   (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.includes('imgur') || msg._normalizedText.includes('supabase'))));
+        }
+
         function renderActiveChat() {
             const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
             const container = document.getElementById('chatMessagesContainer');
@@ -1022,16 +1033,16 @@
                 const fileUrl = m._normalizedImage || m.file_url || m.attachment_url;
                 const fileName = m.file_name || m.attachment_name || 'Attached File';
 
-                const hasFeedback = m.feedback_id || m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback' || 
-                    text.includes('Review Submission') || text.includes('Feedback Moderation') || 
-                    text.toLowerCase().includes('amazon.') || text.toLowerCase().includes('review') || (fileUrl && !isMe);
+                const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback' || m.feedback_id;
+                const hasValidProof = hasAmazonUrl(text) && hasImageAttachment(m);
+                const showAsReviewCard = isExplicitReviewType || hasValidProof;
 
                 const feedbackId = m.feedback_id || m.id;
                 const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
                 const commissionAmount = m.commission_amount || 5.00;
 
                 let bubbleContent = '';
-                if (hasFeedback) {
+                if (showAsReviewCard) {
                     const statusBadge = m.status_badge || 'AWAITING_ATTENTION';
                     const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
                     
