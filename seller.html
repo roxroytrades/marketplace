@@ -391,6 +391,9 @@
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2"></div>
+
     <!-- Footer -->
     <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
         <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace Engine.</p>
@@ -925,7 +928,11 @@
                         message_text: s.content || s.product_name ? `Review Submission [${s.product_name || 'Product'}]: ${s.content || ''}` : 'Review Submission Proof',
                         file_url: s.image || s.image_url || (s.content && s.content.startsWith('data:image/') ? s.content : null),
                         file_name: s.product_name || 'Review Screenshot',
-                        created_at: s.created_at
+                        created_at: s.created_at,
+                        feedback_id: s.feedback_id || s.id,
+                        status_badge: s.status_badge || 'AWAITING_ATTENTION',
+                        amazon_review_url: s.amazon_review_url || s.link || '#',
+                        commission_amount: s.commission_amount || 5.00
                     })),
                     ...(fbData || []).map(f => ({
                         id: f.id,
@@ -933,7 +940,11 @@
                         receiver_id: currentUser.id,
                         message_text: `Feedback Moderation Link: ${f.link || ''}`,
                         file_url: f.image || f.image_url || (f.link && f.link.match(/\.(jpeg|jpg|png|gif)$/i) ? f.link : null),
-                        created_at: f.created_at
+                        created_at: f.created_at,
+                        feedback_id: f.feedback_id || f.id,
+                        status_badge: f.status_badge || 'AWAITING_ATTENTION',
+                        amazon_review_url: f.link || '#',
+                        commission_amount: f.commission_amount || 5.00
                     }))
                 ];
 
@@ -1011,33 +1022,173 @@
                 const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
                 const fileUrl = m._normalizedImage || m.file_url || m.attachment_url;
                 const fileName = m.file_name || m.attachment_name || 'Attached File';
+                const hasFeedback = m.feedback_id || text.includes('Review Submission') || text.includes('Feedback Moderation');
 
-                let attachmentHtml = '';
-                if (fileUrl) {
-                    if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
-                        attachmentHtml = `
-                            <div class="mt-2.5">
-                                <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-xl border border-white/20 shadow-md">
-                                    <img src="${fileUrl}" alt="Review Screenshot" class="max-h-52 w-full object-cover hover:scale-105 transition duration-300">
-                                </a>
-                                <span class="text-[10px] text-slate-400 mt-1 block"><i class="fa-solid fa-image mr-1"></i> Click to inspect full resolution</span>
-                            </div>`;
-                    } else {
-                        attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
+                let bubbleContent = '';
+                if (hasFeedback) {
+                    const statusBadge = m.status_badge || 'AWAITING_ATTENTION';
+                    const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
+                    
+                    bubbleContent = `
+                        <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
+                            <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
+                                <span class="text-[10px] text-slate-400 font-mono">ID: ${m.feedback_id || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <p class="text-xs"><strong>Review Link:</strong> <a href="${m.amazon_review_url || '#'}" target="_blank" class="text-blue-400 underline hover:text-blue-300">View Live Review</a></p>
+                                ${fileUrl ? `
+                                    <div class="mt-2">
+                                        <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
+                                            <img src="${fileUrl}" alt="Proof" class="h-28 w-full object-cover hover:scale-105 transition">
+                                        </a>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <!-- Inline Action Buttons or Stamp -->
+                            <div class="inline-action-area pt-2 border-t border-white/10">
+                                ${statusBadge === 'AWAITING_ATTENTION' ? `
+                                    <div class="flex space-x-2" id="actions-${m.id}">
+                                        <button onclick="handleInlineApprove('${m.id}', '${m.sender_id}',${m.commission_amount || 5.00})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition">
+                                            ✓ Approve
+                                        </button>
+                                        <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition">
+                                            ✕ Deny
+                                        </button>
+                                    </div>
+                                ` : `
+                                    <div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong></div>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    let attachmentHtml = '';
+                    if (fileUrl) {
+                        if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
+                            attachmentHtml = `
+                                <div class="mt-2.5">
+                                    <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-xl border border-white/20 shadow-md">
+                                        <img src="${fileUrl}" alt="Attachment" class="max-h-52 w-full object-cover hover:scale-105 transition duration-300">
+                                    </a>
+                                </div>`;
+                        } else {
+                            attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
+                        }
                     }
+                    bubbleContent = `<div>${text}</div>${attachmentHtml}`;
                 }
 
                 return `
                     <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
-                        <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-                            ${text ? `<div>${text}</div>` : ''}
-                            ${attachmentHtml}
+                        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+                            ${bubbleContent}
                         </div>
                         <span class="text-[9px] text-slate-500 mt-1 px-1">${timeString}</span>
                     </div>
                 `;
             }).join('');
             container.scrollTop = container.scrollHeight;
+        }
+
+        // ================= INLINE DECISION HANDLERS FOR CHAT =================
+        async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
+            const actionContainer = document.getElementById(`actions-${messageId}`);
+            if (actionContainer) {
+                actionContainer.innerHTML = `<span class="text-accentBlue italic text-[11px]">Processing Approval & Ledger Split...</span>`;
+            }
+
+            try {
+                // Attempt Supabase RPC or direct table update for atomic split
+                const { error: rpcError } = await _supabase.rpc('approve_review_and_split', {
+                    p_message_id: messageId,
+                    p_vendor_id: currentUser.id,
+                    p_reviewer_id: reviewerId,
+                    p_commission_amount: commissionAmount,
+                    p_platform_fee: 10.00
+                });
+
+                if (rpcError) {
+                    // Fallback to table status update if RPC is not deployed
+                    const { error: updateError } = await _supabase
+                        .from('messages')
+                        .update({ status_badge: 'APPROVED' })
+                        .eq('id', messageId);
+                    if (updateError) throw updateError;
+                }
+
+                updateMessageCardStateLocally(messageId, 'APPROVED');
+                showToast("Review approved successfully! Commission split generated.");
+                await loadVendorCommissions();
+            } catch (err) {
+                console.error("Approval failed:", err);
+                alert("Error approving review: " + err.message);
+                await loadVendorThreads(true);
+            }
+        }
+
+        async function handleInlineDeny(messageId) {
+            const denialReason = prompt("Please enter a reason for denying this review submission:", "Order mismatch or unreadable link.");
+            if (!denialReason) return;
+
+            const actionContainer = document.getElementById(`actions-${messageId}`);
+            if (actionContainer) {
+                actionContainer.innerHTML = `<span class="text-rose-400 italic text-[11px]">Processing Denial...</span>`;
+            }
+
+            try {
+                const { error } = await _supabase
+                    .from('messages')
+                    .update({ 
+                        status_badge: 'DENIED',
+                        denial_reason: denialReason 
+                    })
+                    .eq('id', messageId);
+
+                if (error) {
+                    const { error: altErr } = await _supabase
+                        .from('submissions')
+                        .update({ status_badge: 'DENIED' })
+                        .eq('id', messageId);
+                    if (altErr) throw altErr;
+                }
+
+                updateMessageCardStateLocally(messageId, 'DENIED');
+                showToast("Review submission denied. Buyer notified.");
+            } catch (err) {
+                console.error("Denial failed:", err);
+                alert("Error denying review: " + err.message);
+                await loadVendorThreads(true);
+            }
+        }
+
+        function updateMessageCardStateLocally(messageId, newStatus) {
+            const card = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (!card) return;
+            
+            const badge = card.querySelector('.status-badge-label');
+            if (badge) {
+                badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
+                badge.innerText = newStatus;
+            }
+            
+            const actionArea = card.querySelector('.inline-action-area');
+            if (actionArea) {
+                actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong></div>`;
+            }
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-cardBg border-l-4 border-accentBlue text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
         }
 
         // --- Paper-Clip Attachment Handlers ---
