@@ -831,7 +831,6 @@
             const amount = parseFloat(document.getElementById('offerAmount').value);
 
             try {
-                // FIXED: Included 'link' and 'type' to satisfy database NOT NULL constraints
                 const { error } = await _supabase
                     .from('commissions')
                     .insert([{
@@ -1132,10 +1131,18 @@
             }
 
             try {
-                // FIXED: Extract review link and pass p_link & p_type to prevent database constraint violations
                 const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
                 const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
                 const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
+
+                // EXPLICIT CONSOLE LOGS ADDED HERE
+                console.log("👉 BEFORE Supabase RPC call (approve_review_and_split):", {
+                    messageId,
+                    vendorId: currentUser.id,
+                    reviewerId,
+                    commissionAmount: Number(commissionAmount),
+                    reviewLink
+                });
 
                 const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
                     p_message_id: String(messageId),
@@ -1145,6 +1152,11 @@
                     p_platform_fee: 10.00,
                     p_link: reviewLink,
                     p_type: 'REVIEW_COMMISSION'
+                });
+
+                console.log("👉 AFTER Supabase RPC call (approve_review_and_split):", {
+                    data,
+                    rpcError
                 });
 
                 if (rpcError) throw rpcError;
