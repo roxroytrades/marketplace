@@ -1022,7 +1022,15 @@
                 const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
                 const fileUrl = m._normalizedImage || m.file_url || m.attachment_url;
                 const fileName = m.file_name || m.attachment_name || 'Attached File';
-                const hasFeedback = m.feedback_id || text.includes('Review Submission') || text.includes('Feedback Moderation');
+
+                // Robust check for review submission cards in chat stream
+                const hasFeedback = m.feedback_id || m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback' || 
+                    text.includes('Review Submission') || text.includes('Feedback Moderation') || 
+                    text.toLowerCase().includes('amazon.') || text.toLowerCase().includes('review') || (fileUrl && !isMe);
+
+                const feedbackId = m.feedback_id || m.id;
+                const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
+                const commissionAmount = m.commission_amount || 5.00;
 
                 let bubbleContent = '';
                 if (hasFeedback) {
@@ -1033,10 +1041,11 @@
                         <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
                             <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
                                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
-                                <span class="text-[10px] text-slate-400 font-mono">ID: ${m.feedback_id || 'N/A'}</span>
+                                <span class="text-[10px] text-slate-400 font-mono">ID: ${feedbackId.substring ? feedbackId.substring(0,8) : feedbackId}</span>
                             </div>
                             <div>
-                                <p class="text-xs"><strong>Review Link:</strong> <a href="${m.amazon_review_url || '#'}" target="_blank" class="text-blue-400 underline hover:text-blue-300">View Live Review</a></p>
+                                <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 underline hover:text-blue-300 truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
+                                ${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-300 mt-1">${text}</p>` : ''}
                                 ${fileUrl ? `
                                     <div class="mt-2">
                                         <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
@@ -1050,7 +1059,7 @@
                             <div class="inline-action-area pt-2 border-t border-white/10">
                                 ${statusBadge === 'AWAITING_ATTENTION' ? `
                                     <div class="flex space-x-2" id="actions-${m.id}">
-                                        <button onclick="handleInlineApprove('${m.id}', '${m.sender_id}',${m.commission_amount || 5.00})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition">
+                                        <button onclick="handleInlineApprove('${m.id}', '${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition">
                                             ✓ Approve
                                         </button>
                                         <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition">
@@ -1100,7 +1109,6 @@
             }
 
             try {
-                // Attempt Supabase RPC or direct table update for atomic split
                 const { error: rpcError } = await _supabase.rpc('approve_review_and_split', {
                     p_message_id: messageId,
                     p_vendor_id: currentUser.id,
@@ -1110,7 +1118,6 @@
                 });
 
                 if (rpcError) {
-                    // Fallback to table status update if RPC is not deployed
                     const { error: updateError } = await _supabase
                         .from('messages')
                         .update({ status_badge: 'APPROVED' })
