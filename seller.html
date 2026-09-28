@@ -299,39 +299,6 @@
         </div>
     </div>
 
-    <!-- ================= DEDICATED REVIEW SUBMISSION MODAL ================= -->
-    <div id="reviewSubmissionModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
-                    <i class="fa-solid fa-star text-amber-400"></i>
-                    <span>Submit Official Product Review</span>
-                </h3>
-                <button onclick="closeReviewSubmissionModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form onsubmit="handleReviewProofSubmit(event)" class="space-y-4">
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-300">Amazon / E-commerce Review URL</label>
-                    <input type="url" id="modalReviewUrl" required placeholder="https://www.amazon.com/review/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                </div>
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-300">Screenshot Proof Uploader</label>
-                    <input type="file" id="modalReviewScreenshot" accept="image/*" onchange="handleScreenshotPreview(event)" required class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition">
-                </div>
-                <div id="screenshotPreviewContainer" class="hidden space-y-1">
-                    <span class="text-[10px] text-slate-400">Thumbnail Preview:</span>
-                    <img id="screenshotThumbnail" src="" class="w-full h-32 object-cover rounded-xl border border-borderSlate">
-                </div>
-                <div class="pt-2 flex justify-end space-x-3">
-                    <button type="button" onclick="closeReviewSubmissionModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-4 py-2.5 rounded-xl transition">Cancel</button>
-                    <button type="submit" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-blue-500/20">
-                        <i class="fa-solid fa-paper-plane mr-1.5"></i> Submit Review Proof
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- ================= WHATSAPP-STYLE TWO-PANEL MESSAGING HUB MODAL ================= -->
     <div id="messagingHubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full h-[85vh] flex overflow-hidden shadow-2xl">
@@ -346,15 +313,8 @@
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
                 </div>
-                <div class="p-3 border-b border-borderSlate space-y-2">
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                        <input type="text" id="threadSearchInput" oninput="filterThreads()" placeholder="Search conversations..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-filter text-xs"></i></span>
-                        <input type="text" id="idTargetedSearchInput" oninput="filterThreadsByIdPinpoint()" placeholder="Pinpoint Feedback ID / Commission ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 outline-none focus:border-blue-500 font-mono transition">
-                    </div>
+                <div class="p-3 border-b border-borderSlate">
+                    <input type="text" id="threadSearchInput" oninput="filterThreads()" placeholder="Search conversations..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                 </div>
                 <div id="threadsListContainer" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
                     <div class="p-6 text-center text-xs text-slate-500">Loading conversations...</div>
@@ -369,10 +329,7 @@
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <div>
-                            <div class="flex items-center space-x-2">
-                                <h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
-                                <span id="activeThreadStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase hidden"></span>
-                            </div>
+                            <h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
                             <span id="activeChatSubtitle" class="text-[10px] text-slate-400">Vendor / Shopper Chat</span>
                         </div>
                     </div>
@@ -392,10 +349,7 @@
                 <!-- Message Input Footer -->
                 <div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40 hidden">
                     <form onsubmit="handleSendMessage(event)" class="flex items-center space-x-2">
-                        <input type="text" id="messageInputBox" oninput="handleChatInputTyping(event)" placeholder="Type message or paste Amazon review URL..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                        <button type="button" onclick="openReviewSubmissionModal()" title="Submit Review Proof" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center">
-                            <i class="fa-solid fa-star"></i>
-                        </button>
+                        <input type="text" id="messageInputBox" placeholder="Type your message..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                         <button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1">
                             <span class="hidden sm:inline">Send</span>
                             <i class="fa-solid fa-paper-plane"></i>
@@ -433,8 +387,6 @@
         let activeRecipientId = null;
         let activeProductId = null;
         let messageSubscription = null;
-        let pendingReviewUrlToSubmit = '';
-        let base64ScreenshotProof = '';
 
         // Initialize workspace & header user metadata display with robust real-time session checking
         async function initShopperWorkspace() {
@@ -916,7 +868,7 @@
             document.getElementById('receiptModal').classList.remove('hidden');
         }
 
-        // ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & REVIEW TOOLS =================
+        // ================= WHATSAPP-STYLE MESSAGING HUB LOGIC =================
 
         function toggleMessagingHub() {
             const modal = document.getElementById('messagingHubModal');
@@ -963,15 +915,7 @@
                 }
             });
 
-            let uniqueThreads = Array.from(threadMap.values());
-
-            if (search) {
-                uniqueThreads = uniqueThreads.filter(t => 
-                    (t.text || '').toLowerCase().includes(search) || 
-                    (t.feedback_id || '').toLowerCase().includes(search) ||
-                    (t.sender_id || '').toLowerCase().includes(search)
-                );
-            }
+            const uniqueThreads = Array.from(threadMap.values());
 
             container.innerHTML = uniqueThreads.map(t => {
                 const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
@@ -995,31 +939,6 @@
 
         function filterThreads() {
             renderThreadsList();
-        }
-
-        // ID-Targeted Search & Pinpointing Engine
-        function filterThreadsByIdPinpoint() {
-            const query = document.getElementById('idTargetedSearchInput').value.trim().toLowerCase();
-            if (!query) {
-                renderThreadsList();
-                return;
-            }
-
-            const container = document.getElementById('threadsListContainer');
-            const matching = messagingThreads.filter(m => 
-                (m.feedback_id || '').toLowerCase().includes(query) || 
-                (m.commission_id || '').toLowerCase().includes(query) ||
-                (m.id || '').toLowerCase().includes(query)
-            );
-
-            if (matching.length === 0) {
-                container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">No matching Feedback or Commission ID found.</div>`;
-                return;
-            }
-
-            const targetMsg = matching[0];
-            const counterpartId = targetMsg.sender_id === currentUser.id ? targetMsg.receiver_id : targetMsg.sender_id;
-            openThread(targetMsg.id, counterpartId, targetMsg.product_id);
         }
 
         async function openThread(threadId, recipientId, productId) {
@@ -1054,26 +973,12 @@
                     return;
                 }
 
-                // Check latest review status badge for header
-                const latestReviewMsg = messages.slice().reverse().find(m => m.status_badge);
-                const badgeEl = document.getElementById('activeThreadStatusBadge');
-                if (latestReviewMsg && latestReviewMsg.status_badge) {
-                    badgeEl.textContent = latestReviewMsg.status_badge;
-                    badgeEl.className = `px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getStatusBadgeColorClass(latestReviewMsg.status_badge)}`;
-                    badgeEl.classList.remove('hidden');
-                } else {
-                    badgeEl.classList.add('hidden');
-                }
-
                 container.innerHTML = messages.map(m => {
                     const isMe = m.sender_id === currentUser.id;
                     return `
                         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-                            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-                                ${m.feedback_id ? `<div class="text-[10px] font-mono bg-black/30 px-2 py-0.5 rounded text-amber-300">Feedback ID: ${m.feedback_id}</div>` : ''}
+                            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
                                 <p>${m.text}</p>
-                                ${m.screenshot_url ? `<img src="${m.screenshot_url}" class="w-full h-32 object-cover rounded-xl border border-white/20">` : ''}
-                                ${m.status_badge ? `<span class="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase ${getStatusBadgeColorClass(m.status_badge)}">${m.status_badge}</span>` : ''}
                             </div>
                             <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                         </div>
@@ -1082,16 +987,6 @@
                 container.scrollTop = container.scrollHeight;
             } catch (err) {
                 container.innerHTML = `<div class="m-auto text-center text-xs text-rose-400">Error loading messages.</div>`;
-            }
-        }
-
-        function getStatusBadgeColorClass(badge) {
-            switch(badge) {
-                case 'AWAITING ATTENTION': return 'bg-amber-500/20 text-amber-300 border border-amber-500/30';
-                case 'APPROVED': return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
-                case 'DENIED': return 'bg-rose-500/20 text-rose-300 border border-rose-500/30';
-                case 'PAID & COMPLETED': return 'bg-blue-500/20 text-blue-300 border border-blue-500/30';
-                default: return 'bg-slate-500/20 text-slate-300 border border-slate-500/30';
             }
         }
 
@@ -1111,131 +1006,6 @@
                     loadMessagingThreads(true);
                 })
                 .subscribe();
-        }
-
-        // Automated Link Recognition inside Chat Input Box
-        function handleChatInputTyping(event) {
-            const val = event.target.value;
-            const amazonUrlPattern = /(https?:\/\/(www\.)?(amazon|amzn)\.(com|ca|co\.uk|de|fr|it|es|co\.jp|in)\/[^\s]+)/i;
-            const match = val.match(amazonUrlPattern);
-            if (match && match[0]) {
-                pendingReviewUrlToSubmit = match[0];
-                if (confirm("Detected Amazon review link structure. Would you like to submit this as an official product review?")) {
-                    event.target.value = val.replace(match[0], '').trim();
-                    openReviewSubmissionModalWithUrl(pendingReviewUrlToSubmit);
-                }
-            }
-        }
-
-        function openReviewSubmissionModal() {
-            if (!activeRecipientId) {
-                alert("Please select an active conversation thread first.");
-                return;
-            }
-            document.getElementById('reviewSubmissionModal').classList.remove('hidden');
-        }
-
-        function openReviewSubmissionModalWithUrl(url) {
-            document.getElementById('modalReviewUrl').value = url;
-            pendingReviewUrlToSubmit = url;
-            openReviewSubmissionModal();
-        }
-
-        function closeReviewSubmissionModal() {
-            document.getElementById('reviewSubmissionModal').classList.add('hidden');
-            document.getElementById('modalReviewUrl').value = '';
-            document.getElementById('modalReviewScreenshot').value = '';
-            document.getElementById('screenshotPreviewContainer').classList.add('hidden');
-            base64ScreenshotProof = '';
-        }
-
-        function handleScreenshotPreview(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const maxWidth = 800;
-                    const scaleSize = maxWidth / img.width;
-                    canvas.width = maxWidth;
-                    canvas.height = img.height * scaleSize;
-
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    base64ScreenshotProof = canvas.toDataURL('image/jpeg', 0.7);
-
-                    document.getElementById('screenshotThumbnail').src = base64ScreenshotProof;
-                    document.getElementById('screenshotPreviewContainer').classList.remove('hidden');
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function handleReviewProofSubmit(event) {
-            event.preventDefault();
-            const reviewUrl = document.getElementById('modalReviewUrl').value.trim();
-            if (!reviewUrl || !base64ScreenshotProof) {
-                alert("Please provide both a valid review URL and screenshot proof.");
-                return;
-            }
-
-            const feedbackId = 'FB-' + Math.floor(1000 + Math.random() * 9000);
-            const messageText = `Official Review Submitted [URL: ${reviewUrl}]`;
-
-            try {
-                // 1. Insert message with Feedback ID, screenshot, and AWAITING ATTENTION badge
-                const { error: msgError } = await _supabase
-                    .from('messages')
-                    .insert([{
-                        sender_id: currentUser.id,
-                        receiver_id: activeRecipientId,
-                        product_id: activeProductId !== 'null' ? activeProductId : null,
-                        text: messageText,
-                        feedback_id: feedbackId,
-                        screenshot_url: base64ScreenshotProof,
-                        status_badge: 'AWAITING ATTENTION'
-                    }]);
-
-                if (msgError) throw msgError;
-
-                // 2. Also record in feedback_moderation & commissions ledger tables
-                await _supabase.from('feedback_moderation').insert([{
-                    reviewer: currentUser.id,
-                    link: reviewUrl,
-                    status: 'AWAITING ATTENTION'
-                }]).select();
-
-                await _supabase.from('commissions').insert([{
-                    type: 'REVIEWER',
-                    link: reviewUrl,
-                    amount: '50.00',
-                    status: 'AWAITING ATTENTION',
-                    feedback_id: feedbackId,
-                    recipient_id: currentUser.id,
-                    recipient_role: 'REVIEWER',
-                    vendor_id: activeRecipientId,
-                    status_tag: 'OFFERED_BY_VENDOR'
-                }]);
-
-                // 3. Send notification directly to vendor
-                await _supabase.from('notifications').insert([{
-                    title: 'New Review Proof Submitted',
-                    message: `Reviewer submitted proof for Feedback ID ${feedbackId}`,
-                    read: false
-                }]);
-
-                closeReviewSubmissionModal();
-                await loadMessageStream(activeRecipientId, activeProductId);
-                await loadMessagingThreads(true);
-                await loadCommissionsData(true);
-                alert(`Review proof successfully dispatched! Tracking ID: ${feedbackId}`);
-            } catch (err) {
-                alert('Failed to submit review proof: ' + err.message);
-            }
         }
 
         async function handleSendMessage(event) {
