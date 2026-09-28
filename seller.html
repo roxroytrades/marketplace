@@ -1067,12 +1067,19 @@
 
                 container.innerHTML = messages.map(m => {
                     const isMe = m.sender_id === currentUser.id;
+                    const imgSource = m.image_url || m.screenshot_url;
                     return `
                         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
                             <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
                                 ${m.feedback_id ? `<div class="text-[10px] font-mono bg-black/30 px-2 py-0.5 rounded text-amber-300">Feedback ID: ${m.feedback_id}</div>` : ''}
-                                <p>${m.text}</p>
-                                ${m.screenshot_url ? `<img src="${m.screenshot_url}" class="w-full h-32 object-cover rounded-xl border border-white/20">` : ''}
+                                <p>${m.text || ''}</p>
+                                ${imgSource ? `
+                                    <div class="mt-2">
+                                        <a href="${imgSource}" target="_blank">
+                                            <img src="${imgSource}" alt="Proof Screenshot" class="max-w-xs rounded-lg border border-white/20 hover:opacity-90 transition cursor-pointer" />
+                                        </a>
+                                    </div>
+                                ` : ''}
                                 ${m.status_badge ? `<span class="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase ${getStatusBadgeColorClass(m.status_badge)}">${m.status_badge}</span>` : ''}
                             </div>
                             <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -1187,7 +1194,6 @@
             const messageText = `Official Review Submitted [URL: ${reviewUrl}]`;
 
             try {
-                // 1. Insert message with Feedback ID, screenshot, and AWAITING ATTENTION badge
                 const { error: msgError } = await _supabase
                     .from('messages')
                     .insert([{
@@ -1196,13 +1202,13 @@
                         product_id: activeProductId !== 'null' ? activeProductId : null,
                         text: messageText,
                         feedback_id: feedbackId,
+                        image_url: base64ScreenshotProof,
                         screenshot_url: base64ScreenshotProof,
                         status_badge: 'AWAITING ATTENTION'
                     }]);
 
                 if (msgError) throw msgError;
 
-                // 2. Also record in feedback_moderation & commissions ledger tables
                 await _supabase.from('feedback_moderation').insert([{
                     reviewer: currentUser.id,
                     link: reviewUrl,
@@ -1221,7 +1227,6 @@
                     status_tag: 'OFFERED_BY_VENDOR'
                 }]);
 
-                // 3. Send notification directly to vendor
                 await _supabase.from('notifications').insert([{
                     title: 'New Review Proof Submitted',
                     message: `Reviewer submitted proof for Feedback ID ${feedbackId}`,
