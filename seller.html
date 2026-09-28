@@ -204,7 +204,23 @@
                             <p>Choose a thread on the left to start messaging.</p>
                         </div>
                     </div>
-                    <form id="chatForm" onsubmit="handleSendMessage(event)" class="pt-3 border-t border-borderSlate flex gap-2">
+                    
+                    <!-- Attached File Preview Container -->
+                    <div id="chatAttachmentPreview" class="hidden px-4 py-2 bg-darkBg border-t border-borderSlate flex items-center justify-between text-xs text-slate-300">
+                        <div class="flex items-center space-x-2 truncate">
+                            <i class="fa-solid fa-paperclip text-blue-400"></i>
+                            <span id="chatAttachmentName" class="truncate"></span>
+                        </div>
+                        <button type="button" onclick="clearChatAttachment()" class="text-slate-400 hover:text-rose-400 transition"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <form id="chatForm" onsubmit="handleSendMessage(event)" class="pt-3 border-t border-borderSlate flex gap-2 items-center">
+                        <!-- Paper-clip attachment button -->
+                        <label class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 hover:text-white px-3.5 py-2.5 rounded-xl cursor-pointer transition flex items-center justify-center">
+                            <i class="fa-solid fa-paperclip text-xs"></i>
+                            <input type="file" id="chatFileInput" onchange="handleChatFileSelect(event)" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt">
+                        </label>
+
                         <input type="text" id="chatInputMsg" placeholder="Type your message here..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition" disabled>
                         <button type="submit" id="chatSendBtn" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition shadow-md" disabled>Send</button>
                     </form>
@@ -395,6 +411,7 @@
         let activeSubTab = 'incoming';
         let selectedSellerCommIds = new Set();
         let pollingInterval = null;
+        let chatAttachedFile = null; // Holds the file object selected via paperclip
 
         async function initVendorWorkspace() {
             const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
@@ -955,10 +972,23 @@
                 const isMe = m.sender_id === currentUser.id;
                 const text = m._normalizedText || m.message_text || m.message || m.content || m.body || m.text || '';
                 const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                const fileUrl = m.file_url || m.attachment_url;
+                const fileName = m.file_name || m.attachment_name || 'Attached File';
+
+                let attachmentHtml = '';
+                if (fileUrl) {
+                    if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i)) {
+                        attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank"><img src="${fileUrl}" class="max-h-40 rounded object-contain border border-white/20"></a></div>`;
+                    } else {
+                        attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
+                    }
+                }
+
                 return `
                     <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
                         <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-                            ${text}
+                            ${text ? `<div>${text}</div>` : ''}
+                            ${attachmentHtml}
                         </div>
                         <span class="text-[9px] text-slate-500 mt-1 px-1">${timeString}</span>
                     </div>
@@ -967,33 +997,75 @@
             container.scrollTop = container.scrollHeight;
         }
 
+        // --- Paper-Clip Attachment Handlers ---
+        function handleChatFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            chatAttachedFile = file;
+            document.getElementById('chatAttachmentName').textContent = file.name;
+            document.getElementById('chatAttachmentPreview').classList.remove('hidden');
+        }
+
+        function clearChatAttachment() {
+            chatAttachedFile = null;
+            document.getElementById('chatFileInput').value = '';
+            document.getElementById('chatAttachmentPreview').classList.add('hidden');
+        }
+
         async function handleSendMessage(event) {
             event.preventDefault();
             const input = document.getElementById('chatInputMsg');
             const text = input.value.trim();
-            if (!text || !activeThreadId) return;
+            if ((!text && !chatAttachedFile) || !activeThreadId) return;
+
+            let fileDataUrl = null;
+            let fileName = null;
+
+            if (chatAttachedFile) {
+                fileName = chatAttachedFile.name;
+                if (chatAttachedFile.type.startsWith('image/')) {
+                    fileDataUrl = await compressImageFile(chatAttachedFile, 800, 0.7);
+                } else {
+                    fileDataUrl = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(chatAttachedFile);
+                    });
+                }
+            }
 
             try {
+                let payload = {
+                    sender_id: currentUser.id,
+                    receiver_id: activeThreadId,
+                    message_text: text || (fileName ? `[Attachment: ${fileName}]` : '')
+                };
+
+                if (fileDataUrl) {
+                    payload.file_url = fileDataUrl;
+                    payload.file_name = fileName;
+                }
+
                 let { error } = await _supabase
                     .from('messages')
-                    .insert([{
-                        sender_id: currentUser.id,
-                        receiver_id: activeThreadId,
-                        message_text: text
-                    }]);
+                    .insert([payload]);
 
                 if (error) {
+                    // Fallback column variations if schema differs
+                    delete payload.message_text;
+                    payload.message = text || (fileName ? `[Attachment: ${fileName}]` : '');
+                    if (fileDataUrl) {
+                        payload.attachment_url = fileDataUrl;
+                        payload.attachment_name = fileName;
+                    }
                     const altInsert = await _supabase
                         .from('messages')
-                        .insert([{
-                            sender_id: currentUser.id,
-                            receiver_id: activeThreadId,
-                            message: text
-                        }]);
+                        .insert([payload]);
                     if (altInsert.error) throw altInsert.error;
                 }
 
                 input.value = '';
+                clearChatAttachment();
                 await loadVendorThreads(true);
             } catch (err) {
                 alert('Error sending message: ' + err.message);
