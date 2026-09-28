@@ -1129,36 +1129,19 @@
             }
 
             try {
-                // 1. Attempt the Supabase RPC first
-                const { error: rpcError } = await _supabase.rpc('approve_review_and_split', {
-                    p_message_id: messageId,
+                // Execute the backend RPC function
+                const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
+                    p_message_id: String(messageId),
                     p_vendor_id: currentUser.id,
                     p_reviewer_id: reviewerId,
-                    p_commission_amount: commissionAmount,
+                    p_commission_amount: Number(commissionAmount),
                     p_platform_fee: 10.00
                 });
 
-                // 2. Fallback if the RPC fails or isn't set up in Supabase
-                if (rpcError) {
-                    console.warn("RPC approve_review_and_split failed, executing multi-table fallback updates:", rpcError);
-                    
-                    const updatePayload = { status_badge: 'APPROVED', status: 'APPROVED' };
-                    
-                    // Update across all possible source tables to ensure persistence
-                    await _supabase.from('messages').update(updatePayload).eq('id', messageId);
-                    await _supabase.from('submissions').update(updatePayload).eq('id', messageId);
-                    await _supabase.from('feedback_moderation').update(updatePayload).eq('id', messageId);
+                if (rpcError) throw rpcError;
 
-                    // Ensure a working queue commission record is generated for the vendor
-                    await _supabase.from('commissions').insert([{
-                        vendor_id: currentUser.id,
-                        recipient_email: reviewerId,
-                        recipient_role: 'REVIEWER',
-                        amount: commissionAmount,
-                        status_tag: 'APPROVED_IN_WORKING',
-                        status: 'APPROVED_IN_WORKING',
-                        feedback_id: messageId
-                    }]);
+                if (data && data.success === false) {
+                    throw new Error(data.error || 'Unknown database error');
                 }
 
                 updateMessageCardStateLocally(messageId, 'APPROVED');
