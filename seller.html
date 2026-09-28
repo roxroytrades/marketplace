@@ -1302,20 +1302,7 @@
             }
         }
 
-        function copyReferralLink() {
-            const input = document.getElementById('refLinkInput');
-            input.select();
-            navigator.clipboard.writeText(input.value);
-            alert('Referral link copied to clipboard!');
-        }
-
-        async function handleLogout() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            await _supabase.auth.signOut();
-            window.location.href = 'login.html';
-        }
-
-        initVendorWorkspace();
+        window.addEventListener('DOMContentLoaded', initVendorWorkspace);
     </script>
 </body>
 </html>
