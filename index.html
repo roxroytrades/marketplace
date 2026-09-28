@@ -322,7 +322,7 @@
             </div>
 
             <!-- Right Panel: Active Chat Stream -->
-            <div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg">
+            <div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg relative">
                 <div id="activeChatHeader" class="p-4 border-b border-borderSlate flex items-center justify-between bg-slate-900/30">
                     <div class="flex items-center space-x-3">
                         <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs">
@@ -346,10 +346,54 @@
                     </div>
                 </div>
 
-                <!-- Message Input Footer -->
+                <!-- Interactive Attachment Options Drawer (Initially Hidden) -->
+                <div id="attachmentOptionsDrawer" class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-72 space-y-2">
+                    <div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
+                        <span>Attach Options</span>
+                        <button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+                        <div class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
+                        <div>
+                            <p class="font-semibold">Submit Review URL</p>
+                            <p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
+                        </div>
+                    </button>
+                    <button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+                        <div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
+                        <div>
+                            <p class="font-semibold">Attach Screenshot Proof</p>
+                            <p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
+                        </div>
+                    </button>
+                    <!-- Hidden file uploader & URL input state containers -->
+                    <input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
+                </div>
+
+                <!-- Inline Review URL Input Prompt Modal / Container -->
+                <div id="reviewUrlInputBoxContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center space-x-2">
+                    <input type="text" id="reviewUrlField" placeholder="Paste Amazon/Store review URL here..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue">
+                    <button onclick="submitReviewUrlMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold">Send URL</button>
+                    <button onclick="document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <!-- Thumbnail Preview Container -->
+                <div id="chatThumbnailPreviewContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate">
+                        <span class="text-xs text-slate-300 font-medium">Screenshot attached ready to send</span>
+                    </div>
+                    <button onclick="clearChatThumbnail()" class="text-rose-400 hover:text-rose-300 text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i> Remove</button>
+                </div>
+
+                <!-- Message Input Footer with Paperclip Attachment Button -->
                 <div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40 hidden">
-                    <form onsubmit="handleSendMessage(event)" class="flex items-center space-x-2">
-                        <input type="text" id="messageInputBox" placeholder="Type your message..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                    <form onsubmit="handleSendMessage(event)" class="flex items-center space-x-2 relative">
+                        <!-- Paperclip Attachment Button -->
+                        <button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner" title="Attach options">
+                            <i class="fa-solid fa-paperclip text-blue-400"></i>
+                        </button>
+                        <input type="text" id="messageInputBox" placeholder="Type your message or attach review proof..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                         <button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1">
                             <span class="hidden sm:inline">Send</span>
                             <i class="fa-solid fa-paper-plane"></i>
@@ -387,6 +431,7 @@
         let activeRecipientId = null;
         let activeProductId = null;
         let messageSubscription = null;
+        let attachedImageBase64 = null;
 
         // Initialize workspace & header user metadata display with robust real-time session checking
         async function initShopperWorkspace() {
@@ -868,7 +913,7 @@
             document.getElementById('receiptModal').classList.remove('hidden');
         }
 
-        // ================= WHATSAPP-STYLE MESSAGING HUB LOGIC =================
+        // ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & PAPERCLIP ATTACHMENTS =================
 
         function toggleMessagingHub() {
             const modal = document.getElementById('messagingHubModal');
@@ -876,6 +921,54 @@
             if (!modal.classList.contains('hidden')) {
                 loadMessagingThreads();
             }
+        }
+
+        function toggleAttachmentDrawer() {
+            const drawer = document.getElementById('attachmentOptionsDrawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        function openReviewUrlInput() {
+            toggleAttachmentDrawer();
+            document.getElementById('reviewUrlInputBoxContainer').classList.remove('hidden');
+            document.getElementById('reviewUrlField').focus();
+        }
+
+        function triggerScreenshotUploader() {
+            toggleAttachmentDrawer();
+            document.getElementById('inlineChatFileInput').click();
+        }
+
+        function handleChatImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                attachedImageBase64 = e.target.result;
+                document.getElementById('chatPreviewThumb').src = attachedImageBase64;
+                document.getElementById('chatThumbnailPreviewContainer').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearChatThumbnail() {
+            attachedImageBase64 = null;
+            document.getElementById('chatThumbnailPreviewContainer').classList.add('hidden');
+            document.getElementById('inlineChatFileInput').value = '';
+        }
+
+        async function submitReviewUrlMessage() {
+            const urlField = document.getElementById('reviewUrlField');
+            const url = urlField.value.trim();
+            if (!url) {
+                alert('Please enter a valid review URL.');
+                return;
+            }
+            urlField.value = '';
+            document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden');
+
+            const formattedText = `[Review URL Submitted]: ${url}`;
+            await sendChatMessage(formattedText, null);
         }
 
         async function loadMessagingThreads(isPolling = false) {
@@ -905,7 +998,6 @@
                 return;
             }
 
-            // Group messages into unique threads by counterpart & product
             const threadMap = new Map();
             messagingThreads.forEach(msg => {
                 const counterpartId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
@@ -977,7 +1069,8 @@
                     const isMe = m.sender_id === currentUser.id;
                     return `
                         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-                            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+                            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+                                ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20">` : ''}
                                 <p>${m.text}</p>
                             </div>
                             <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -1012,19 +1105,30 @@
             event.preventDefault();
             const input = document.getElementById('messageInputBox');
             const text = input.value.trim();
-            if (!text || !activeRecipientId) return;
+            if ((!text && !attachedImageBase64) || !activeRecipientId) return;
 
             input.value = '';
+            const imageUrlToSend = attachedImageBase64;
+            clearChatThumbnail();
 
+            await sendChatMessage(text || 'Attached Screenshot Proof', imageUrlToSend);
+        }
+
+        async function sendChatMessage(text, imageUrl) {
             try {
+                const payload = {
+                    sender_id: currentUser.id,
+                    receiver_id: activeRecipientId,
+                    product_id: activeProductId !== 'null' ? activeProductId : null,
+                    text: text
+                };
+                if (imageUrl) {
+                    payload.image_url = imageUrl;
+                }
+
                 const { error } = await _supabase
                     .from('messages')
-                    .insert([{
-                        sender_id: currentUser.id,
-                        receiver_id: activeRecipientId,
-                        product_id: activeProductId !== 'null' ? activeProductId : null,
-                        text: text
-                    }]);
+                    .insert([payload]);
 
                 if (error) throw error;
                 await loadMessageStream(activeRecipientId, activeProductId);
