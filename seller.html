@@ -926,11 +926,17 @@
                     fbData = fData || [];
                 } catch (e) {}
 
+                let commData = [];
+                try {
+                    const { data: cData } = await _supabase.from('commissions').select('*').eq('vendor_id', currentUser.id);
+                    commData = cData || [];
+                } catch (e) {}
+
                 const allItems = [
                     ...(msgData || []),
                     ...(subData || []).map(s => ({
                         id: s.id,
-                        sender_id: s.reviewer || 'Shopper',
+                        sender_id: s.reviewer || s.user_id || 'Shopper',
                         receiver_id: currentUser.id,
                         message_text: s.content || s.product_name ? `Review Submission [${s.product_name || 'Product'}]: ${s.content || ''}` : 'Review Submission Proof',
                         file_url: s.image || s.image_url || (s.content && s.content.startsWith('data:image/') ? s.content : null),
@@ -943,7 +949,7 @@
                     })),
                     ...(fbData || []).map(f => ({
                         id: f.id,
-                        sender_id: f.reviewer || 'Shopper',
+                        sender_id: f.reviewer || f.user_id || 'Shopper',
                         receiver_id: currentUser.id,
                         message_text: `Feedback Moderation Link: ${f.link || ''}`,
                         file_url: f.image || f.image_url || (f.link && f.link.match(/\.(jpeg|jpg|png|gif)$/i) ? f.link : null),
@@ -1015,7 +1021,7 @@
         }
 
         function hasAmazonUrl(text) {
-            return text && (text.includes('amazon.com') || text.includes('amzn.to'));
+            return text && (text.includes('amazon.com') || text.includes('amzn.to') || text.includes('http'));
         }
 
         function hasImageAttachment(msg) {
@@ -1041,7 +1047,7 @@
                 const fileName = m.file_name || m.attachment_name || 'Attached File';
 
                 const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback' || m.feedback_id;
-                const hasValidProof = hasAmazonUrl(text) && hasImageAttachment(m);
+                const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
                 const showAsReviewCard = isExplicitReviewType || hasValidProof;
 
                 const feedbackId = m.feedback_id || m.id;
@@ -1074,11 +1080,11 @@
                             <div class="inline-action-area pt-2 border-t border-white/10">
                                 ${statusBadge === 'AWAITING_ATTENTION' ? `
                                     <div class="flex space-x-2" id="actions-${m.id}">
-                                        <button onclick="handleInlineApprove('${m.id}', '${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition">
-                                            ✓ Approve
+                                        <button onclick="handleInlineApprove('${m.id}', '${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
+                                            <i class="fa-solid fa-check"></i><span>Approve</span>
                                         </button>
-                                        <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition">
-                                            ✕ Deny
+                                        <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
+                                            <i class="fa-solid fa-xmark"></i><span>Deny</span>
                                         </button>
                                     </div>
                                 ` : `
