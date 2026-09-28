@@ -522,10 +522,10 @@
                 grid.innerHTML = vendorProducts.map(p => `
                     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
                         <div>
-                            <img src="${p.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
+                            <img src="${p.image_url || p.image || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
                             <div class="p-5 space-y-2">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status}</span>
+                                    <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status || 'ACTIVE'}</span>
                                     <span class="text-xs font-bold text-emerald-400">Price: $${Number(p.price || 0).toFixed(2)}</span>
                                 </div>
                                 <h3 class="font-bold text-white text-base">${p.title}</h3>
@@ -555,7 +555,7 @@
         }
 
         async function editProduct(id) {
-            const prod = vendorProducts.find(p => p.id === id);
+            const prod = vendorProducts.find(p => p.id == id);
             if (!prod) return;
 
             document.getElementById('productModalTitle').textContent = 'Edit Product Listing';
@@ -578,8 +578,8 @@
 
             let imageUrl = 'https://via.placeholder.com/300';
             if (id) {
-                const existing = vendorProducts.find(p => p.id === id);
-                if (existing) imageUrl = existing.image_url;
+                const existing = vendorProducts.find(p => p.id == id);
+                if (existing) imageUrl = existing.image_url || existing.image;
             }
 
             if (fileInput.files && fileInput.files[0]) {
@@ -590,13 +590,13 @@
                 if (id) {
                     const { error } = await _supabase
                         .from('products')
-                        .update({ title, description, price, status, image_url: imageUrl })
+                        .update({ title, description, price, status, image_url: imageUrl, image: imageUrl })
                         .eq('id', id);
                     if (error) throw error;
                 } else {
                     const { error } = await _supabase
                         .from('products')
-                        .insert([{ vendor_id: currentUser.id, title, description, price, status, image_url: imageUrl }]);
+                        .insert([{ vendor_id: currentUser.id, title, description, price, status, image_url: imageUrl, image: imageUrl }]);
                     if (error) throw error;
                 }
 
@@ -665,14 +665,15 @@
             const search = document.getElementById('sellerCommSearch').value.toLowerCase();
 
             const filtered = vendorCommissions.filter(c => {
+                const statusField = c.status_tag || c.status || 'UNREQUESTED_BALANCE';
                 const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) || (c.id || '').toLowerCase().includes(search);
                 
                 let matchesTab = false;
-                if (activeSubTab === 'incoming') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
-                else if (activeSubTab === 'mainQueue') matchesTab = c.status_tag === 'UNREQUESTED_BALANCE';
-                else if (activeSubTab === 'outgoing') matchesTab = c.status_tag === 'OFFERED_AWAITING_ACCEPTANCE';
-                else if (activeSubTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
-                else if (activeSubTab === 'history') matchesTab = c.status_tag === 'COMPLETED_PAID';
+                if (activeSubTab === 'incoming') matchesTab = statusField === 'REQUESTED_BY_RECIPIENT';
+                else if (activeSubTab === 'mainQueue') matchesTab = statusField === 'UNREQUESTED_BALANCE';
+                else if (activeSubTab === 'outgoing') matchesTab = statusField === 'OFFERED_AWAITING_ACCEPTANCE';
+                else if (activeSubTab === 'workingQueue') matchesTab = statusField === 'APPROVED_IN_WORKING';
+                else if (activeSubTab === 'history') matchesTab = statusField === 'COMPLETED_PAID';
 
                 return matchesSearch && matchesTab;
             });
@@ -734,7 +735,7 @@
                             <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
                         </div>
                         <div class="col-span-3 space-y-0.5">
-                            <span class="font-bold text-white">${c.feedback_id ? 'FB ID: ' + c.feedback_id : 'Ref ID: ' + c.id.substring(0,8)}</span>
+                            <span class="font-bold text-white">${c.feedback_id ? 'FB ID: ' + c.feedback_id : 'Ref ID: ' + String(c.id).substring(0,8)}</span>
                             <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
                         </div>
                         <div class="col-span-3 space-y-0.5">
@@ -776,9 +777,12 @@
             }
             try {
                 for (const id of selectedSellerCommIds) {
+                    const updatePayload = {};
+                    updatePayload.status_tag = 'APPROVED_IN_WORKING';
+                    updatePayload.status = 'APPROVED_IN_WORKING';
                     const { error } = await _supabase
                         .from('commissions')
-                        .update({ status_tag: 'APPROVED_IN_WORKING' })
+                        .update(updatePayload)
                         .eq('id', id);
                     if (error) throw error;
                 }
@@ -792,9 +796,10 @@
 
         async function approveSingleComm(id) {
             try {
+                const updatePayload = { status_tag: 'APPROVED_IN_WORKING', status: 'APPROVED_IN_WORKING' };
                 const { error } = await _supabase
                     .from('commissions')
-                    .update({ status_tag: 'APPROVED_IN_WORKING' })
+                    .update(updatePayload)
                     .eq('id', id);
                 if (error) throw error;
                 await loadVendorCommissions();
@@ -806,9 +811,10 @@
         async function denySingleComm(id) {
             if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
             try {
+                const updatePayload = { status_tag: 'UNREQUESTED_BALANCE', status: 'UNREQUESTED_BALANCE' };
                 const { error } = await _supabase
                     .from('commissions')
-                    .update({ status_tag: 'UNREQUESTED_BALANCE' })
+                    .update(updatePayload)
                     .eq('id', id);
                 if (error) throw error;
                 await loadVendorCommissions();
@@ -832,7 +838,8 @@
                         recipient_email: recipientEmail,
                         recipient_role: recipientRole,
                         amount: amount,
-                        status_tag: 'OFFERED_AWAITING_ACCEPTANCE'
+                        status_tag: 'OFFERED_AWAITING_ACCEPTANCE',
+                        status: 'OFFERED_AWAITING_ACCEPTANCE'
                     }]);
 
                 if (error) throw error;
@@ -875,6 +882,7 @@
                     .from('commissions')
                     .update({
                         status_tag: 'COMPLETED_PAID',
+                        status: 'COMPLETED_PAID',
                         paypal_tx_id: txId,
                         receipt_url: receiptBase64
                     })
@@ -929,7 +937,7 @@
                         file_name: s.product_name || 'Review Screenshot',
                         created_at: s.created_at,
                         feedback_id: s.feedback_id || s.id,
-                        status_badge: s.status_badge || 'AWAITING_ATTENTION',
+                        status_badge: s.status_badge || s.status || 'AWAITING_ATTENTION',
                         amazon_review_url: s.amazon_review_url || s.link || '#',
                         commission_amount: s.commission_amount || 5.00
                     })),
@@ -941,7 +949,7 @@
                         file_url: f.image || f.image_url || (f.link && f.link.match(/\.(jpeg|jpg|png|gif)$/i) ? f.link : null),
                         created_at: f.created_at,
                         feedback_id: f.feedback_id || f.id,
-                        status_badge: f.status_badge || 'AWAITING_ATTENTION',
+                        status_badge: f.status_badge || f.status || 'AWAITING_ATTENTION',
                         amazon_review_url: f.link || '#',
                         commission_amount: f.commission_amount || 5.00
                     }))
@@ -989,7 +997,7 @@
                 return `
                     <div onclick="selectThread('${t.partnerId}')" class="p-3 bg-darkBg border ${activeThreadId === t.partnerId ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-200">Reviewer (${t.partnerId.substring(0,6)}...)</span>
+                            <span class="text-xs font-semibold text-slate-200">Reviewer (${String(t.partnerId).substring(0,6)}...)</span>
                             <span class="text-[10px] text-slate-500">${timeString}</span>
                         </div>
                         <p class="text-xs text-slate-400 truncate">${t.lastMessage || 'Attachment or link submitted'}</p>
@@ -1006,7 +1014,6 @@
             document.getElementById('chatSendBtn').disabled = false;
         }
 
-        // --- Helper functions for review/submission validation ---
         function hasAmazonUrl(text) {
             return text && (text.includes('amazon.com') || text.includes('amzn.to'));
         }
@@ -1022,7 +1029,7 @@
             const container = document.getElementById('chatMessagesContainer');
             if (!thread) return;
 
-            document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${activeThreadId.substring(0,6)}...)`;
+            document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,6)}...)`;
             
             const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
 
@@ -1043,7 +1050,7 @@
 
                 let bubbleContent = '';
                 if (showAsReviewCard) {
-                    const statusBadge = m.status_badge || 'AWAITING_ATTENTION';
+                    const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
                     const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
                     
                     bubbleContent = `
@@ -1109,7 +1116,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // ================= INLINE DECISION HANDLERS FOR CHAT =================
         async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
             const actionContainer = document.getElementById(`actions-${messageId}`);
             if (actionContainer) {
@@ -1128,9 +1134,14 @@
                 if (rpcError) {
                     const { error: updateError } = await _supabase
                         .from('messages')
-                        .update({ status_badge: 'APPROVED' })
+                        .update({ status_badge: 'APPROVED', status: 'APPROVED' })
                         .eq('id', messageId);
-                    if (updateError) throw updateError;
+                    if (updateError) {
+                        await _supabase
+                            .from('submissions')
+                            .update({ status_badge: 'APPROVED', status: 'APPROVED' })
+                            .eq('id', messageId);
+                    }
                 }
 
                 updateMessageCardStateLocally(messageId, 'APPROVED');
@@ -1157,16 +1168,16 @@
                     .from('messages')
                     .update({ 
                         status_badge: 'DENIED',
+                        status: 'DENIED',
                         denial_reason: denialReason 
                     })
                     .eq('id', messageId);
 
                 if (error) {
-                    const { error: altErr } = await _supabase
+                    await _supabase
                         .from('submissions')
-                        .update({ status_badge: 'DENIED' })
+                        .update({ status_badge: 'DENIED', status: 'DENIED' })
                         .eq('id', messageId);
-                    if (altErr) throw altErr;
                 }
 
                 updateMessageCardStateLocally(messageId, 'DENIED');
@@ -1206,7 +1217,6 @@
             }, 3500);
         }
 
-        // --- Paper-Clip Attachment Handlers ---
         function handleChatFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1268,10 +1278,7 @@
                         payload.attachment_url = fileDataUrl;
                         payload.attachment_name = fileName;
                     }
-                    const altInsert = await _supabase
-                        .from('messages')
-                        .insert([payload]);
-                    if (altInsert.error) throw altInsert.error;
+                    await _supabase.from('messages').insert([payload]);
                 }
 
                 input.value = '';
@@ -1295,7 +1302,6 @@
             window.location.href = 'login.html';
         }
 
-        // Initialize vendor workspace on load
         initVendorWorkspace();
     </script>
 </body>
