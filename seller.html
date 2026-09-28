@@ -414,7 +414,7 @@
         let activeSubTab = 'incoming';
         let selectedSellerCommIds = new Set();
         let pollingInterval = null;
-        let chatAttachedFile = null; // Holds the file object selected via paperclip
+        let chatAttachedFile = null;
 
         async function initVendorWorkspace() {
             const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
@@ -636,7 +636,6 @@
                 }
                 vendorCommissions = data || [];
             } catch (err) {
-                console.log('Using local vendor commissions fallback or table column mismatch resolved.');
                 vendorCommissions = [];
             }
             renderSellerCommissions();
@@ -1023,7 +1022,6 @@
                 const fileUrl = m._normalizedImage || m.file_url || m.attachment_url;
                 const fileName = m.file_name || m.attachment_name || 'Attached File';
 
-                // Robust check for review submission cards in chat stream
                 const hasFeedback = m.feedback_id || m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback' || 
                     text.includes('Review Submission') || text.includes('Feedback Moderation') || 
                     text.toLowerCase().includes('amazon.') || text.toLowerCase().includes('review') || (fileUrl && !isMe);
@@ -1055,7 +1053,6 @@
                                 ` : ''}
                             </div>
                             
-                            <!-- Inline Action Buttons or Stamp -->
                             <div class="inline-action-area pt-2 border-t border-white/10">
                                 ${statusBadge === 'AWAITING_ATTENTION' ? `
                                     <div class="flex space-x-2" id="actions-${m.id}">
