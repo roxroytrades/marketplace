@@ -1118,7 +1118,7 @@
                     throw new Error(data.error || 'Unknown database error');
                 }
 
-                // Update messages table status
+                // Update messages table status badge
                 await _supabase.from('messages').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
 
                 updateMessageCardStateLocally(messageId, 'APPROVED');
