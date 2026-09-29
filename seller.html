@@ -966,7 +966,7 @@
 
                 const threadMap = {};
                 allItems.forEach(m => {
-                    const text = m.message_text || m.message || m.content || m.body || m.text || m.link || '';
+                    const text = m.text || m.message_text || m.message || m.content || m.body || m.link || '';
                     const partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id) || 'general_shopper';
                     
                     if (!threadMap[partnerId]) {
@@ -1045,7 +1045,7 @@
 
             container.innerHTML = sorted.map(m => {
                 const isMe = m.sender_id === currentUser.id;
-                const text = m._normalizedText || m.message_text || m.message || m.content || m.body || m.text || '';
+                const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
                 const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
                 const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
                 const fileName = m.file_name || m.attachment_name || 'Attached File';
@@ -1276,7 +1276,7 @@
                     sender_id: currentUser.id,
                     receiver_id: activeThreadId,
                     vendor_id: currentUser.id,
-                    message_text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
+                    text: text || (fileName ? `[Attachment: ${fileName}]` : ''), // Fixed schema column name
                     type: 'vendor_reply'
                 };
 
@@ -1290,7 +1290,7 @@
                     .insert([payload]);
 
                 if (error) {
-                    delete payload.message_text;
+                    delete payload.text;
                     payload.message = text || (fileName ? `[Attachment: ${fileName}]` : '');
                     if (fileDataUrl) {
                         payload.attachment_url = fileDataUrl;
