@@ -303,7 +303,7 @@
     <div id="messagingHubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6">
         <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full h-[85vh] flex overflow-hidden shadow-2xl">
             <!-- Left Sidebar: Thread List -->
-            <div class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50">
+            <div class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden">
                 <div class="p-4 border-b border-borderSlate flex items-center justify-between">
                     <h3 class="font-bold text-white text-sm flex items-center space-x-2">
                         <i class="fa-solid fa-comments text-blue-500"></i>
@@ -321,25 +321,25 @@
                 </div>
             </div>
 
-            <!-- Right Panel: Active Chat Stream -->
-            <div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg relative">
+            <!-- Right Panel: Active Chat Stream (Added min-w-0 and overflow-hidden to prevent clipping) -->
+            <div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg relative overflow-hidden min-w-0">
                 <div id="activeChatHeader" class="p-4 border-b border-borderSlate flex items-center justify-between bg-slate-900/30">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs">
+                    <div class="flex items-center space-x-3 truncate">
+                        <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
                             <i class="fa-solid fa-user"></i>
                         </div>
-                        <div>
-                            <h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
-                            <span id="activeChatSubtitle" class="text-[10px] text-slate-400">Vendor / Shopper Chat</span>
+                        <div class="truncate">
+                            <h4 id="activeChatTitle" class="font-bold text-white text-xs truncate">Select a conversation</h4>
+                            <span id="activeChatSubtitle" class="text-[10px] text-slate-400 truncate block">Vendor / Shopper Chat</span>
                         </div>
                     </div>
-                    <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
+                    <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition flex-shrink-0 ml-2">
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
                 </div>
                 
-                <!-- Message Stream Area -->
-                <div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col">
+                <!-- Message Stream Area (Added overflow-x-hidden to prevent horizontal page spill) -->
+                <div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden min-w-0">
                     <div class="m-auto text-center text-xs text-slate-500 space-y-1">
                         <i class="fa-regular fa-comments text-2xl text-slate-600"></i>
                         <p>Choose a thread from the left to start messaging.</p>
@@ -1069,11 +1069,11 @@
                 container.innerHTML = messages.map(m => {
                     const isMe = m.sender_id === currentUser.id;
                     return `
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-                            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1 w-full">
+                            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words overflow-hidden ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
                                 ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20">` : ''}
-                                <p>${m.text}</p>
-                                ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white truncate"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
+                                <p class="break-words">${m.text}</p>
+                                ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
                             </div>
                             <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                         </div>
@@ -1121,7 +1121,7 @@
                 const payload = {
                     sender_id: currentUser.id,
                     receiver_id: activeRecipientId,
-                    vendor_id: activeRecipientId, // 👈 Included vendor_id fix
+                    vendor_id: activeRecipientId,
                     product_id: activeProductId !== 'null' ? activeProductId : null,
                     text: text
                 };
