@@ -944,7 +944,6 @@
                         file_url: s.image || s.image_url || (s.content && s.content.startsWith('data:image/') ? s.content : null),
                         file_name: s.product_name || 'Review Screenshot',
                         created_at: s.created_at,
-                        id: s.id,
                         status_badge: s.status_badge || s.status || 'AWAITING_ATTENTION',
                         amazon_review_url: s.amazon_review_url || s.link || '#',
                         commission_amount: s.commission_amount || 5.00
@@ -956,8 +955,7 @@
                         message_text: `Feedback Moderation Link: ${f.link || ''}`,
                         file_url: f.image || f.image_url || (f.link && f.link.match(/\.(jpeg|jpg|png|gif)$/i) ? f.link : null),
                         created_at: f.created_at,
-                        id: f.id,
-                        status_badge: s.status_badge || f.status || 'AWAITING_ATTENTION',
+                        status_badge: f.status_badge || f.status || 'AWAITING_ATTENTION',
                         amazon_review_url: f.link || '#',
                         commission_amount: f.commission_amount || 5.00
                     }))
@@ -1135,14 +1133,6 @@
                 const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
                 const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
 
-                console.log("👉 BEFORE Supabase RPC call (approve_review_and_split):", {
-                    messageId,
-                    vendorId: currentUser.id,
-                    reviewerId,
-                    commissionAmount: Number(commissionAmount),
-                    reviewLink
-                });
-
                 const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
                     p_message_id: String(messageId),
                     p_vendor_id: currentUser.id,
@@ -1151,11 +1141,6 @@
                     p_platform_fee: 10.00,
                     p_link: reviewLink,
                     p_type: 'REVIEW_COMMISSION'
-                });
-
-                console.log("👉 AFTER Supabase RPC call (approve_review_and_split):", {
-                    data,
-                    rpcError
                 });
 
                 if (rpcError) throw rpcError;
