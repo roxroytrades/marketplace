@@ -33,7 +33,7 @@
         h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </style>
 </head>
-<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
+<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between" onload="initVendorWorkspace()">
 
     <!-- Top Navigation Bar -->
     <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
@@ -876,343 +876,172 @@
 
             let receiptBase64 = '';
             if (fileInput.files && fileInput.files[0]) {
-                receiptBase64 = await compressImageFile(fileInput.files[0], 900, 0.7);
+                receiptBase64 = await compressImageFile(fileInput.files[0], 800, 0.7);
             }
 
             try {
-                const updateData = {
-                    status_tag: 'COMPLETED_PAID',
-                    status: 'COMPLETED_PAID',
-                    paypal_tx_id: txId,
-                    receipt_base64: receiptBase64,
-                    receipt_url: receiptBase64
-                };
-
                 const { error } = await _supabase
                     .from('commissions')
-                    .update(updateData)
+                    .update({
+                        status_tag: 'COMPLETED_PAID',
+                        status: 'COMPLETED_PAID',
+                        paypal_tx_id: txId,
+                        receipt_base64: receiptBase64
+                    })
                     .eq('id', commId);
 
                 if (error) throw error;
-
                 document.getElementById('settlementModal').classList.add('hidden');
                 await loadVendorCommissions();
-                alert('Payment successfully settled and archived to Payment History!');
+                alert('Payout settlement completed and archived to payment history.');
             } catch (err) {
-                alert('Settlement execution failed: ' + err.message);
+                alert('Settlement error: ' + err.message);
             }
         }
 
-        function inspectReceipt(txId, amount, receiptUrl) {
-            document.getElementById('inspectModalTxId').textContent = txId;
-            document.getElementById('inspectModalAmount').textContent = `$${Number(amount).toFixed(2)}`;
-            document.getElementById('inspectModalImage').src = receiptUrl || 'https://via.placeholder.com/300?text=No+Receipt+Image';
+        function inspectReceipt(txId, amount, receiptImg) {
+            document.getElementById('inspectModalTxId').textContent = txId || 'N/A';
+            document.getElementById('inspectModalAmount').textContent = `$${Number(amount || 0).toFixed(2)}`;
+            const imgEl = document.getElementById('inspectModalImage');
+            if (receiptImg) {
+                imgEl.src = receiptImg;
+                imgEl.classList.remove('hidden');
+            } else {
+                imgEl.src = '';
+                imgEl.classList.add('hidden');
+            }
             document.getElementById('inspectReceiptModal').classList.remove('hidden');
         }
 
-        // ================= MESSAGING HUB & REVIEW STREAM =================
+        // ================= MESSAGING HUB & REVIEW APPROVALS =================
         async function loadVendorThreads(isPolling = false) {
             try {
-                const { data: msgData } = await _supabase
+                const { data, error } = await _supabase
                     .from('messages')
                     .select('*')
-                    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
-                    .order('created_at', { ascending: false });
+                    .or(`vendor_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},sender_id.eq.${currentUser.id}`)
+                    .order('created_at', { ascending: true });
 
-                let commData = [];
-                try {
-                    const { data: cData } = await _supabase.from('commissions').select('*').eq('vendor_id', currentUser.id);
-                    commData = cData || [];
-                } catch (e) {}
-
-                const allItems = [
-                    ...(msgData || [])
-                ];
-
+                if (error) throw error;
+                
+                const messages = data || [];
                 const threadMap = {};
-                allItems.forEach(m => {
-                    const text = m.text || m.message_text || m.message || m.content || m.body || m.link || '';
-                    const partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id) || 'general_shopper';
-                    
+
+                messages.forEach(m => {
+                    const partnerId = (m.sender_id === currentUser.id) ? (m.receiver_id || m.buyer_id) : m.sender_id;
+                    if (!partnerId) return;
+
                     if (!threadMap[partnerId]) {
                         threadMap[partnerId] = {
                             partnerId: partnerId,
-                            lastMessage: text,
-                            updatedAt: m.created_at,
+                            partnerName: m.sender_name || 'Shopper / Reviewer',
                             messages: []
                         };
                     }
-                    
-                    m._normalizedText = text;
-                    m._normalizedImage = m.file_url || m.attachment_url || m.image || m.image_url || m.proof_base64 ||
-                        (m.link && (m.link.match(/\.(jpeg|jpg|png|gif)$/i) || m.link.startsWith('data:image/')) ? m.link : null) || 
-                        (m.content && m.content.startsWith('data:image/') ? m.content : null);
-
                     threadMap[partnerId].messages.push(m);
                 });
 
                 vendorThreads = Object.values(threadMap);
-                renderThreadsList();
-                if (activeThreadId) renderActiveChat();
+                renderMessagingThreads();
+
+                if (activeThreadId) {
+                    selectThread(activeThreadId, true);
+                }
             } catch (err) {
-                console.log('Error loading threads:', err);
+                console.error("Error loading messaging threads:", err);
             }
         }
 
-        function renderThreadsList() {
+        function renderMessagingThreads() {
             const listEl = document.getElementById('messagingThreadsList');
             if (vendorThreads.length === 0) {
-                listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No conversations yet.</p>`;
+                listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No active conversations found.</p>`;
                 return;
             }
 
             listEl.innerHTML = vendorThreads.map(t => {
-                const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                const lastMsg = t.messages[t.messages.length - 1];
+                const isActive = t.partnerId === activeThreadId;
                 return `
-                    <div onclick="selectThread('${t.partnerId}')" class="p-3 bg-darkBg border ${activeThreadId === t.partnerId ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-200">Reviewer (${String(t.partnerId).substring(0,6)}...)</span>
-                            <span class="text-[10px] text-slate-500">${timeString}</span>
+                    <div onclick="selectThread('${t.partnerId}')" class="p-3 rounded-xl cursor-pointer transition border ${isActive ? 'bg-accentBlue/10 border-accentBlue' : 'bg-darkBg border-borderSlate hover:bg-slate-800'}">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-white truncate">Reviewer (${String(t.partnerId).substring(0,6)})</span>
+                            <span class="text-[10px] text-slate-500">${new Date(lastMsg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                         </div>
-                        <p class="text-xs text-slate-400 truncate">${t.lastMessage || 'Attachment or link submitted'}</p>
+                        <p class="text-[11px] text-slate-400 truncate">${lastMsg.text || lastMsg.amazon_review_url || 'Attachment / Review'}</p>
                     </div>
                 `;
             }).join('');
         }
 
-        function selectThread(partnerId) {
+        function selectThread(partnerId, preserveScroll = false) {
             activeThreadId = partnerId;
-            renderThreadsList();
-            renderActiveChat();
-            document.getElementById('chatInputMsg').disabled = false;
-            document.getElementById('chatSendBtn').disabled = false;
-        }
+            renderMessagingThreads();
 
-        function hasAmazonUrl(text) {
-            return text && (text.includes('amazon.com') || text.includes('amzn.to') || text.includes('http'));
-        }
-
-        function hasImageAttachment(msg) {
-            return (msg._normalizedImage && msg._normalizedImage.trim() !== '') || 
-                   (msg.file_url && msg.file_url.trim() !== '') ||
-                   (msg.proof_base64 && msg.proof_base64.trim() !== '') ||
-                   (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.includes('imgur') || msg._normalizedText.includes('supabase'))));
-        }
-
-        function renderActiveChat() {
-            const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
+            const thread = vendorThreads.find(t => t.partnerId === partnerId);
             const container = document.getElementById('chatMessagesContainer');
+            const titleEl = document.getElementById('activeChatTitle');
+            const subEl = document.getElementById('activeChatSub');
+            const inputMsg = document.getElementById('chatInputMsg');
+            const sendBtn = document.getElementById('chatSendBtn');
+
             if (!thread) return;
 
-            document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,6)}...)`;
-            
-            const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+            titleEl.textContent = `Conversation with Reviewer`;
+            subEl.textContent = `ID: ${partnerId}`;
+            inputMsg.disabled = false;
+            sendBtn.disabled = false;
 
-            container.innerHTML = sorted.map(m => {
+            container.innerHTML = thread.messages.map(m => {
                 const isMe = m.sender_id === currentUser.id;
-                const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
-                const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-                const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
-                const fileName = m.file_name || m.attachment_name || 'Attached File';
+                const statusBadge = m.status_badge || 'AWAITING_ATTENTION';
+                
+                let reviewCardHtml = '';
+                if (m.amazon_review_url || m.link || m.submission_cycle) {
+                    let badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                    let badgeText = 'Awaiting Review';
+                    if (statusBadge === 'APPROVED') {
+                        badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                        badgeText = 'Approved & Split';
+                    } else if (statusBadge === 'DENIED') {
+                        badgeClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                        badgeText = 'Denied';
+                    }
 
-                const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
-                const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
-                const showAsReviewCard = isExplicitReviewType || hasValidProof;
+                    const actionButtons = (!isMe && statusBadge === 'AWAITING_ATTENTION') ? `
+                        <div id="actions-${m.id}" class="flex items-center space-x-2 mt-3 pt-2 border-t border-borderSlate">
+                            <button onclick="handleInlineApprove('${m.id}', '${m.sender_id || m.buyer_id}', 15.00, '${m.submission_cycle || ''}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg transition">Approve Review</button>
+                            <button onclick="handleInlineDeny('${m.id}', '${m.sender_id || m.buyer_id}', '${m.submission_cycle || ''}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition">Deny</button>
+                        </div>
+                    ` : '';
 
-                const feedbackId = m.feedback_id || 'Pending Approval';
-                const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
-                const commissionAmount = m.commission_amount || 5.00;
-
-                let bubbleContent = '';
-                if (showAsReviewCard) {
-                    const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
-                    const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
-                    
-                    bubbleContent = `
-                        <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
-                            <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
-                                <span class="text-[10px] text-slate-400 font-mono feedback-id-display">ID: ${feedbackId}</span>
+                    reviewCardHtml = `
+                        <div class="mt-2 p-3 bg-darkBg border border-borderSlate rounded-xl space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] uppercase font-bold text-blue-400">Review Submission</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeClass}">${badgeText}</span>
                             </div>
-                            <div>
-                                <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 underline hover:text-blue-300 truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
-                                ${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-300 mt-1">${text}</p>` : ''}
-                                ${fileUrl ? `
-                                    <div class="mt-2">
-                                        <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
-                                            <img src="${fileUrl}" alt="Proof" class="h-28 w-full object-cover hover:scale-105 transition">
-                                        </a>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            
-                            <div class="inline-action-area pt-2 border-t border-white/10">
-                                ${statusBadge === 'AWAITING_ATTENTION' ? `
-                                    <div class="flex space-x-2" id="actions-${m.id}">
-                                        <button onclick="handleInlineApprove('${m.id}', '${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                                            <i class="fa-solid fa-check"></i><span>Approve</span>
-                                        </button>
-                                        <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                                            <i class="fa-solid fa-xmark"></i><span>Deny</span>
-                                        </button>
-                                    </div>
-                                ` : `
-                                    <div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong>${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
-                                `}
-                            </div>
+                            <p class="text-xs font-mono text-slate-300 truncate">URL: <a href="${m.amazon_review_url || m.link}" target="_blank" class="underline text-blue-400">${m.amazon_review_url || m.link}</a></p>
+                            ${m.proof_base64 ? `<img src="${m.proof_base64}" class="rounded max-h-32 object-contain mt-1">` : ''}
+                            ${actionButtons}
                         </div>
                     `;
-                } else {
-                    let attachmentHtml = '';
-                    if (fileUrl) {
-                        if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
-                            attachmentHtml = `
-                                <div class="mt-2.5">
-                                    <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-xl border border-white/20 shadow-md">
-                                        <img src="${fileUrl}" alt="Attachment" class="max-h-52 w-full object-cover hover:scale-105 transition duration-300">
-                                    </a>
-                                </div>`;
-                        } else {
-                            attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
-                        }
-                    }
-                    bubbleContent = `<div>${text}</div>${attachmentHtml}`;
                 }
 
                 return `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
-                        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-                            ${bubbleContent}
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
+                        <div class="max-w-[80%] rounded-2xl px-4 py-3 text-xs ${isMe ? 'bg-blue-600 text-white' : 'bg-darkBg border border-borderSlate text-slate-200'}">
+                            <p>${m.text || ''}</p>
+                            ${reviewCardHtml}
                         </div>
-                        <span class="text-[9px] text-slate-500 mt-1 px-1">${timeString}</span>
+                        <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                     </div>
                 `;
             }).join('');
-            container.scrollTop = container.scrollHeight;
-        }
 
-        async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
-            const actionContainer = document.getElementById(`actions-${messageId}`);
-            if (actionContainer) {
-                actionContainer.innerHTML = `<span class="text-accentBlue italic text-[11px]">Processing Approval & Ledger Split...</span>`;
+            if (!preserveScroll) {
+                container.scrollTop = container.scrollHeight;
             }
-
-            try {
-                const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
-                const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-                const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
-
-                const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
-                    p_message_id: String(messageId),
-                    p_vendor_id: currentUser.id,
-                    p_reviewer_id: reviewerId,
-                    p_commission_amount: Number(commissionAmount),
-                    p_platform_fee: 10.00,
-                    p_link: reviewLink,
-                    p_type: 'REVIEW_COMMISSION'
-                });
-
-                if (rpcError) throw rpcError;
-
-                if (data && data.success === false) {
-                    throw new Error(data.error || 'Unknown database error');
-                }
-
-                const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-
-                await _supabase.from('messages').update({ 
-                    status_badge: 'APPROVED', 
-                    status: 'APPROVED',
-                    feedback_id: generatedFeedbackId 
-                }).eq('id', messageId);
-
-                updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
-                showToast("Review approved successfully! Commission split generated.");
-                await loadVendorCommissions();
-                await loadVendorThreads(true);
-            } catch (err) {
-                console.error("Approval failed:", err);
-                
-                try {
-                    const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-                    await _supabase.from('messages').update({ 
-                        status_badge: 'APPROVED', 
-                        status: 'APPROVED',
-                        feedback_id: fallbackFeedbackId 
-                    }).eq('id', messageId);
-                    
-                    updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
-                    showToast("Review approved (Direct update mode).");
-                    await loadVendorCommissions();
-                    await loadVendorThreads(true);
-                } catch (fallbackErr) {
-                    alert("Error approving review: " + err.message);
-                    await loadVendorThreads(true);
-                }
-            }
-        }
-
-        async function handleInlineDeny(messageId) {
-            const denialReason = prompt("Please enter a reason for denying this review submission:", "Order mismatch or unreadable link.");
-            if (!denialReason) return;
-
-            const actionContainer = document.getElementById(`actions-${messageId}`);
-            if (actionContainer) {
-                actionContainer.innerHTML = `<span class="text-rose-400 italic text-[11px]">Processing Denial...</span>`;
-            }
-
-            try {
-                const updatePayload = { 
-                    status_badge: 'DENIED',
-                    status: 'DENIED',
-                    denial_reason: denialReason 
-                };
-
-                await _supabase.from('messages').update(updatePayload).eq('id', messageId);
-
-                updateMessageCardStateLocally(messageId, 'DENIED');
-                showToast("Review submission denied. Buyer notified.");
-                await loadVendorThreads(true);
-            } catch (err) {
-                console.error("Denial failed:", err);
-                alert("Error denying review: " + err.message);
-                await loadVendorThreads(true);
-            }
-        }
-
-        function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
-            const card = document.querySelector(`[data-message-id="${messageId}"]`);
-            if (!card) return;
-            
-            const badge = card.querySelector('.status-badge-label');
-            if (badge) {
-                badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
-                badge.innerText = newStatus;
-            }
-
-            if (feedbackId) {
-                const idEl = card.querySelector('.feedback-id-display');
-                if (idEl) {
-                    idEl.innerText = `ID: ${feedbackId}`;
-                }
-            }
-            
-            const actionArea = card.querySelector('.inline-action-area');
-            if (actionArea) {
-                actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
-            }
-        }
-
-        function showToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'bg-cardBg border-l-4 border-accentBlue text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
-            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
         }
 
         function handleChatFileSelect(event) {
@@ -1235,59 +1064,113 @@
             const text = input.value.trim();
             if ((!text && !chatAttachedFile) || !activeThreadId) return;
 
-            let fileDataUrl = null;
-            let fileName = null;
-
+            let fileBase64 = null;
             if (chatAttachedFile) {
-                fileName = chatAttachedFile.name;
-                if (chatAttachedFile.type.startsWith('image/')) {
-                    fileDataUrl = await compressImageFile(chatAttachedFile, 800, 0.7);
-                } else {
-                    fileDataUrl = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => resolve(e.target.result);
-                        reader.readAsDataURL(chatAttachedFile);
-                    });
-                }
+                fileBase64 = await compressImageFile(chatAttachedFile, 800, 0.7);
             }
 
             try {
-                let payload = {
+                const { error } = await _supabase.from('messages').insert([{
                     sender_id: currentUser.id,
                     receiver_id: activeThreadId,
-                    vendor_id: currentUser.id,
-                    text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-                    type: 'vendor_reply'
-                };
+                    buyer_id: activeThreadId,
+                    text: text,
+                    proof_base64: fileBase64,
+                    status_badge: 'AWAITING_ATTENTION'
+                }]);
 
-                if (fileDataUrl) {
-                    payload.file_url = fileDataUrl;
-                    payload.file_name = fileName;
-                }
-
-                let { error } = await _supabase
-                    .from('messages')
-                    .insert([payload]);
-
-                if (error) {
-                    delete payload.text;
-                    payload.message = text || (fileName ? `[Attachment: ${fileName}]` : '');
-                    if (fileDataUrl) {
-                        payload.attachment_url = fileDataUrl;
-                        payload.attachment_name = fileName;
-                    }
-                    await _supabase.from('messages').insert([payload]);
-                }
+                if (error) throw error;
 
                 input.value = '';
                 clearChatAttachment();
-                await loadVendorThreads(true);
+                await loadVendorThreads();
             } catch (err) {
                 alert('Error sending message: ' + err.message);
             }
         }
 
-        window.addEventListener('DOMContentLoaded', initVendorWorkspace);
+        async function handleInlineApprove(messageId, reviewerId, commissionAmount, submissionCycle) {
+            const actionContainer = document.getElementById(`actions-${messageId}`);
+            if (actionContainer) {
+                actionContainer.innerHTML = `<span class="text-blue-400 italic text-[11px]">Processing Approval & Ledger Split...</span>`;
+            }
+
+            try {
+                const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
+                const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
+                const reviewLink = msg ? (msg.amazon_review_url || msg.link || 'N/A') : 'N/A';
+
+                const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
+                    p_message_id: String(messageId),
+                    p_vendor_id: currentUser.id,
+                    p_reviewer_id: reviewerId,
+                    p_commission_amount: Number(commissionAmount),
+                    p_platform_fee: 10.00,
+                    p_link: reviewLink,
+                    p_type: 'REVIEW_COMMISSION'
+                });
+
+                if (rpcError) throw rpcError;
+                if (data && data.success === false) {
+                    throw new Error(data.error || 'Unknown database error');
+                }
+
+                // Issue 1 & 2 & 3 Fix: Update message status to 'APPROVED' with correct check constraint and submission_cycle in WHERE clause
+                let updateQuery = _supabase.from('messages').update({ status_badge: 'APPROVED' }).eq('id', messageId);
+                if (submissionCycle) {
+                    updateQuery = updateQuery.eq('submission_cycle', submissionCycle);
+                }
+                const { error: updateError } = await updateQuery;
+                if (updateError) throw updateError;
+
+                await loadVendorThreads();
+                await loadVendorCommissions();
+                alert('Review approved successfully and commission split recorded!');
+            } catch (err) {
+                alert('Approval error: ' + err.message);
+                if (actionContainer) {
+                    actionContainer.innerHTML = `<span class="text-rose-400 text-[11px]">Approval failed. Try again.</span>`;
+                }
+            }
+        }
+
+        async function handleInlineDeny(messageId, reviewerId, submissionCycle) {
+            const actionContainer = document.getElementById(`actions-${messageId}`);
+            if (actionContainer) {
+                actionContainer.innerHTML = `<span class="text-rose-400 italic text-[11px]">Processing Denial...</span>`;
+            }
+
+            try {
+                // Issue 1 & 2 & 3 Fix: Update message status to 'DENIED' adhering to check constraint ('AWAITING_ATTENTION', 'APPROVED', 'DENIED', 'PAID') and including submission_cycle in WHERE clause
+                let updateQuery = _supabase.from('messages').update({ status_badge: 'DENIED' }).eq('id', messageId);
+                if (submissionCycle) {
+                    updateQuery = updateQuery.eq('submission_cycle', submissionCycle);
+                }
+                const { error } = await updateQuery;
+                if (error) throw error;
+
+                await loadVendorThreads();
+                alert('Review submission denied.');
+            } catch (err) {
+                alert('Denial error: ' + err.message);
+                if (actionContainer) {
+                    actionContainer.innerHTML = `<span class="text-rose-400 text-[11px]">Action failed. Try again.</span>`;
+                }
+            }
+        }
+
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        function copyReferralLink() {
+            const input = document.getElementById('refLinkInput');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            alert('Referral link copied to clipboard!');
+        }
     </script>
 </body>
 </html>
