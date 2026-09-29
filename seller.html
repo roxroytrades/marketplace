@@ -148,7 +148,7 @@
                 <div class="flex items-center space-x-3 w-full sm:w-auto">
                     <div class="relative w-full sm:w-72">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                        <input type="text" id="sellerCommSearch" oninput="renderSellerCommissions()" placeholder="Search feedback ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+                        <input type="text" id="sellerCommSearch" oninput="renderSellerCommissions()" placeholder="Search Reference ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
                     </div>
                 </div>
                 <div id="sellerToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
@@ -160,7 +160,7 @@
             <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
                     <span class="col-span-1"><input type="checkbox" id="selectAllSellerComms" onclick="toggleSelectAllSeller(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"></span>
-                    <span class="col-span-3">Feedback / Ref ID</span>
+                    <span class="col-span-3">Reference ID</span>
                     <span class="col-span-3">Recipient Role & Target</span>
                     <span class="col-span-2">Amount</span>
                     <span class="col-span-3 text-right">Status & Action</span>
@@ -666,7 +666,7 @@
 
             const filtered = vendorCommissions.filter(c => {
                 const statusField = c.status_tag || c.status || 'UNREQUESTED_BALANCE';
-                const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) || (c.id || '').toLowerCase().includes(search);
+                const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) || (c.recipient_email || '').toLowerCase().includes(search);
                 
                 let matchesTab = false;
                 if (activeSubTab === 'incoming') matchesTab = statusField === 'REQUESTED_BY_RECIPIENT';
@@ -735,7 +735,7 @@
                             <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
                         </div>
                         <div class="col-span-3 space-y-0.5">
-                            <span class="font-bold text-white">${c.feedback_id ? 'FB ID: ' + c.feedback_id : 'Ref ID: ' + String(c.id).substring(0,8)}</span>
+                            <span class="font-bold text-white">Ref ID: ${String(c.id).substring(0,8)}</span>
                             <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
                         </div>
                         <div class="col-span-3 space-y-0.5">
@@ -944,7 +944,7 @@
                         file_url: s.image || s.image_url || (s.content && s.content.startsWith('data:image/') ? s.content : null),
                         file_name: s.product_name || 'Review Screenshot',
                         created_at: s.created_at,
-                        feedback_id: s.feedback_id || s.id,
+                        feedback_id: s.id,
                         status_badge: s.status_badge || s.status || 'AWAITING_ATTENTION',
                         amazon_review_url: s.amazon_review_url || s.link || '#',
                         commission_amount: s.commission_amount || 5.00
@@ -956,8 +956,8 @@
                         message_text: `Feedback Moderation Link: ${f.link || ''}`,
                         file_url: f.image || f.image_url || (f.link && f.link.match(/\.(jpeg|jpg|png|gif)$/i) ? f.link : null),
                         created_at: f.created_at,
-                        feedback_id: f.feedback_id || f.id,
-                        status_badge: f.status_badge || f.status || 'AWAITING_ATTENTION',
+                        feedback_id: f.id,
+                        status_badge: s.status_badge || f.status || 'AWAITING_ATTENTION',
                         amazon_review_url: f.link || '#',
                         commission_amount: f.commission_amount || 5.00
                     }))
@@ -1048,11 +1048,11 @@
                 const fileUrl = m._normalizedImage || m.file_url || m.attachment_url;
                 const fileName = m.file_name || m.attachment_name || 'Attached File';
 
-                const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback' || m.feedback_id;
+                const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
                 const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
                 const showAsReviewCard = isExplicitReviewType || hasValidProof;
 
-                const feedbackId = m.feedback_id || m.id;
+                const feedbackId = m.id;
                 const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
                 const commissionAmount = m.commission_amount || 5.00;
 
@@ -1065,7 +1065,7 @@
                         <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
                             <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
                                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
-                                <span class="text-[10px] text-slate-400 font-mono">ID: ${feedbackId.substring ? feedbackId.substring(0,8) : feedbackId}</span>
+                                <span class="text-[10px] text-slate-400 font-mono">ID: ${String(feedbackId).substring(0,8)}</span>
                             </div>
                             <div>
                                 <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 underline hover:text-blue-300 truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
@@ -1135,7 +1135,6 @@
                 const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
                 const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
 
-                // EXPLICIT CONSOLE LOGS ADDED HERE
                 console.log("👉 BEFORE Supabase RPC call (approve_review_and_split):", {
                     messageId,
                     vendorId: currentUser.id,
