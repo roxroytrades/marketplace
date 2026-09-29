@@ -968,7 +968,7 @@
             document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden');
 
             const formattedText = `[Review URL Submitted]: ${url}`;
-            await sendChatMessage(formattedText, null);
+            await sendChatMessage(formattedText, null, url);
         }
 
         async function loadMessagingThreads(isPolling = false) {
@@ -1072,6 +1072,7 @@
                             <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
                                 ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20">` : ''}
                                 <p>${m.text}</p>
+                                ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white truncate"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
                             </div>
                             <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                         </div>
@@ -1111,10 +1112,10 @@
             const imageUrlToSend = attachedImageBase64;
             clearChatThumbnail();
 
-            await sendChatMessage(text || 'Attached Screenshot Proof', imageUrlToSend);
+            await sendChatMessage(text || 'Attached Screenshot Proof', imageUrlToSend, null);
         }
 
-        async function sendChatMessage(text, imageUrl) {
+        async function sendChatMessage(text, imageUrl, reviewUrl) {
             try {
                 const payload = {
                     sender_id: currentUser.id,
@@ -1124,6 +1125,9 @@
                 };
                 if (imageUrl) {
                     payload.image_url = imageUrl;
+                }
+                if (reviewUrl) {
+                    payload.review_url = reviewUrl;
                 }
 
                 const { error } = await _supabase
