@@ -1019,7 +1019,7 @@
                 const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
                 const showAsReviewCard = isExplicitReviewType || hasValidProof;
 
-                const feedbackId = m.id;
+                const feedbackId = m.feedback_id || 'Pending Approval';
                 const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
                 const commissionAmount = m.commission_amount || 5.00;
 
@@ -1032,7 +1032,7 @@
                         <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
                             <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
                                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
-                                <span class="text-[10px] text-slate-400 font-mono">ID: ${String(feedbackId).substring(0,8)}</span>
+                                <span class="text-[10px] text-slate-400 font-mono feedback-id-display">ID: ${feedbackId}</span>
                             </div>
                             <div>
                                 <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 underline hover:text-blue-300 truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
@@ -1057,7 +1057,7 @@
                                         </button>
                                     </div>
                                 ` : `
-                                    <div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong></div>
+                                    <div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong>${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
                                 `}
                             </div>
                         </div>
@@ -1118,10 +1118,17 @@
                     throw new Error(data.error || 'Unknown database error');
                 }
 
-                // Update messages table status badge
-                await _supabase.from('messages').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
+                // Generate or retrieve the unique feedback_id upon successful approval
+                const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-                updateMessageCardStateLocally(messageId, 'APPROVED');
+                // Update messages table status badge and insert generated feedback_id
+                await _supabase.from('messages').update({ 
+                    status_badge: 'APPROVED', 
+                    status: 'APPROVED',
+                    feedback_id: generatedFeedbackId 
+                }).eq('id', messageId);
+
+                updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
                 showToast("Review approved successfully! Commission split generated.");
                 await loadVendorCommissions();
                 await loadVendorThreads(true);
@@ -1129,9 +1136,14 @@
                 console.error("Approval failed:", err);
                 
                 try {
-                    await _supabase.from('messages').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
+                    const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+                    await _supabase.from('messages').update({ 
+                        status_badge: 'APPROVED', 
+                        status: 'APPROVED',
+                        feedback_id: fallbackFeedbackId 
+                    }).eq('id', messageId);
                     
-                    updateMessageCardStateLocally(messageId, 'APPROVED');
+                    updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
                     showToast("Review approved (Direct update mode).");
                     await loadVendorCommissions();
                     await loadVendorThreads(true);
@@ -1170,7 +1182,7 @@
             }
         }
 
-        function updateMessageCardStateLocally(messageId, newStatus) {
+        function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
             const card = document.querySelector(`[data-message-id="${messageId}"]`);
             if (!card) return;
             
@@ -1179,10 +1191,17 @@
                 badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
                 badge.innerText = newStatus;
             }
+
+            if (feedbackId) {
+                const idEl = card.querySelector('.feedback-id-display');
+                if (idEl) {
+                    idEl.innerText = `ID: ${feedbackId}`;
+                }
+            }
             
             const actionArea = card.querySelector('.inline-action-area');
             if (actionArea) {
-                actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong></div>`;
+                actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
             }
         }
 
