@@ -910,7 +910,7 @@
             document.getElementById('inspectReceiptModal').classList.remove('hidden');
         }
 
-        // ================= MESSAGING HUB & MULTI-TABLE REVIEW STREAM =================
+        // ================= MESSAGING HUB & REVIEW STREAM =================
         async function loadVendorThreads(isPolling = false) {
             try {
                 const { data: msgData } = await _supabase
@@ -919,18 +919,6 @@
                     .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
                     .order('created_at', { ascending: false });
 
-                let subData = [];
-                try {
-                    const { data: sData } = await _supabase.from('submissions').select('*').order('created_at', { ascending: false });
-                    subData = sData || [];
-                } catch (e) {}
-
-                let fbData = [];
-                try {
-                    const { data: fData } = await _supabase.from('feedback_moderation').select('*').order('created_at', { ascending: false });
-                    fbData = fData || [];
-                } catch (e) {}
-
                 let commData = [];
                 try {
                     const { data: cData } = await _supabase.from('commissions').select('*').eq('vendor_id', currentUser.id);
@@ -938,30 +926,7 @@
                 } catch (e) {}
 
                 const allItems = [
-                    ...(msgData || []),
-                    ...(subData || []).map(s => ({
-                        id: s.id,
-                        sender_id: s.reviewer || s.user_id || 'Shopper',
-                        receiver_id: currentUser.id,
-                        message_text: s.content || s.product_name ? `Review Submission [${s.product_name || 'Product'}]: ${s.content || ''}` : 'Review Submission Proof',
-                        file_url: s.image || s.image_url || (s.content && s.content.startsWith('data:image/') ? s.content : null),
-                        file_name: s.product_name || 'Review Screenshot',
-                        created_at: s.created_at,
-                        status_badge: s.status_badge || s.status || 'AWAITING_ATTENTION',
-                        amazon_review_url: s.amazon_review_url || s.link || '#',
-                        commission_amount: s.commission_amount || 5.00
-                    })),
-                    ...(fbData || []).map(f => ({
-                        id: f.id,
-                        sender_id: f.reviewer || f.user_id || 'Shopper',
-                        receiver_id: currentUser.id,
-                        message_text: `Feedback Moderation Link: ${f.link || ''}`,
-                        file_url: f.image || f.image_url || (f.link && f.link.match(/\.(jpeg|jpg|png|gif)$/i) ? f.link : null),
-                        created_at: f.created_at,
-                        status_badge: f.status_badge || f.status || 'AWAITING_ATTENTION',
-                        amazon_review_url: f.link || '#',
-                        commission_amount: f.commission_amount || 5.00
-                    }))
+                    ...(msgData || [])
                 ];
 
                 const threadMap = {};
@@ -1153,6 +1118,9 @@
                     throw new Error(data.error || 'Unknown database error');
                 }
 
+                // Update messages table status
+                await _supabase.from('messages').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
+
                 updateMessageCardStateLocally(messageId, 'APPROVED');
                 showToast("Review approved successfully! Commission split generated.");
                 await loadVendorCommissions();
@@ -1160,11 +1128,8 @@
             } catch (err) {
                 console.error("Approval failed:", err);
                 
-                // Fallback direct update if RPC is missing in DB schema
                 try {
                     await _supabase.from('messages').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
-                    await _supabase.from('submissions').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
-                    await _supabase.from('feedback_moderation').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
                     
                     updateMessageCardStateLocally(messageId, 'APPROVED');
                     showToast("Review approved (Direct update mode).");
@@ -1194,8 +1159,6 @@
                 };
 
                 await _supabase.from('messages').update(updatePayload).eq('id', messageId);
-                await _supabase.from('submissions').update(updatePayload).eq('id', messageId);
-                await _supabase.from('feedback_moderation').update(updatePayload).eq('id', messageId);
 
                 updateMessageCardStateLocally(messageId, 'DENIED');
                 showToast("Review submission denied. Buyer notified.");
