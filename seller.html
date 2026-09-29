@@ -1118,10 +1118,8 @@
                     throw new Error(data.error || 'Unknown database error');
                 }
 
-                // Generate or retrieve the unique feedback_id upon successful approval
                 const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-                // Update messages table status badge and insert generated feedback_id
                 await _supabase.from('messages').update({ 
                     status_badge: 'APPROVED', 
                     status: 'APPROVED',
