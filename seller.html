@@ -719,7 +719,7 @@
                     `;
                 } else if (activeSubTab === 'history') {
                     actionHtml = `
-                        <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}', '${c.amount || 0}', '${c.receipt_url || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
+                        <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}', '${c.amount || 0}', '${c.receipt_url || c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
                             <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
                         </button>
                     `;
@@ -880,14 +880,17 @@
             }
 
             try {
+                const updateData = {
+                    status_tag: 'COMPLETED_PAID',
+                    status: 'COMPLETED_PAID',
+                    paypal_tx_id: txId,
+                    receipt_base64: receiptBase64,
+                    receipt_url: receiptBase64
+                };
+
                 const { error } = await _supabase
                     .from('commissions')
-                    .update({
-                        status_tag: 'COMPLETED_PAID',
-                        status: 'COMPLETED_PAID',
-                        paypal_tx_id: txId,
-                        receipt_url: receiptBase64
-                    })
+                    .update(updateData)
                     .eq('id', commId);
 
                 if (error) throw error;
@@ -976,7 +979,7 @@
                     }
                     
                     m._normalizedText = text;
-                    m._normalizedImage = m.file_url || m.attachment_url || m.image || m.image_url || 
+                    m._normalizedImage = m.file_url || m.attachment_url || m.image || m.image_url || m.proof_base64 ||
                         (m.link && (m.link.match(/\.(jpeg|jpg|png|gif)$/i) || m.link.startsWith('data:image/')) ? m.link : null) || 
                         (m.content && m.content.startsWith('data:image/') ? m.content : null);
 
@@ -1027,6 +1030,7 @@
         function hasImageAttachment(msg) {
             return (msg._normalizedImage && msg._normalizedImage.trim() !== '') || 
                    (msg.file_url && msg.file_url.trim() !== '') ||
+                   (msg.proof_base64 && msg.proof_base64.trim() !== '') ||
                    (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.includes('imgur') || msg._normalizedText.includes('supabase'))));
         }
 
@@ -1043,7 +1047,7 @@
                 const isMe = m.sender_id === currentUser.id;
                 const text = m._normalizedText || m.message_text || m.message || m.content || m.body || m.text || '';
                 const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-                const fileUrl = m._normalizedImage || m.file_url || m.attachment_url;
+                const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
                 const fileName = m.file_name || m.attachment_name || 'Attached File';
 
                 const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
@@ -1155,8 +1159,21 @@
                 await loadVendorThreads(true);
             } catch (err) {
                 console.error("Approval failed:", err);
-                alert("Error approving review: " + err.message);
-                await loadVendorThreads(true);
+                
+                // Fallback direct update if RPC is missing in DB schema
+                try {
+                    await _supabase.from('messages').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
+                    await _supabase.from('submissions').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
+                    await _supabase.from('feedback_moderation').update({ status_badge: 'APPROVED', status: 'APPROVED' }).eq('id', messageId);
+                    
+                    updateMessageCardStateLocally(messageId, 'APPROVED');
+                    showToast("Review approved (Direct update mode).");
+                    await loadVendorCommissions();
+                    await loadVendorThreads(true);
+                } catch (fallbackErr) {
+                    alert("Error approving review: " + err.message);
+                    await loadVendorThreads(true);
+                }
             }
         }
 
