@@ -692,6 +692,7 @@
                         .insert([{
                             sender_id: currentUser.id,
                             receiver_id: vendorId,
+                            vendor_id: vendorId,
                             product_id: productId,
                             text: 'Hello, I would like to inquire about reviewing this product.'
                         }])
@@ -1120,6 +1121,7 @@
                 const payload = {
                     sender_id: currentUser.id,
                     receiver_id: activeRecipientId,
+                    vendor_id: activeRecipientId, // 👈 Included vendor_id fix
                     product_id: activeProductId !== 'null' ? activeProductId : null,
                     text: text
                 };
