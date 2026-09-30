@@ -1227,18 +1227,17 @@
 </script>
 
 <script>
-    async function handleShopperSubmission(event) {
+   async function handleShopperSubmission(event) {
   event.preventDefault();
 
   const productId = document.getElementById('modal-product-id').value;
   const sellerId = document.getElementById('modal-seller-id').value;
   const buyerId = window.currentUser?.id;
   
-  // Get the review URL from the input (if your form has one)
   const reviewUrlInput = document.getElementById('review-url-input');
   const reviewUrl = reviewUrlInput ? reviewUrlInput.value.trim() : '';
 
-  // Base payload for standard inquiries/messages
+  // Base payload for standard inquiries (both review_url and feedback_id omitted)
   const payload = {
     sender_id: buyerId,
     buyer_id: buyerId,
@@ -1247,7 +1246,7 @@
     status_badge: 'AWAITING_ATTENTION'
   };
 
-  // If a valid Amazon review URL is provided, attach it and generate the feedback_id
+  // If a valid Amazon review URL is provided, attach review_url and generate feedback_id
   if (reviewUrl && reviewUrl.includes('amazon.com')) {
     payload.review_url = reviewUrl;
     payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -1264,7 +1263,6 @@
     console.log('Successfully saved to messages table:', data);
     alert('Submitted successfully!');
     
-    // Close modal or reset form
     document.getElementById('inquiry-modal').style.display = 'none';
   } catch (err) {
     console.error('Error opening inquiry thread:', err.message);
