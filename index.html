@@ -483,7 +483,7 @@
             try {
                 const { data: profile, error } = await _supabase
                     .from('profiles')
-                    .select('role, verification_status, referral_code, full_name')
+                    .select('role, verification_status, full_name')
                     .eq('id', currentUser.id)
                     .maybeSingle();
 
@@ -589,7 +589,7 @@
                     .from('commissions')
                     .select('*')
                     .eq('recipient_id', currentUser.id)
-                    .in('recipient_role', ['BUYER_INVITER', 'SELLER_INVITER']);
+                    .in('role_type', ['BUYER_INVITER', 'SELLER_INVITER']);
 
                 if (error) throw error;
                 const refs = data || [];
@@ -614,7 +614,7 @@
                 tableBody.innerHTML = refs.map(r => `
                     <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
                         <div class="col-span-4 font-mono text-slate-400 truncate">${r.feedback_id || 'Ref User'}</div>
-                        <div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.recipient_role}</span></div>
+                        <div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.role_type}</span></div>
                         <div class="col-span-2 font-bold text-emerald-400">$${Number(r.amount || 0).toFixed(2)}</div>
                         <div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.status_tag || 'ACTIVE'}</span></div>
                     </div>
@@ -797,7 +797,7 @@
                 const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) || 
                                       (c.vendor_id || '').toLowerCase().includes(search) || 
                                       (c.id || '').toLowerCase().includes(search);
-                const matchesType = typeFilter === 'ALL' || c.recipient_role === typeFilter;
+                const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter;
 
                 let matchesTab = false;
                 if (activeCommTab === 'incoming') matchesTab = c.status_tag === 'OFFERED_BY_VENDOR';
@@ -849,7 +849,7 @@
                         <p class="text-[10px] text-slate-400 font-mono truncate">${c.vendor_id}</p>
                     </div>
                     <div class="col-span-2 space-y-0.5">
-                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role}</span>
+                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type}</span>
                         <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
                     </div>
                     <div class="col-span-3 flex items-center justify-end space-x-2">
@@ -1299,6 +1299,49 @@ async function handleChatMessage(text, imageUrl, reviewUrl) {
   }
 }
 </script>
+<script>
+    // Make sure it is attached to window so inline onclick="submitReviewUrlMessage(...)" finds it
+window.submitReviewUrlMessage = async function(productId, receiverId) {
+  const buyerId = window.currentUser?.id;
+  
+  // Prompt or grab the review URL input from your modal/chat input
+  const reviewUrlInput = document.getElementById('review-url-input') || document.getElementById('chat-input');
+  const reviewUrl = reviewUrlInput ? reviewUrlInput.value.trim() : '';
 
+  if (!reviewUrl || !reviewUrl.includes('amazon.com')) {
+    alert('Please enter a valid Amazon review URL containing amazon.com');
+    return;
+  }
+
+  const payload = {
+    sender_id: buyerId,
+    buyer_id: buyerId,
+    receiver_id: receiverId,
+    product_id: productId,
+    status_badge: 'AWAITING_ATTENTION',
+    review_url: reviewUrl,
+    feedback_id: 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([payload])
+      .select();
+
+    if (error) throw error;
+
+    console.log('Review URL message sent successfully:', data);
+    alert('Review link submitted successfully!');
+    
+    // Clear input or close modal
+    if (reviewUrlInput) reviewUrlInput.value = '';
+  } catch (err) {
+    console.error('Error sending review message:', err.message);
+    alert('Failed to send: ' + err.message);
+  }
+};
+</script>
+  document.getElementById('shopper-submission-form').addEventListener('submit', handleShopperSubmission);
 </body>
 </html>
