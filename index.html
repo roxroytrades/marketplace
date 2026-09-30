@@ -486,6 +486,9 @@ async function pollShopperData() {
   await loadCommissionsData(true);
   await loadShopperReferralData(true);
   await loadMessagingThreads(true);
+  if (activeRecipientId) {
+    await loadMessageStream(activeRecipientId, activeProductId);
+  }
 }
 
 function applyBuyerVerificationLock(profile) {
@@ -945,6 +948,15 @@ function renderThreadsList() {
     const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
     const isSelected = activeThreadId === t.id;
     const profile = profilesCache[counterpartId] || { full_name: `User #${counterpartId.substring(0, 6)}`, role: 'user' };
+    const statusVal = (t.status_badge || t.status || '').toUpperCase();
+    let threadBadge = '';
+    if (statusVal.includes('APPROV') || statusVal.includes('VERIFIED') || statusVal.includes('COMPLETE')) {
+      threadBadge = `<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Approved</span>`;
+    } else if (statusVal.includes('REJECT')) {
+      threadBadge = `<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">Rejected</span>`;
+    } else if (statusVal) {
+      threadBadge = `<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Pending</span>`;
+    }
     return `
       <div onclick="openThread('${t.id}','${counterpartId}', '${t.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
         <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -952,7 +964,7 @@ function renderThreadsList() {
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex justify-between items-center mb-0.5">
-            <h4 class="font-bold text-white text-xs truncate">${profile.full_name}</h4>
+            <h4 class="font-bold text-white text-xs truncate flex items-center">${profile.full_name}${threadBadge}</h4>
             <span class="text-[9px] text-slate-500">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
           </div>
           <p class="text-[11px] text-slate-400 truncate">${t.text || 'Attachment'}</p>
@@ -980,13 +992,55 @@ async function openThread(threadId, recipientId, productId) {
   setupRealtimeMessageSubscription(recipientId, productId);
 }
 
+function renderMessageStatusBadge(m) {
+  const badgeVal = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase();
+  if (!badgeVal) return '';
+
+  let badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+  let iconClass = 'fa-solid fa-clock text-amber-400';
+  let label = 'Awaiting Approval';
+
+  if (badgeVal.includes('APPROV') || badgeVal.includes('VERIFIED') || badgeVal.includes('COMPLETE') || badgeVal.includes('PAID')) {
+    badgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+    iconClass = 'fa-solid fa-circle-check text-emerald-400';
+    label = 'Approved by Seller';
+  } else if (badgeVal.includes('REJECT') || badgeVal.includes('DECLIN')) {
+    badgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+    iconClass = 'fa-solid fa-circle-xmark text-rose-400';
+    label = 'Rejected';
+  } else if (badgeVal.includes('AWAIT') || badgeVal.includes('PEND')) {
+    badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+    iconClass = 'fa-solid fa-hourglass-half text-amber-400';
+    label = 'Awaiting Seller Approval';
+  } else {
+    badgeColor = 'bg-blue-500/20 text-blue-300 border-blue-500/40';
+    iconClass = 'fa-solid fa-tag text-blue-400';
+    label = m.status_badge || m.status;
+  }
+
+  const feedbackBadge = m.feedback_id ? `
+    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-slate-800/80 text-blue-300 border border-blue-500/30">
+      <i class="fa-solid fa-hashtag mr-1 text-blue-400 text-[9px]"></i>${m.feedback_id}
+    </span>
+  ` : '';
+
+  return `
+    <div class="flex flex-wrap items-center gap-1.5 pt-1.5 mt-1 border-t border-white/10">
+      ${feedbackBadge}
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}">
+        <i class="${iconClass} mr-1 text-[10px]"></i>${label}
+      </span>
+    </div>
+  `;
+}
+
 async function loadMessageStream(recipientId, productId) {
   const container = document.getElementById('messageStreamContainer');
   try {
     const { data, error } = await _supabase
       .from('messages')
       .select('*')
-      .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${currentUser.id})`)
+      .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${currentUser.id}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${recipientId}),and(vendor_id.eq.${recipientId},buyer_id.eq.${currentUser.id})`)
       .order('created_at', { ascending: true });
     if (error) throw error;
     const messages = data || [];
@@ -998,10 +1052,11 @@ async function loadMessageStream(recipientId, productId) {
       const isMe = m.sender_id === currentUser.id;
       return `
         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-          <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-            ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20">` : ''}
-            <p>${m.text}</p>
+          <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+            ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">` : ''}
+            ${m.text ? `<p class="leading-relaxed">${m.text}</p>` : ''}
             ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
+            ${renderMessageStatusBadge(m)}
           </div>
           <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
         </div>
@@ -1019,10 +1074,12 @@ async function setupRealtimeMessageSubscription(recipientId, productId) {
   }
   messageSubscription = _supabase
     .channel('public:messages')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
       const newMsg = payload.new;
-      if ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === recipientId) ||
-          (newMsg.sender_id === recipientId && newMsg.receiver_id === currentUser.id)) {
+      if (newMsg && ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === recipientId) ||
+                     (newMsg.sender_id === recipientId && newMsg.receiver_id === currentUser.id) ||
+                     (newMsg.buyer_id === currentUser.id && newMsg.vendor_id === recipientId) ||
+                     (newMsg.vendor_id === currentUser.id && newMsg.buyer_id === recipientId))) {
         loadMessageStream(recipientId, productId);
       }
       loadMessagingThreads(true);
