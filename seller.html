@@ -416,6 +416,14 @@
         let pollingInterval = null;
         let chatAttachedFile = null;
 
+        // ================= STATUS BADGE SANITIZER HELPER =================
+        const sanitizeStatusBadge = (payload) => {
+            if (payload.status_badge) {
+                payload.status_badge = payload.status_badge.trim().toUpperCase();
+            }
+            return payload;
+        };
+
         async function initVendorWorkspace() {
             const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
 
@@ -777,9 +785,12 @@
             }
             try {
                 for (const id of selectedSellerCommIds) {
-                    const updatePayload = {};
-                    updatePayload.status_tag = 'APPROVED_IN_WORKING';
-                    updatePayload.status = 'APPROVED_IN_WORKING';
+                    let updatePayload = {
+                        status_tag: 'APPROVED_IN_WORKING',
+                        status: 'APPROVED_IN_WORKING'
+                    };
+                    sanitizeStatusBadge(updatePayload);
+
                     const { error } = await _supabase
                         .from('commissions')
                         .update(updatePayload)
@@ -796,7 +807,9 @@
 
         async function approveSingleComm(id) {
             try {
-                const updatePayload = { status_tag: 'APPROVED_IN_WORKING', status: 'APPROVED_IN_WORKING' };
+                let updatePayload = { status_tag: 'APPROVED_IN_WORKING', status: 'APPROVED_IN_WORKING' };
+                sanitizeStatusBadge(updatePayload);
+
                 const { error } = await _supabase
                     .from('commissions')
                     .update(updatePayload)
@@ -811,7 +824,9 @@
         async function denySingleComm(id) {
             if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
             try {
-                const updatePayload = { status_tag: 'UNREQUESTED_BALANCE', status: 'UNREQUESTED_BALANCE' };
+                let updatePayload = { status_tag: 'UNREQUESTED_BALANCE', status: 'UNREQUESTED_BALANCE' };
+                sanitizeStatusBadge(updatePayload);
+
                 const { error } = await _supabase
                     .from('commissions')
                     .update(updatePayload)
@@ -830,19 +845,22 @@
             const recipientRole = document.getElementById('offerRecipientRole').value;
             const amount = parseFloat(document.getElementById('offerAmount').value);
 
+            let insertPayload = {
+                vendor_id: currentUser.id,
+                recipient_email: recipientEmail,
+                recipient_role: recipientRole,
+                amount: amount,
+                status_tag: 'OFFERED_AWAITING_ACCEPTANCE',
+                status: 'OFFERED_AWAITING_ACCEPTANCE',
+                link: 'N/A',
+                type: 'TOP_DOWN_OFFER'
+            };
+            sanitizeStatusBadge(insertPayload);
+
             try {
                 const { error } = await _supabase
                     .from('commissions')
-                    .insert([{
-                        vendor_id: currentUser.id,
-                        recipient_email: recipientEmail,
-                        recipient_role: recipientRole,
-                        amount: amount,
-                        status_tag: 'OFFERED_AWAITING_ACCEPTANCE',
-                        status: 'OFFERED_AWAITING_ACCEPTANCE',
-                        link: 'N/A',
-                        type: 'TOP_DOWN_OFFER'
-                    }]);
+                    .insert([insertPayload]);
 
                 if (error) throw error;
                 document.getElementById('topDownOfferModal').classList.add('hidden');
@@ -880,13 +898,14 @@
             }
 
             try {
-                const updateData = {
+                let updateData = {
                     status_tag: 'COMPLETED_PAID',
                     status: 'COMPLETED_PAID',
                     paypal_tx_id: txId,
                     receipt_base64: receiptBase64,
                     receipt_url: receiptBase64
                 };
+                sanitizeStatusBadge(updateData);
 
                 const { error } = await _supabase
                     .from('commissions')
@@ -1121,11 +1140,14 @@
 
                 const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-                let updateQuery = _supabase.from('messages').update({ 
+                let updatePayload = { 
                     status_badge: 'APPROVED', 
                     status: 'APPROVED',
                     feedback_id: generatedFeedbackId 
-                }).eq('id', messageId);
+                };
+                sanitizeStatusBadge(updatePayload);
+
+                let updateQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
 
                 if (currentCycle !== null && currentCycle !== undefined) {
                     updateQuery = updateQuery.eq('submission_cycle', currentCycle);
@@ -1147,11 +1169,14 @@
                     const currentCycle = msg ? msg.submission_cycle : null;
                     const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-                    let fallbackQuery = _supabase.from('messages').update({ 
+                    let updatePayload = { 
                         status_badge: 'APPROVED', 
                         status: 'APPROVED',
                         feedback_id: fallbackFeedbackId 
-                    }).eq('id', messageId);
+                    };
+                    sanitizeStatusBadge(updatePayload);
+
+                    let fallbackQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
 
                     if (currentCycle !== null && currentCycle !== undefined) {
                         fallbackQuery = fallbackQuery.eq('submission_cycle', currentCycle);
@@ -1190,6 +1215,7 @@
                     status: 'DENIED',
                     denial_reason: denialReason 
                 };
+                sanitizeStatusBadge(updatePayload);
 
                 let denyQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
                 if (currentCycle !== null && currentCycle !== undefined) {
