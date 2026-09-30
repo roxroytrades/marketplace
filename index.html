@@ -993,6 +993,8 @@ async function openThread(threadId, recipientId, productId) {
 }
 
 function renderMessageStatusBadge(m) {
+  // Only render status badges for feedback/review submissions
+  if (!m.review_url && !m.feedback_id) return '';
   const badgeVal = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase();
   if (!badgeVal) return '';
 
