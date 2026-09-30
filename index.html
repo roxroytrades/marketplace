@@ -405,13 +405,7 @@ let attachedImageBase64 = null;
 let profilesCache = {}; // Cache for user profiles (names & roles)
 
 // Initialize workspace & header user metadata display with robust real-time session checking
-async function initShopperWorkspace() {
-  const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
-  if (sessionError || !session) {
-    window.location.href = 'login.html';
-    return;
-  }
-  currentUser = session.user;
+async function initShopperWorkspace() { try { // 1\. Verify active Supabase auth session const { data: { session }, error: sessionError } = await \_supabase.auth.getSession(); if (sessionError || !session) { window.location.href = 'login.html'; return; } // 2\. Fetch user's assigned role from public.profiles const { data: profile, error: profileError } = await \_supabase .from('profiles') .select('role') .eq('id', session.user.id) .single(); if (profileError || !profile || !profile.role) { console.error("Failed to verify user profile/role:", profileError?.message); await \_supabase.auth.signOut(); window.location.href = 'login.html'; return; } const userRole = profile.role.toLowerCase(); // 3\. Block Sellers/Vendors from accessing the Shopper Portal if (userRole === 'seller' || userRole === 'vendor') { alert("Access Denied: Vendor accounts are not permitted in the Shopper Portal."); window.location.href = 'seller.html'; return; } // 4\. Continue loading shopper portal dashboard... console.log("Shopper workspace authorized for user:", session.user.id); // [Your existing index.html initialization calls go here] } catch (err) { console.error("Shopper workspace initialization error:", err.message); window.location.href = 'login.html'; } } // Ensure the guard runs when the DOM loads document.addEventListener('DOMContentLoaded', initShopperWorkspace);  currentUser = session.user;
   // Extract display name instantly from Auth Metadata or fallback to email handle
   const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
   const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
