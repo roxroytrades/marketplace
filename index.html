@@ -981,19 +981,46 @@
             document.getElementById('inlineChatFileInput').value = '';
         }
 
-        async function submitReviewUrlMessage() {
-            const urlField = document.getElementById('reviewUrlField');
-            const url = urlField.value.trim();
-            if (!url) {
-                alert('Please enter a valid review URL.');
-                return;
-            }
-            urlField.value = '';
-            document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden');
+        // Inside your chat message sending function:
+async function handleChatMessage(text, imageUrl, reviewUrl) {
+  const buyerId = window.currentUser?.id;
+  const sellerId = window.currentVendorId; // Or however you track the active chat partner
 
-            const formattedText = `[Review URL Submitted]: ${url}`;
-            await sendChatMessage(formattedText, null, url);
-        }
+  // 1. Base payload for standard chat messages
+  const payload = {
+    sender_id: buyerId,
+    buyer_id: buyerId,
+    receiver_id: sellerId,
+    text: text || '',
+    image_url: imageUrl || null,
+    status_badge: 'AWAITING_ATTENTION',
+    review_url: null,
+    feedback_id: null
+  };
+
+  // 2. If a review URL or text containing an Amazon link is being sent, populate both fields!
+  const targetUrl = reviewUrl || (text && text.includes('amazon.com') ? text : null);
+
+  if (targetUrl && targetUrl.includes('amazon.com')) {
+    payload.review_url = targetUrl;
+    payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+
+  // 3. Insert into Supabase
+  const { data, error } = await supabase
+    .from('messages')
+    .insert([payload])
+    .select();
+
+  if (error) {
+    console.error('Failed to send message:', error.message);
+    alert('Failed to send message: ' + error.message);
+    return;
+  }
+
+  // Refresh your chat UI window with the new message data
+  appendMessageToChatUI(data[0]);
+}
 
         async function loadMessagingThreads(isPolling = false) {
             if (!currentUser) return;
