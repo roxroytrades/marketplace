@@ -1110,6 +1110,93 @@
             container.scrollTop = container.scrollHeight;
         }
 
+        /**
+     * Approves a seller review and explicitly generates an associated commission record.
+     * @param {string|number} reviewId - The unique ID of the review being approved.
+     * @param {string|number} sellerId - The ID of the seller receiving the commission.
+     * @param {number} commissionAmount - The calculated commission value.
+     */
+    async function approveReviewAndGenerateCommission(reviewId, sellerId, commissionAmount) {
+        try {
+            // Step 1: Update the review status to 'Approved' via Supabase or API endpoint
+            let updatePayload = { 
+                status_tag: 'APPROVED_IN_WORKING', 
+                status: 'APPROVED_IN_WORKING' 
+            };
+            if (typeof sanitizeStatusBadge === 'function') {
+                sanitizeStatusBadge(updatePayload);
+            }
+
+            const { error: reviewError } = await _supabase
+                .from('commissions') // Or your reviews table depending on your architecture
+                .update(updatePayload)
+                .eq('id', reviewId);
+
+            if (reviewError) {
+                // Fallback to fetch API if table structure expects endpoint routing
+                const reviewResponse = await fetch(`/api/reviews/${reviewId}/approve`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'approved' })
+                });
+                if (!reviewResponse.ok) throw new Error('Failed to update review status.');
+            }
+
+            console.log('Review/Commission status updated successfully.');
+
+            // Step 2: Ensure the commission record is synchronized / generated
+            const { error: commissionError } = await _supabase
+                .from('commissions')
+                .upsert([{
+                    id: reviewId,
+                    vendor_id: sellerId,
+                    amount: commissionAmount,
+                    status_tag: 'APPROVED_IN_WORKING',
+                    status: 'APPROVED_IN_WORKING',
+                    created_at: new Date().toISOString()
+                }, { onConflict: 'id' }]);
+
+            if (commissionError) {
+                const commissionResponse = await fetch('/api/commissions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        review_id: reviewId,
+                        seller_id: sellerId,
+                        amount: commissionAmount,
+                        status: 'pending',
+                        created_at: new Date().toISOString()
+                    })
+                });
+                if (!commissionResponse.ok) throw new Error('Review approved, but failed to generate commission record.');
+            }
+
+            console.log('Commission record successfully synchronized.');
+
+            // Step 3: Refresh dashboard data and trigger toast notification
+            if (typeof loadVendorCommissions === 'function') {
+                await loadVendorCommissions();
+            }
+            if (typeof refreshDashboardData === 'function') {
+                refreshDashboardData();
+            }
+
+            if (typeof showToast === 'function') {
+                showToast('Review approved and commission record generated successfully!');
+            } else if (typeof showNotification === 'function') {
+                showNotification('Review approved and commission record generated successfully!', 'success');
+            }
+
+        } catch (error) {
+            console.error('Error in approval workflow:', error);
+            if (typeof showToast === 'function') {
+                showToast('Error: ' + error.message);
+            } else {
+                alert('Approval Error: ' + error.message);
+            }
+        }
+    }
+    
         async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
             const actionContainer = document.getElementById(`actions-${messageId}`);
             if (actionContainer) {
