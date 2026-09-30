@@ -1227,24 +1227,31 @@
 </script>
 
 <script>
-    // Step 2: Shopper portal submission handler for index.html
-async function handleShopperSubmission(event) {
-  event.preventDefault(); // Prevent default form reload if tied to a form submit
+    async function handleShopperSubmission(event) {
+  event.preventDefault();
 
-  // Gather form values from your index.html inputs
   const productId = document.getElementById('modal-product-id').value;
   const sellerId = document.getElementById('modal-seller-id').value;
-  const buyerId = window.currentUser?.id; // Assuming user session is stored globally
+  const buyerId = window.currentUser?.id;
+  
+  // Get the review URL from the input (if your form has one)
+  const reviewUrlInput = document.getElementById('review-url-input');
+  const reviewUrl = reviewUrlInput ? reviewUrlInput.value.trim() : '';
 
+  // Base payload for standard inquiries/messages
   const payload = {
     sender_id: buyerId,
     buyer_id: buyerId,
     receiver_id: sellerId,
     product_id: productId,
-    review_url: null,     // Explicitly set to null initially as per Step 2
-    feedback_id: null,    // Explicitly set to null initially as per Step 2
     status_badge: 'AWAITING_ATTENTION'
   };
+
+  // If a valid Amazon review URL is provided, attach it and generate the feedback_id
+  if (reviewUrl && reviewUrl.includes('amazon.com')) {
+    payload.review_url = reviewUrl;
+    payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
 
   try {
     const { data, error } = await supabase
@@ -1254,24 +1261,16 @@ async function handleShopperSubmission(event) {
 
     if (error) throw error;
 
-    console.log('Submission successfully sent with null feedback_id and review_url:', data);
-    alert('Inquiry submitted successfully!');
+    console.log('Successfully saved to messages table:', data);
+    alert('Submitted successfully!');
     
-    // Close modal or reset form here
+    // Close modal or reset form
     document.getElementById('inquiry-modal').style.display = 'none';
   } catch (err) {
-    console.error('Error submitting inquiry:', err.message);
-    alert('Failed to submit inquiry. Please try again.');
+    console.error('Error opening inquiry thread:', err.message);
+    alert('Failed to submit: ' + err.message);
   }
 }
-
-// Attach event listener to your submission form in index.html
-document.addEventListener('DOMContentLoaded', () => {
-  const submitForm = document.getElementById('shopper-submission-form');
-  if (submitForm) {
-    submitForm.addEventListener('submit', handleShopperSubmission);
-  }
-});
 </script>
 
 </body>
