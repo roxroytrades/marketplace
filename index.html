@@ -395,7 +395,7 @@ let activeCommTab = 'incoming';
 let selectedCommIds = new Set();
 let pollingInterval = null;
 
-// Messaging Hub State Variables
+/* Messaging Hub State Variables */
 let messagingThreads = [];
 let activeThreadId = null;
 let activeRecipientId = null;
@@ -404,31 +404,73 @@ let messageSubscription = null;
 let attachedImageBase64 = null;
 let profilesCache = {}; // Cache for user profiles (names & roles)
 
-// Initialize workspace & header user metadata display with robust real-time session checking
-async function initShopperWorkspace() { try { // 1\. Verify active Supabase auth session const { data: { session }, error: sessionError } = await \_supabase.auth.getSession(); if (sessionError || !session) { window.location.href = 'login.html'; return; } // 2\. Fetch user's assigned role from public.profiles const { data: profile, error: profileError } = await \_supabase .from('profiles') .select('role') .eq('id', session.user.id) .single(); if (profileError || !profile || !profile.role) { console.error("Failed to verify user profile/role:", profileError?.message); await \_supabase.auth.signOut(); window.location.href = 'login.html'; return; } const userRole = profile.role.toLowerCase(); // 3\. Block Sellers/Vendors from accessing the Shopper Portal if (userRole === 'seller' || userRole === 'vendor') { alert("Access Denied: Vendor accounts are not permitted in the Shopper Portal."); window.location.href = 'seller.html'; return; } // 4\. Continue loading shopper portal dashboard... console.log("Shopper workspace authorized for user:", session.user.id); // [Your existing index.html initialization calls go here] } catch (err) { console.error("Shopper workspace initialization error:", err.message); window.location.href = 'login.html'; } } // Ensure the guard runs when the DOM loads document.addEventListener('DOMContentLoaded', initShopperWorkspace);  currentUser = session.user;
-  // Extract display name instantly from Auth Metadata or fallback to email handle
-  const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
-  const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-  // Update Header & Welcome Banner with User's Name
-  document.getElementById('headerUserName').textContent = fullName;
-  document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
-  
-  // Setup Referral Links
-  const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-  document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${currentUser.id}`;
-  document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${currentUser.id}`;
-  
-  // Read role & verification status safely with profile fallback checks and live polling sync
-  await fetchAndUpdateProfileState();
-  await preloadProfiles();
-  await loadMarketplaceProducts();
-  await loadCommissionsData();
-  await loadShopperReferralData();
-  await loadMessagingThreads();
-  
-  // 10-second polling interval for real-time verification and data sync
-  if (pollingInterval) clearInterval(pollingInterval);
-  pollingInterval = setInterval(pollShopperData, 10000);
+/* Initialize workspace & header user metadata display with robust real-time session checking */
+async function initShopperWorkspace() {
+  try {
+    /* Step A: Check for active Supabase auth session */
+    const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+    if (sessionError || !session) {
+      window.location.href = 'login.html';
+      return;
+    }
+    currentUser = session.user;
+
+    /* Step B: Fetch profile and check account role */
+    const { data: profile, error: profileError } = await _supabase
+      .from('profiles')
+      .select('role, verification_status, full_name, referral_code')
+      .eq('id', currentUser.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.warn("Profile fetch warning during init:", profileError.message);
+    }
+
+    const userRole = profile?.role ? profile.role.toLowerCase() : 'buyer';
+
+    /* Step C: Role Isolation Guard (Block Vendors/Sellers from Shopper Portal) */
+    if (userRole === 'seller' || userRole === 'vendor') {
+      alert("Access Denied: Vendor accounts are not permitted in the Shopper Portal.");
+      window.location.href = 'seller.html';
+      return;
+    }
+
+    /* Step D: Initialize Authorized Shopper UI Header */
+    const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+    const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+    if (document.getElementById('headerUserName')) {
+      document.getElementById('headerUserName').textContent = fullName;
+    }
+    if (document.getElementById('welcomeTitle')) {
+      document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
+    }
+
+    /* Step E: Setup Referral Links */
+    const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+    const refCode = profile?.referral_code || currentUser.id;
+    if (document.getElementById('buyerRefLinkInput')) {
+      document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${refCode}`;
+    }
+    if (document.getElementById('vendorRefLinkInput')) {
+      document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${refCode}`;
+    }
+
+    /* Step F: Load Shopper Workspace Data */
+    await fetchAndUpdateProfileState();
+    await preloadProfiles();
+    await loadMarketplaceProducts();
+    await loadCommissionsData();
+    await loadShopperReferralData();
+    await loadMessagingThreads();
+
+    /* Step G: Start Live Polling Loop (10-second sync) */
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(pollShopperData, 10000);
+
+  } catch (err) {
+    console.error("Shopper workspace initialization error:", err.message);
+    window.location.href = 'login.html';
+  }
 }
 
 async function fetchAndUpdateProfileState() {
@@ -507,12 +549,12 @@ function switchShopperTab(tab) {
   const commBtn = document.getElementById('navCommissionsBtn');
   const refBtn = document.getElementById('navReferralsBtn');
   
-  // Hide all sections
+  /* Hide all sections */
   marketSec.classList.add('hidden');
   commSec.classList.add('hidden');
   refSec.classList.add('hidden');
   
-  // Reset buttons
+  /* Reset buttons */
   marketBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
   commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
   refBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
@@ -574,7 +616,7 @@ async function loadShopperReferralData(isPolling = false) {
   }
 }
 
-// ================= MARKETPLACE CATALOG & INQUIRY =================
+/* ================= MARKETPLACE CATALOG & INQUIRY ================= */
 async function loadMarketplaceProducts(isPolling = false) {
   const grid = document.getElementById('marketplaceGrid');
   try {
@@ -672,7 +714,7 @@ async function handleInquireClick(productId, vendorId) {
   }
 }
 
-// ================= COMMISSIONS DASHBOARD (SHOPPER) =================
+/* ================= COMMISSIONS DASHBOARD (SHOPPER) ================= */
 async function loadCommissionsData(isPolling = false) {
   try {
     const { data, error } = await _supabase
@@ -863,7 +905,7 @@ function viewReceipt(id) {
   document.getElementById('receiptModal').classList.remove('hidden');
 }
 
-// ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & PAPERCLIP ATTACHMENTS =================
+/* ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & PAPERCLIP ATTACHMENTS ================= */
 function toggleMessagingHub() {
   const modal = document.getElementById('messagingHubModal');
   modal.classList.toggle('hidden');
@@ -987,7 +1029,7 @@ async function openThread(threadId, recipientId, productId) {
 }
 
 function renderMessageStatusBadge(m) {
-  // Only render status badges for feedback/review submissions
+  /* Only render status badges for feedback/review submissions */
   if (!m.review_url && !m.feedback_id) return '';
   const badgeVal = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase();
   if (!badgeVal) return '';
@@ -1124,11 +1166,11 @@ async function sendChatMessage(text, imageUrl, reviewUrl) {
   }
 }
 
-// FIXED & ENHANCED REVIEW URL SUBMISSION METHOD
+/* FIXED & ENHANCED REVIEW URL SUBMISSION METHOD */
 window.submitReviewUrlMessage = async function(productId, receiverId) {
   const buyerId = currentUser?.id || window.currentUser?.id;
   
-  // Look for the review URL input in the messaging hub, modal, or chat input
+  /* Look for the review URL input in the messaging hub, modal, or chat input */
   const reviewField = document.getElementById('reviewUrlField');
   const modalInput = document.getElementById('review-url-input');
   const chatInput = document.getElementById('chat-input');
@@ -1174,16 +1216,16 @@ window.submitReviewUrlMessage = async function(productId, receiverId) {
     console.log('Review URL message sent successfully:', data);
     alert('Review link submitted successfully!');
     
-    // Clear the input fields
+    /* Clear the input fields */
     if (reviewField) reviewField.value = '';
     if (modalInput) modalInput.value = '';
     if (chatInput) chatInput.value = '';
     
-    // Hide the review input drawer if open
+    /* Hide the review input drawer if open */
     const promptContainer = document.getElementById('reviewUrlInputBoxContainer');
     if (promptContainer) promptContainer.classList.add('hidden');
     
-    // Refresh active stream and thread list
+    /* Refresh active stream and thread list */
     if (targetRecipientId) {
       await loadMessageStream(targetRecipientId, targetProductId);
       await loadMessagingThreads(true);
@@ -1211,7 +1253,7 @@ async function handleLogout() {
   window.location.href = 'login.html';
 }
 
-// Initialize shopper workspace on load
+/* Initialize shopper workspace on load */
 initShopperWorkspace();
 </script>
 </body>
