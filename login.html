@@ -36,8 +36,19 @@
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
     <!-- Top Bar -->
-   <header> <div> <div> eh </div> <span> echo<span>hub</span> <span>Authentication Portal</span> </span> </div> <div> <a href="buyer-register.html">Create Account</a> </div> </header>
-
+<!-- Top Bar -->
+    <header class="border-b border-borderSlate bg-cardBg px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-xl bg-accentBlue flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">eh</div>
+            <div>
+                <div class="text-sm font-bold text-white tracking-tight">echo<span class="text-blue-500">hub</span></div>
+                <div class="text-xs text-slate-400">Authentication Portal</div>
+            </div>
+        </div>
+        <div>
+            <a href="buyer-register.html" class="text-xs text-blue-400 hover:text-blue-300 font-medium transition">Create Account</a>
+        </div>
+    </header>
     <!-- Main Form Container -->
     <main class="flex-1 max-w-md w-full mx-auto px-4 py-12 flex flex-col justify-center">
         <div class="bg-cardBg border border-borderSlate rounded-3xl p-8 shadow-2xl space-y-6">
