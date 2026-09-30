@@ -605,6 +605,13 @@
                 imageUrl = await compressImageFile(fileInput.files[0]);
             }
 
+            // Safety check: ensure vendor_id is never an empty string
+            const vendorId = currentUser && currentUser.id ? currentUser.id : null;
+            if (!vendorId) {
+                alert('Error: User profile session is missing. Please log out and log back in.');
+                return;
+            }
+
             try {
                 if (id) {
                     const { error } = await _supabase
@@ -615,7 +622,7 @@
                 } else {
                     const { error } = await _supabase
                         .from('products')
-                        .insert([{ vendor_id: currentUser.id, title, description, price, status, image_url: imageUrl, image: imageUrl }]);
+                        .insert([{ vendor_id: vendorId, title, description, price, status, image_url: imageUrl, image: imageUrl }]);
                     if (error) throw error;
                 }
 
