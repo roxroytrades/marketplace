@@ -1304,18 +1304,16 @@ async function handleChatMessage(text, imageUrl, reviewUrl) {
 window.submitReviewUrlMessage = async function(productId, receiverId) {
   const buyerId = window.currentUser?.id;
   
-  const reviewUrlInput = document.getElementById('review-url-input') || document.getElementById('chat-input');
-  const reviewUrl = reviewUrlInput ? reviewUrlInput.value.trim() : '';
+  // Explicitly check which input element contains the value
+  const modalInput = document.getElementById('review-url-input');
+  const chatInput = document.getElementById('chat-input');
+  
+  const reviewUrl = modalInput ? modalInput.value.trim() : (chatInput ? chatInput.value.trim() : '');
+  
+  console.log("DEBUG - Found input value:", reviewUrl); // Check your browser console (F12) to see what this prints!
 
-  // Expanded check to allow amazon.com, amzn.to, or amazon.co.uk links
-  const isValidAmazon = reviewUrl && (
-    reviewUrl.includes('amazon.com') || 
-    reviewUrl.includes('amzn.to') || 
-    reviewUrl.includes('amazon.')
-  );
-
-  if (!isValidAmazon) {
-    alert('Please enter a valid Amazon link (e.g., containing amazon.com or amzn.to)');
+  if (!reviewUrl || !reviewUrl.toLowerCase().includes('amazon.com')) {
+    alert('Validation Failed. Input value detected was: "' + reviewUrl + '"');
     return;
   }
 
@@ -1323,7 +1321,7 @@ window.submitReviewUrlMessage = async function(productId, receiverId) {
     sender_id: buyerId,
     buyer_id: buyerId,
     receiver_id: receiverId,
-    product_id: productId,
+    product_id: productId || null,
     status_badge: 'AWAITING_ATTENTION',
     review_url: reviewUrl,
     feedback_id: 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase()
@@ -1340,7 +1338,8 @@ window.submitReviewUrlMessage = async function(productId, receiverId) {
     console.log('Review URL message sent successfully:', data);
     alert('Review link submitted successfully!');
     
-    if (reviewUrlInput) reviewUrlInput.value = '';
+    if (modalInput) modalInput.value = '';
+    if (chatInput) chatInput.value = '';
   } catch (err) {
     console.error('Error sending review message:', err.message);
     alert('Failed to send: ' + err.message);
