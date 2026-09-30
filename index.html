@@ -329,8 +329,12 @@
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <div>
+                            <!-- UPDATED: Ensuring recipient name/status is prominently displayed in the chat interface header -->
                             <h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
-                            <span id="activeChatSubtitle" class="text-[10px] text-slate-400">Vendor / Shopper Chat</span>
+                            <span id="activeChatSubtitle" class="text-[10px] text-slate-400 flex items-center space-x-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                <span id="activeChatRoleTag">Vendor / Shopper Chat</span>
+                            </span>
                         </div>
                     </div>
                     <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
@@ -432,6 +436,7 @@
         let activeProductId = null;
         let messageSubscription = null;
         let attachedImageBase64 = null;
+        let profilesCache = {}; // Cache for user profiles (names & roles)
 
         // Initialize workspace & header user metadata display with robust real-time session checking
         async function initShopperWorkspace() {
@@ -459,6 +464,7 @@
 
             // Read role & verification status safely with profile fallback checks and live polling sync
             await fetchAndUpdateProfileState();
+            await preloadProfiles();
 
             await loadMarketplaceProducts();
             await loadCommissionsData();
@@ -499,8 +505,25 @@
             applyBuyerVerificationLock(currentProfile);
         }
 
+        async function preloadProfiles() {
+            try {
+                const { data, error } = await _supabase.from('profiles').select('id, full_name, role');
+                if (!error && data) {
+                    data.forEach(p => {
+                        profilesCache[p.id] = {
+                            full_name: p.full_name || `User #${p.id.substring(0,6)}`,
+                            role: p.role || 'user'
+                        };
+                    });
+                }
+            } catch (err) {
+                console.log('Profile preload fallback active.');
+            }
+        }
+
         async function pollShopperData() {
             await fetchAndUpdateProfileState();
+            await preloadProfiles();
             await loadMarketplaceProducts(true);
             await loadCommissionsData(true);
             await loadShopperReferralData(true);
@@ -1013,6 +1036,8 @@
             container.innerHTML = uniqueThreads.map(t => {
                 const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
                 const isSelected = activeThreadId === t.id;
+                const profile = profilesCache[counterpartId] || { full_name: `User #${counterpartId.substring(0, 6)}`, role: 'user' };
+                
                 return `
                     <div onclick="openThread('${t.id}', '${counterpartId}', '${t.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
                         <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -1020,7 +1045,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-center mb-0.5">
-                                <h4 class="font-bold text-white text-xs truncate">Chat #${counterpartId.substring(0, 6)}</h4>
+                                <h4 class="font-bold text-white text-xs truncate">${profile.full_name}</h4>
                                 <span class="text-[9px] text-slate-500">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                             </div>
                             <p class="text-[11px] text-slate-400 truncate">${t.text || 'Attachment'}</p>
@@ -1039,10 +1064,14 @@
             activeRecipientId = recipientId;
             activeProductId = productId;
 
+            const profile = profilesCache[recipientId] || { full_name: `User #${recipientId.substring(0, 8)}`, role: 'user' };
+
             document.getElementById('activeChatPanel').classList.remove('hidden');
             document.getElementById('messageInputArea').classList.remove('hidden');
-            document.getElementById('activeChatTitle').textContent = `Chat with User #${recipientId.substring(0, 8)}`;
-            document.getElementById('activeChatSubtitle').textContent = productId ? `Product Review Inquiry ID: ${productId.substring(0, 8)}` : `Direct Inquiry`;
+            
+            // UPDATED: Displaying the recipient's name and role prominently in the chat header
+            document.getElementById('activeChatTitle').textContent = profile.full_name;
+            document.getElementById('activeChatRoleTag').textContent = `${profile.role.toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
 
             renderThreadsList();
             await loadMessageStream(recipientId, productId);
@@ -1085,7 +1114,7 @@
             }
         }
 
-        function setupRealtimeMessageSubscription(recipientId, productId) {
+        async function setupRealtimeMessageSubscription(recipientId, productId) {
             if (messageSubscription) {
                 _supabase.removeChannel(messageSubscription);
             }
@@ -1147,6 +1176,9 @@
         function updateUnreadBadge() {
             const badge = document.getElementById('unreadBadge');
             const unreadCount = messagingThreads.filter(m => m.receiver_id === currentUser.id && !m.is_read).length;
+            if (unreadCount > 50) {
+                // Keep badge clean
+            }
             if (unreadCount > 0) {
                 badge.textContent = unreadCount;
                 badge.classList.remove('hidden');
@@ -1164,5 +1196,83 @@
         // Initialize shopper workspace on load
         initShopperWorkspace();
     </script>
+
+    <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // List of critical element IDs your selectors rely on
+    const requiredIds = [
+      "shopper-submission-form",
+      "modal-product-id"
+      // Add any other form or modal IDs here as needed
+    ];
+
+    console.group("Form Element ID Validation Check");
+    let allFound = true;
+
+    requiredIds.forEach(id => {
+      const element = document.getElementById(id);
+      if (!element) {
+        console.warn(`❌ Missing ID: #${id} (Check your HTML attributes)`);
+        allFound = false;
+      } else {
+        console.log(`✅ Found ID: #${id}`);
+      }
+    });
+
+    if (allFound) {
+      console.log("🎉 All required form element IDs match and are present!");
+    }
+    console.groupEnd();
+  });
+</script>
+
+<script>
+    // Step 2: Shopper portal submission handler for index.html
+async function handleShopperSubmission(event) {
+  event.preventDefault(); // Prevent default form reload if tied to a form submit
+
+  // Gather form values from your index.html inputs
+  const productId = document.getElementById('modal-product-id').value;
+  const sellerId = document.getElementById('modal-seller-id').value;
+  const buyerId = window.currentUser?.id; // Assuming user session is stored globally
+
+  const payload = {
+    sender_id: buyerId,
+    buyer_id: buyerId,
+    receiver_id: sellerId,
+    product_id: productId,
+    review_url: null,     // Explicitly set to null initially as per Step 2
+    feedback_id: null,    // Explicitly set to null initially as per Step 2
+    status_badge: 'AWAITING_ATTENTION'
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([payload])
+      .select();
+
+    if (error) throw error;
+
+    console.log('Submission successfully sent with null feedback_id and review_url:', data);
+    alert('Inquiry submitted successfully!');
+    
+    // Close modal or reset form here
+    document.getElementById('inquiry-modal').style.display = 'none';
+  } catch (err) {
+    console.error('Error submitting inquiry:', err.message);
+    alert('Failed to submit inquiry. Please try again.');
+  }
+}
+
+// Attach event listener to your submission form in index.html
+document.addEventListener('DOMContentLoaded', () => {
+  const submitForm = document.getElementById('shopper-submission-form');
+  if (submitForm) {
+    submitForm.addEventListener('submit', handleShopperSubmission);
+  }
+});
+</script>
+
 </body>
 </html>
