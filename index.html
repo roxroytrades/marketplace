@@ -1304,12 +1304,18 @@ async function handleChatMessage(text, imageUrl, reviewUrl) {
 window.submitReviewUrlMessage = async function(productId, receiverId) {
   const buyerId = window.currentUser?.id;
   
-  // Prompt or grab the review URL input from your modal/chat input
   const reviewUrlInput = document.getElementById('review-url-input') || document.getElementById('chat-input');
   const reviewUrl = reviewUrlInput ? reviewUrlInput.value.trim() : '';
 
-  if (!reviewUrl || !reviewUrl.includes('amazon.com')) {
-    alert('Please enter a valid Amazon review URL containing amazon.com');
+  // Expanded check to allow amazon.com, amzn.to, or amazon.co.uk links
+  const isValidAmazon = reviewUrl && (
+    reviewUrl.includes('amazon.com') || 
+    reviewUrl.includes('amzn.to') || 
+    reviewUrl.includes('amazon.')
+  );
+
+  if (!isValidAmazon) {
+    alert('Please enter a valid Amazon link (e.g., containing amazon.com or amzn.to)');
     return;
   }
 
@@ -1334,7 +1340,6 @@ window.submitReviewUrlMessage = async function(productId, receiverId) {
     console.log('Review URL message sent successfully:', data);
     alert('Review link submitted successfully!');
     
-    // Clear input or close modal
     if (reviewUrlInput) reviewUrlInput.value = '';
   } catch (err) {
     console.error('Error sending review message:', err.message);
