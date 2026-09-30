@@ -1304,16 +1304,23 @@ async function handleChatMessage(text, imageUrl, reviewUrl) {
 window.submitReviewUrlMessage = async function(productId, receiverId) {
   const buyerId = window.currentUser?.id;
   
-  // Explicitly check which input element contains the value
-  const modalInput = document.getElementById('review-url-input');
-  const chatInput = document.getElementById('chat-input');
-  
-  const reviewUrl = modalInput ? modalInput.value.trim() : (chatInput ? chatInput.value.trim() : '');
-  
-  console.log("DEBUG - Found input value:", reviewUrl); // Check your browser console (F12) to see what this prints!
+  // Ultra-robust search: checks all common ID/class patterns for review or chat inputs
+  const reviewUrlInput = document.getElementById('review-url-input') || 
+                         document.getElementById('chat-input') || 
+                         document.getElementById('modal-link') ||
+                         document.querySelector('input[name="review_url"]') ||
+                         document.querySelector('.review-url-input') ||
+                         document.querySelector('#inquiry-modal input[type="text"], #inquiry-modal input[type="url"]') ||
+                         document.querySelector('input[placeholder*="Amazon"], input[placeholder*="URL"], input[placeholder*="link"]');
+
+  const reviewUrl = reviewUrlInput ? reviewUrlInput.value.trim() : '';
+
+  // Console log to see what it grabs in your browser F12 console
+  console.log("DEBUG INPUT ELEMENT:", reviewUrlInput);
+  console.log("DEBUG INPUT VALUE:", reviewUrl);
 
   if (!reviewUrl || !reviewUrl.toLowerCase().includes('amazon.com')) {
-    alert('Validation Failed. Input value detected was: "' + reviewUrl + '"');
+    alert('Validation Failed. The input box was empty or did not contain amazon.com. Captured value was: "' + reviewUrl + '"');
     return;
   }
 
@@ -1338,8 +1345,7 @@ window.submitReviewUrlMessage = async function(productId, receiverId) {
     console.log('Review URL message sent successfully:', data);
     alert('Review link submitted successfully!');
     
-    if (modalInput) modalInput.value = '';
-    if (chatInput) chatInput.value = '';
+    if (reviewUrlInput) reviewUrlInput.value = '';
   } catch (err) {
     console.error('Error sending review message:', err.message);
     alert('Failed to send: ' + err.message);
