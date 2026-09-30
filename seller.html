@@ -68,10 +68,10 @@
             </div>
 
             <!-- Logout Button -->
-            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Sign Out</span>
-            </button>
+            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
+  <i class="fa-solid fa-right-from-bracket"></i>
+  <span>Sign Out</span>
+</button>
         </div>
     </header>
 
@@ -478,7 +478,8 @@
                 document.getElementById('navReferralsBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
             }
         }
-
+async function initSellerWorkspace() { try { // 1\. Verify active session const { data: { session }, error: sessionError } = await \_supabase.auth.getSession(); if (sessionError || !session) { window.location.href = 'login.html'; return; } // 2\. Fetch role from public.profiles const { data: profile, error: profileError } = await \_supabase .from('profiles') .select('role') .eq('id', session.user.id) .single(); if (profileError || !profile || !profile.role) { await \_supabase.auth.signOut(); window.location.href = 'login.html'; return; } // 3\. Block Buyers from Vendor Portal if (profile.role.toLowerCase() === 'buyer') { alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace."); window.location.href = 'index.html'; return; } // 4\. YOUR EXISTING INITIALIZATION CALLS HERE: // e.g., await loadSellerProfile(); // e.g., await loadVendorProducts(); // e.g., await loadOrderMessages(); } catch (err) { console.error("Initialization error:", err.message); window.location.href = 'login.html'; } }
+        async function handleLogout() { try { // Stop any active polling intervals if running if (typeof pollingInterval !== 'undefined' &amp;&amp; pollingInterval) { clearInterval(pollingInterval); } // Sign out from Supabase Auth await \_supabase.auth.signOut(); } catch (err) { console.error("Logout error:", err.message); } finally { // Redirect to login portal window.location.href = 'login.html'; } }
         // ================= IMAGE COMPRESSION UTILITY =================
         async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
             return new Promise((resolve) => {
