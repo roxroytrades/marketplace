@@ -1237,16 +1237,18 @@
   const reviewUrlInput = document.getElementById('review-url-input');
   const reviewUrl = reviewUrlInput ? reviewUrlInput.value.trim() : '';
 
-  // Base payload for standard inquiries (both review_url and feedback_id omitted)
+  // Construct the payload explicitly
   const payload = {
     sender_id: buyerId,
     buyer_id: buyerId,
     receiver_id: sellerId,
     product_id: productId,
-    status_badge: 'AWAITING_ATTENTION'
+    status_badge: 'AWAITING_ATTENTION',
+    review_url: null,
+    feedback_id: null
   };
 
-  // If a valid Amazon review URL is provided, attach review_url and generate feedback_id
+  // If a valid Amazon review URL is provided, populate both
   if (reviewUrl && reviewUrl.includes('amazon.com')) {
     payload.review_url = reviewUrl;
     payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
