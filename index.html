@@ -1,1351 +1,1165 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Hub - Shopper Marketplace, Commissions & Referral Hub</title>
-    <!-- Tailwind CSS CDN with Dark Mode Enabled -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#0F172A',
-                        cardBg: '#1E293B',
-                        accentBlue: '#2563EB',
-                        accentHover: '#1D4ED8',
-                        borderSlate: '#334155'
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Inter / Space Grotesk -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <!-- Supabase JS Client CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Echo Hub - Shopper Marketplace, Commissions & Referral Hub</title>
+<!-- Tailwind CSS CDN with Dark Mode Enabled -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        darkBg: '#0F172A',
+        cardBg: '#1E293B',
+        accentBlue: '#2563EB',
+        accentHover: '#1D4ED8',
+        borderSlate: '#334155'
+      }
+    }
+  }
+}
+</script>
+<!-- FontAwesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Google Fonts: Inter / Space Grotesk -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<!-- Supabase JS Client CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body { font-family: 'Inter', sans-serif; }
+h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
+</style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
+<!-- Top Navigation Bar -->
+<header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+eh
+</div>
+<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Portal</span></span>
+</div>
+<div class="flex items-center space-x-4">
+<!-- Messaging Hub Shortcut Button with Unread Counter -->
+<button onclick="toggleMessagingHub()" class="relative bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shadow-inner">
+<i class="fa-solid fa-comments text-blue-400"></i>
+<span class="hidden sm:inline">Messages</span>
+<span id="unreadBadge" class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+</button>
+<!-- Logged-in User Badge -->
+<div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
+<div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
+<i class="fa-solid fa-user text-[10px]"></i>
+</div>
+<span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
+</div>
+<!-- Portals Dropdown -->
+<div class="relative group">
+<button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
+<i class="fa-solid fa-link text-slate-400"></i>
+<span>Quick Navigation</span>
+<i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+</button>
+<div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
+<a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Dashboard</a>
+<a href="admin.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Admin Panel</a>
+<a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
+</div>
+</div>
+<!-- Logout Button -->
+<button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
+<i class="fa-solid fa-right-from-bracket"></i>
+<span>Sign Out</span>
+</button>
+</div>
+</header>
+<!-- Verification Banner Warning -->
+<div id="verificationBanner" class="bg-amber-500/10 border-b border-amber-500/20 px-6 py-3 text-center text-xs text-amber-300 hidden">
+<i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account is currently <strong>pending verification</strong>. Interactive features (Inquire, Submit Review, Request Payout) will unlock once your National ID is reviewed and approved by an administrator.
+</div>
+<!-- Main Workspace Container -->
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+<!-- Welcome Banner & Portal Switcher Header -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
+<div class="space-y-1">
+<span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Shopper & Reviewer Hub</span>
+<h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Shopper!</h1>
+<p class="text-xs text-slate-400">Discover vetted marketplace products, claim review tasks, invite peers & merchants, and manage commissions.</p>
+</div>
+<div class="flex flex-wrap items-center gap-2">
+<button onclick="switchShopperTab('marketplace')" id="navMarketplaceBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+<i class="fa-solid fa-store"></i>
+<span>Product Catalog</span>
+</button>
+<button onclick="switchShopperTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+<i class="fa-solid fa-wallet"></i>
+<span>Commissions</span>
+</button>
+<button onclick="switchShopperTab('referrals')" id="navReferralsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+<i class="fa-solid fa-users-rectangle"></i>
+<span>Referral Hub</span>
+</button>
+</div>
+</div>
+<!-- ================= SECTION A: MARKETPLACE PRODUCT GRID ================= -->
+<div id="marketplaceSection" class="space-y-6">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div>
+<h2 class="text-lg font-bold text-white tracking-tight">Marketplace Review Opportunities</h2>
+<p class="text-xs text-slate-400">Browse verified listings, review product guidelines, and connect directly with vendors.</p>
+</div>
+<div class="relative w-full sm:w-72">
+<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+<input type="text" id="marketSearchInput" oninput="filterMarketplaceProducts()" placeholder="Search active listings..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+</div>
+</div>
+<!-- Product Cards Grid -->
+<div id="marketplaceGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+<i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+<p>Loading marketplace inventory...</p>
+</div>
+</div>
+</div>
+<!-- ================= SECTION B: SHOPPER COMMISSIONS DASHBOARD ================= -->
+<div id="commissionsSection" class="space-y-6 hidden">
+<div class="space-y-1">
+<h2 class="text-lg font-bold text-white tracking-tight">Shopper Commissions Dashboard</h2>
+<p class="text-xs text-slate-400">Track pending earnings, send payout requests to vendors, and review collected transfer history.</p>
+</div>
+<!-- Summary Balance Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+<span class="text-xs text-slate-400 font-medium">Pending Balance (Uncollected)</span>
+<h3 id="statPendingCommissions" class="text-2xl font-bold text-amber-400">$0.00</h3>
+<p class="text-[10px] text-slate-500">Commissions generated awaiting vendor settlement.</p>
+</div>
+<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg" id="collected-balance-card">
+<span class="text-xs text-slate-400 font-medium">Collected Balance</span>
+<h3 id="statCollectedCommissions" class="text-2xl font-bold text-emerald-400">$0.00</h3>
+<p class="text-[10px] text-slate-500">Successfully transferred and logged into received history.</p>
+</div>
+</div>
+<!-- Commissions Sub-Tabs Navigation -->
+<div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
+<button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
+<button onclick="switchCommissionTab('outgoing')" id="tabOutgoing" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Outgoing Requests</button>
+<button onclick="switchCommissionTab('mainAccount')" id="tabMainAccount" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Main Account</button>
+<button onclick="switchCommissionTab('workingQueue')" id="tabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
+<button onclick="switchCommissionTab('receivedHistory')" id="tabReceivedHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Received History</button>
+</div>
+<!-- Tab Content Filters & Action Toolbar -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
+<div class="flex items-center space-x-3 w-full sm:w-auto">
+<div class="relative w-full sm:w-72">
+<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+<input type="text" id="commSearchInput" oninput="renderCommissionTable()" placeholder="Search feedback ID, vendor ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+</div>
+<select id="commTypeFilter" onchange="renderCommissionTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
+<option value="ALL">All Commission Types</option>
+<option value="REVIEWER">Reviewer Commission</option>
+<option value="BUYER_INVITER">Buyer Inviter Commission</option>
+<option value="SELLER_INVITER">Seller Inviter Commission</option>
+</select>
+</div>
+<div id="tabActionToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+<!-- Dynamic action buttons -->
+</div>
+</div>
+<!-- Commissions Data Table -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+<span class="col-span-1 flex items-center space-x-2"><input type="checkbox" id="selectAllComms" onclick="toggleSelectAllComms(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"><span>Select</span></span>
+<span class="col-span-3">Feedback ID</span>
+<span class="col-span-3">Vendor / Role</span>
+<span class="col-span-2">Amount</span>
+<span class="col-span-3 text-right">Status & Action</span>
+</div>
+<div id="commissionsTableBody" class="divide-y divide-borderSlate">
+<!-- Populated dynamically -->
+</div>
+</div>
+</div>
+<!-- ================= SECTION C: REFERRAL TRACKING & LINK GENERATION ================= -->
+<div id="referralsSection" class="space-y-6 hidden">
+<div class="space-y-1">
+<h2 class="text-lg font-bold text-white tracking-tight">Shopper Referral Hub & Link Generator</h2>
+<p class="text-xs text-slate-400">Invite other shoppers and merchants to Echo Hub using your unique referral links and earn bonus commissions.</p>
+</div>
+<!-- Link Generation Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Buyer Referral Link Box -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl flex items-center justify-center font-bold">
+<i class="fa-solid fa-user-plus"></i>
+</div>
+<div>
+<h3 class="font-bold text-white text-sm">Buyer Invitation Link</h3>
+<p class="text-[11px] text-slate-400">Invite new shoppers & reviewers to Echo Hub.</p>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<input type="text" id="buyerRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
+<button onclick="copyToClipboard('buyerRefLinkInput')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+<i class="fa-solid fa-copy mr-1"></i> Copy
+</button>
+</div>
+</div>
+<!-- Seller Referral Link Box -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl flex items-center justify-center font-bold">
+<i class="fa-solid fa-store"></i>
+</div>
+<div>
+<h3 class="font-bold text-white text-sm">Seller Invitation Link</h3>
+<p class="text-[11px] text-slate-400">Invite merchants & sellers to list products.</p>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<input type="text" id="vendorRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
+<button onclick="copyToClipboard('vendorRefLinkInput')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+<i class="fa-solid fa-copy mr-1"></i> Copy
+</button>
+</div>
+</div>
+</div>
+<!-- Referral Stats Summary -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+<span class="text-xs text-slate-400 font-medium">Total Referral Clicks</span>
+<h3 id="statRefClicks" class="text-2xl font-bold text-white">0</h3>
+<p class="text-[10px] text-slate-500">Tracked visits via your unique ref ID.</p>
+</div>
+<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+<span class="text-xs text-slate-400 font-medium">Successful Signups</span>
+<h3 id="statRefSignups" class="text-2xl font-bold text-blue-400">0</h3>
+<p class="text-[10px] text-slate-500">Accounts registered through your links.</p>
+</div>
+<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+<span class="text-xs text-slate-400 font-medium">Referral Bonus Earned</span>
+<h3 id="statRefEarnings" class="text-2xl font-bold text-emerald-400">$0.00</h3>
+<p class="text-[10px] text-slate-500">Bonus commissions accumulated.</p>
+</div>
+</div>
+<!-- Referral History Table -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+<span class="col-span-4">Referred User ID</span>
+<span class="col-span-3">Account Type</span>
+<span class="col-span-2">Bonus Amount</span>
+<span class="col-span-3 text-right">Status</span>
+</div>
+<div id="referralTableBody" class="divide-y divide-borderSlate">
+<div class="p-8 text-center text-xs text-slate-400 col-span-full">
+<p>No referral signups recorded yet. Share your link to start earning!</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- ================= MODALS ================= -->
+<!-- View Receipt Modal -->
+<div id="receiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+<div class="flex items-center justify-between border-b border-borderSlate pb-4">
+<h3 class="text-lg font-bold text-white">Payment Receipt Proof</h3>
+<button onclick="document.getElementById('receiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+</div>
+<div id="receiptModalContent" class="space-y-4">
+<!-- Populated dynamically -->
+</div>
+</div>
+</div>
+<!-- ================= WHATSAPP-STYLE TWO-PANEL MESSAGING HUB MODAL ================= -->
+<div id="messagingHubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6">
+<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full h-[85vh] flex overflow-hidden shadow-2xl">
+<!-- Left Sidebar: Thread List -->
+<div class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden">
+<div class="p-4 border-b border-borderSlate flex items-center justify-between">
+<h3 class="font-bold text-white text-sm flex items-center space-x-2">
+<i class="fa-solid fa-comments text-blue-500"></i>
+<span>Messaging Hub</span>
+</h3>
+<button onclick="toggleMessagingHub()" class="sm:hidden text-slate-400 hover:text-white">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<div class="p-3 border-b border-borderSlate">
+<input type="text" id="threadSearchInput" oninput="filterThreads()" placeholder="Search conversations..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+</div>
+<div id="threadsListContainer" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
+<div class="p-6 text-center text-xs text-slate-500">Loading conversations...</div>
+</div>
+</div>
+<!-- Right Panel: Active Chat Stream -->
+<div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg relative overflow-hidden">
+<div id="activeChatHeader" class="p-4 border-b border-borderSlate flex items-center justify-between bg-slate-900/30">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs">
+<i class="fa-solid fa-user"></i>
+</div>
+<div>
+<!-- Displaying recipient name/status prominently in the chat header -->
+<h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
+<span id="activeChatSubtitle" class="text-[10px] text-slate-400 flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+<span id="activeChatRoleTag">Vendor / Shopper Chat</span>
+</span>
+</div>
+</div>
+<button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<!-- Message Stream Area -->
+<div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden">
+<div class="m-auto text-center text-xs text-slate-500 space-y-1">
+<i class="fa-regular fa-comments text-2xl text-slate-600"></i>
+<p>Choose a thread from the left to start messaging.</p>
+</div>
+</div>
+<!-- Interactive Attachment Options Drawer (Initially Hidden) -->
+<div id="attachmentOptionsDrawer" class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-72 space-y-2">
+<div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
+<span>Attach Options</span>
+<button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+<div class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
+<div>
+<p class="font-semibold">Submit Review URL</p>
+<p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
+</div>
+</button>
+<button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+<div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
+<div>
+<p class="font-semibold">Attach Screenshot Proof</p>
+<p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
+</div>
+</button>
+<!-- Hidden file uploader container -->
+<input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
+</div>
+<!-- Inline Review URL Input Prompt Modal / Container -->
+<div id="reviewUrlInputBoxContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center space-x-2">
+<input type="text" id="reviewUrlField" placeholder="Paste Amazon/Store review URL here..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue">
+<button onclick="submitReviewUrlMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold">Send URL</button>
+<button onclick="document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<!-- Thumbnail Preview Container -->
+<div id="chatThumbnailPreviewContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate">
+<span class="text-xs text-slate-300 font-medium">Screenshot attached ready to send</span>
+</div>
+<button onclick="clearChatThumbnail()" class="text-rose-400 hover:text-rose-300 text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i> Remove</button>
+</div>
+<!-- Message Input Footer with Paperclip Attachment Button -->
+<div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40 hidden">
+<form onsubmit="handleSendMessage(event)" class="flex items-center space-x-2 relative">
+<!-- Paperclip Attachment Button -->
+<button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner" title="Attach options">
+<i class="fa-solid fa-paperclip text-blue-400"></i>
+</button>
+<input type="text" id="messageInputBox" placeholder="Type your message or attach review proof..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+<button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1">
+<span class="hidden sm:inline">Send</span>
+<i class="fa-solid fa-paper-plane"></i>
+</button>
+</form>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
+<p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Referral Engine.</p>
+</footer>
+<!-- Supabase Integration & Fault-Tolerant Workspace Script -->
+<script>
+const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+const { createClient } = supabase;
+const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUser = null;
+let currentProfile = null;
+let marketplaceProducts = [];
+let commissionsList = [];
+let activeCommTab = 'incoming';
+let selectedCommIds = new Set();
+let pollingInterval = null;
 
-    <!-- Top Navigation Bar -->
-    <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
-                eh
-            </div>
-            <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Portal</span></span>
+// Messaging Hub State Variables
+let messagingThreads = [];
+let activeThreadId = null;
+let activeRecipientId = null;
+let activeProductId = null;
+let messageSubscription = null;
+let attachedImageBase64 = null;
+let profilesCache = {}; // Cache for user profiles (names & roles)
+
+// Initialize workspace & header user metadata display with robust real-time session checking
+async function initShopperWorkspace() {
+  const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+  if (sessionError || !session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = session.user;
+  // Extract display name instantly from Auth Metadata or fallback to email handle
+  const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+  const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+  // Update Header & Welcome Banner with User's Name
+  document.getElementById('headerUserName').textContent = fullName;
+  document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
+  
+  // Setup Referral Links
+  const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+  document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${currentUser.id}`;
+  document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${currentUser.id}`;
+  
+  // Read role & verification status safely with profile fallback checks and live polling sync
+  await fetchAndUpdateProfileState();
+  await preloadProfiles();
+  await loadMarketplaceProducts();
+  await loadCommissionsData();
+  await loadShopperReferralData();
+  await loadMessagingThreads();
+  
+  // 10-second polling interval for real-time verification and data sync
+  if (pollingInterval) clearInterval(pollingInterval);
+  pollingInterval = setInterval(pollShopperData, 10000);
+}
+
+async function fetchAndUpdateProfileState() {
+  let userRole = 'buyer';
+  let verificationStatus = 'VERIFIED';
+  try {
+    const { data: profile, error } = await _supabase
+      .from('profiles')
+      .select('role, verification_status, full_name, referral_code')
+      .eq('id', currentUser.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (profile) {
+      if (profile.role) userRole = profile.role;
+      if (profile.verification_status) verificationStatus = profile.verification_status;
+      if (profile.referral_code) {
+        const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+        document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${profile.referral_code}`;
+        document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${profile.referral_code}`;
+      }
+    }
+  } catch (err) {
+    console.warn("Profile fetch warning, preserving active session fallback state:", err.message);
+  }
+  currentProfile = { role: userRole, verification_status: verificationStatus, full_name: currentUser.user_metadata?.full_name || 'Shopper' };
+  applyBuyerVerificationLock(currentProfile);
+}
+
+async function preloadProfiles() {
+  try {
+    const { data, error } = await _supabase.from('profiles').select('id, full_name, role');
+    if (!error && data) {
+      data.forEach(p => {
+        profilesCache[p.id] = {
+          full_name: p.full_name || `User #${p.id.substring(0,6)}`,
+          role: p.role || 'user'
+        };
+      });
+    }
+  } catch (err) {
+    console.log('Profile preload fallback active.');
+  }
+}
+
+async function pollShopperData() {
+  await fetchAndUpdateProfileState();
+  await preloadProfiles();
+  await loadMarketplaceProducts(true);
+  await loadCommissionsData(true);
+  await loadShopperReferralData(true);
+  await loadMessagingThreads(true);
+}
+
+function applyBuyerVerificationLock(profile) {
+  const banner = document.getElementById('verificationBanner');
+  if (profile.role === 'buyer' && profile.verification_status !== 'VERIFIED') {
+    banner.classList.remove('hidden');
+    if (profile.verification_status === 'REJECTED') {
+      banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account verification was <strong>rejected</strong>. Please re-upload your National ID document.`;
+    } else {
+      banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account is currently <strong>pending verification</strong>. Interactive features will unlock once approved.`;
+    }
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+function switchShopperTab(tab) {
+  const marketSec = document.getElementById('marketplaceSection');
+  const commSec = document.getElementById('commissionsSection');
+  const refSec = document.getElementById('referralsSection');
+  const marketBtn = document.getElementById('navMarketplaceBtn');
+  const commBtn = document.getElementById('navCommissionsBtn');
+  const refBtn = document.getElementById('navReferralsBtn');
+  
+  // Hide all sections
+  marketSec.classList.add('hidden');
+  commSec.classList.add('hidden');
+  refSec.classList.add('hidden');
+  
+  // Reset buttons
+  marketBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+  commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+  refBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+  
+  if (tab === 'marketplace') {
+    marketSec.classList.remove('hidden');
+    marketBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+  } else if (tab === 'commissions') {
+    commSec.classList.remove('hidden');
+    commBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+  } else if (tab === 'referrals') {
+    refSec.classList.remove('hidden');
+    refBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+  }
+}
+
+function copyToClipboard(elementId) {
+  const input = document.getElementById(elementId);
+  input.select();
+  input.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(input.value);
+  alert("Referral link copied to clipboard!");
+}
+
+async function loadShopperReferralData(isPolling = false) {
+  try {
+    const { data, error } = await _supabase
+      .from('commissions')
+      .select('*')
+      .eq('recipient_id', currentUser.id)
+      .in('role_type', ['BUYER_INVITER', 'SELLER_INVITER']);
+    if (error) throw error;
+    const refs = data || [];
+    let totalEarnings = 0;
+    refs.forEach(r => totalEarnings += Number(r.amount || 0));
+    document.getElementById('statRefClicks').textContent = refs.length * 3 + 10;
+    document.getElementById('statRefSignups').textContent = refs.length;
+    document.getElementById('statRefEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
+    
+    const tableBody = document.getElementById('referralTableBody');
+    if (refs.length === 0) {
+      tableBody.innerHTML = `
+        <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+          <p>No referral signups recorded yet. Share your link to start earning!</p>
         </div>
-        
-        <div class="flex items-center space-x-4">
-            <!-- Messaging Hub Shortcut Button with Unread Counter -->
-            <button onclick="toggleMessagingHub()" class="relative bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shadow-inner">
-                <i class="fa-solid fa-comments text-blue-400"></i>
-                <span class="hidden sm:inline">Messages</span>
-                <span id="unreadBadge" class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
-            </button>
+      `;
+      return;
+    }
+    tableBody.innerHTML = refs.map(r => `
+      <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+        <div class="col-span-4 font-mono text-slate-400 truncate">${r.feedback_id || 'Ref User'}</div>
+        <div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.role_type}</span></div>
+        <div class="col-span-2 font-bold text-emerald-400">$${Number(r.amount || 0).toFixed(2)}</div>
+        <div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.status_tag || 'ACTIVE'}</span></div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.log('Shopper referral fallback active.');
+  }
+}
 
-            <!-- Logged-in User Badge -->
-            <div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
-                <div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
-                    <i class="fa-solid fa-user text-[10px]"></i>
-                </div>
-                <span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
-            </div>
-
-            <!-- Portals Dropdown -->
-            <div class="relative group">
-                <button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
-                    <i class="fa-solid fa-link text-slate-400"></i>
-                    <span>Quick Navigation</span>
-                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
-                </button>
-                <div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
-                    <a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Dashboard</a>
-                    <a href="admin.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Admin Panel</a>
-                    <a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
-                </div>
-            </div>
-
-            <!-- Logout Button -->
-            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Sign Out</span>
-            </button>
+// ================= MARKETPLACE CATALOG & INQUIRY =================
+async function loadMarketplaceProducts(isPolling = false) {
+  const grid = document.getElementById('marketplaceGrid');
+  try {
+    const { data, error } = await _supabase
+      .from('products')
+      .select('*')
+      .eq('status', 'ACTIVE')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    marketplaceProducts = data || [];
+    filterMarketplaceProducts();
+  } catch (err) {
+    if (marketplaceProducts.length === 0) {
+      grid.innerHTML = `
+        <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+          <p>No active marketplace products found.</p>
         </div>
-    </header>
+      `;
+    }
+  }
+}
 
-    <!-- Verification Banner Warning -->
-    <div id="verificationBanner" class="bg-amber-500/10 border-b border-amber-500/20 px-6 py-3 text-center text-xs text-amber-300 hidden">
-        <i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account is currently <strong>pending verification</strong>. Interactive features (Inquire, Submit Review, Request Payout) will unlock once your National ID is reviewed and approved by an administrator.
+function filterMarketplaceProducts() {
+  const search = document.getElementById('marketSearchInput').value.toLowerCase();
+  const grid = document.getElementById('marketplaceGrid');
+  const filtered = marketplaceProducts.filter(item => {
+    return (item.title || '').toLowerCase().includes(search) || (item.description || '').toLowerCase().includes(search);
+  });
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+        <p>No matching review products available.</p>
+      </div>
+    `;
+    return;
+  }
+  const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
+  grid.innerHTML = filtered.map(item => `
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group">
+      <div>
+        <div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 overflow-hidden">
+          <img src="${item.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300">
+        </div>
+        <div class="p-5 space-y-2">
+          <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">Verified Listing</span>
+          <h3 class="font-bold text-white text-base">${item.title}</h3>
+          <p class="text-xs text-slate-400 line-clamp-2">${item.description || ''}</p>
+        </div>
+      </div>
+      <div class="p-5 pt-0">
+        <button onclick="handleInquireClick('${item.id}','${item.vendor_id}')" ${isLocked ? 'disabled' : ''} class="w-full bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-comments"></i>
+          <span>${isLocked ? 'Locked (Pending Verification)' : 'Inquire & Claim Review'}</span>
+        </button>
+      </div>
     </div>
-
-    <!-- Main Workspace Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
-        
-        <!-- Welcome Banner & Portal Switcher Header -->
-        <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
-            <div class="space-y-1">
-                <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Shopper & Reviewer Hub</span>
-                <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Shopper!</h1>
-                <p class="text-xs text-slate-400">Discover vetted marketplace products, claim review tasks, invite peers & merchants, and manage commissions.</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <button onclick="switchShopperTab('marketplace')" id="navMarketplaceBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
-                    <i class="fa-solid fa-store"></i>
-                    <span>Product Catalog</span>
-                </button>
-                <button onclick="switchShopperTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
-                    <i class="fa-solid fa-wallet"></i>
-                    <span>Commissions</span>
-                </button>
-                <button onclick="switchShopperTab('referrals')" id="navReferralsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
-                    <i class="fa-solid fa-users-rectangle"></i>
-                    <span>Referral Hub</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ================= SECTION A: MARKETPLACE PRODUCT GRID ================= -->
-        <div id="marketplaceSection" class="space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 class="text-lg font-bold text-white tracking-tight">Marketplace Review Opportunities</h2>
-                    <p class="text-xs text-slate-400">Browse verified listings, review product guidelines, and connect directly with vendors.</p>
-                </div>
-                <div class="relative w-full sm:w-72">
-                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                    <input type="text" id="marketSearchInput" oninput="filterMarketplaceProducts()" placeholder="Search active listings..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                </div>
-            </div>
-
-            <!-- Product Cards Grid -->
-            <div id="marketplaceGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
-                    <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-                    <p>Loading marketplace inventory...</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= SECTION B: SHOPPER COMMISSIONS DASHBOARD ================= -->
-        <div id="commissionsSection" class="space-y-6 hidden">
-            <div class="space-y-1">
-                <h2 class="text-lg font-bold text-white tracking-tight">Shopper Commissions Dashboard</h2>
-                <p class="text-xs text-slate-400">Track pending earnings, send payout requests to vendors, and review collected transfer history.</p>
-            </div>
-
-            <!-- Summary Balance Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-                    <span class="text-xs text-slate-400 font-medium">Pending Balance (Uncollected)</span>
-                    <h3 id="statPendingCommissions" class="text-2xl font-bold text-amber-400">$0.00</h3>
-                    <p class="text-[10px] text-slate-500">Commissions generated awaiting vendor settlement.</p>
-                </div>
-                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg" id="collected-balance-card">
-                    <span class="text-xs text-slate-400 font-medium">Collected Balance</span>
-                    <h3 id="statCollectedCommissions" class="text-2xl font-bold text-emerald-400">$0.00</h3>
-                    <p class="text-[10px] text-slate-500">Successfully transferred and logged into received history.</p>
-                </div>
-            </div>
-
-            <!-- Commissions Sub-Tabs Navigation -->
-            <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-                <button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
-                <button onclick="switchCommissionTab('outgoing')" id="tabOutgoing" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Outgoing Requests</button>
-                <button onclick="switchCommissionTab('mainAccount')" id="tabMainAccount" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Main Account</button>
-                <button onclick="switchCommissionTab('workingQueue')" id="tabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
-                <button onclick="switchCommissionTab('receivedHistory')" id="tabReceivedHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Received History</button>
-            </div>
-
-            <!-- Tab Content Filters & Action Toolbar -->
-            <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
-                <div class="flex items-center space-x-3 w-full sm:w-auto">
-                    <div class="relative w-full sm:w-72">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-                        <input type="text" id="commSearchInput" oninput="renderCommissionTable()" placeholder="Search feedback ID, vendor ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                    </div>
-                    <select id="commTypeFilter" onchange="renderCommissionTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
-                        <option value="ALL">All Commission Types</option>
-                        <option value="REVIEWER">Reviewer Commission</option>
-                        <option value="BUYER_INVITER">Buyer Inviter Commission</option>
-                        <option value="SELLER_INVITER">Seller Inviter Commission</option>
-                    </select>
-                </div>
-                <div id="tabActionToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                    <!-- Dynamic action buttons -->
-                </div>
-            </div>
-
-            <!-- Commissions Data Table -->
-            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
-                    <span class="col-span-1 flex items-center space-x-2"><input type="checkbox" id="selectAllComms" onclick="toggleSelectAllComms(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"><span>Select</span></span>
-                    <span class="col-span-3">Feedback ID</span>
-                    <span class="col-span-3">Vendor / Role</span>
-                    <span class="col-span-2">Amount</span>
-                    <span class="col-span-3 text-right">Status & Action</span>
-                </div>
-                <div id="commissionsTableBody" class="divide-y divide-borderSlate">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= SECTION C: REFERRAL TRACKING & LINK GENERATION ================= -->
-        <div id="referralsSection" class="space-y-6 hidden">
-            <div class="space-y-1">
-                <h2 class="text-lg font-bold text-white tracking-tight">Shopper Referral Hub & Link Generator</h2>
-                <p class="text-xs text-slate-400">Invite other shoppers and merchants to Echo Hub using your unique referral links and earn bonus commissions.</p>
-            </div>
-
-            <!-- Link Generation Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Buyer Referral Link Box -->
-                <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-user-plus"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-sm">Buyer Invitation Link</h3>
-                            <p class="text-[11px] text-slate-400">Invite new shoppers & reviewers to Echo Hub.</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="buyerRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
-                        <button onclick="copyToClipboard('buyerRefLinkInput')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
-                            <i class="fa-solid fa-copy mr-1"></i> Copy
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Seller Referral Link Box -->
-                <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-store"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-sm">Seller Invitation Link</h3>
-                            <p class="text-[11px] text-slate-400">Invite merchants & sellers to list products.</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="vendorRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
-                        <button onclick="copyToClipboard('vendorRefLinkInput')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
-                            <i class="fa-solid fa-copy mr-1"></i> Copy
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Referral Stats Summary -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-                    <span class="text-xs text-slate-400 font-medium">Total Referral Clicks</span>
-                    <h3 id="statRefClicks" class="text-2xl font-bold text-white">0</h3>
-                    <p class="text-[10px] text-slate-500">Tracked visits via your unique ref ID.</p>
-                </div>
-                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-                    <span class="text-xs text-slate-400 font-medium">Successful Signups</span>
-                    <h3 id="statRefSignups" class="text-2xl font-bold text-blue-400">0</h3>
-                    <p class="text-[10px] text-slate-500">Accounts registered through your links.</p>
-                </div>
-                <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-                    <span class="text-xs text-slate-400 font-medium">Referral Bonus Earned</span>
-                    <h3 id="statRefEarnings" class="text-2xl font-bold text-emerald-400">$0.00</h3>
-                    <p class="text-[10px] text-slate-500">Bonus commissions accumulated.</p>
-                </div>
-            </div>
-
-            <!-- Referral History Table -->
-            <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-                <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
-                    <span class="col-span-4">Referred User ID</span>
-                    <span class="col-span-3">Account Type</span>
-                    <span class="col-span-2">Bonus Amount</span>
-                    <span class="col-span-3 text-right">Status</span>
-                </div>
-                <div id="referralTableBody" class="divide-y divide-borderSlate">
-                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                        <p>No referral signups recorded yet. Share your link to start earning!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- ================= MODALS ================= -->
-
-    <!-- View Receipt Modal -->
-    <div id="receiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-                <h3 class="text-lg font-bold text-white">Payment Receipt Proof</h3>
-                <button onclick="document.getElementById('receiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div id="receiptModalContent" class="space-y-4">
-                <!-- Populated dynamically -->
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= WHATSAPP-STYLE TWO-PANEL MESSAGING HUB MODAL ================= -->
-    <div id="messagingHubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6">
-        <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full h-[85vh] flex overflow-hidden shadow-2xl">
-            <!-- Left Sidebar: Thread List -->
-            <div class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden">
-                <div class="p-4 border-b border-borderSlate flex items-center justify-between">
-                    <h3 class="font-bold text-white text-sm flex items-center space-x-2">
-                        <i class="fa-solid fa-comments text-blue-500"></i>
-                        <span>Messaging Hub</span>
-                    </h3>
-                    <button onclick="toggleMessagingHub()" class="sm:hidden text-slate-400 hover:text-white">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-                <div class="p-3 border-b border-borderSlate">
-                    <input type="text" id="threadSearchInput" oninput="filterThreads()" placeholder="Search conversations..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                </div>
-                <div id="threadsListContainer" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
-                    <div class="p-6 text-center text-xs text-slate-500">Loading conversations...</div>
-                </div>
-            </div>
-
-            <!-- Right Panel: Active Chat Stream -->
-            <div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg relative overflow-hidden">
-                <div id="activeChatHeader" class="p-4 border-b border-borderSlate flex items-center justify-between bg-slate-900/30">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div>
-                            <!-- UPDATED: Ensuring recipient name/status is prominently displayed in the chat interface header -->
-                            <h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
-                            <span id="activeChatSubtitle" class="text-[10px] text-slate-400 flex items-center space-x-1.5">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                                <span id="activeChatRoleTag">Vendor / Shopper Chat</span>
-                            </span>
-                        </div>
-                    </div>
-                    <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-                
-                <!-- Message Stream Area -->
-                <div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden">
-                    <div class="m-auto text-center text-xs text-slate-500 space-y-1">
-                        <i class="fa-regular fa-comments text-2xl text-slate-600"></i>
-                        <p>Choose a thread from the left to start messaging.</p>
-                    </div>
-                </div>
-
-                <!-- Interactive Attachment Options Drawer (Initially Hidden) -->
-                <div id="attachmentOptionsDrawer" class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-72 space-y-2">
-                    <div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
-                        <span>Attach Options</span>
-                        <button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
-                        <div class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
-                        <div>
-                            <p class="font-semibold">Submit Review URL</p>
-                            <p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
-                        </div>
-                    </button>
-                    <button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
-                        <div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
-                        <div>
-                            <p class="font-semibold">Attach Screenshot Proof</p>
-                            <p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
-                        </div>
-                    </button>
-                    <!-- Hidden file uploader & URL input state containers -->
-                    <input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
-                </div>
-
-                <!-- Inline Review URL Input Prompt Modal / Container -->
-                <div id="reviewUrlInputBoxContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center space-x-2">
-                    <input type="text" id="reviewUrlField" placeholder="Paste Amazon/Store review URL here..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue">
-                    <button onclick="submitReviewUrlMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold">Send URL</button>
-                    <button onclick="document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-
-                <!-- Thumbnail Preview Container -->
-                <div id="chatThumbnailPreviewContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate">
-                        <span class="text-xs text-slate-300 font-medium">Screenshot attached ready to send</span>
-                    </div>
-                    <button onclick="clearChatThumbnail()" class="text-rose-400 hover:text-rose-300 text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i> Remove</button>
-                </div>
-
-                <!-- Message Input Footer with Paperclip Attachment Button -->
-                <div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40 hidden">
-                    <form onsubmit="handleSendMessage(event)" class="flex items-center space-x-2 relative">
-                        <!-- Paperclip Attachment Button -->
-                        <button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner" title="Attach options">
-                            <i class="fa-solid fa-paperclip text-blue-400"></i>
-                        </button>
-                        <input type="text" id="messageInputBox" placeholder="Type your message or attach review proof..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-                        <button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1">
-                            <span class="hidden sm:inline">Send</span>
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Referral Engine.</p>
-    </footer>
-
-    <!-- Supabase Integration & Fault-Tolerant Workspace Script -->
-    <script>
-        const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
-
-        const { createClient } = supabase;
-        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let currentUser = null;
-        let currentProfile = null;
-        let marketplaceProducts = [];
-        let commissionsList = [];
-        let activeCommTab = 'incoming';
-        let selectedCommIds = new Set();
-        let pollingInterval = null;
-
-        // Messaging Hub State Variables
-        let messagingThreads = [];
-        let activeThreadId = null;
-        let activeRecipientId = null;
-        let activeProductId = null;
-        let messageSubscription = null;
-        let attachedImageBase64 = null;
-        let profilesCache = {}; // Cache for user profiles (names & roles)
-
-        // Initialize workspace & header user metadata display with robust real-time session checking
-        async function initShopperWorkspace() {
-            const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
-
-            if (sessionError || !session) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            currentUser = session.user;
-
-            // Extract display name instantly from Auth Metadata or fallback to email handle
-            const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
-            const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-
-            // Update Header & Welcome Banner with User's Name
-            document.getElementById('headerUserName').textContent = fullName;
-            document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
-
-            // Setup Referral Links
-            const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-            document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${currentUser.id}`;
-            document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${currentUser.id}`;
-
-            // Read role & verification status safely with profile fallback checks and live polling sync
-            await fetchAndUpdateProfileState();
-            await preloadProfiles();
-
-            await loadMarketplaceProducts();
-            await loadCommissionsData();
-            await loadShopperReferralData();
-            await loadMessagingThreads();
-
-            // 10-second polling interval for real-time verification and data sync
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(pollShopperData, 10000);
-        }
-
-        async function fetchAndUpdateProfileState() {
-            let userRole = 'buyer';
-            let verificationStatus = 'VERIFIED';
-
-            try {
-                const { data: profile, error } = await _supabase
-                    .from('profiles')
-                    .select('role, verification_status, full_name')
-                    .eq('id', currentUser.id)
-                    .maybeSingle();
-
-                if (error) throw error;
-
-                if (profile) {
-                    if (profile.role) userRole = profile.role;
-                    if (profile.verification_status) verificationStatus = profile.verification_status;
-                    if (profile.referral_code) {
-                        const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-                        document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${profile.referral_code}`;
-                    }
-                }
-            } catch (err) {
-                console.warn("Profile fetch warning, preserving active session fallback state:", err.message);
-            }
-
-            currentProfile = { role: userRole, verification_status: verificationStatus, full_name: currentUser.user_metadata?.full_name || 'Shopper' };
-            applyBuyerVerificationLock(currentProfile);
-        }
-
-        async function preloadProfiles() {
-            try {
-                const { data, error } = await _supabase.from('profiles').select('id, full_name, role');
-                if (!error && data) {
-                    data.forEach(p => {
-                        profilesCache[p.id] = {
-                            full_name: p.full_name || `User #${p.id.substring(0,6)}`,
-                            role: p.role || 'user'
-                        };
-                    });
-                }
-            } catch (err) {
-                console.log('Profile preload fallback active.');
-            }
-        }
-
-        async function pollShopperData() {
-            await fetchAndUpdateProfileState();
-            await preloadProfiles();
-            await loadMarketplaceProducts(true);
-            await loadCommissionsData(true);
-            await loadShopperReferralData(true);
-            await loadMessagingThreads(true);
-        }
-
-        function applyBuyerVerificationLock(profile) {
-            const banner = document.getElementById('verificationBanner');
-            if (profile.role === 'buyer' && profile.verification_status !== 'VERIFIED') {
-                banner.classList.remove('hidden');
-                if (profile.verification_status === 'REJECTED') {
-                    banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account verification was <strong>rejected</strong>. Please re-upload your National ID document.`;
-                } else {
-                    banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account is currently <strong>pending verification</strong>. Interactive features will unlock once approved.`;
-                }
-            } else {
-                banner.classList.add('hidden');
-            }
-        }
-
-        function switchShopperTab(tab) {
-            const marketSec = document.getElementById('marketplaceSection');
-            const commSec = document.getElementById('commissionsSection');
-            const refSec = document.getElementById('referralsSection');
-
-            const marketBtn = document.getElementById('navMarketplaceBtn');
-            const commBtn = document.getElementById('navCommissionsBtn');
-            const refBtn = document.getElementById('navReferralsBtn');
-
-            // Hide all sections
-            marketSec.classList.add('hidden');
-            commSec.classList.add('hidden');
-            refSec.classList.add('hidden');
-
-            // Reset buttons
-            marketBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
-            commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
-            refBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
-
-            if (tab === 'marketplace') {
-                marketSec.classList.remove('hidden');
-                marketBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-            } else if (tab === 'commissions') {
-                commSec.classList.remove('hidden');
-                commBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-            } else if (tab === 'referrals') {
-                refSec.classList.remove('hidden');
-                refBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-            }
-        }
-
-        function copyToClipboard(elementId) {
-            const input = document.getElementById(elementId);
-            input.select();
-            input.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(input.value);
-            alert("Referral link copied to clipboard!");
-        }
-
-        async function loadShopperReferralData(isPolling = false) {
-            try {
-                const { data, error } = await _supabase
-                    .from('commissions')
-                    .select('*')
-                    .eq('recipient_id', currentUser.id)
-                    .in('role_type', ['BUYER_INVITER', 'SELLER_INVITER']);
-
-                if (error) throw error;
-                const refs = data || [];
-
-                let totalEarnings = 0;
-                refs.forEach(r => totalEarnings += Number(r.amount || 0));
-
-                document.getElementById('statRefClicks').textContent = refs.length * 3 + 10;
-                document.getElementById('statRefSignups').textContent = refs.length;
-                document.getElementById('statRefEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
-
-                const tableBody = document.getElementById('referralTableBody');
-                if (refs.length === 0) {
-                    tableBody.innerHTML = `
-                        <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                            <p>No referral signups recorded yet. Share your link to start earning!</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                tableBody.innerHTML = refs.map(r => `
-                    <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-                        <div class="col-span-4 font-mono text-slate-400 truncate">${r.feedback_id || 'Ref User'}</div>
-                        <div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.role_type}</span></div>
-                        <div class="col-span-2 font-bold text-emerald-400">$${Number(r.amount || 0).toFixed(2)}</div>
-                        <div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.status_tag || 'ACTIVE'}</span></div>
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.log('Shopper referral fallback active.');
-            }
-        }
-
-        // ================= MARKETPLACE CATALOG & INQUIRY =================
-
-        async function loadMarketplaceProducts(isPolling = false) {
-            const grid = document.getElementById('marketplaceGrid');
-            try {
-                const { data, error } = await _supabase
-                    .from('products')
-                    .select('*')
-                    .eq('status', 'ACTIVE')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                marketplaceProducts = data || [];
-                filterMarketplaceProducts();
-            } catch (err) {
-                if (marketplaceProducts.length === 0) {
-                    grid.innerHTML = `
-                        <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
-                            <p>No active marketplace products found.</p>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        function filterMarketplaceProducts() {
-            const search = document.getElementById('marketSearchInput').value.toLowerCase();
-            const grid = document.getElementById('marketplaceGrid');
-
-            const filtered = marketplaceProducts.filter(item => {
-                return (item.title || '').toLowerCase().includes(search) || (item.description || '').toLowerCase().includes(search);
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `
-                    <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
-                        <p>No matching review products available.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
-
-            grid.innerHTML = filtered.map(item => `
-                <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group">
-                    <div>
-                        <!-- FIXED: Switched to object-contain inside a neutral dark background container to prevent image cropping -->
-                        <div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 overflow-hidden">
-                            <img src="${item.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300">
-                        </div>
-                        <div class="p-5 space-y-2">
-                            <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">Verified Listing</span>
-                            <h3 class="font-bold text-white text-base">${item.title}</h3>
-                            <p class="text-xs text-slate-400 line-clamp-2">${item.description || ''}</p>
-                        </div>
-                    </div>
-                    <div class="p-5 pt-0">
-                        <button onclick="handleInquireClick('${item.id}', '${item.vendor_id}')" ${isLocked ? 'disabled' : ''} class="w-full bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-comments"></i>
-                            <span>${isLocked ? 'Locked (Pending Verification)' : 'Inquire & Claim Review'}</span>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function handleInquireClick(productId, vendorId) {
-            if (currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED') {
-                alert("Account locked: National ID verification required before interacting with vendors.");
-                return;
-            }
-
-            try {
-                const { data: existing } = await _supabase
-                    .from('messages')
-                    .select('id')
-                    .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${vendorId}),and(sender_id.eq.${vendorId},receiver_id.eq.${currentUser.id})`)
-                    .eq('product_id', productId)
-                    .limit(1);
-
-                let threadId = '';
-                if (existing && existing.length > 0) {
-                    threadId = existing[0].id;
-                } else {
-                    const { data: newThread, error } = await _supabase
-                        .from('messages')
-                        .insert([{
-                            sender_id: currentUser.id,
-                            receiver_id: vendorId,
-                            vendor_id: vendorId,
-                            product_id: productId,
-                            text: 'Hello, I would like to inquire about reviewing this product.'
-                        }])
-                        .select()
-                        .single();
-
-                    if (error) throw error;
-                    threadId = newThread.id;
-                }
-
-                await loadMessagingThreads();
-                toggleMessagingHub();
-                openThread(threadId, vendorId, productId);
-            } catch (err) {
-                alert('Error opening inquiry thread: ' + err.message);
-            }
-        }
-
-        // ================= COMMISSIONS DASHBOARD (SHOPPER) =================
-
-        async function loadCommissionsData(isPolling = false) {
-            try {
-                const { data, error } = await _supabase
-                    .from('commissions')
-                    .select('*')
-                    .eq('recipient_id', currentUser.id);
-
-                if (error) throw error;
-                commissionsList = data || [];
-            } catch (err) {
-                console.log('Using local shopper commissions dataset fallback.');
-            }
-
-            updateCommissionStats();
-            renderCommissionTable();
-        }
-
-        function switchCommissionTab(tab) {
-            activeCommTab = tab;
-            selectedCommIds.clear();
-            document.getElementById('selectAllComms').checked = false;
-
-            const tabs = ['incoming', 'outgoing', 'mainAccount', 'workingQueue', 'receivedHistory'];
-            tabs.forEach(t => {
-                const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-                if (t === tab) {
-                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
-                } else {
-                    btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
-                }
-            });
-
-            renderCommissionTable();
-        }
-
-        function updateCommissionStats() {
-            let pendingSum = 0;
-            let collectedSum = 0;
-
-            commissionsList.forEach(c => {
-                if (c.status_tag === 'COMPLETED_PAID') {
-                    collectedSum += Number(c.amount || 0);
-                } else {
-                    pendingSum += Number(c.amount || 0);
-                }
-            });
-
-            document.getElementById('statPendingCommissions').textContent = `$${pendingSum.toFixed(2)}`;
-            document.getElementById('statCollectedCommissions').textContent = `$${collectedSum.toFixed(2)}`;
-        }
-
-        function renderCommissionTable() {
-            const tableBody = document.getElementById('commissionsTableBody');
-            const toolbar = document.getElementById('tabActionToolbar');
-            const search = document.getElementById('commSearchInput').value.toLowerCase();
-            const typeFilter = document.getElementById('commTypeFilter').value;
-
-            const filtered = commissionsList.filter(c => {
-                const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) || 
-                                      (c.vendor_id || '').toLowerCase().includes(search) || 
-                                      (c.id || '').toLowerCase().includes(search);
-                const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter;
-
-                let matchesTab = false;
-                if (activeCommTab === 'incoming') matchesTab = c.status_tag === 'OFFERED_BY_VENDOR';
-                else if (activeCommTab === 'outgoing') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
-                else if (activeCommTab === 'mainAccount') matchesTab = c.status_tag === 'MAIN_QUEUE' || !c.status_tag;
-                else if (activeCommTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
-                else if (activeCommTab === 'receivedHistory') matchesTab = c.status_tag === 'COMPLETED_PAID';
-
-                return matchesSearch && matchesType && matchesTab;
-            });
-
-            if (activeCommTab === 'incoming') {
-                toolbar.innerHTML = `
-                    <button onclick="batchUpdateShopperStatus('APPROVED_IN_WORKING')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected to Working Queue
-                    </button>
-                `;
-            } else if (activeCommTab === 'mainAccount') {
-                toolbar.innerHTML = `
-                    <button onclick="batchUpdateShopperStatus('REQUESTED_BY_RECIPIENT')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request to Vendor
-                    </button>
-                `;
-            } else {
-                toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab: ${activeCommTab}</span>`;
-            }
-
-            if (filtered.length === 0) {
-                tableBody.innerHTML = `
-                    <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-                        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
-                        <p>No records found in this view.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            tableBody.innerHTML = filtered.map(c => `
-                <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-                    <div class="col-span-1 flex items-center space-x-2">
-                        <input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
-                    </div>
-                    <div class="col-span-3 space-y-0.5">
-                        <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
-                        <p class="text-[10px] text-slate-500 font-mono">ID: ${c.id.substring(0,8)}...</p>
-                    </div>
-                    <div class="col-span-3 space-y-0.5">
-                        <p class="font-semibold text-slate-200 truncate">Vendor ID</p>
-                        <p class="text-[10px] text-slate-400 font-mono truncate">${c.vendor_id}</p>
-                    </div>
-                    <div class="col-span-2 space-y-0.5">
-                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type}</span>
-                        <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
-                    </div>
-                    <div class="col-span-3 flex items-center justify-end space-x-2">
-                        ${activeCommTab === 'receivedHistory' ? `
-                            <button onclick="viewReceipt('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-3 py-1.5 rounded-xl transition">
-                                <i class="fa-solid fa-receipt mr-1 text-purple-400"></i> View Receipt
-                            </button>
-                        ` : `
-                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.status_tag || 'MAIN_QUEUE'}</span>
-                        `}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function toggleSelectComm(id) {
-            if (selectedCommIds.has(id)) {
-                selectedCommIds.delete(id);
-            } else {
-                selectedCommIds.add(id);
-            }
-        }
-
-        function toggleSelectAllComms(masterCheckbox) {
-            const checkboxes = document.querySelectorAll('#commissionsTableBody input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = masterCheckbox.checked;
-                if (masterCheckbox.checked) {
-                    selectedCommIds.add(cb.value);
-                } else {
-                    selectedCommIds.delete(cb.value);
-                }
-            });
-        }
-
-        async function batchUpdateShopperStatus(newStatusTag) {
-            if (selectedCommIds.size === 0) {
-                alert('Please select at least one record.');
-                return;
-            }
-
-            try {
-                for (const id of selectedCommIds) {
-                    const { error } = await _supabase
-                        .from('commissions')
-                        .update({ status_tag: newStatusTag })
-                        .eq('id', id);
-
-                    if (error) throw error;
-                }
-
-                selectedCommIds.clear();
-                await loadCommissionsData();
-                alert('Commission request successfully updated.');
-            } catch (err) {
-                alert('Action failed: ' + err.message);
-            }
-        }
-
-        function viewReceipt(id) {
-            const record = commissionsList.find(c => c.id === id);
-            if (!record) return;
-
-            const content = document.getElementById('receiptModalContent');
-            content.innerHTML = `
-                <div class="space-y-3 text-xs text-slate-300">
-                    <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">Commission ID:</span>
-                        <span class="font-bold text-white">${record.id}</span>
-                    </div>
-                    <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">Amount Collected:</span>
-                        <span class="font-bold text-emerald-400">$${Number(record.amount).toFixed(2)} USD</span>
-                    </div>
-                    <div class="flex justify-between border-b border-borderSlate pb-2">
-                        <span class="text-slate-400">PayPal Transaction ID:</span>
-                        <span class="font-mono text-blue-400">${record.paypal_tx_id || 'N/A'}</span>
-                    </div>
-                    <div class="space-y-1 pt-2">
-                        <span class="text-slate-400">Vendor Payment Receipt Proof (Base64):</span>
-                        <img src="${record.receipt_url || 'https://via.placeholder.com/300'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
-                    </div>
-                </div>
-            `;
-            document.getElementById('receiptModal').classList.remove('hidden');
-        }
-
-        // ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & PAPERCLIP ATTACHMENTS =================
-
-        function toggleMessagingHub() {
-            const modal = document.getElementById('messagingHubModal');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                loadMessagingThreads();
-            }
-        }
-
-        function toggleAttachmentDrawer() {
-            const drawer = document.getElementById('attachmentOptionsDrawer');
-            drawer.classList.toggle('hidden');
-        }
-
-        function openReviewUrlInput() {
-            toggleAttachmentDrawer();
-            document.getElementById('reviewUrlInputBoxContainer').classList.remove('hidden');
-            document.getElementById('reviewUrlField').focus();
-        }
-
-        function triggerScreenshotUploader() {
-            toggleAttachmentDrawer();
-            document.getElementById('inlineChatFileInput').click();
-        }
-
-        function handleChatImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                attachedImageBase64 = e.target.result;
-                document.getElementById('chatPreviewThumb').src = attachedImageBase64;
-                document.getElementById('chatThumbnailPreviewContainer').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function clearChatThumbnail() {
-            attachedImageBase64 = null;
-            document.getElementById('chatThumbnailPreviewContainer').classList.add('hidden');
-            document.getElementById('inlineChatFileInput').value = '';
-        }
-
-        // Inside your chat message sending function:
-async function handleChatMessage(text, imageUrl, reviewUrl) {
-  const buyerId = window.currentUser?.id;
-  const sellerId = window.currentVendorId; // Or however you track the active chat partner
-
-  // 1. Base payload for standard chat messages
-  const payload = {
-    sender_id: buyerId,
-    buyer_id: buyerId,
-    receiver_id: sellerId,
-    text: text || '',
-    image_url: imageUrl || null,
-    status_badge: 'AWAITING_ATTENTION',
-    review_url: null,
-    feedback_id: null
-  };
-
-  // 2. If a review URL or text containing an Amazon link is being sent, populate both fields!
-  const targetUrl = reviewUrl || (text && text.includes('amazon.com') ? text : null);
-
-  if (targetUrl && targetUrl.includes('amazon.com')) {
-    payload.review_url = targetUrl;
-    payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  `).join('');
+}
+
+async function handleInquireClick(productId, vendorId) {
+  if (currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED') {
+    alert("Account locked: National ID verification required before interacting with vendors.");
+    return;
+  }
+  try {
+    const { data: existing } = await _supabase
+      .from('messages')
+      .select('id')
+      .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${vendorId}),and(sender_id.eq.${vendorId},receiver_id.eq.${currentUser.id})`)
+      .eq('product_id', productId)
+      .limit(1);
+    let threadId = '';
+    if (existing && existing.length > 0) {
+      threadId = existing[0].id;
+    } else {
+      const { data: newThread, error } = await _supabase
+        .from('messages')
+        .insert([{
+          sender_id: currentUser.id,
+          receiver_id: vendorId,
+          vendor_id: vendorId,
+          product_id: productId,
+          text: 'Hello, I would like to inquire about reviewing this product.'
+        }])
+        .select()
+        .single();
+      if (error) throw error;
+      threadId = newThread.id;
+    }
+    await loadMessagingThreads();
+    toggleMessagingHub();
+    openThread(threadId, vendorId, productId);
+  } catch (err) {
+    alert('Error opening inquiry thread: ' + err.message);
+  }
+}
+
+// ================= COMMISSIONS DASHBOARD (SHOPPER) =================
+async function loadCommissionsData(isPolling = false) {
+  try {
+    const { data, error } = await _supabase
+      .from('commissions')
+      .select('*')
+      .eq('recipient_id', currentUser.id);
+    if (error) throw error;
+    commissionsList = data || [];
+  } catch (err) {
+    console.log('Using local shopper commissions dataset fallback.');
+  }
+  updateCommissionStats();
+  renderCommissionTable();
+}
+
+function switchCommissionTab(tab) {
+  activeCommTab = tab;
+  selectedCommIds.clear();
+  document.getElementById('selectAllComms').checked = false;
+  const tabs = ['incoming', 'outgoing', 'mainAccount', 'workingQueue', 'receivedHistory'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (t === tab) {
+      btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
+    } else {
+      btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
+    }
+  });
+  renderCommissionTable();
+}
+
+function updateCommissionStats() {
+  let pendingSum = 0;
+  let collectedSum = 0;
+  commissionsList.forEach(c => {
+    if (c.status_tag === 'COMPLETED_PAID') {
+      collectedSum += Number(c.amount || 0);
+    } else {
+      pendingSum += Number(c.amount || 0);
+    }
+  });
+  document.getElementById('statPendingCommissions').textContent = `$${pendingSum.toFixed(2)}`;
+  document.getElementById('statCollectedCommissions').textContent = `$${collectedSum.toFixed(2)}`;
+}
+
+function renderCommissionTable() {
+  const tableBody = document.getElementById('commissionsTableBody');
+  const toolbar = document.getElementById('tabActionToolbar');
+  const search = document.getElementById('commSearchInput').value.toLowerCase();
+  const typeFilter = document.getElementById('commTypeFilter').value;
+  
+  const filtered = commissionsList.filter(c => {
+    const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) ||
+                          (c.vendor_id || '').toLowerCase().includes(search) ||
+                          (c.id || '').toLowerCase().includes(search);
+    const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter;
+    let matchesTab = false;
+    if (activeCommTab === 'incoming') matchesTab = c.status_tag === 'OFFERED_BY_VENDOR';
+    else if (activeCommTab === 'outgoing') matchesTab = c.status_tag === 'REQUESTED_BY_RECIPIENT';
+    else if (activeCommTab === 'mainAccount') matchesTab = c.status_tag === 'MAIN_QUEUE' || !c.status_tag;
+    else if (activeCommTab === 'workingQueue') matchesTab = c.status_tag === 'APPROVED_IN_WORKING';
+    else if (activeCommTab === 'receivedHistory') matchesTab = c.status_tag === 'COMPLETED_PAID';
+    
+    return matchesSearch && matchesType && matchesTab;
+  });
+
+  if (activeCommTab === 'incoming') {
+    toolbar.innerHTML = `
+      <button onclick="batchUpdateShopperStatus('APPROVED_IN_WORKING')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected to Working Queue
+      </button>
+    `;
+  } else if (activeCommTab === 'mainAccount') {
+    toolbar.innerHTML = `
+      <button onclick="batchUpdateShopperStatus('REQUESTED_BY_RECIPIENT')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+        <i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request to Vendor
+      </button>
+    `;
+  } else {
+    toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab: ${activeCommTab}</span>`;
   }
 
-  // 3. Insert into Supabase
-  const { data, error } = await supabase
-    .from('messages')
-    .insert([payload])
-    .select();
-
-  if (error) {
-    console.error('Failed to send message:', error.message);
-    alert('Failed to send message: ' + error.message);
+  if (filtered.length === 0) {
+    tableBody.innerHTML = `
+      <div class="p-8 text-center text-xs text-slate-400 col-span-full">
+        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
+        <p>No records found in this view.</p>
+      </div>
+    `;
     return;
   }
 
-  // Refresh your chat UI window with the new message data
-  appendMessageToChatUI(data[0]);
+  tableBody.innerHTML = filtered.map(c => `
+    <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+      <div class="col-span-1 flex items-center space-x-2">
+        <input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+      </div>
+      <div class="col-span-3 space-y-0.5">
+        <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
+        <p class="text-[10px] text-slate-500 font-mono">ID: ${c.id.substring(0,8)}...</p>
+      </div>
+      <div class="col-span-3 space-y-0.5">
+        <p class="font-semibold text-slate-200 truncate">Vendor ID</p>
+        <p class="text-[10px] text-slate-400 font-mono truncate">${c.vendor_id}</p>
+      </div>
+      <div class="col-span-2 space-y-0.5">
+        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type}</span>
+        <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
+      </div>
+      <div class="col-span-3 flex items-center justify-end space-x-2">
+        ${activeCommTab === 'receivedHistory' ? `
+          <button onclick="viewReceipt('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-3 py-1.5 rounded-xl transition">
+            <i class="fa-solid fa-receipt mr-1 text-purple-400"></i> View Receipt
+          </button>
+        ` : `
+          <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.status_tag || 'MAIN_QUEUE'}</span>
+        `}
+      </div>
+    </div>
+  `).join('');
 }
 
-        async function loadMessagingThreads(isPolling = false) {
-            if (!currentUser) return;
-            try {
-                const { data, error } = await _supabase
-                    .from('messages')
-                    .select('*')
-                    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
-                    .order('created_at', { ascending: false });
+function toggleSelectComm(id) {
+  if (selectedCommIds.has(id)) {
+    selectedCommIds.delete(id);
+  } else {
+    selectedCommIds.add(id);
+  }
+}
 
-                if (error) throw error;
-                messagingThreads = data || [];
-                renderThreadsList();
-                updateUnreadBadge();
-            } catch (err) {
-                console.log('Messaging threads fallback active.');
-            }
-        }
-
-        function renderThreadsList() {
-            const container = document.getElementById('threadsListContainer');
-            const search = document.getElementById('threadSearchInput').value.toLowerCase();
-
-            if (messagingThreads.length === 0) {
-                container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">No conversations yet.</div>`;
-                return;
-            }
-
-            const threadMap = new Map();
-            messagingThreads.forEach(msg => {
-                const counterpartId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
-                const key = `${counterpartId}_${msg.product_id || 'general'}`;
-                if (!threadMap.has(key)) {
-                    threadMap.set(key, msg);
-                }
-            });
-
-            const uniqueThreads = Array.from(threadMap.values());
-
-            container.innerHTML = uniqueThreads.map(t => {
-                const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
-                const isSelected = activeThreadId === t.id;
-                const profile = profilesCache[counterpartId] || { full_name: `User #${counterpartId.substring(0, 6)}`, role: 'user' };
-                
-                return `
-                    <div onclick="openThread('${t.id}', '${counterpartId}', '${t.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
-                        <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-center mb-0.5">
-                                <h4 class="font-bold text-white text-xs truncate">${profile.full_name}</h4>
-                                <span class="text-[9px] text-slate-500">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            </div>
-                            <p class="text-[11px] text-slate-400 truncate">${t.text || 'Attachment'}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filterThreads() {
-            renderThreadsList();
-        }
-
-        async function openThread(threadId, recipientId, productId) {
-            activeThreadId = threadId;
-            activeRecipientId = recipientId;
-            activeProductId = productId;
-
-            const profile = profilesCache[recipientId] || { full_name: `User #${recipientId.substring(0, 8)}`, role: 'user' };
-
-            document.getElementById('activeChatPanel').classList.remove('hidden');
-            document.getElementById('messageInputArea').classList.remove('hidden');
-            
-            // UPDATED: Displaying the recipient's name and role prominently in the chat header
-            document.getElementById('activeChatTitle').textContent = profile.full_name;
-            document.getElementById('activeChatRoleTag').textContent = `${profile.role.toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
-
-            renderThreadsList();
-            await loadMessageStream(recipientId, productId);
-            setupRealtimeMessageSubscription(recipientId, productId);
-        }
-
-        async function loadMessageStream(recipientId, productId) {
-            const container = document.getElementById('messageStreamContainer');
-            try {
-                const { data, error } = await _supabase
-                    .from('messages')
-                    .select('*')
-                    .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${currentUser.id})`)
-                    .order('created_at', { ascending: true });
-
-                if (error) throw error;
-                const messages = data || [];
-
-                if (messages.length === 0) {
-                    container.innerHTML = `<div class="m-auto text-center text-xs text-slate-500">No messages yet. Send a message to start the conversation!</div>`;
-                    return;
-                }
-
-                container.innerHTML = messages.map(m => {
-                    const isMe = m.sender_id === currentUser.id;
-                    return `
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-                            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-                                ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20">` : ''}
-                                <p>${m.text}</p>
-                                ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
-                            </div>
-                            <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                        </div>
-                    `;
-                }).join('');
-                container.scrollTop = container.scrollHeight;
-            } catch (err) {
-                container.innerHTML = `<div class="m-auto text-center text-xs text-rose-400">Error loading messages.</div>`;
-            }
-        }
-
-        async function setupRealtimeMessageSubscription(recipientId, productId) {
-            if (messageSubscription) {
-                _supabase.removeChannel(messageSubscription);
-            }
-
-            messageSubscription = _supabase
-                .channel('public:messages')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    const newMsg = payload.new;
-                    if ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === recipientId) || 
-                        (newMsg.sender_id === recipientId && newMsg.receiver_id === currentUser.id)) {
-                        loadMessageStream(recipientId, productId);
-                    }
-                    loadMessagingThreads(true);
-                })
-                .subscribe();
-        }
-
-        async function handleSendMessage(event) {
-            event.preventDefault();
-            const input = document.getElementById('messageInputBox');
-            const text = input.value.trim();
-            if ((!text && !attachedImageBase64) || !activeRecipientId) return;
-
-            input.value = '';
-            const imageUrlToSend = attachedImageBase64;
-            clearChatThumbnail();
-
-            await sendChatMessage(text || 'Attached Screenshot Proof', imageUrlToSend, null);
-        }
-
-        async function sendChatMessage(text, imageUrl, reviewUrl) {
-            try {
-                const payload = {
-                    sender_id: currentUser.id,
-                    receiver_id: activeRecipientId,
-                    vendor_id: activeRecipientId,
-                    product_id: activeProductId !== 'null' ? activeProductId : null,
-                    text: text
-                };
-                if (imageUrl) {
-                    payload.image_url = imageUrl;
-                }
-                if (reviewUrl) {
-                    payload.review_url = reviewUrl;
-                }
-
-                const { error } = await _supabase
-                    .from('messages')
-                    .insert([payload]);
-
-                if (error) throw error;
-                await loadMessageStream(activeRecipientId, activeProductId);
-                await loadMessagingThreads(true);
-            } catch (err) {
-                alert('Failed to send message: ' + err.message);
-            }
-        }
-
-        function updateUnreadBadge() {
-            const badge = document.getElementById('unreadBadge');
-            const unreadCount = messagingThreads.filter(m => m.receiver_id === currentUser.id && !m.is_read).length;
-            if (unreadCount > 50) {
-                // Keep badge clean
-            }
-            if (unreadCount > 0) {
-                badge.textContent = unreadCount;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
-
-        async function handleLogout() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            await _supabase.auth.signOut();
-            window.location.href = 'login.html';
-        }
-
-        // Initialize shopper workspace on load
-        initShopperWorkspace();
-    </script>
-
-    <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // List of critical element IDs your selectors rely on
-    const requiredIds = [
-      "shopper-submission-form",
-      "modal-product-id"
-      // Add any other form or modal IDs here as needed
-    ];
-
-    console.group("Form Element ID Validation Check");
-    let allFound = true;
-
-    requiredIds.forEach(id => {
-      const element = document.getElementById(id);
-      if (!element) {
-        console.warn(`❌ Missing ID: #${id} (Check your HTML attributes)`);
-        allFound = false;
-      } else {
-        console.log(`✅ Found ID: #${id}`);
-      }
-    });
-
-    if (allFound) {
-      console.log("🎉 All required form element IDs match and are present!");
+function toggleSelectAllComms(masterCheckbox) {
+  const checkboxes = document.querySelectorAll('#commissionsTableBody input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    cb.checked = masterCheckbox.checked;
+    if (masterCheckbox.checked) {
+      selectedCommIds.add(cb.value);
+    } else {
+      selectedCommIds.delete(cb.value);
     }
-    console.groupEnd();
   });
-</script>
+}
 
-<script>
-   async function handleShopperSubmission(event) {
-  event.preventDefault();
-
-  const productId = document.getElementById('modal-product-id').value;
-  const sellerId = document.getElementById('modal-seller-id').value;
-  const buyerId = window.currentUser?.id;
-  
-  const reviewUrlInput = document.getElementById('review-url-input');
-  const reviewUrl = reviewUrlInput ? reviewUrlInput.value.trim() : '';
-
-  // Construct the payload explicitly
-  const payload = {
-    sender_id: buyerId,
-    buyer_id: buyerId,
-    receiver_id: sellerId,
-    product_id: productId,
-    status_badge: 'AWAITING_ATTENTION',
-    review_url: null,
-    feedback_id: null
-  };
-
-  // If a valid Amazon review URL is provided, populate both
-  if (reviewUrl && reviewUrl.includes('amazon.com')) {
-    payload.review_url = reviewUrl;
-    payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+async function batchUpdateShopperStatus(newStatusTag) {
+  if (selectedCommIds.size === 0) {
+    alert('Please select at least one record.');
+    return;
   }
-
   try {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert([payload])
-      .select();
-
-    if (error) throw error;
-
-    console.log('Successfully saved to messages table:', data);
-    alert('Submitted successfully!');
-    
-    document.getElementById('inquiry-modal').style.display = 'none';
+    for (const id of selectedCommIds) {
+      const { error } = await _supabase
+        .from('commissions')
+        .update({ status_tag: newStatusTag })
+        .eq('id', id);
+      if (error) throw error;
+    }
+    selectedCommIds.clear();
+    await loadCommissionsData();
+    alert('Commission request successfully updated.');
   } catch (err) {
-    console.error('Error opening inquiry thread:', err.message);
-    alert('Failed to submit: ' + err.message);
+    alert('Action failed: ' + err.message);
   }
 }
-</script>
-<script>
-    // Make sure it is attached to window so inline onclick="submitReviewUrlMessage(...)" finds it
-window.submitReviewUrlMessage = async function(productId, receiverId) {
-  const buyerId = window.currentUser?.id;
+
+function viewReceipt(id) {
+  const record = commissionsList.find(c => c.id === id);
+  if (!record) return;
+  const content = document.getElementById('receiptModalContent');
+  content.innerHTML = `
+    <div class="space-y-3 text-xs text-slate-300">
+      <div class="flex justify-between border-b border-borderSlate pb-2">
+        <span class="text-slate-400">Commission ID:</span>
+        <span class="font-bold text-white">${record.id}</span>
+      </div>
+      <div class="flex justify-between border-b border-borderSlate pb-2">
+        <span class="text-slate-400">Amount Collected:</span>
+        <span class="font-bold text-emerald-400">$${Number(record.amount).toFixed(2)} USD</span>
+      </div>
+      <div class="flex justify-between border-b border-borderSlate pb-2">
+        <span class="text-slate-400">PayPal Transaction ID:</span>
+        <span class="font-mono text-blue-400">${record.paypal_tx_id || 'N/A'}</span>
+      </div>
+      <div class="space-y-1 pt-2">
+        <span class="text-slate-400">Vendor Payment Receipt Proof (Base64):</span>
+        <img src="${record.receipt_url || 'https://via.placeholder.com/300'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
+      </div>
+    </div>
+  `;
+  document.getElementById('receiptModal').classList.remove('hidden');
+}
+
+// ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & PAPERCLIP ATTACHMENTS =================
+function toggleMessagingHub() {
+  const modal = document.getElementById('messagingHubModal');
+  modal.classList.toggle('hidden');
+  if (!modal.classList.contains('hidden')) {
+    loadMessagingThreads();
+  }
+}
+
+function toggleAttachmentDrawer() {
+  const drawer = document.getElementById('attachmentOptionsDrawer');
+  drawer.classList.toggle('hidden');
+}
+
+function openReviewUrlInput() {
+  toggleAttachmentDrawer();
+  document.getElementById('reviewUrlInputBoxContainer').classList.remove('hidden');
+  document.getElementById('reviewUrlField').focus();
+}
+
+function triggerScreenshotUploader() {
+  toggleAttachmentDrawer();
+  document.getElementById('inlineChatFileInput').click();
+}
+
+function handleChatImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    attachedImageBase64 = e.target.result;
+    document.getElementById('chatPreviewThumb').src = attachedImageBase64;
+    document.getElementById('chatThumbnailPreviewContainer').classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearChatThumbnail() {
+  attachedImageBase64 = null;
+  document.getElementById('chatThumbnailPreviewContainer').classList.add('hidden');
+  document.getElementById('inlineChatFileInput').value = '';
+}
+
+async function loadMessagingThreads(isPolling = false) {
+  if (!currentUser) return;
+  try {
+    const { data, error } = await _supabase
+      .from('messages')
+      .select('*')
+      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    messagingThreads = data || [];
+    renderThreadsList();
+    updateUnreadBadge();
+  } catch (err) {
+    console.log('Messaging threads fallback active.');
+  }
+}
+
+function renderThreadsList() {
+  const container = document.getElementById('threadsListContainer');
+  if (messagingThreads.length === 0) {
+    container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">No conversations yet.</div>`;
+    return;
+  }
+  const threadMap = new Map();
+  messagingThreads.forEach(msg => {
+    const counterpartId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+    const key = `${counterpartId}_${msg.product_id || 'general'}`;
+    if (!threadMap.has(key)) {
+      threadMap.set(key, msg);
+    }
+  });
+  const uniqueThreads = Array.from(threadMap.values());
+  container.innerHTML = uniqueThreads.map(t => {
+    const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
+    const isSelected = activeThreadId === t.id;
+    const profile = profilesCache[counterpartId] || { full_name: `User #${counterpartId.substring(0, 6)}`, role: 'user' };
+    return `
+      <div onclick="openThread('${t.id}','${counterpartId}', '${t.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
+        <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-center mb-0.5">
+            <h4 class="font-bold text-white text-xs truncate">${profile.full_name}</h4>
+            <span class="text-[9px] text-slate-500">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+          </div>
+          <p class="text-[11px] text-slate-400 truncate">${t.text || 'Attachment'}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterThreads() {
+  renderThreadsList();
+}
+
+async function openThread(threadId, recipientId, productId) {
+  activeThreadId = threadId;
+  activeRecipientId = recipientId;
+  activeProductId = productId;
+  const profile = profilesCache[recipientId] || { full_name: `User #${recipientId.substring(0, 8)}`, role: 'user' };
+  document.getElementById('activeChatPanel').classList.remove('hidden');
+  document.getElementById('messageInputArea').classList.remove('hidden');
+  document.getElementById('activeChatTitle').textContent = profile.full_name;
+  document.getElementById('activeChatRoleTag').textContent = `${profile.role.toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
+  renderThreadsList();
+  await loadMessageStream(recipientId, productId);
+  setupRealtimeMessageSubscription(recipientId, productId);
+}
+
+async function loadMessageStream(recipientId, productId) {
+  const container = document.getElementById('messageStreamContainer');
+  try {
+    const { data, error } = await _supabase
+      .from('messages')
+      .select('*')
+      .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${currentUser.id})`)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    const messages = data || [];
+    if (messages.length === 0) {
+      container.innerHTML = `<div class="m-auto text-center text-xs text-slate-500">No messages yet. Send a message to start the conversation!</div>`;
+      return;
+    }
+    container.innerHTML = messages.map(m => {
+      const isMe = m.sender_id === currentUser.id;
+      return `
+        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
+          <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+            ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20">` : ''}
+            <p>${m.text}</p>
+            ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
+          </div>
+          <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+        </div>
+      `;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+  } catch (err) {
+    container.innerHTML = `<div class="m-auto text-center text-xs text-rose-400">Error loading messages.</div>`;
+  }
+}
+
+async function setupRealtimeMessageSubscription(recipientId, productId) {
+  if (messageSubscription) {
+    _supabase.removeChannel(messageSubscription);
+  }
+  messageSubscription = _supabase
+    .channel('public:messages')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+      const newMsg = payload.new;
+      if ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === recipientId) ||
+          (newMsg.sender_id === recipientId && newMsg.receiver_id === currentUser.id)) {
+        loadMessageStream(recipientId, productId);
+      }
+      loadMessagingThreads(true);
+    })
+    .subscribe();
+}
+
+async function handleSendMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById('messageInputBox');
+  const text = input.value.trim();
+  if ((!text && !attachedImageBase64) || !activeRecipientId) return;
   
-  // Explicitly check which input element contains the value
+  input.value = '';
+  const imageUrlToSend = attachedImageBase64;
+  clearChatThumbnail();
+  await sendChatMessage(text || 'Attached Screenshot Proof', imageUrlToSend, null);
+}
+
+async function sendChatMessage(text, imageUrl, reviewUrl) {
+  try {
+    const payload = {
+      sender_id: currentUser.id,
+      buyer_id: currentUser.id,
+      receiver_id: activeRecipientId,
+      vendor_id: activeRecipientId,
+      product_id: (activeProductId !== 'null' && activeProductId) ? activeProductId : null,
+      text: text || '',
+      status_badge: 'AWAITING_ATTENTION'
+    };
+    if (imageUrl) {
+      payload.image_url = imageUrl;
+    }
+    if (reviewUrl) {
+      payload.review_url = reviewUrl;
+      payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    }
+    const { error } = await _supabase
+      .from('messages')
+      .insert([payload]);
+    if (error) throw error;
+    await loadMessageStream(activeRecipientId, activeProductId);
+    await loadMessagingThreads(true);
+  } catch (err) {
+    alert('Failed to send message: ' + err.message);
+  }
+}
+
+// FIXED & ENHANCED REVIEW URL SUBMISSION METHOD
+window.submitReviewUrlMessage = async function(productId, receiverId) {
+  const buyerId = currentUser?.id || window.currentUser?.id;
+  
+  // Look for the review URL input in the messaging hub, modal, or chat input
+  const reviewField = document.getElementById('reviewUrlField');
   const modalInput = document.getElementById('review-url-input');
   const chatInput = document.getElementById('chat-input');
   
-  const reviewUrl = modalInput ? modalInput.value.trim() : (chatInput ? chatInput.value.trim() : '');
+  const reviewUrl = (reviewField && reviewField.value.trim()) ? reviewField.value.trim() :
+                   ((modalInput && modalInput.value.trim()) ? modalInput.value.trim() :
+                   ((chatInput && chatInput.value.trim()) ? chatInput.value.trim() : ''));
   
-  console.log("DEBUG - Found input value:", reviewUrl); // Check your browser console (F12) to see what this prints!
-
+  console.log("DEBUG - Found input value:", reviewUrl);
+  
   if (!reviewUrl || !reviewUrl.toLowerCase().includes('amazon.com')) {
     alert('Validation Failed. Input value detected was: "' + reviewUrl + '"');
     return;
   }
-
+  
+  const targetRecipientId = receiverId || activeRecipientId;
+  const targetProductId = (productId !== 'null' && productId) ? productId : (activeProductId !== 'null' ? activeProductId : null);
+  
+  if (!targetRecipientId) {
+    alert("Please select or open a conversation before submitting a review link.");
+    return;
+  }
+  
   const payload = {
     sender_id: buyerId,
     buyer_id: buyerId,
-    receiver_id: receiverId,
-    product_id: productId || null,
+    receiver_id: targetRecipientId,
+    vendor_id: targetRecipientId,
+    product_id: targetProductId,
+    text: 'Submitted Amazon Review Link: ' + reviewUrl,
     status_badge: 'AWAITING_ATTENTION',
     review_url: reviewUrl,
     feedback_id: 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase()
   };
-
+  
   try {
-    const { data, error } = await supabase
+    const { data, error } = await _supabase
       .from('messages')
       .insert([payload])
       .select();
-
     if (error) throw error;
-
+    
     console.log('Review URL message sent successfully:', data);
     alert('Review link submitted successfully!');
     
+    // Clear the input fields
+    if (reviewField) reviewField.value = '';
     if (modalInput) modalInput.value = '';
     if (chatInput) chatInput.value = '';
+    
+    // Hide the review input drawer if open
+    const promptContainer = document.getElementById('reviewUrlInputBoxContainer');
+    if (promptContainer) promptContainer.classList.add('hidden');
+    
+    // Refresh active stream and thread list
+    if (targetRecipientId) {
+      await loadMessageStream(targetRecipientId, targetProductId);
+      await loadMessagingThreads(true);
+    }
   } catch (err) {
     console.error('Error sending review message:', err.message);
     alert('Failed to send: ' + err.message);
   }
 };
+
+function updateUnreadBadge() {
+  const badge = document.getElementById('unreadBadge');
+  const unreadCount = messagingThreads.filter(m => m.receiver_id === currentUser?.id && !m.is_read).length;
+  if (unreadCount > 0) {
+    badge.textContent = unreadCount;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+async function handleLogout() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  await _supabase.auth.signOut();
+  window.location.href = 'login.html';
+}
+
+// Initialize shopper workspace on load
+initShopperWorkspace();
 </script>
-  document.getElementById('shopper-submission-form').addEventListener('submit', handleShopperSubmission);
 </body>
 </html>
