@@ -329,8 +329,12 @@
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <div>
+                            <!-- UPDATED: Ensuring recipient name/status is prominently displayed in the chat interface header -->
                             <h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
-                            <span id="activeChatSubtitle" class="text-[10px] text-slate-400">Vendor / Shopper Chat</span>
+                            <span id="activeChatSubtitle" class="text-[10px] text-slate-400 flex items-center space-x-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                <span id="activeChatRoleTag">Vendor / Shopper Chat</span>
+                            </span>
                         </div>
                     </div>
                     <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
@@ -432,110 +436,7 @@
         let activeProductId = null;
         let messageSubscription = null;
         let attachedImageBase64 = null;
-        let pollInterval = null;
-
-        // Helper to render styled status badges for review submission messages
-        function renderReviewStatusBadge(statusBadge, feedbackId = null) {
-          switch (statusBadge) {
-            case 'AWAITING_ATTENTION':
-              return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        ⏳ Awaiting Vendor Approval
-                      </span>`;
-
-            case 'APPROVED':
-              return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        ✅ Approved ${feedbackId ? `(${feedbackId})` : ''}
-                      </span>`;
-
-            case 'DENIED':
-              return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                        ❌ Submission Denied
-                      </span>`;
-
-            case 'PAID_COMPLETED':
-              return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        💰 Paid &amp; Completed
-                      </span>`;
-
-            default:
-              return '';
-          }
-        }
-
-        // Message Bubble Rendering Logic
-        function renderMessageBubble(msg) {
-          const isReviewSubmission = Boolean(msg.review_url);
-          const isMe = msg.sender_id === currentUser.id;
-
-          if (isReviewSubmission) {
-            return `
-              <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-                <div class="max-w-[85%] sm:max-w-[75%] bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 shadow-xl ${isMe ? 'rounded-br-none' : 'rounded-bl-none'}">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-borderSlate pb-2.5">
-                      <span class="font-bold text-white text-xs flex items-center space-x-1.5"><i class="fa-solid fa-shield-halved text-blue-400"></i><span>Review Submission</span></span>
-                      ${renderReviewStatusBadge(msg.status_badge, msg.feedback_id)}
-                    </div>
-                    <div class="bg-darkBg/80 p-2.5 rounded-xl border border-borderSlate/60">
-                      <a href="${msg.review_url}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-400 hover:text-blue-300 underline break-all flex items-center space-x-2">
-                        <span>🔗</span>
-                        <span class="truncate">${msg.review_url}</span>
-                      </a>
-                    </div>
-                    ${msg.proof_base64 || msg.image_url ? `
-                      <div class="overflow-hidden rounded-xl border border-borderSlate">
-                        <img src="${msg.proof_base64 || msg.image_url}" alt="Review Proof" class="w-full h-36 object-cover">
-                      </div>
-                    ` : ''}
-                </div>
-                <span class="text-[9px] text-slate-500 px-1">${new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              </div>
-            `;
-          }
-
-          // Standard Text Message Bubble
-          return `
-            <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-              <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-                ${msg.image_url ? `<img src="${msg.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20">` : ''}
-                <p>${msg.text || msg.message_text || ''}</p>
-              </div>
-              <span class="text-[9px] text-slate-500 px-1">${new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-          `;
-        }
-
-        // Smart Polling Mechanism for Status Updates
-        function startMessagePolling(buyerId, vendorId, productId) {
-          if (pollInterval) clearInterval(pollInterval);
-
-          pollInterval = setInterval(async () => {
-            const { data: updatedMessages, error } = await _supabase
-              .from('messages')
-              .select('id, status_badge, feedback_id')
-              .eq('buyer_id', buyerId)
-              .eq('vendor_id', vendorId)
-              .eq('product_id', productId)
-              .eq('status_badge', 'AWAITING_ATTENTION');
-
-            if (!error && updatedMessages) {
-              refreshChatUI();
-            }
-          }, 5000);
-        }
-
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden) {
-            clearInterval(pollInterval);
-          } else if (activeRecipientId && activeProductId && currentUser) {
-            startMessagePolling(currentUser.id, activeRecipientId, activeProductId);
-          }
-        });
-
-        function refreshChatUI() {
-          if (activeRecipientId && activeProductId) {
-            loadMessageStream(activeRecipientId, activeProductId);
-          }
-        }
+        let profilesCache = {}; // Cache for user profiles (names & roles)
 
         // Initialize workspace & header user metadata display with robust real-time session checking
         async function initShopperWorkspace() {
@@ -563,6 +464,7 @@
 
             // Read role & verification status safely with profile fallback checks and live polling sync
             await fetchAndUpdateProfileState();
+            await preloadProfiles();
 
             await loadMarketplaceProducts();
             await loadCommissionsData();
@@ -603,8 +505,25 @@
             applyBuyerVerificationLock(currentProfile);
         }
 
+        async function preloadProfiles() {
+            try {
+                const { data, error } = await _supabase.from('profiles').select('id, full_name, role');
+                if (!error && data) {
+                    data.forEach(p => {
+                        profilesCache[p.id] = {
+                            full_name: p.full_name || `User #${p.id.substring(0,6)}`,
+                            role: p.role || 'user'
+                        };
+                    });
+                }
+            } catch (err) {
+                console.log('Profile preload fallback active.');
+            }
+        }
+
         async function pollShopperData() {
             await fetchAndUpdateProfileState();
+            await preloadProfiles();
             await loadMarketplaceProducts(true);
             await loadCommissionsData(true);
             await loadShopperReferralData(true);
@@ -1117,6 +1036,8 @@
             container.innerHTML = uniqueThreads.map(t => {
                 const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
                 const isSelected = activeThreadId === t.id;
+                const profile = profilesCache[counterpartId] || { full_name: `User #${counterpartId.substring(0, 6)}`, role: 'user' };
+                
                 return `
                     <div onclick="openThread('${t.id}', '${counterpartId}', '${t.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
                         <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -1124,10 +1045,10 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-center mb-0.5">
-                                <h4 class="font-bold text-white text-xs truncate">Chat #${counterpartId.substring(0, 6)}</h4>
+                                <h4 class="font-bold text-white text-xs truncate">${profile.full_name}</h4>
                                 <span class="text-[9px] text-slate-500">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                             </div>
-                            <p class="text-[11px] text-slate-400 truncate">${t.text || t.message_text || 'Attachment'}</p>
+                            <p class="text-[11px] text-slate-400 truncate">${t.text || 'Attachment'}</p>
                         </div>
                     </div>
                 `;
@@ -1143,15 +1064,18 @@
             activeRecipientId = recipientId;
             activeProductId = productId;
 
+            const profile = profilesCache[recipientId] || { full_name: `User #${recipientId.substring(0, 8)}`, role: 'user' };
+
             document.getElementById('activeChatPanel').classList.remove('hidden');
             document.getElementById('messageInputArea').classList.remove('hidden');
-            document.getElementById('activeChatTitle').textContent = `Chat with User #${recipientId.substring(0, 8)}`;
-            document.getElementById('activeChatSubtitle').textContent = productId ? `Product Review Inquiry ID: ${productId.substring(0, 8)}` : `Direct Inquiry`;
+            
+            // UPDATED: Displaying the recipient's name and role prominently in the chat header
+            document.getElementById('activeChatTitle').textContent = profile.full_name;
+            document.getElementById('activeChatRoleTag').textContent = `${profile.role.toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
 
             renderThreadsList();
             await loadMessageStream(recipientId, productId);
             setupRealtimeMessageSubscription(recipientId, productId);
-            startMessagePolling(currentUser.id, recipientId, productId);
         }
 
         async function loadMessageStream(recipientId, productId) {
@@ -1171,24 +1095,36 @@
                     return;
                 }
 
-                container.innerHTML = messages.map(m => renderMessageBubble(m)).join('');
+                container.innerHTML = messages.map(m => {
+                    const isMe = m.sender_id === currentUser.id;
+                    return `
+                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
+                            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+                                ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20">` : ''}
+                                <p>${m.text}</p>
+                                ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
+                            </div>
+                            <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    `;
+                }).join('');
                 container.scrollTop = container.scrollHeight;
             } catch (err) {
                 container.innerHTML = `<div class="m-auto text-center text-xs text-rose-400">Error loading messages.</div>`;
             }
         }
 
-        function setupRealtimeMessageSubscription(recipientId, productId) {
+        async function setupRealtimeMessageSubscription(recipientId, productId) {
             if (messageSubscription) {
                 _supabase.removeChannel(messageSubscription);
             }
 
             messageSubscription = _supabase
                 .channel('public:messages')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-                    const newMsg = payload.new || payload.old;
-                    if (newMsg && ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === recipientId) || 
-                        (newMsg.sender_id === recipientId && newMsg.receiver_id === currentUser.id))) {
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                    const newMsg = payload.new;
+                    if ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === recipientId) || 
+                        (newMsg.sender_id === recipientId && newMsg.receiver_id === currentUser.id)) {
                         loadMessageStream(recipientId, productId);
                     }
                     loadMessagingThreads(true);
@@ -1215,15 +1151,11 @@
                     sender_id: currentUser.id,
                     receiver_id: activeRecipientId,
                     vendor_id: activeRecipientId,
-                    buyer_id: currentUser.id,
                     product_id: activeProductId !== 'null' ? activeProductId : null,
-                    text: text,
-                    message_text: text,
-                    status_badge: reviewUrl ? 'AWAITING_ATTENTION' : null
+                    text: text
                 };
                 if (imageUrl) {
                     payload.image_url = imageUrl;
-                    payload.proof_base64 = imageUrl;
                 }
                 if (reviewUrl) {
                     payload.review_url = reviewUrl;
@@ -1244,6 +1176,9 @@
         function updateUnreadBadge() {
             const badge = document.getElementById('unreadBadge');
             const unreadCount = messagingThreads.filter(m => m.receiver_id === currentUser.id && !m.is_read).length;
+            if (unreadCount > 50) {
+                // Keep badge clean
+            }
             if (unreadCount > 0) {
                 badge.textContent = unreadCount;
                 badge.classList.remove('hidden');
@@ -1254,7 +1189,6 @@
 
         async function handleLogout() {
             if (pollingInterval) clearInterval(pollingInterval);
-            if (pollInterval) clearInterval(pollInterval);
             await _supabase.auth.signOut();
             window.location.href = 'login.html';
         }
