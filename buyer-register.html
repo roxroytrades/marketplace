@@ -193,7 +193,41 @@ const userId = authData.user ? authData.user.id : null;
 if (!userId) {
 throw new Error('User registration failed to return an authenticated ID.');
 }
-// 2. Insert profile record with initial PENDING_VERIFICATION state
+// Helper function to resolve referee/inviter profile UUID safely without Postgres type errors
+async function resolveRefereeProfile(client, rawCode) {
+  if (!rawCode) return { refereeUuid: null, refereeCode: null };
+  let refereeUuid = null;
+  let refereeCode = rawCode;
+  try {
+    const cleanCode = rawCode.replace(/^(vendor_|buyer_|seller_)/i, '').trim();
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanCode);
+
+    if (isUuid) {
+      const { data } = await client.from('profiles').select('id, referral_code').eq('id', cleanCode).maybeSingle();
+      if (data) return { refereeUuid: data.id, refereeCode: data.referral_code || rawCode };
+    }
+
+    const { data: byCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', rawCode).maybeSingle();
+    if (byCode) return { refereeUuid: byCode.id, refereeCode: byCode.referral_code || rawCode };
+
+    const { data: byCleanCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', cleanCode).maybeSingle();
+    if (byCleanCode) return { refereeUuid: byCleanCode.id, refereeCode: byCleanCode.referral_code || rawCode };
+
+    if (cleanCode.length >= 6) {
+      const { data: byPrefix } = await client.from('profiles').select('id, referral_code').ilike('id', cleanCode + '%').limit(1);
+      if (byPrefix && byPrefix.length > 0) {
+        return { refereeUuid: byPrefix[0].id, refereeCode: byPrefix[0].referral_code || rawCode };
+      }
+    }
+  } catch (err) {
+    console.warn('Referee resolution warning:', err);
+  }
+  return { refereeUuid, refereeCode };
+}
+
+const { refereeUuid, refereeCode } = await resolveRefereeProfile(supabaseClient, invitedByCode);
+
+// 3. Insert profile record with referee UUID saved to all referral UUID columns
 const { error: profileError } = await supabaseClient
 .from('profiles')
 .upsert({
@@ -206,7 +240,11 @@ categories: categories,
 national_id_base64: compressedIdBase64,
 role: 'buyer',
 verification_status: 'PENDING_VERIFICATION',
-invited_by_code: invitedByCode,
+invited_by_code: refereeCode,
+referred_by: refereeUuid,
+invited_by: refereeUuid,
+invited_by_id: refereeUuid,
+inviter_id: refereeUuid,
 created_at: new Date().toISOString()
 });
 if (profileError) throw profileError;
@@ -221,3 +259,5 @@ submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i><span>Register Shopp
 </script>
 </body>
 </html>
+
+
