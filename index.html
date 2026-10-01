@@ -740,7 +740,8 @@ let pendingSum = 0;
 let collectedSum = 0;
 commissionsList.forEach(c => {
 const statusVal = (c.status_tag || c.status || '').toUpperCase();
-if (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID') {
+const qType = (c.queue_type || '').toUpperCase();
+if (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') {
 collectedSum += Number(c.amount || 0);
 } else {
 pendingSum += Number(c.amount || 0);
@@ -768,22 +769,26 @@ const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter;
 
 let matchesTab = false;
 if (activeCommTab === 'mainAccount') {
-// Main Account shows all active/approved uncollected commissions assigned to the user
-matchesTab = (queueType === 'MAIN_ACCOUNT' || statusTag === 'MAIN_QUEUE' || statusTag === 'UNREQUESTED_BALANCE' || statusTag === 'APPROVED' || !c.status_tag) && 
+matchesTab = (queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || statusTag === 'MAIN_QUEUE' || statusTag === 'UNREQUESTED_BALANCE' || statusTag === 'APPROVED' || (!c.status_tag && !c.queue_type)) && 
 queueType !== 'WORKING_QUEUE' && 
+queueType !== 'OUTGOING_REQUESTS' && 
+queueType !== 'INCOMING_REQUESTS' && 
+queueType !== 'HISTORY' && 
+queueType !== 'PAYMENT_HISTORY' && 
 statusTag !== 'APPROVED_IN_WORKING' && 
 statusTag !== 'COMPLETED_PAID' && 
+statusTag !== 'PAID' && 
 statusTag !== 'REQUESTED_BY_RECIPIENT' && 
 statusTag !== 'OFFERED_BY_VENDOR' && 
 statusTag !== 'OFFERED_AWAITING_ACCEPTANCE';
 } else if (activeCommTab === 'incoming') {
-matchesTab = statusTag === 'OFFERED_BY_VENDOR' || statusTag === 'OFFERED_AWAITING_ACCEPTANCE';
+matchesTab = statusTag === 'OFFERED_BY_VENDOR' || statusTag === 'OFFERED_AWAITING_ACCEPTANCE' || queueType === 'INCOMING_REQUESTS';
 } else if (activeCommTab === 'outgoing') {
-matchesTab = statusTag === 'REQUESTED_BY_RECIPIENT';
+matchesTab = statusTag === 'REQUESTED_BY_RECIPIENT' || queueType === 'OUTGOING_REQUESTS';
 } else if (activeCommTab === 'workingQueue') {
 matchesTab = queueType === 'WORKING_QUEUE' || statusTag === 'APPROVED_IN_WORKING';
 } else if (activeCommTab === 'receivedHistory') {
-matchesTab = statusTag === 'COMPLETED_PAID' || statusTag === 'PAID';
+matchesTab = queueType === 'HISTORY' || queueType === 'PAYMENT_HISTORY' || statusTag === 'COMPLETED_PAID' || statusTag === 'PAID';
 }
 
 return matchesSearch && matchesType && matchesTab;
@@ -886,7 +891,8 @@ try {
 const { error } = await _supabase
 .from('commissions')
 .update({
-queue_type: 'OUTGOING_REQUESTS',
+queue_type: 'WORKING_QUEUE',
+status_tag: 'REQUESTED_BY_RECIPIENT',
 status: 'REQUESTED_BY_RECIPIENT'
 })
 .eq('id', commId);
@@ -907,10 +913,11 @@ return;
 try {
 for (const id of selectedCommIds) {
 const updateData = {
+status_tag: newStatusTag,
 status: newStatusTag
 };
 if (newStatusTag === 'REQUESTED_BY_RECIPIENT') {
-updateData.queue_type = 'OUTGOING_REQUESTS';
+updateData.queue_type = 'WORKING_QUEUE';
 }
 const { error } = await _supabase
 .from('commissions')
