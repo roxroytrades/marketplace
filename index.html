@@ -70,7 +70,7 @@ eh
 </div>
 </div>
 <!-- Logout Button -->
-<button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
+<button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
 <i class="fa-solid fa-right-from-bracket"></i>
 <span>Sign Out</span>
 </button>
@@ -145,13 +145,13 @@ eh
 </div>
 <!-- Commissions Sub-Tabs Navigation -->
 <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-<button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
+<button onclick="switchCommissionTab('mainAccount')" id="tabMainAccount" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Main Account</button>
+<button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Incoming Requests</button>
 <button onclick="switchCommissionTab('outgoing')" id="tabOutgoing" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Outgoing Requests</button>
-<button onclick="switchCommissionTab('mainAccount')" id="tabMainAccount" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Main Account</button>
 <button onclick="switchCommissionTab('workingQueue')" id="tabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
 <button onclick="switchCommissionTab('receivedHistory')" id="tabReceivedHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Received History</button>
 </div>
-<!-- Action Toolbar -->
+<!-- Tab Content Filters & Action Toolbar -->
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
 <div class="flex items-center space-x-3 w-full sm:w-auto">
 <div class="relative w-full sm:w-72">
@@ -174,7 +174,7 @@ eh
 <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
 <span class="col-span-1 flex items-center space-x-2"><input type="checkbox" id="selectAllComms" onclick="toggleSelectAllComms(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"><span>Select</span></span>
 <span class="col-span-3">Feedback ID</span>
-<span class="col-span-3">Vendor / Role</span>
+<span class="col-span-3">Role & Queue Type</span>
 <span class="col-span-2">Amount</span>
 <span class="col-span-3 text-right">Status & Action</span>
 </div>
@@ -256,18 +256,18 @@ eh
 </div>
 <div id="referralTableBody" class="divide-y divide-borderSlate">
 <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-<i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-<p>Loading referral network history...</p>
+<p>No referral signups recorded yet. Share your link to start earning!</p>
 </div>
 </div>
 </div>
 </div>
 </main>
-<!-- Receipt Viewer Modal -->
+<!-- ================= MODALS ================= -->
+<!-- View Receipt Modal -->
 <div id="receiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-3">
-<h3 class="text-sm font-bold text-white">Payment Receipt Details</h3>
+<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+<div class="flex items-center justify-between border-b border-borderSlate pb-4">
+<h3 class="text-lg font-bold text-white">Payment Receipt Proof</h3>
 <button onclick="document.getElementById('receiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
 </div>
 <div id="receiptModalContent" class="space-y-4">
@@ -332,14 +332,14 @@ eh
 <button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
 <div class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
 <div>
-<p class="font-bold">Submit Review URL</p>
-<p class="text-[10px] text-slate-400">Paste Amazon live review link</p>
+<p class="font-semibold">Submit Review URL</p>
+<p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
 </div>
 </button>
 <button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
 <div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
 <div>
-<p class="font-bold">Attach Screenshot Proof</p>
+<p class="font-semibold">Attach Screenshot Proof</p>
 <p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
 </div>
 </button>
@@ -391,10 +391,10 @@ let currentUser = null;
 let currentProfile = null;
 let marketplaceProducts = [];
 let commissionsList = [];
-let activeCommTab = 'incoming';
+let activeCommTab = 'mainAccount';
 let selectedCommIds = new Set();
 let pollingInterval = null;
-// Messaging Hub State Variables
+/* Messaging Hub State Variables */
 let messagingThreads = [];
 let activeThreadId = null;
 let activeRecipientId = null;
@@ -403,34 +403,64 @@ let messageSubscription = null;
 let attachedImageBase64 = null;
 let profilesCache = {}; // Cache for user profiles (names & roles)
 
-// Initialize workspace & header user metadata display with robust real-time session checking
+/* Initialize workspace & header user metadata display with robust real-time session checking */
 async function initShopperWorkspace() {
+try {
+/* Step A: Check for active Supabase auth session */
 const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
 if (sessionError || !session) {
 window.location.href = 'login.html';
 return;
 }
 currentUser = session.user;
-// Extract display name instantly from Auth Metadata or fallback to email handle
+/* Step B: Fetch profile and check account role */
+const { data: profile, error: profileError } = await _supabase
+.from('profiles')
+.select('role, verification_status, full_name, referral_code')
+.eq('id', currentUser.id)
+.maybeSingle();
+if (profileError) {
+console.warn("Profile fetch warning during init:", profileError.message);
+}
+const userRole = profile?.role ? profile.role.toLowerCase() : 'buyer';
+/* Step C: Role Isolation Guard (Block Vendors/Sellers from Shopper Portal) */
+if (userRole === 'seller' || userRole === 'vendor') {
+alert("Access Denied: Vendor accounts are not permitted in the Shopper Portal.");
+window.location.href = 'seller.html';
+return;
+}
+/* Step D: Initialize Authorized Shopper UI Header */
 const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
 const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-// Update Header & Welcome Banner with User's Name
+if (document.getElementById('headerUserName')) {
 document.getElementById('headerUserName').textContent = fullName;
+}
+if (document.getElementById('welcomeTitle')) {
 document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
-// Setup Referral Links
+}
+/* Step E: Setup Referral Links */
 const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${currentUser.id}`;
-document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${currentUser.id}`;
-// Read role & verification status safely with profile fallback checks and live polling sync
+const refCode = profile?.referral_code || currentUser.id;
+if (document.getElementById('buyerRefLinkInput')) {
+document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${refCode}`;
+}
+if (document.getElementById('vendorRefLinkInput')) {
+document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${refCode}`;
+}
+/* Step F: Load Shopper Workspace Data */
 await fetchAndUpdateProfileState();
 await preloadProfiles();
 await loadMarketplaceProducts();
 await loadCommissionsData();
 await loadShopperReferralData();
 await loadMessagingThreads();
-// 10-second polling interval for real-time verification and data sync
+/* Step G: Start Live Polling Loop (10-second sync) */
 if (pollingInterval) clearInterval(pollingInterval);
 pollingInterval = setInterval(pollShopperData, 10000);
+} catch (err) {
+console.error("Shopper workspace initialization error:", err.message);
+window.location.href = 'login.html';
+}
 }
 
 async function fetchAndUpdateProfileState() {
@@ -482,6 +512,9 @@ await loadMarketplaceProducts(true);
 await loadCommissionsData(true);
 await loadShopperReferralData(true);
 await loadMessagingThreads(true);
+if (activeRecipientId) {
+await loadMessageStream(activeRecipientId, activeProductId);
+}
 }
 
 function applyBuyerVerificationLock(profile) {
@@ -505,9 +538,11 @@ const refSec = document.getElementById('referralsSection');
 const marketBtn = document.getElementById('navMarketplaceBtn');
 const commBtn = document.getElementById('navCommissionsBtn');
 const refBtn = document.getElementById('navReferralsBtn');
+/* Hide all sections */
 marketSec.classList.add('hidden');
 commSec.classList.add('hidden');
 refSec.classList.add('hidden');
+/* Reset buttons */
 marketBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
 commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
 refBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
@@ -545,29 +580,29 @@ refs.forEach(r => totalEarnings += Number(r.amount || 0));
 document.getElementById('statRefClicks').textContent = refs.length * 3 + 10;
 document.getElementById('statRefSignups').textContent = refs.length;
 document.getElementById('statRefEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
-renderShopperReferralTable(refs);
+const tableBody = document.getElementById('referralTableBody');
+if (refs.length === 0) {
+tableBody.innerHTML = `
+<div class="p-8 text-center text-xs text-slate-400 col-span-full">
+<p>No referral signups recorded yet. Share your link to start earning!</p>
+</div>
+`;
+return;
+}
+tableBody.innerHTML = refs.map(r => `
+<div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+<div class="col-span-4 font-mono text-slate-400 truncate">${r.feedback_id || 'Ref User'}</div>
+<div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.role_type}</span></div>
+<div class="col-span-2 font-bold text-emerald-400">$${Number(r.amount || 0).toFixed(2)}</div>
+<div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.status_tag || 'ACTIVE'}</span></div>
+</div>
+`).join('');
 } catch (err) {
 console.log('Shopper referral fallback active.');
 }
 }
 
-function renderShopperReferralTable(refs) {
-const body = document.getElementById('referralTableBody');
-if (!refs || refs.length === 0) {
-body.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full">No referral signups recorded yet. Share your link to start earning!</div>`;
-return;
-}
-body.innerHTML = refs.map(r => `
-<div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-<div class="col-span-4 font-mono text-[11px] text-purple-400">${r.recipient_id ? r.recipient_id.substring(0,8) : 'User'}</div>
-<div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.role_type}</span></div>
-<div class="col-span-2 font-bold text-emerald-400">$${Number(r.amount || 0).toFixed(2)}</div>
-<div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.queue_type || 'ACTIVE'}</span></div>
-</div>
-`).join('');
-}
-
-// ================= MARKETPLACE CATALOG & INQUIRY =================
+/* ================= MARKETPLACE CATALOG & INQUIRY ================= */
 async function loadMarketplaceProducts(isPolling = false) {
 const grid = document.getElementById('marketplaceGrid');
 try {
@@ -618,7 +653,7 @@ grid.innerHTML = filtered.map(item => `
 </div>
 </div>
 <div class="p-5 pt-0">
-<button onclick="handleInquireClick('${item.id}','${item.seller_id || item.vendor_id}')" ${isLocked ? 'disabled' : ''} class="w-full bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+<button onclick="handleInquireClick('${item.id}','${item.vendor_id}')" ${isLocked ? 'disabled' : ''} class="w-full bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
 <i class="fa-solid fa-comments"></i>
 <span>${isLocked ? 'Locked (Pending Verification)' : 'Inquire & Claim Review'}</span>
 </button>
@@ -647,7 +682,6 @@ const { data: newThread, error } = await _supabase
 .from('messages')
 .insert([{
 sender_id: currentUser.id,
-buyer_id: currentUser.id,
 receiver_id: vendorId,
 vendor_id: vendorId,
 product_id: productId,
@@ -666,17 +700,19 @@ alert('Error opening inquiry thread: ' + err.message);
 }
 }
 
-// ================= COMMISSIONS DASHBOARD (SHOPPER) =================
+/* ================= COMMISSIONS DASHBOARD (SHOPPER / REVIEWER) ================= */
 async function loadCommissionsData(isPolling = false) {
 try {
 const { data, error } = await _supabase
 .from('commissions')
 .select('*')
-.eq('recipient_id', currentUser.id);
+.eq('recipient_id', currentUser.id)
+.order('created_at', { ascending: false });
 if (error) throw error;
 commissionsList = data || [];
 } catch (err) {
-console.log('Using local shopper commissions dataset fallback.');
+console.log('Error fetching commissions:', err.message);
+commissionsList = [];
 }
 updateCommissionStats();
 renderCommissionTable();
@@ -686,9 +722,10 @@ function switchCommissionTab(tab) {
 activeCommTab = tab;
 selectedCommIds.clear();
 document.getElementById('selectAllComms').checked = false;
-const tabs = ['incoming', 'outgoing', 'mainAccount', 'workingQueue', 'receivedHistory'];
+const tabs = ['mainAccount', 'incoming', 'outgoing', 'workingQueue', 'receivedHistory'];
 tabs.forEach(t => {
 const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+if (!btn) return;
 if (t === tab) {
 btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
 } else {
@@ -702,8 +739,8 @@ function updateCommissionStats() {
 let pendingSum = 0;
 let collectedSum = 0;
 commissionsList.forEach(c => {
-const q = (c.queue_type || '').toUpperCase();
-if (q === 'RECEIVED_HISTORY' || q === 'PAID') {
+const statusVal = (c.status_tag || c.status || '').toUpperCase();
+if (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID') {
 collectedSum += Number(c.amount || 0);
 } else {
 pendingSum += Number(c.amount || 0);
@@ -716,74 +753,115 @@ document.getElementById('statCollectedCommissions').textContent = `$${collectedS
 function renderCommissionTable() {
 const tableBody = document.getElementById('commissionsTableBody');
 const toolbar = document.getElementById('tabActionToolbar');
-const search = document.getElementById('commSearchInput').value.toLowerCase();
-const typeFilter = document.getElementById('commTypeFilter').value;
+const search = (document.getElementById('commSearchInput')?.value || '').toLowerCase();
+const typeFilter = document.getElementById('commTypeFilter')?.value || 'ALL';
+
 const filtered = commissionsList.filter(c => {
+const statusTag = (c.status_tag || c.status || '').toUpperCase();
+const queueType = (c.queue_type || '').toUpperCase();
+
 const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) ||
 (c.vendor_id || '').toLowerCase().includes(search) ||
 (c.id || '').toLowerCase().includes(search);
-const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter || c.recipient_role === typeFilter;
-const queueType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
+
+const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter;
+
 let matchesTab = false;
-if (activeCommTab === 'incoming') matchesTab = queueType === 'INCOMING_REQUESTS';
-else if (activeCommTab === 'outgoing') matchesTab = queueType === 'OUTGOING_REQUESTS';
-else if (activeCommTab === 'mainAccount') matchesTab = queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || !c.queue_type;
-else if (activeCommTab === 'workingQueue') matchesTab = queueType === 'WORKING_QUEUE';
-else if (activeCommTab === 'receivedHistory') matchesTab = queueType === 'RECEIVED_HISTORY';
+if (activeCommTab === 'mainAccount') {
+// Main Account shows all active/approved uncollected commissions assigned to the user
+matchesTab = (queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || statusTag === 'MAIN_QUEUE' || statusTag === 'UNREQUESTED_BALANCE' || statusTag === 'APPROVED' || !c.queue_type) && 
+queueType !== 'WORKING_QUEUE' && 
+queueType !== 'OUTGOING_REQUESTS' && 
+queueType !== 'INCOMING_REQUESTS' && 
+queueType !== 'HISTORY' && 
+statusTag !== 'APPROVED_IN_WORKING' && 
+statusTag !== 'COMPLETED_PAID' && 
+statusTag !== 'REQUESTED_BY_RECIPIENT' && 
+statusTag !== 'OFFERED_BY_VENDOR' && 
+statusTag !== 'OFFERED_AWAITING_ACCEPTANCE';
+} else if (activeCommTab === 'incoming') {
+matchesTab = statusTag === 'OFFERED_BY_VENDOR' || statusTag === 'OFFERED_AWAITING_ACCEPTANCE';
+} else if (activeCommTab === 'outgoing') {
+matchesTab = queueType === 'OUTGOING_REQUESTS' || statusTag === 'REQUESTED_BY_RECIPIENT' || (c.status || '').toUpperCase() === 'REQUESTED_BY_RECIPIENT';
+} else if (activeCommTab === 'workingQueue') {
+matchesTab = queueType === 'WORKING_QUEUE' || statusTag === 'APPROVED_IN_WORKING' || (c.status || '').toUpperCase() === 'APPROVED_IN_WORKING';
+} else if (activeCommTab === 'receivedHistory') {
+matchesTab = queueType === 'HISTORY' || statusTag === 'COMPLETED_PAID' || statusTag === 'PAID' || (c.status || '').toUpperCase() === 'COMPLETED_PAID' || (c.status || '').toUpperCase() === 'PAID';
+}
+
 return matchesSearch && matchesType && matchesTab;
 });
-if (activeCommTab === 'incoming') {
+
+if (activeCommTab === 'mainAccount') {
 toolbar.innerHTML = `
-<button onclick="batchUpdateShopperStatus('WORKING_QUEUE')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-<i class="fa-solid fa-check mr-1.5"></i> Approve Selected to Working Queue
+<button onclick="batchUpdateShopperStatus('REQUESTED_BY_RECIPIENT')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+<i class="fa-solid fa-paper-plane mr-1.5"></i> Request Payout for Selected
 </button>
 `;
-} else if (activeCommTab === 'mainAccount') {
+} else if (activeCommTab === 'incoming') {
 toolbar.innerHTML = `
-<button onclick="batchUpdateShopperStatus('OUTGOING_REQUESTS')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-<i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request to Vendor
+<button onclick="batchUpdateShopperStatus('APPROVED_IN_WORKING')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+<i class="fa-solid fa-check mr-1.5"></i> Approve Selected to Working Queue
 </button>
 `;
 } else {
 toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab: ${activeCommTab}</span>`;
 }
+
 if (filtered.length === 0) {
 tableBody.innerHTML = `
 <div class="p-8 text-center text-xs text-slate-400 col-span-full">
 <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
-<p>No records found in this view.</p>
+<p>No commission records found in this tab.</p>
 </div>
 `;
 return;
 }
-tableBody.innerHTML = filtered.map(c => `
-<div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-<div class="col-span-1 flex items-center space-x-2">
-<input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id)?'checked':''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
-</div>
-<div class="col-span-3 space-y-0.5">
-<span class="font-bold text-white">Ref ID: ${c.feedback_id || c.id.substring(0,8)}</span>
-<p class="text-[10px] text-slate-500 font-mono">ID: ${c.id.substring(0,8)}...</p>
-</div>
-<div class="col-span-3 space-y-0.5">
-<p class="font-semibold text-slate-200 truncate">Vendor ID</p>
-<p class="text-[10px] text-slate-400 font-mono truncate">${c.vendor_id || 'N/A'}</p>
-</div>
-<div class="col-span-2 space-y-0.5">
-<span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || c.role_type || 'REVIEWER'}</span>
-<p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
-</div>
-<div class="col-span-3 flex items-center justify-end space-x-2">
-${activeCommTab === 'receivedHistory' ? `
+
+tableBody.innerHTML = filtered.map(c => {
+let actionHtml = '';
+if (activeCommTab === 'mainAccount') {
+actionHtml = `
+<button onclick="requestSinglePayout('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg transition shadow-md flex items-center space-x-1">
+<i class="fa-solid fa-paper-plane"></i><span>Request Payout</span>
+</button>
+`;
+} else if (activeCommTab === 'receivedHistory') {
+actionHtml = `
 <button onclick="viewReceipt('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-3 py-1.5 rounded-xl transition">
 <i class="fa-solid fa-receipt mr-1 text-purple-400"></i> View Receipt
 </button>
-` : `
-<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.queue_type || 'MAIN_ACCOUNT'}</span>
-`}
+`;
+} else if (activeCommTab === 'workingQueue') {
+actionHtml = `<span class="px-2.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px] font-bold">IN WORKING QUEUE</span>`;
+} else if (activeCommTab === 'outgoing') {
+actionHtml = `<span class="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px] font-bold">PAYOUT REQUESTED</span>`;
+} else {
+actionHtml = `<span class="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px] font-bold">${c.status_tag || 'APPROVED'}</span>`;
+}
+
+return `
+<div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+<div class="col-span-1 flex items-center space-x-2">
+<input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+</div>
+<div class="col-span-3 space-y-0.5">
+<span class="font-bold text-white font-mono">${c.feedback_id || 'FB-PENDING'}</span>
+<p class="text-[10px] text-slate-500 font-mono">ID: ${String(c.id).substring(0,8)}...</p>
+</div>
+<div class="col-span-3 space-y-0.5">
+<span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px] font-semibold">${c.role_type || 'REVIEWER'}</span>
+<p class="text-[10px] text-slate-400 font-mono truncate">Queue: ${c.queue_type || 'MAIN_ACCOUNT'}</p>
+</div>
+<div class="col-span-2">
+<p class="font-bold text-emerald-400 text-sm">$${Number(c.amount || 0).toFixed(2)}</p>
+</div>
+<div class="col-span-3 flex items-center justify-end space-x-2">
+${actionHtml}
 </div>
 </div>
-`).join('');
+`;
+}).join('');
 }
 
 function toggleSelectComm(id) {
@@ -806,22 +884,48 @@ selectedCommIds.delete(cb.value);
 });
 }
 
-async function batchUpdateShopperStatus(targetQueueType) {
+async function requestSinglePayout(commId) {
+try {
+const { error } = await _supabase
+.from('commissions')
+.update({
+queue_type: 'OUTGOING_REQUESTS',
+status: 'REQUESTED_BY_RECIPIENT'
+})
+.eq('id', commId);
+
+if (error) throw error;
+alert("Payout request submitted! Moved to Outgoing Requests for vendor approval.");
+await loadCommissionsData();
+} catch (err) {
+alert("Error requesting payout: " + err.message);
+}
+}
+
+async function batchUpdateShopperStatus(newStatus) {
 if (selectedCommIds.size === 0) {
 alert('Please select at least one record.');
 return;
 }
 try {
 for (const id of selectedCommIds) {
+const updateData = {
+status: newStatus
+};
+if (newStatus === 'REQUESTED_BY_RECIPIENT') {
+updateData.queue_type = 'OUTGOING_REQUESTS';
+} else if (newStatus === 'APPROVED_IN_WORKING') {
+updateData.queue_type = 'WORKING_QUEUE';
+}
 const { error } = await _supabase
 .from('commissions')
-.update({ queue_type: targetQueueType })
+.update(updateData)
 .eq('id', id);
 if (error) throw error;
 }
 selectedCommIds.clear();
 await loadCommissionsData();
-alert('Commission request successfully updated.');
+alert('Commission status successfully updated!');
 } catch (err) {
 alert('Action failed: ' + err.message);
 }
@@ -843,18 +947,18 @@ content.innerHTML = `
 </div>
 <div class="flex justify-between border-b border-borderSlate pb-2">
 <span class="text-slate-400">PayPal Transaction ID:</span>
-<span class="font-mono text-blue-400">${record.paypal_tx_id || record.paypal_transaction_id || 'N/A'}</span>
+<span class="font-mono text-blue-400">${record.paypal_tx_id || 'N/A'}</span>
 </div>
 <div class="space-y-1 pt-2">
 <span class="text-slate-400">Vendor Payment Receipt Proof:</span>
-<img src="${record.receipt_base64 || record.receipt_url || 'https://via.placeholder.com/300?text=No+Receipt+Image'}" class="w-full max-h-56 object-contain rounded-xl border border-borderSlate bg-darkBg">
+<img src="${record.receipt_url || record.receipt_base64 || 'https://via.placeholder.com/300?text=No+Receipt+Available'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
 </div>
 </div>
 `;
 document.getElementById('receiptModal').classList.remove('hidden');
 }
 
-// ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & SMART THREAD GROUPING =================
+/* ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & PAPERCLIP ATTACHMENTS ================= */
 function toggleMessagingHub() {
 const modal = document.getElementById('messagingHubModal');
 modal.classList.toggle('hidden');
@@ -903,86 +1007,59 @@ try {
 const { data, error } = await _supabase
 .from('messages')
 .select('*')
-.or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},buyer_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
+.or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
 .order('created_at', { ascending: false });
 if (error) throw error;
 messagingThreads = data || [];
 renderThreadsList();
 updateUnreadBadge();
 } catch (err) {
-console.log('Messaging threads fallback active:', err);
+console.log('Messaging threads fallback active.');
 }
 }
 
-/* SMART THREAD GROUPING INTEGRATION:
-   Groups messages by conversation partner so strictly ONE entry per partner appears in the sidebar list.
-*/
 function renderThreadsList() {
 const container = document.getElementById('threadsListContainer');
 if (messagingThreads.length === 0) {
 container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">No conversations yet.</div>`;
 return;
 }
-
-const currentUserId = currentUser.id;
-const uniqueThreadsMap = new Map();
-
+const threadMap = new Map();
 messagingThreads.forEach(msg => {
-    // Determine who the "other" user is relative to the current logged-in user
-    // (If you are the buyer, group by vendor_id; if vendor, group by buyer_id; fallback to sender/receiver)
-    let partnerId = null;
-    if (msg.vendor_id && msg.buyer_id) {
-        partnerId = msg.vendor_id === currentUserId ? msg.buyer_id : msg.vendor_id;
-    } else {
-        partnerId = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id;
-    }
-    
-    // Keep the most recent message (since query is ordered by created_at DESC)
-    if (partnerId && !uniqueThreadsMap.has(partnerId)) {
-        uniqueThreadsMap.set(partnerId, {
-            partnerId: partnerId,
-            latestMessage: msg
-        });
-    }
-});
-
-const distinctConversations = Array.from(uniqueThreadsMap.values());
-const search = (document.getElementById('threadSearchInput')?.value || '').toLowerCase();
-
-const filtered = distinctConversations.filter(item => {
-    const p = profilesCache[item.partnerId] || {};
-    const name = (p.full_name || '').toLowerCase();
-    const msgText = (item.latestMessage.text || item.latestMessage.content || item.latestMessage.review_url || '').toLowerCase();
-    return name.includes(search) || msgText.includes(search);
-});
-
-if (filtered.length === 0) {
-    container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">No matching conversations found.</div>`;
-    return;
+const counterpartId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+const key = `${counterpartId}_${msg.product_id || 'general'}`;
+if (!threadMap.has(key)) {
+threadMap.set(key, msg);
 }
-
-container.innerHTML = filtered.map(item => {
-    const partnerId = item.partnerId;
-    const msg = item.latestMessage;
-    const isSelected = activeRecipientId === partnerId;
-    const profile = profilesCache[partnerId] || { full_name: `User #${partnerId.substring(0, 6)}`, role: 'user' };
-    const displayMsg = msg.text || msg.content || (msg.review_url ? `Review Link: ${msg.review_url}` : 'Attachment submitted');
-    const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-
-    return `
-    <div onclick="openThread('${msg.id}', '${partnerId}', '${msg.product_id || ''}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
-        <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
-            <i class="fa-solid fa-user"></i>
-        </div>
-        <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-center mb-0.5">
-                <h4 class="font-bold text-white text-xs truncate">${profile.full_name}</h4>
-                <span class="text-[9px] text-slate-500">${timeStr}</span>
-            </div>
-            <p class="text-[11px] text-slate-400 truncate">${displayMsg}</p>
-        </div>
-    </div>
-    `;
+});
+const uniqueThreads = Array.from(threadMap.values());
+container.innerHTML = uniqueThreads.map(t => {
+const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
+const isSelected = activeThreadId === t.id;
+const profile = profilesCache[counterpartId] || { full_name: `User #${counterpartId ? counterpartId.substring(0, 6) : 'Unknown'}`, role: 'user' };
+const statusVal = (t.status_badge || t.status || '').toUpperCase();
+let threadBadge = '';
+if (statusVal.includes('APPROV') || statusVal.includes('VERIFIED') || statusVal.includes('COMPLETE')) {
+threadBadge = `<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Approved</span>`;
+} else if (statusVal.includes('REJECT') || statusVal.includes('DENIED')) {
+threadBadge = `<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">Denied</span>`;
+} else if (statusVal) {
+threadBadge = `<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Pending</span>`;
+}
+return `
+<div onclick="openThread('${t.id}','${counterpartId}', '${t.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
+<div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
+<i class="fa-solid fa-user"></i>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h4 class="font-bold text-white text-xs truncate flex items-center">${profile.full_name}${threadBadge}</h4>
+<span class="text-[9px] text-slate-500">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+</div>
+<p class="text-[11px] text-slate-400 truncate">${t.text || t.message_text || t.content || 'Attachment or Link'}</p>
+</div>
+</div>
+`;
 }).join('');
 }
 
@@ -993,15 +1070,54 @@ renderThreadsList();
 async function openThread(threadId, recipientId, productId) {
 activeThreadId = threadId;
 activeRecipientId = recipientId;
-activeProductId = (productId && productId !== 'null' && productId !== 'undefined') ? productId : null;
-const profile = profilesCache[recipientId] || { full_name: `User #${recipientId ? recipientId.substring(0, 8) : 'N/A'}`, role: 'user' };
+activeProductId = productId;
+const profile = profilesCache[recipientId] || { full_name: `User #${recipientId ? recipientId.substring(0, 8) : 'Unknown'}`, role: 'user' };
 document.getElementById('activeChatPanel').classList.remove('hidden');
 document.getElementById('messageInputArea').classList.remove('hidden');
 document.getElementById('activeChatTitle').textContent = profile.full_name;
-document.getElementById('activeChatRoleTag').textContent = `${(profile.role || 'USER').toUpperCase()} • ${activeProductId ? 'Product Inquiry' : 'Direct Chat'}`;
+document.getElementById('activeChatRoleTag').textContent = `${(profile.role || 'VENDOR').toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
 renderThreadsList();
-await loadMessageStream(recipientId, activeProductId);
-setupRealtimeMessageSubscription(recipientId, activeProductId);
+await loadMessageStream(recipientId, productId);
+setupRealtimeMessageSubscription(recipientId, productId);
+}
+
+function renderMessageStatusBadge(m) {
+if (!m.review_url && !m.feedback_id) return '';
+const badgeVal = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase();
+if (!badgeVal) return '';
+let badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+let iconClass = 'fa-solid fa-clock text-amber-400';
+let label = 'Awaiting Approval';
+if (badgeVal.includes('APPROV') || badgeVal.includes('VERIFIED') || badgeVal.includes('COMPLETE') || badgeVal.includes('PAID')) {
+badgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+iconClass = 'fa-solid fa-circle-check text-emerald-400';
+label = 'Approved by Seller';
+} else if (badgeVal.includes('REJECT') || badgeVal.includes('DENI')) {
+badgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+iconClass = 'fa-solid fa-circle-xmark text-rose-400';
+label = 'Denied';
+} else if (badgeVal.includes('AWAIT') || badgeVal.includes('PEND')) {
+badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+iconClass = 'fa-solid fa-hourglass-half text-amber-400';
+label = 'Awaiting Seller Approval';
+} else {
+badgeColor = 'bg-blue-500/20 text-blue-300 border-blue-500/40';
+iconClass = 'fa-solid fa-tag text-blue-400';
+label = m.status_badge || m.status;
+}
+const feedbackBadge = m.feedback_id ? `
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-slate-800/80 text-blue-300 border border-blue-500/30">
+<i class="fa-solid fa-hashtag mr-1 text-blue-400 text-[9px]"></i>${m.feedback_id}
+</span>
+` : '';
+return `
+<div class="flex flex-wrap items-center gap-1.5 pt-1.5 mt-1 border-t border-white/10">
+${feedbackBadge}
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}">
+<i class="${iconClass} mr-1 text-[10px]"></i>${label}
+</span>
+</div>
+`;
 }
 
 async function loadMessageStream(recipientId, productId) {
@@ -1010,7 +1126,7 @@ try {
 const { data, error } = await _supabase
 .from('messages')
 .select('*')
-.or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${currentUser.id}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${recipientId}),and(buyer_id.eq.${recipientId},vendor_id.eq.${currentUser.id})`)
+.or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${currentUser.id}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${recipientId}),and(vendor_id.eq.${recipientId},buyer_id.eq.${currentUser.id})`)
 .order('created_at', { ascending: true });
 if (error) throw error;
 const messages = data || [];
@@ -1020,22 +1136,22 @@ return;
 }
 container.innerHTML = messages.map(m => {
 const isMe = m.sender_id === currentUser.id;
-const text = m.text || m.content || m.review_url || '';
-const imageUrl = m.image_url || m.proof_base64 || m.attachment_url;
-const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+const displayImg = m.image_url || m.file_url || m.attachment_url || m.proof_base64;
 return `
 <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-<div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-${imageUrl ? `<img src="${imageUrl}" class="w-full max-h-56 object-contain rounded-lg border border-white/20 bg-slate-950">` : ''}
-<p>${text}</p>
+<div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+${displayImg ? `<img src="${displayImg}" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">` : ''}
+${m.text || m.message_text || m.content ? `<p class="leading-relaxed">${m.text || m.message_text || m.content}</p>` : ''}
+${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
+${renderMessageStatusBadge(m)}
 </div>
-<span class="text-[9px] text-slate-500 px-1">${timeStr}</span>
+<span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
 </div>
 `;
 }).join('');
 container.scrollTop = container.scrollHeight;
 } catch (err) {
-container.innerHTML = `<div class="m-auto text-center text-xs text-rose-400">Error loading message history.</div>`;
+container.innerHTML = `<div class="m-auto text-center text-xs text-rose-400">Error loading messages.</div>`;
 }
 }
 
@@ -1045,10 +1161,12 @@ _supabase.removeChannel(messageSubscription);
 }
 messageSubscription = _supabase
 .channel('public:messages')
-.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+.on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
 const newMsg = payload.new;
-if ((newMsg.sender_id === currentUser.id && (newMsg.receiver_id === recipientId || newMsg.vendor_id === recipientId)) ||
-(newMsg.receiver_id === currentUser.id && (newMsg.sender_id === recipientId || newMsg.buyer_id === recipientId))) {
+if (newMsg && ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === recipientId) ||
+(newMsg.sender_id === recipientId && newMsg.receiver_id === currentUser.id) ||
+(newMsg.buyer_id === currentUser.id && newMsg.vendor_id === recipientId) ||
+(newMsg.vendor_id === currentUser.id && newMsg.buyer_id === recipientId))) {
 loadMessageStream(recipientId, productId);
 }
 loadMessagingThreads(true);
@@ -1074,18 +1192,20 @@ sender_id: currentUser.id,
 buyer_id: currentUser.id,
 receiver_id: activeRecipientId,
 vendor_id: activeRecipientId,
-product_id: (activeProductId && activeProductId !== 'null') ? activeProductId : null,
+product_id: (activeProductId !== 'null' && activeProductId) ? activeProductId : null,
 text: text || '',
 status_badge: 'AWAITING_ATTENTION'
 };
 if (imageUrl) {
-payload.proof_base64 = imageUrl;
 payload.image_url = imageUrl;
 }
 if (reviewUrl) {
 payload.review_url = reviewUrl;
+payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 }
-const { error } = await _supabase.from('messages').insert([payload]);
+const { error } = await _supabase
+.from('messages')
+.insert([payload]);
 if (error) throw error;
 await loadMessageStream(activeRecipientId, activeProductId);
 await loadMessagingThreads(true);
@@ -1094,25 +1214,55 @@ alert('Failed to send message: ' + err.message);
 }
 }
 
-async function submitReviewUrlMessage() {
+/* FIXED & ENHANCED REVIEW URL SUBMISSION METHOD */
+window.submitReviewUrlMessage = async function(productId, receiverId) {
+const buyerId = currentUser?.id;
 const reviewField = document.getElementById('reviewUrlField');
 const reviewUrl = reviewField ? reviewField.value.trim() : '';
-if (!reviewUrl || !reviewUrl.toLowerCase().includes('amazon.com')) {
-alert('Please enter a valid Amazon review URL.');
+if (!reviewUrl || !reviewUrl.toLowerCase().includes('http')) {
+alert('Please enter a valid review URL link.');
 return;
 }
-if (!activeRecipientId) {
-alert('Please select a conversation thread first.');
+const targetRecipientId = receiverId || activeRecipientId;
+const targetProductId = (productId !== 'null' && productId) ? productId : (activeProductId !== 'null' ? activeProductId : null);
+if (!targetRecipientId) {
+alert("Please select or open a conversation before submitting a review link.");
 return;
 }
-await sendChatMessage(`Submitted Amazon Review Link: ${reviewUrl}`, null, reviewUrl);
-reviewField.value = '';
-document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden');
+const payload = {
+sender_id: buyerId,
+buyer_id: buyerId,
+receiver_id: targetRecipientId,
+vendor_id: targetRecipientId,
+product_id: targetProductId,
+text: 'Submitted Review Link: ' + reviewUrl,
+status_badge: 'AWAITING_ATTENTION',
+review_url: reviewUrl,
+feedback_id: 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+};
+try {
+const { data, error } = await _supabase
+.from('messages')
+.insert([payload])
+.select();
+if (error) throw error;
+alert('Review link submitted successfully!');
+if (reviewField) reviewField.value = '';
+const promptContainer = document.getElementById('reviewUrlInputBoxContainer');
+if (promptContainer) promptContainer.classList.add('hidden');
+if (targetRecipientId) {
+await loadMessageStream(targetRecipientId, targetProductId);
+await loadMessagingThreads(true);
 }
+} catch (err) {
+console.error('Error sending review message:', err.message);
+alert('Failed to send: ' + err.message);
+}
+};
 
 function updateUnreadBadge() {
 const badge = document.getElementById('unreadBadge');
-const unreadCount = messagingThreads.filter(m => (m.receiver_id === currentUser?.id || m.vendor_id === currentUser?.id) && !m.is_read).length;
+const unreadCount = messagingThreads.filter(m => m.receiver_id === currentUser?.id && !m.is_read).length;
 if (unreadCount > 0) {
 badge.textContent = unreadCount;
 badge.classList.remove('hidden');
@@ -1127,7 +1277,7 @@ await _supabase.auth.signOut();
 window.location.href = 'login.html';
 }
 
-// Initialize shopper workspace on load
+/* Initialize shopper workspace on load */
 window.addEventListener('DOMContentLoaded', initShopperWorkspace);
 </script>
 </body>
