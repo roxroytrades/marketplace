@@ -679,14 +679,38 @@ function renderSellerCommissions() {
   const search = document.getElementById('sellerCommSearch').value.toLowerCase();
 
   const filtered = vendorCommissions.filter(c => {
-    const statusField = c.status_tag || c.status || 'UNREQUESTED_BALANCE';
-    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) || (c.recipient_email || '').toLowerCase().includes(search);
+    const statusUpper = (c.status || '').toUpperCase();
+    const queueTypeUpper = (c.queue_type || '').toUpperCase();
+    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) || 
+                          (c.recipient_email || '').toLowerCase().includes(search) ||
+                          (c.feedback_id || '').toLowerCase().includes(search);
+
     let matchesTab = false;
-    if (activeSubTab === 'incoming') matchesTab = statusField === 'REQUESTED_BY_RECIPIENT';
-    else if (activeSubTab === 'mainQueue') matchesTab = statusField === 'UNREQUESTED_BALANCE';
-    else if (activeSubTab === 'outgoing') matchesTab = statusField === 'OFFERED_AWAITING_ACCEPTANCE';
-    else if (activeSubTab === 'workingQueue') matchesTab = statusField === 'APPROVED_IN_WORKING';
-    else if (activeSubTab === 'history') matchesTab = statusField === 'COMPLETED_PAID';
+    if (activeSubTab === 'incoming') {
+      matchesTab = queueTypeUpper === 'INCOMING_REQUESTS' || 
+                   queueTypeUpper === 'OUTGOING_REQUESTS' || 
+                   statusUpper === 'REQUESTED_BY_RECIPIENT' || 
+                   statusUpper === 'REQUESTED';
+    } else if (activeSubTab === 'mainQueue') {
+      // Main Queue shows all unrequested commission balances (MAIN_ACCOUNT queue or Approved status)
+      matchesTab = (queueTypeUpper === 'MAIN_ACCOUNT' || queueTypeUpper === 'MAIN_QUEUE' || statusUpper === 'APPROVED' || statusUpper === 'UNREQUESTED_BALANCE' || !c.queue_type) &&
+                   queueTypeUpper !== 'WORKING_QUEUE' &&
+                   queueTypeUpper !== 'HISTORY' &&
+                   queueTypeUpper !== 'PAYMENT_HISTORY' &&
+                   statusUpper !== 'REQUESTED_BY_RECIPIENT' &&
+                   statusUpper !== 'OUTGOING_REQUESTS' &&
+                   statusUpper !== 'OFFERED_AWAITING_ACCEPTANCE' &&
+                   statusUpper !== 'OFFERED_BY_VENDOR' &&
+                   statusUpper !== 'APPROVED_IN_WORKING' &&
+                   statusUpper !== 'COMPLETED_PAID' &&
+                   statusUpper !== 'PAID';
+    } else if (activeSubTab === 'outgoing') {
+      matchesTab = statusUpper === 'OFFERED_AWAITING_ACCEPTANCE' || statusUpper === 'OFFERED_BY_VENDOR';
+    } else if (activeSubTab === 'workingQueue') {
+      matchesTab = queueTypeUpper === 'WORKING_QUEUE' || statusUpper === 'APPROVED_IN_WORKING';
+    } else if (activeSubTab === 'history') {
+      matchesTab = queueTypeUpper === 'HISTORY' || queueTypeUpper === 'PAYMENT_HISTORY' || statusUpper === 'COMPLETED_PAID' || statusUpper === 'PAID';
+    }
     return matchesSearch && matchesTab;
   });
 
@@ -790,8 +814,8 @@ async function batchVendorApprove() {
   try {
     for (const id of selectedSellerCommIds) {
       let updatePayload = {
-        status: 'APPROVED_IN_WORKING',
-        queue_type: 'WORKING_QUEUE'
+        status_tag: 'APPROVED_IN_WORKING',
+        status: 'APPROVED_IN_WORKING'
       };
       sanitizeStatusBadge(updatePayload);
       const { error } = await _supabase
@@ -810,7 +834,7 @@ async function batchVendorApprove() {
 
 async function approveSingleComm(id) {
   try {
-    let updatePayload = { status: 'APPROVED_IN_WORKING', queue_type: 'WORKING_QUEUE' };
+    let updatePayload = { status_tag: 'APPROVED_IN_WORKING', status: 'APPROVED_IN_WORKING' };
     sanitizeStatusBadge(updatePayload);
     const { error } = await _supabase
       .from('commissions')
@@ -826,7 +850,7 @@ async function approveSingleComm(id) {
 async function denySingleComm(id) {
   if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
   try {
-    let updatePayload = { status: 'Approved', queue_type: 'MAIN_ACCOUNT' };
+    let updatePayload = { status_tag: 'UNREQUESTED_BALANCE', status: 'UNREQUESTED_BALANCE' };
     sanitizeStatusBadge(updatePayload);
     const { error } = await _supabase
       .from('commissions')
@@ -850,8 +874,8 @@ async function handleTopDownOfferSubmit(event) {
     recipient_email: recipientEmail,
     recipient_role: recipientRole,
     amount: amount,
+    status_tag: 'OFFERED_AWAITING_ACCEPTANCE',
     status: 'OFFERED_AWAITING_ACCEPTANCE',
-    queue_type: 'OUTGOING_REQUESTS',
     link: 'N/A',
     type: 'TOP_DOWN_OFFER'
   };
@@ -894,10 +918,11 @@ async function handleSettlementSubmit(event) {
   }
   try {
     let updateData = {
+      status_tag: 'COMPLETED_PAID',
       status: 'COMPLETED_PAID',
-      queue_type: 'HISTORY',
       paypal_tx_id: txId,
-      receipt_base64: receiptBase64
+      receipt_base64: receiptBase64,
+      receipt_url: receiptBase64
     };
     sanitizeStatusBadge(updateData);
     const { error } = await _supabase
