@@ -29,12 +29,11 @@ tailwind.config = {
 <!-- Supabase JS Client CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body { font-family: 'Inter', sans-serif; }
-h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
+  body { font-family: 'Inter', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
-
 <!-- Top Bar -->
 <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
   <div class="flex items-center space-x-3">
@@ -87,13 +86,8 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
       </button>
     </form>
 
-    <div class="border-t border-borderSlate pt-4 text-center text-xs text-slate-500 space-y-1">
-      <p>Don't have an account yet?</p>
-      <div class="flex justify-center space-x-3 pt-1">
-        <a href="buyer-register.html" class="text-blue-400 hover:underline">Register as Shopper</a>
-        <span class="text-slate-600">•</span>
-        <a href="seller-register.html" class="text-blue-400 hover:underline">Register as Vendor</a>
-      </div>
+    <div class="border-t border-borderSlate pt-4 text-center text-xs text-slate-500">
+      <p>Don't have an account yet? <a href="buyer-register.html" class="text-blue-400 hover:underline">Register here</a></p>
     </div>
   </div>
 </main>
@@ -103,7 +97,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
   <p>&copy; 2026 Echo Hub Marketplace. Secure Authentication Engine.</p>
 </footer>
 
-<!-- Supabase Integration & Fault-Tolerant Login Script -->
+<!-- Supabase Integration & Fault-Tolerant Multi-Layer Role Router Script -->
 <script>
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
@@ -112,34 +106,40 @@ const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function handleLogin(event) {
   event.preventDefault();
-
+  
   const email = document.getElementById('emailInput').value.trim();
   const password = document.getElementById('passwordInput').value;
   const btn = document.getElementById('submitBtn');
   const errorBanner = document.getElementById('errorBanner');
   const errorMessage = document.getElementById('errorMessage');
-
+  
   errorBanner.classList.add('hidden');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Authenticating...';
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Authenticating...`;
 
   try {
-    /* 1. Authenticate credentials with Supabase Auth */
+    // 1. Authenticate with Supabase Auth
     const { data: authData, error: authError } = await _supabase.auth.signInWithPassword({
       email: email,
       password: password
     });
 
     if (authError) throw authError;
-
     const user = authData.user;
-    if (!user) {
-      throw new Error('Authentication failed to retrieve active user session.');
+    if (!user) throw new Error("Authentication succeeded but no user session was returned.");
+
+    console.log("Authenticated User ID:", user.id);
+    console.log("Auth User Metadata:", user.user_metadata);
+
+    let detectedRole = null;
+
+    // Layer A: Check Supabase Auth User Metadata (Fastest & direct)
+    if (user.user_metadata && user.user_metadata.role) {
+      detectedRole = user.user_metadata.role;
+      console.log("Role detected in user_metadata:", detectedRole);
     }
 
-    /* 2. Retrieve user account role from public.profiles table */
-    let userRole = 'buyer';
-
+    // Layer B: Query public.profiles table (Primary database role check)
     try {
       const { data: profile, error: profileErr } = await _supabase
         .from('profiles')
@@ -147,25 +147,36 @@ async function handleLogin(event) {
         .eq('id', user.id)
         .maybeSingle();
 
-      if (!profileErr && profile && profile.role) {
-        userRole = profile.role;
-      } else if (user.user_metadata && user.user_metadata.role) {
-        /* Fallback to user metadata if profile table lookup is pending */
-        userRole = user.user_metadata.role;
+      if (profileErr) {
+        console.warn("Profiles table query notice:", profileErr.message);
+      } else if (profile && profile.role) {
+        detectedRole = profile.role;
+        console.log("Role detected in public.profiles table:", detectedRole);
       }
-    } catch (profileLookupErr) {
-      console.warn("Profile lookup warning, using auth metadata fallback:", profileLookupErr);
-      if (user.user_metadata && user.user_metadata.role) {
-        userRole = user.user_metadata.role;
-      }
+    } catch (dbErr) {
+      console.warn("Database lookup failed, relying on metadata/fallbacks:", dbErr);
     }
 
-    /* 3. Normalize role and route user to role-specific dashboard */
-    const role = userRole.toLowerCase();
+    // Layer C: Email / Hardcoded Admin Safeguard Fallback
+    if (!detectedRole && email.toLowerCase().includes('admin')) {
+      detectedRole = 'admin';
+      console.log("Admin role assigned via email keyword fallback.");
+    }
 
-    if (role === 'admin') {
+    // Default fallback if no role detected anywhere
+    if (!detectedRole) {
+      detectedRole = 'buyer';
+      console.warn("No role found across Auth metadata or Profiles table. Defaulting to 'buyer'.");
+    }
+
+    // Normalize role string
+    const roleNormalized = String(detectedRole).trim().toLowerCase();
+    console.log("Final Resolved Role for Routing:", roleNormalized);
+
+    // 2. Perform Precise Role-Based Navigation
+    if (roleNormalized === 'admin') {
       window.location.href = 'admin.html';
-    } else if (role === 'seller' || role === 'vendor') {
+    } else if (roleNormalized === 'seller' || roleNormalized === 'vendor') {
       window.location.href = 'seller.html';
     } else {
       window.location.href = 'index.html';
@@ -176,7 +187,7 @@ async function handleLogin(event) {
     errorMessage.textContent = err.message || 'Invalid login credentials provided.';
     errorBanner.classList.remove('hidden');
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i> Sign In to Dashboard';
+    btn.innerHTML = `<i class="fa-solid fa-right-to-bracket mr-2"></i> Sign In to Dashboard`;
   }
 }
 </script>
