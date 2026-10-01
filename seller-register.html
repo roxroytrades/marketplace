@@ -267,7 +267,7 @@ form.addEventListener('submit', async (e) => {
 
     const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, referralCode);
 
-    // Upsert directly into public.profiles ensuring referee UUID is saved to all referral UUID columns
+    // Upsert directly into public.profiles matching exact 13-column live schema
     const { error: profileError } = await _supabase
       .from('profiles')
       .upsert({
@@ -275,14 +275,8 @@ form.addEventListener('submit', async (e) => {
         full_name: fullName,
         email: email,
         paypal_email: paypalEmail,
-        business_description: businessDescription,
-        vendor_type: vendorType,
-        commission_amount: commissionAmount,
-        invited_by_code: refereeCode,
-        referred_by: refereeUuid,
-        invited_by: refereeUuid,
-        invited_by_id: refereeUuid,
-        inviter_id: refereeUuid,
+        invited_by_code: refereeCode || referralCode || null,
+        referred_by: refereeUuid || refereeCode || referralCode || null,
         role: 'seller',
         verification_status: 'VERIFIED',
         created_at: new Date().toISOString()
