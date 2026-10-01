@@ -638,16 +638,15 @@ async function deleteProduct(id) {
 // 5-Tab Commissions Architecture
 async function loadVendorCommissions(isPolling = false) {
   try {
-    const { data, error } = await _supabase
+    let { data, error } = await _supabase
       .from('commissions')
       .select('*')
       .eq('vendor_id', currentUser.id)
       .order('created_at', { ascending: false });
-
     if (error) throw error;
     vendorCommissions = data || [];
   } catch (err) {
-    console.warn("Error loading vendor commissions:", err.message);
+    console.warn('Error loading vendor commissions:', err.message);
     vendorCommissions = [];
   }
   renderSellerCommissions();
@@ -672,26 +671,27 @@ function switchCommSubTab(subTab) {
 function renderSellerCommissions() {
   const tableBody = document.getElementById('sellerCommsTableBody');
   const toolbar = document.getElementById('sellerToolbar');
-  const search = document.getElementById('sellerCommSearch').value.toLowerCase();
+  const search = (document.getElementById('sellerCommSearch')?.value || '').toLowerCase();
 
   const filtered = vendorCommissions.filter(c => {
     const statusField = (c.status_tag || c.status || '').toUpperCase();
     const queueType = (c.queue_type || '').toUpperCase();
-    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) || 
-                          (c.recipient_email || '').toLowerCase().includes(search) ||
-                          (c.feedback_id || '').toLowerCase().includes(search);
-    
+    const recipientEmail = (c.recipient_email || '').toLowerCase();
+    const refId = (c.feedback_id || c.id || '').toLowerCase();
+
+    const matchesSearch = refId.includes(search) || recipientEmail.includes(search);
+
     let matchesTab = false;
     if (activeSubTab === 'incoming') {
       matchesTab = statusField === 'REQUESTED_BY_RECIPIENT';
     } else if (activeSubTab === 'mainQueue') {
-      matchesTab = (queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || statusField === 'APPROVED' || statusField === 'UNREQUESTED_BALANCE' || statusField === '') && 
-                    statusField !== 'REQUESTED_BY_RECIPIENT' && 
-                    statusField !== 'OFFERED_AWAITING_ACCEPTANCE' && 
-                    statusField !== 'OFFERED_BY_VENDOR' && 
-                    statusField !== 'APPROVED_IN_WORKING' && 
-                    queueType !== 'WORKING_QUEUE' && 
-                    statusField !== 'COMPLETED_PAID' && 
+      matchesTab = (queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || statusField === 'APPROVED' || statusField === 'UNREQUESTED_BALANCE' || statusField === '') &&
+                    statusField !== 'REQUESTED_BY_RECIPIENT' &&
+                    statusField !== 'OFFERED_AWAITING_ACCEPTANCE' &&
+                    statusField !== 'OFFERED_BY_VENDOR' &&
+                    statusField !== 'APPROVED_IN_WORKING' &&
+                    queueType !== 'WORKING_QUEUE' &&
+                    statusField !== 'COMPLETED_PAID' &&
                     statusField !== 'PAID';
     } else if (activeSubTab === 'outgoing') {
       matchesTab = statusField === 'OFFERED_AWAITING_ACCEPTANCE' || statusField === 'OFFERED_BY_VENDOR';
@@ -704,98 +704,53 @@ function renderSellerCommissions() {
   });
 
   if (activeSubTab === 'incoming') {
-    toolbar.innerHTML = `
-      <button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected
-      </button>
-    `;
+    toolbar.innerHTML = `<button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md"><i class="fa-solid fa-check mr-1.5"></i> Approve Selected</button>`;
   } else if (activeSubTab === 'mainQueue') {
-    toolbar.innerHTML = `
-      <button onclick="document.getElementById('topDownOfferModal').classList.remove('hidden')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-        <i class="fa-solid fa-paper-plane mr-1.5"></i> Proactive Offer
-      </button>
-    `;
+    toolbar.innerHTML = `<button onclick="document.getElementById('topDownOfferModal').classList.remove('hidden')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md"><i class="fa-solid fa-paper-plane mr-1.5"></i> Proactive Offer</button>`;
   } else {
     toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab View: ${activeSubTab}</span>`;
   }
 
   if (filtered.length === 0) {
-    tableBody.innerHTML = `
-      <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
-        <p>No records found in this view.</p>
-      </div>
-    `;
+    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 col-span-full"><i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i><p>No records found in this view.</p></div>`;
     return;
   }
 
   tableBody.innerHTML = filtered.map(c => {
     let actionHtml = '';
     if (activeSubTab === 'incoming') {
-      actionHtml = `
-        <button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
-        <button onclick="denySingleComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
-      `;
+      actionHtml = `<button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button> <button onclick="denySingleComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>`;
     } else if (activeSubTab === 'workingQueue') {
-      actionHtml = `
-        <button onclick="openSettlementModal('${c.id}','${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
-          <i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
-        </button>
-      `;
+      actionHtml = `<button onclick="openSettlementModal('${c.id}','${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md"><i class="fa-solid fa-wallet mr-1"></i> Pay & Settle</button>`;
     } else if (activeSubTab === 'history') {
-      actionHtml = `
-        <button onclick="inspectReceipt('${c.paypal_tx_id || c.paypaltxid || 'N/A'}','${c.amount || 0}', '${c.receipt_url || c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
-          <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
-        </button>
-      `;
+      actionHtml = `<button onclick="inspectReceipt('${c.paypal_tx_id || c.paypaltxid || 'N/A'}','${c.amount || 0}', '${c.receipt_url || c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition"><i class="fa-solid fa-eye mr-1"></i> Inspect Receipt</button>`;
     } else if (activeSubTab === 'outgoing') {
       actionHtml = `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px]">AWAITING ACCEPTANCE</span>`;
     } else {
-      actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">MAIN QUEUE</span>`;
+      actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">UNREQUESTED</span>`;
     }
 
-    return `
-      <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-        <div class="col-span-1">
-          <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id)?'checked':''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
-        </div>
-        <div class="col-span-3 space-y-0.5">
-          <span class="font-bold text-white font-mono">${c.feedback_id || 'FB-PENDING'}</span>
-          <p class="text-[10px] text-slate-500 font-mono">ID: ${String(c.id).substring(0,8)}...</p>
-        </div>
-        <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type || 'REVIEWER'}</span>
-          <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
-        </div>
-        <div class="col-span-2">
-          <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
-        </div>
-        <div class="col-span-3 flex items-center justify-end space-x-2">
-          ${actionHtml}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
+    const displayRef = c.feedback_id ? c.feedback_id : `Ref ID: ${String(c.id).substring(0,8)}`;
 
-function toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
-        </div>
-        <div class="col-span-3 space-y-0.5">
-          <span class="font-bold text-white">Ref ID: ${String(c.id).substring(0,8)}</span>
-          <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
-        </div>
-        <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
-          <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
-        </div>
-        <div class="col-span-2">
-          <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
-        </div>
-        <div class="col-span-3 flex items-center justify-end space-x-2">
-          ${actionHtml}
-        </div>
+    return `<div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+      <div class="col-span-1">
+        <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id)?'checked':''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
       </div>
-    `;
+      <div class="col-span-3 space-y-0.5">
+        <span class="font-bold text-white font-mono">${displayRef}</span>
+        <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
+      </div>
+      <div class="col-span-3 space-y-0.5">
+        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || c.role_type || 'REVIEWER'}</span>
+        <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
+      </div>
+      <div class="col-span-2">
+        <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
+      </div>
+      <div class="col-span-3 flex items-center justify-end space-x-2">
+        ${actionHtml}
+      </div>
+    </div>`;
   }).join('');
 }
 
