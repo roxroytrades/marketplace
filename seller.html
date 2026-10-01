@@ -8,18 +8,18 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
-  darkMode: 'class',
-  theme: {
-    extend: {
-      colors: {
-        darkBg: '#0F172A',
-        cardBg: '#1E293B',
-        accentBlue: '#2563EB',
-        accentHover: '#1D4ED8',
-        borderSlate: '#334155'
-      }
-    }
-  }
+darkMode: 'class',
+theme: {
+extend: {
+colors: {
+darkBg: '#0F172A',
+cardBg: '#1E293B',
+accentBlue: '#2563EB',
+accentHover: '#1D4ED8',
+borderSlate: '#334155'
+}
+}
+}
 }
 </script>
 <!-- FontAwesome for Icons -->
@@ -386,1016 +386,892 @@ let activeSubTab = 'incoming';
 let selectedSellerCommIds = new Set();
 let pollingInterval = null;
 let chatAttachedFile = null;
-
 // Status Badge Sanitizer
 const sanitizeStatusBadge = (payload) => {
-  if (payload.status_badge) {
-    payload.status_badge = payload.status_badge.trim().toUpperCase();
-  }
-  return payload;
+if (payload.status_badge) {
+payload.status_badge = payload.status_badge.trim().toUpperCase();
+}
+return payload;
 };
-
 async function initVendorWorkspace() {
-  const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
-  if (sessionError || !session) {
-    window.location.href = 'login.html';
-    return;
-  }
-  currentUser = session.user;
-
-  // Multi-layer Role Gating & Auto-Healing Check
-  try {
-    let metadataRole = (currentUser.user_metadata?.role || '').toLowerCase();
-    let dbRole = '';
-    
-    const { data: profile } = await _supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', currentUser.id)
-      .maybeSingle();
-
-    if (profile && profile.role) {
-      dbRole = profile.role.toLowerCase();
-    }
-
-    const isSeller = metadataRole === 'seller' || metadataRole === 'vendor' || dbRole === 'seller' || dbRole === 'vendor' || metadataRole === 'admin' || dbRole === 'admin';
-
-    if (!isSeller && (dbRole === 'buyer' || metadataRole === 'buyer')) {
-      alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
-      window.location.href = 'index.html';
-      return;
-    }
-
-    // Auto-heal profile role if metadata indicates seller/vendor but profile is set to buyer or unassigned
-    if ((metadataRole === 'seller' || metadataRole === 'vendor') && dbRole !== 'seller' && dbRole !== 'vendor') {
-      await _supabase.from('profiles').update({ role: 'seller' }).eq('id', currentUser.id);
-    }
-  } catch (profileErr) {
-    console.warn("Profile role check bypassed:", profileErr);
-  }
-
-  const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
-  const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-  if (document.getElementById('headerUserName')) document.getElementById('headerUserName').textContent = fullName;
-  if (document.getElementById('welcomeTitle')) document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
-  if (document.getElementById('refLinkInput')) document.getElementById('refLinkInput').value = `https://echohub.ja/register?ref=vendor_${currentUser.id.substring(0,8)}`;
-
-  await loadVendorProducts();
-  await loadVendorCommissions();
-  await loadVendorThreads();
-
-  if (pollingInterval) clearInterval(pollingInterval);
-  pollingInterval = setInterval(pollVendorData, 10000);
+const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+if (sessionError || !session) {
+window.location.href = 'login.html';
+return;
 }
-
+currentUser = session.user;
+// Multi-layer Role Gating & Auto-Healing Check
+try {
+let metadataRole = (currentUser.user_metadata?.role || '').toLowerCase();
+let dbRole = '';
+const { data: profile } = await _supabase
+.from('profiles')
+.select('role')
+.eq('id', currentUser.id)
+.maybeSingle();
+if (profile && profile.role) {
+dbRole = profile.role.toLowerCase();
+}
+const isSeller = metadataRole === 'seller' || metadataRole === 'vendor' || dbRole === 'seller' || dbRole === 'vendor' || metadataRole === 'admin' || dbRole === 'admin';
+if (!isSeller && (dbRole === 'buyer' || metadataRole === 'buyer')) {
+alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
+window.location.href = 'index.html';
+return;
+}
+// Auto-heal profile role if metadata indicates seller/vendor but profile is set to buyer or unassigned
+if ((metadataRole === 'seller' || metadataRole === 'vendor') && dbRole !== 'seller' && dbRole !== 'vendor') {
+await _supabase.from('profiles').update({ role: 'seller' }).eq('id', currentUser.id);
+}
+} catch (profileErr) {
+console.warn("Profile role check bypassed:", profileErr);
+}
+const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+if (document.getElementById('headerUserName')) document.getElementById('headerUserName').textContent = fullName;
+if (document.getElementById('welcomeTitle')) document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
+if (document.getElementById('refLinkInput')) document.getElementById('refLinkInput').value = `https://echohub.ja/register?ref=vendor_${currentUser.id.substring(0,8)}`;
+await loadVendorProducts();
+await loadVendorCommissions();
+await loadVendorThreads();
+if (pollingInterval) clearInterval(pollingInterval);
+pollingInterval = setInterval(pollVendorData, 10000);
+}
 async function pollVendorData() {
-  await loadVendorProducts(true);
-  await loadVendorCommissions(true);
-  await loadVendorThreads(true);
+await loadVendorProducts(true);
+await loadVendorCommissions(true);
+await loadVendorThreads(true);
 }
-
 function copyReferralLink() {
-  const input = document.getElementById('refLinkInput');
-  if (input) {
-    input.select();
-    navigator.clipboard.writeText(input.value);
-    showToast("Referral link copied to clipboard!");
-  }
+const input = document.getElementById('refLinkInput');
+if (input) {
+input.select();
+navigator.clipboard.writeText(input.value);
+showToast("Referral link copied to clipboard!");
 }
-
+}
 function switchVendorTab(tab) {
-  const sections = ['catalogSection', 'commissionsSection', 'messagesSection', 'referralsSection'];
-  const buttons = ['navCatalogBtn', 'navCommissionsBtn', 'navMessagesBtn', 'navReferralsBtn'];
-  sections.forEach(s => document.getElementById(s).classList.add('hidden'));
-  buttons.forEach(b => {
-    document.getElementById(b).className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
-  });
-  if (tab === 'catalog') {
-    document.getElementById('catalogSection').classList.remove('hidden');
-    document.getElementById('navCatalogBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-  } else if (tab === 'commissions') {
-    document.getElementById('commissionsSection').classList.remove('hidden');
-    document.getElementById('navCommissionsBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-  } else if (tab === 'messages') {
-    document.getElementById('messagesSection').classList.remove('hidden');
-    document.getElementById('navMessagesBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-  } else if (tab === 'referrals') {
-    document.getElementById('referralsSection').classList.remove('hidden');
-    document.getElementById('navReferralsBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
-  }
+const sections = ['catalogSection', 'commissionsSection', 'messagesSection', 'referralsSection'];
+const buttons = ['navCatalogBtn', 'navCommissionsBtn', 'navMessagesBtn', 'navReferralsBtn'];
+sections.forEach(s => document.getElementById(s).classList.add('hidden'));
+buttons.forEach(b => {
+document.getElementById(b).className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
+});
+if (tab === 'catalog') {
+document.getElementById('catalogSection').classList.remove('hidden');
+document.getElementById('navCatalogBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+} else if (tab === 'commissions') {
+document.getElementById('commissionsSection').classList.remove('hidden');
+document.getElementById('navCommissionsBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+} else if (tab === 'messages') {
+document.getElementById('messagesSection').classList.remove('hidden');
+document.getElementById('navMessagesBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
+} else if (tab === 'referrals') {
+document.getElementById('referralsSection').classList.remove('hidden');
+document.getElementById('navReferralsBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
 }
-
+}
 async function handleLogout() {
-  try {
-    if (pollingInterval) clearInterval(pollingInterval);
-    await _supabase.auth.signOut();
-  } catch (err) {
-    console.error("Logout error:", err.message);
-  } finally {
-    window.location.href = 'login.html';
-  }
+try {
+if (pollingInterval) clearInterval(pollingInterval);
+await _supabase.auth.signOut();
+} catch (err) {
+console.error("Logout error:", err.message);
+} finally {
+window.location.href = 'login.html';
 }
-
+}
 // Image Compression Utility
 async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-    };
-  });
+return new Promise((resolve) => {
+const reader = new FileReader();
+reader.readAsDataURL(file);
+reader.onload = (event) => {
+const img = new Image();
+img.src = event.target.result;
+img.onload = () => {
+const canvas = document.createElement('canvas');
+let width = img.width;
+let height = img.height;
+if (width > maxWidth) {
+height = Math.round((height * maxWidth) / width);
+width = maxWidth;
 }
-
+canvas.width = width;
+canvas.height = height;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(img, 0, 0, width, height);
+resolve(canvas.toDataURL('image/jpeg', quality));
+};
+};
+});
+}
 // Product Catalog
 async function loadVendorProducts(isPolling = false) {
-  const grid = document.getElementById('vendorProductGrid');
-  try {
-    const { data, error } = await _supabase
-      .from('products')
-      .select('*')
-      .eq('vendor_id', currentUser.id)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    vendorProducts = data || [];
-    if (vendorProducts.length === 0) {
-      grid.innerHTML = `
-        <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
-          <p>You have not listed any products yet. Click "Add New Product" above to begin.</p>
-        </div>
-      `;
-      return;
-    }
-    grid.innerHTML = vendorProducts.map(p => `
-      <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
-        <div>
-          <img src="${p.image_url || p.image || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
-          <div class="p-5 space-y-2">
-            <div class="flex justify-between items-center">
-              <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status || 'ACTIVE'}</span>
-              <span class="text-xs font-bold text-emerald-400">Price: $${Number(p.price || 0).toFixed(2)}</span>
-            </div>
-            <h3 class="font-bold text-white text-base">${p.title}</h3>
-            <p class="text-xs text-slate-400 line-clamp-2">${p.description || ''}</p>
-          </div>
-        </div>
-        <div class="p-5 pt-0 flex space-x-2">
-          <button onclick="editProduct('${p.id}')" class="flex-1 bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition">Edit</button>
-          <button onclick="deleteProduct('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold px-4 py-2.5 rounded-xl transition"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </div>
-    `).join('');
-  } catch (err) {
-    console.error("Error loading products:", err);
-  }
+const grid = document.getElementById('vendorProductGrid');
+try {
+const { data, error } = await _supabase
+.from('products')
+.select('*')
+.eq('vendor_id', currentUser.id)
+.order('created_at', { ascending: false });
+if (error) throw error;
+vendorProducts = data || [];
+if (vendorProducts.length === 0) {
+grid.innerHTML = `
+<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+<p>You have not listed any products yet. Click "Add New Product" above to begin.</p>
+</div>
+`;
+return;
 }
-
+grid.innerHTML = vendorProducts.map(p => `
+<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
+<div>
+<img src="${p.image_url || p.image || 'https://via.placeholder.com/300'}" alt="Product" class="w-full h-48 object-cover border-b border-borderSlate">
+<div class="p-5 space-y-2">
+<div class="flex justify-between items-center">
+<span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">${p.status || 'ACTIVE'}</span>
+<span class="text-xs font-bold text-emerald-400">Price: $${Number(p.price || 0).toFixed(2)}</span>
+</div>
+<h3 class="font-bold text-white text-base">${p.title}</h3>
+<p class="text-xs text-slate-400 line-clamp-2">${p.description || ''}</p>
+</div>
+</div>
+<div class="p-5 pt-0 flex space-x-2">
+<button onclick="editProduct('${p.id}')" class="flex-1 bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition">Edit</button>
+<button onclick="deleteProduct('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold px-4 py-2.5 rounded-xl transition"><i class="fa-solid fa-trash"></i></button>
+</div>
+</div>
+`).join('');
+} catch (err) {
+console.error("Error loading products:", err);
+}
+}
 function openProductModal() {
-  document.getElementById('productModalTitle').textContent = 'Add New Marketplace Product';
-  document.getElementById('editingProductId').value = '';
-  document.getElementById('productForm').reset();
-  document.getElementById('productModal').classList.remove('hidden');
+document.getElementById('productModalTitle').textContent = 'Add New Marketplace Product';
+document.getElementById('editingProductId').value = '';
+document.getElementById('productForm').reset();
+document.getElementById('productModal').classList.remove('hidden');
 }
-
 function closeProductModal() {
-  document.getElementById('productModal').classList.add('hidden');
+document.getElementById('productModal').classList.add('hidden');
 }
-
 async function editProduct(id) {
-  const prod = vendorProducts.find(p => p.id == id);
-  if (!prod) return;
-  document.getElementById('productModalTitle').textContent = 'Edit Product Listing';
-  document.getElementById('editingProductId').value = prod.id;
-  document.getElementById('prodTitle').value = prod.title;
-  document.getElementById('prodDesc').value = prod.description || '';
-  document.getElementById('prodPrice').value = prod.price !== undefined ? Number(prod.price).toFixed(2) : '0.00';
-  document.getElementById('prodStatus').value = prod.status || 'ACTIVE';
-  document.getElementById('productModal').classList.remove('hidden');
+const prod = vendorProducts.find(p => p.id == id);
+if (!prod) return;
+document.getElementById('productModalTitle').textContent = 'Edit Product Listing';
+document.getElementById('editingProductId').value = prod.id;
+document.getElementById('prodTitle').value = prod.title;
+document.getElementById('prodDesc').value = prod.description || '';
+document.getElementById('prodPrice').value = prod.price !== undefined ? Number(prod.price).toFixed(2) : '0.00';
+document.getElementById('prodStatus').value = prod.status || 'ACTIVE';
+document.getElementById('productModal').classList.remove('hidden');
 }
-
 async function handleSaveProduct(event) {
-  event.preventDefault();
-  const id = document.getElementById('editingProductId').value;
-  const title = document.getElementById('prodTitle').value.trim();
-  const description = document.getElementById('prodDesc').value.trim();
-  const price = parseFloat(document.getElementById('prodPrice').value) || 0.00;
-  const status = document.getElementById('prodStatus').value;
-  const fileInput = document.getElementById('prodImageFile');
-  let imageUrl = 'https://via.placeholder.com/300';
-
-  if (id) {
-    const existing = vendorProducts.find(p => p.id == id);
-    if (existing) imageUrl = existing.image_url || existing.image;
-  }
-
-  if (fileInput.files && fileInput.files[0]) {
-    imageUrl = await compressImageFile(fileInput.files[0]);
-  }
-
-  try {
-    if (id) {
-      const { error } = await _supabase
-        .from('products')
-        .update({ title, description, price, status, image_url: imageUrl, image: imageUrl })
-        .eq('id', id);
-      if (error) throw error;
-    } else {
-      const { error } = await _supabase
-        .from('products')
-        .insert([{ vendor_id: currentUser.id, title, description, price, status, image_url: imageUrl, image: imageUrl }]);
-      if (error) throw error;
-    }
-    closeProductModal();
-    await loadVendorProducts();
-  } catch (err) {
-    alert('Error saving product: ' + err.message);
-  }
+event.preventDefault();
+const id = document.getElementById('editingProductId').value;
+const title = document.getElementById('prodTitle').value.trim();
+const description = document.getElementById('prodDesc').value.trim();
+const price = parseFloat(document.getElementById('prodPrice').value) || 0.00;
+const status = document.getElementById('prodStatus').value;
+const fileInput = document.getElementById('prodImageFile');
+let imageUrl = 'https://via.placeholder.com/300';
+if (id) {
+const existing = vendorProducts.find(p => p.id == id);
+if (existing) imageUrl = existing.image_url || existing.image;
 }
-
+if (fileInput.files && fileInput.files[0]) {
+imageUrl = await compressImageFile(fileInput.files[0]);
+}
+try {
+if (id) {
+const { error } = await _supabase
+.from('products')
+.update({ title, description, price, status, image_url: imageUrl, image: imageUrl })
+.eq('id', id);
+if (error) throw error;
+} else {
+const { error } = await _supabase
+.from('products')
+.insert([{ vendor_id: currentUser.id, title, description, price, status, image_url: imageUrl, image: imageUrl }]);
+if (error) throw error;
+}
+closeProductModal();
+await loadVendorProducts();
+} catch (err) {
+alert('Error saving product: ' + err.message);
+}
+}
 async function deleteProduct(id) {
-  if (!confirm('Are you sure you want to delete this product?')) return;
-  try {
-    const { error } = await _supabase.from('products').delete().eq('id', id);
-    if (error) throw error;
-    await loadVendorProducts();
-  } catch (err) {
-    alert('Error deleting product: ' + err.message);
-  }
+if (!confirm('Are you sure you want to delete this product?')) return;
+try {
+const { error } = await _supabase.from('products').delete().eq('id', id);
+if (error) throw error;
+await loadVendorProducts();
+} catch (err) {
+alert('Error deleting product: ' + err.message);
 }
-
+}
 // 5-Tab Commissions Architecture
 async function loadVendorCommissions(isPolling = false) {
-  try {
-    let { data, error } = await _supabase
-      .from('commissions')
-      .select('*')
-      .eq('vendor_id', currentUser.id)
-      .order('created_at', { ascending: false });
-
-    if (error || !data || data.length === 0) {
-      const resAlt = await _supabase
-        .from('commissions')
-        .select('*')
-        .eq('seller_id', currentUser.id)
-        .order('created_at', { ascending: false });
-      if (!resAlt.error && resAlt.data && resAlt.data.length > 0) {
-        data = resAlt.data;
-      }
-    }
-
-    // Resolve missing recipient emails from profiles table
-    if (data && data.length > 0) {
-      const missingRecipientIds = [...new Set(data.filter(c => !c.recipient_email && c.recipient_id).map(c => c.recipient_id))];
-      if (missingRecipientIds.length > 0) {
-        const { data: profs } = await _supabase
-          .from('profiles')
-          .select('id, email, full_name')
-          .in('id', missingRecipientIds);
-
-        if (profs && profs.length > 0) {
-          const profMap = new Map(profs.map(p => [p.id, p]));
-          data.forEach(c => {
-            if (!c.recipient_email && c.recipient_id && profMap.has(c.recipient_id)) {
-              c.recipient_email = profMap.get(c.recipient_id).email || profMap.get(c.recipient_id).full_name;
-            }
-          });
-        }
-      }
-    }
-
-    vendorCommissions = data || [];
-  } catch (err) {
-    console.error('Error loading commissions:', err);
-    vendorCommissions = [];
-  }
-  renderSellerCommissions();
+try {
+let { data, error } = await _supabase
+.from('commissions')
+.select('*')
+.eq('vendor_id', currentUser.id)
+.order('created_at', { ascending: false });
+if (error || !data || data.length === 0) {
+const resAlt = await _supabase
+.from('commissions')
+.select('*')
+.eq('seller_id', currentUser.id)
+.order('created_at', { ascending: false });
+if (!resAlt.error && resAlt.data && resAlt.data.length > 0) {
+data = resAlt.data;
 }
-
+}
+// Resolve missing recipient emails from profiles table
+if (data && data.length > 0) {
+const missingRecipientIds = [...new Set(data.filter(c => !c.recipient_email && c.recipient_id).map(c => c.recipient_id))];
+if (missingRecipientIds.length > 0) {
+const { data: profs } = await _supabase
+.from('profiles')
+.select('id, email, full_name')
+.in('id', missingRecipientIds);
+if (profs && profs.length > 0) {
+const profMap = new Map(profs.map(p => [p.id, p]));
+data.forEach(c => {
+if (!c.recipient_email && c.recipient_id && profMap.has(c.recipient_id)) {
+c.recipient_email = profMap.get(c.recipient_id).email || profMap.get(c.recipient_id).full_name;
+}
+});
+}
+}
+}
+vendorCommissions = data || [];
+} catch (err) {
+console.error('Error loading commissions:', err);
+vendorCommissions = [];
+}
+renderSellerCommissions();
+}
 function switchCommSubTab(subTab) {
-  activeSubTab = subTab;
-  selectedSellerCommIds.clear();
-  const selectAllEl = document.getElementById('selectAllSellerComms');
-  if (selectAllEl) selectAllEl.checked = false;
-  const tabs = ['incoming', 'mainQueue', 'outgoing', 'workingQueue', 'history'];
-  tabs.forEach(t => {
-    const btn = document.getElementById('subTab' + t.charAt(0).toUpperCase() + t.slice(1));
-    if (btn) {
-      if (t === subTab) {
-        btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
-      } else {
-        btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
-      }
-    }
-  });
-  renderSellerCommissions();
+activeSubTab = subTab;
+selectedSellerCommIds.clear();
+const selectAllEl = document.getElementById('selectAllSellerComms');
+if (selectAllEl) selectAllEl.checked = false;
+const tabs = ['incoming', 'mainQueue', 'outgoing', 'workingQueue', 'history'];
+tabs.forEach(t => {
+const btn = document.getElementById('subTab' + t.charAt(0).toUpperCase() + t.slice(1));
+if (btn) {
+if (t === subTab) {
+btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
+} else {
+btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
 }
-
+}
+});
+renderSellerCommissions();
+}
 function renderSellerCommissions() {
-  const tableBody = document.getElementById('sellerCommsTableBody');
-  const toolbar = document.getElementById('sellerToolbar');
-  const searchInput = document.getElementById('sellerCommSearch');
-  const search = searchInput ? searchInput.value.toLowerCase() : '';
+const tableBody = document.getElementById('sellerCommsTableBody');
+const toolbar = document.getElementById('sellerToolbar');
+const searchInput = document.getElementById('sellerCommSearch');
+const search = searchInput ? searchInput.value.toLowerCase() : '';
+const filtered = vendorCommissions.filter(c => {
+const queueType = String(c.queue_type || '').toUpperCase();
+const refId = String(c.feedback_id || c.id || '').toLowerCase();
+const recipientEmail = String(c.recipient_email || c.recipient_id || '').toLowerCase();
+const matchesSearch = refId.includes(search) || recipientEmail.includes(search);
+let matchesTab = false;
 
-  const filtered = vendorCommissions.filter(c => {
-    const statusField = String(c.status_tag || c.status || '').toUpperCase();
-    const queueType = String(c.queue_type || '').toUpperCase();
-    const refId = String(c.feedback_id || c.id || '').toLowerCase();
-    const recipientEmail = String(c.recipient_email || c.recipient_id || '').toLowerCase();
-    const matchesSearch = refId.includes(search) || recipientEmail.includes(search);
-
-    let matchesTab = false;
-    // Status classifications
-    const isCompleted = statusField === 'COMPLETED_PAID' || statusField === 'PAID';
-    const isRequested = statusField === 'REQUESTED_BY_RECIPIENT' || statusField === 'REQUESTED' || statusField === 'REQUESTED_BY_BUYER';
-    const isWorking = statusField === 'APPROVED_IN_WORKING' || (queueType === 'WORKING_QUEUE' && !isRequested && !isCompleted);
-    const isOutgoing = statusField === 'OFFERED_AWAITING_ACCEPTANCE';
-
-    if (activeSubTab === 'incoming') {
-      matchesTab = isRequested && !isCompleted;
-    } else if (activeSubTab === 'mainQueue') {
-      // Main Queue includes:
-      // 1) Newly created review commissions (queue_type = 'MAIN_ACCOUNT' or status = 'APPROVED' or status_tag = 'UNREQUESTED_BALANCE')
-      // 2) Any balance not in incoming requests, working queue, outgoing, or paid history
-      matchesTab = (queueType === 'MAIN_ACCOUNT' || statusField === 'APPROVED' || statusField === 'UNREQUESTED_BALANCE' || statusField === '' || !c.status_tag) && 
-                 !isRequested && !isWorking && !isCompleted && !isOutgoing;
-    } else if (activeSubTab === 'outgoing') {
-      matchesTab = isOutgoing;
-    } else if (activeSubTab === 'workingQueue') {
-      matchesTab = isWorking;
-    } else if (activeSubTab === 'history') {
-      matchesTab = isCompleted;
-    }
-
-    return matchesSearch && matchesTab;
-  });
-
-  if (activeSubTab === 'incoming') {
-    toolbar.innerHTML = `
-      <button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected
-      </button>
-    `;
-  } else if (activeSubTab === 'mainQueue') {
-    toolbar.innerHTML = `
-      <button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md mr-2">
-        <i class="fa-solid fa-arrow-right-to-bracket mr-1.5"></i> Move Selected to Working
-      </button>
-      <button onclick="document.getElementById('topDownOfferModal').classList.remove('hidden')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-        <i class="fa-solid fa-paper-plane mr-1.5"></i> Proactive Offer
-      </button>
-    `;
-  } else {
-    toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab View: ${activeSubTab}</span>`;
-  }
-
-  if (filtered.length === 0) {
-    tableBody.innerHTML = `
-      <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
-        <p>No records found in this view.</p>
-      </div>
-    `;
-    return;
-  }
-
-  tableBody.innerHTML = filtered.map(c => {
-    let actionHtml = '';
-    if (activeSubTab === 'incoming') {
-      actionHtml = `
-        <button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
-        <button onclick="denySingleComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
-      `;
-    } else if (activeSubTab === 'mainQueue') {
-      actionHtml = `
-        <button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">
-          <i class="fa-solid fa-arrow-right mr-1"></i> Move to Working
-        </button>
-      `;
-    } else if (activeSubTab === 'workingQueue') {
-      actionHtml = `
-        <button onclick="openSettlementModal('${c.id}','${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
-          <i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
-        </button>
-      `;
-    } else if (activeSubTab === 'history') {
-      actionHtml = `
-        <button onclick="inspectReceipt('${c.paypal_tx_id || c.paypaltxid || 'N/A'}','${c.amount || 0}', '${c.receipt_url || c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
-          <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
-        </button>
-      `;
-    } else if (activeSubTab === 'outgoing') {
-      actionHtml = `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px]">AWAITING ACCEPTANCE</span>`;
-    } else {
-      actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">MAIN ACCOUNT BALANCE</span>`;
-    }
-
-    return `
-      <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-        <div class="col-span-1">
-          <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id)?'checked':''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
-        </div>
-        <div class="col-span-3 space-y-0.5">
-          <span class="font-bold text-white">Ref ID: ${String(c.feedback_id || c.id).substring(0,12)}</span>
-          <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
-        </div>
-        <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type || c.recipient_role || 'REVIEWER'}</span>
-          <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || c.recipient_id || 'Recipient'}</p>
-        </div>
-        <div class="col-span-2">
-          <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
-        </div>
-        <div class="col-span-3 flex items-center justify-end space-x-2">
-          ${actionHtml}
-        </div>
-      </div>
-    `;
-  }).join('');
+if (activeSubTab === 'incoming') {
+matchesTab = queueType === 'OUTGOING_REQUESTS' || c.status === 'REQUESTED_BY_RECIPIENT';
+} else if (activeSubTab === 'mainQueue') {
+matchesTab = (queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || !c.queue_type) && queueType !== 'WORKING_QUEUE' && queueType !== 'RECEIVED_HISTORY' && queueType !== 'OUTGOING_REQUESTS';
+} else if (activeSubTab === 'outgoing') {
+matchesTab = queueType === 'OUTGOING_REQUESTS' && c.type === 'TOP_DOWN_OFFER';
+} else if (activeSubTab === 'workingQueue') {
+matchesTab = queueType === 'WORKING_QUEUE';
+} else if (activeSubTab === 'history') {
+matchesTab = queueType === 'RECEIVED_HISTORY' || c.status === 'COMPLETED_PAID';
 }
-
+return matchesSearch && matchesTab;
+});
+if (activeSubTab === 'incoming') {
+toolbar.innerHTML = `
+<button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+<i class="fa-solid fa-check mr-1.5"></i> Approve Selected
+</button>
+`;
+} else if (activeSubTab === 'mainQueue') {
+toolbar.innerHTML = `
+<button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md mr-2">
+<i class="fa-solid fa-arrow-right-to-bracket mr-1.5"></i> Move Selected to Working
+</button>
+<button onclick="document.getElementById('topDownOfferModal').classList.remove('hidden')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+<i class="fa-solid fa-paper-plane mr-1.5"></i> Proactive Offer
+</button>
+`;
+} else {
+toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab View: ${activeSubTab}</span>`;
+}
+if (filtered.length === 0) {
+tableBody.innerHTML = `
+<div class="p-8 text-center text-xs text-slate-400 col-span-full">
+<i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
+<p>No records found in this view.</p>
+</div>
+`;
+return;
+}
+tableBody.innerHTML = filtered.map(c => {
+let actionHtml = '';
+if (activeSubTab === 'incoming') {
+actionHtml = `
+<button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
+<button onclick="denySingleComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
+`;
+} else if (activeSubTab === 'mainQueue') {
+actionHtml = `
+<button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">
+<i class="fa-solid fa-arrow-right mr-1"></i> Move to Working
+</button>
+`;
+} else if (activeSubTab === 'workingQueue') {
+actionHtml = `
+<button onclick="openSettlementModal('${c.id}','${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
+<i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
+</button>
+`;
+} else if (activeSubTab === 'history') {
+actionHtml = `
+<button onclick="inspectReceipt('${c.paypal_tx_id || c.paypaltxid || 'N/A'}','${c.amount || 0}', '${c.receipt_url || c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
+<i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
+</button>
+`;
+} else if (activeSubTab === 'outgoing') {
+actionHtml = `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px]">AWAITING ACCEPTANCE</span>`;
+} else {
+actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">MAIN ACCOUNT BALANCE</span>`;
+}
+return `
+<div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+<div class="col-span-1">
+<input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id)?'checked':''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+</div>
+<div class="col-span-3 space-y-0.5">
+<span class="font-bold text-white">Ref ID: ${String(c.feedback_id || c.id).substring(0,12)}</span>
+<p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
+</div>
+<div class="col-span-3 space-y-0.5">
+<span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type || c.recipient_role || 'REVIEWER'}</span>
+<p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || c.recipient_id || 'Recipient'}</p>
+</div>
+<div class="col-span-2">
+<p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
+</div>
+<div class="col-span-3 flex items-center justify-end space-x-2">
+${actionHtml}
+</div>
+</div>
+`;
+}).join('');
+}
 function toggleSelectSellerComm(id) {
-  if (selectedSellerCommIds.has(id)) {
-    selectedSellerCommIds.delete(id);
-  } else {
-    selectedSellerCommIds.add(id);
-  }
+if (selectedSellerCommIds.has(id)) {
+selectedSellerCommIds.delete(id);
+} else {
+selectedSellerCommIds.add(id);
 }
-
+}
 function toggleSelectAllSeller(master) {
-  const boxes = document.querySelectorAll('#sellerCommsTableBody input[type="checkbox"]');
-  boxes.forEach(b => {
-    b.checked = master.checked;
-    if (master.checked) selectedSellerCommIds.add(b.value);
-    else selectedSellerCommIds.delete(b.value);
-  });
+const boxes = document.querySelectorAll('#sellerCommsTableBody input[type="checkbox"]');
+boxes.forEach(b => {
+b.checked = master.checked;
+if (master.checked) selectedSellerCommIds.add(b.value);
+else selectedSellerCommIds.delete(b.value);
+});
 }
-
 async function batchVendorApprove() {
-  if (selectedSellerCommIds.size === 0) {
-    alert('Please select at least one record.');
-    return;
-  }
-  try {
-    for (const id of selectedSellerCommIds) {
-      let updatePayload = {
-        status_tag: 'APPROVED_IN_WORKING',
-        status: 'APPROVED_IN_WORKING'
-      };
-      sanitizeStatusBadge(updatePayload);
-      const { error } = await _supabase
-        .from('commissions')
-        .update(updatePayload)
-        .eq('id', id);
-      if (error) throw error;
-    }
-    selectedSellerCommIds.clear();
-    await loadVendorCommissions();
-    alert('Selected requests successfully moved to Working Queue.');
-  } catch (err) {
-    alert('Action failed: ' + err.message);
-  }
+if (selectedSellerCommIds.size === 0) {
+alert('Please select at least one record.');
+return;
 }
-
+try {
+for (const id of selectedSellerCommIds) {
+const { error } = await _supabase
+.from('commissions')
+.update({ queue_type: 'WORKING_QUEUE' })
+.eq('id', id);
+if (error) throw error;
+}
+selectedSellerCommIds.clear();
+await loadVendorCommissions();
+alert('Selected requests successfully moved to Working Queue.');
+} catch (err) {
+alert('Action failed: ' + err.message);
+}
+}
 async function approveSingleComm(id) {
-  try {
-    let updatePayload = { status_tag: 'APPROVED_IN_WORKING', status: 'APPROVED_IN_WORKING' };
-    sanitizeStatusBadge(updatePayload);
-    const { error } = await _supabase
-      .from('commissions')
-      .update(updatePayload)
-      .eq('id', id);
-    if (error) throw error;
-    await loadVendorCommissions();
-  } catch (err) {
-    alert('Approval failed: ' + err.message);
-  }
+try {
+const { error } = await _supabase
+.from('commissions')
+.update({ queue_type: 'WORKING_QUEUE' })
+.eq('id', id);
+if (error) throw error;
+await loadVendorCommissions();
+} catch (err) {
+alert('Approval failed: ' + err.message);
 }
-
+}
 async function denySingleComm(id) {
-  if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
-  try {
-    let updatePayload = { status_tag: 'UNREQUESTED_BALANCE', status: 'UNREQUESTED_BALANCE' };
-    sanitizeStatusBadge(updatePayload);
-    const { error } = await _supabase
-      .from('commissions')
-      .update(updatePayload)
-      .eq('id', id);
-    if (error) throw error;
-    await loadVendorCommissions();
-    alert('Claim reversed back to recipient queue.');
-  } catch (err) {
-    alert('Reversal failed: ' + err.message);
-  }
+if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
+try {
+const { error } = await _supabase
+.from('commissions')
+.update({ queue_type: 'MAIN_ACCOUNT' })
+.eq('id', id);
+if (error) throw error;
+await loadVendorCommissions();
+alert('Claim reversed back to recipient queue.');
+} catch (err) {
+alert('Reversal failed: ' + err.message);
 }
-
+}
 async function handleTopDownOfferSubmit(event) {
-  event.preventDefault();
-  const recipientEmail = document.getElementById('offerRecipientId').value.trim();
-  const recipientRole = document.getElementById('offerRecipientRole').value;
-  const amount = parseFloat(document.getElementById('offerAmount').value);
-  let insertPayload = {
-    vendor_id: currentUser.id,
-    recipient_email: recipientEmail,
-    recipient_role: recipientRole,
-    amount: amount,
-    status_tag: 'OFFERED_AWAITING_ACCEPTANCE',
-    status: 'OFFERED_AWAITING_ACCEPTANCE',
-    link: 'N/A',
-    type: 'TOP_DOWN_OFFER'
-  };
-  sanitizeStatusBadge(insertPayload);
-  try {
-    const { error } = await _supabase
-      .from('commissions')
-      .insert([insertPayload]);
-    if (error) throw error;
-    document.getElementById('topDownOfferModal').classList.add('hidden');
-    document.getElementById('offerRecipientId').value = '';
-    document.getElementById('offerAmount').value = '';
-    await loadVendorCommissions();
-    alert('Top-down commission offer sent successfully to Outgoing Requests.');
-  } catch (err) {
-    alert('Error creating offer: ' + err.message);
-  }
+event.preventDefault();
+const recipientEmail = document.getElementById('offerRecipientId').value.trim();
+const recipientRole = document.getElementById('offerRecipientRole').value;
+const amount = parseFloat(document.getElementById('offerAmount').value);
+let insertPayload = {
+vendor_id: currentUser.id,
+recipient_email: recipientEmail,
+recipient_role: recipientRole,
+amount: amount,
+queue_type: 'OUTGOING_REQUESTS',
+link: 'N/A',
+type: 'TOP_DOWN_OFFER'
+};
+try {
+const { error } = await _supabase
+.from('commissions')
+.insert([insertPayload]);
+if (error) throw error;
+document.getElementById('topDownOfferModal').classList.add('hidden');
+document.getElementById('offerRecipientId').value = '';
+document.getElementById('offerAmount').value = '';
+await loadVendorCommissions();
+alert('Top-down commission offer sent successfully to Outgoing Requests.');
+} catch (err) {
+alert('Error creating offer: ' + err.message);
 }
-
+}
 function openSettlementModal(commId, recipientEmail) {
-  document.getElementById('settleTargetCommId').value = commId;
-  document.getElementById('settlePaypalEmail').value = recipientEmail;
-  document.getElementById('settleTxId').value = '';
-  document.getElementById('settleReceiptFile').value = '';
-  document.getElementById('settlementModal').classList.remove('hidden');
+document.getElementById('settleTargetCommId').value = commId;
+document.getElementById('settlePaypalEmail').value = recipientEmail;
+document.getElementById('settleTxId').value = '';
+document.getElementById('settleReceiptFile').value = '';
+document.getElementById('settlementModal').classList.remove('hidden');
 }
-
 async function handleSettlementSubmit(event) {
-  event.preventDefault();
-  const commId = document.getElementById('settleTargetCommId').value;
-  const txId = document.getElementById('settleTxId').value.trim();
-  const fileInput = document.getElementById('settleReceiptFile');
-  if (txId.length !== 17) {
-    alert('PayPal Transaction ID must be exactly 17 characters.');
-    return;
-  }
-  let receiptBase64 = '';
-  if (fileInput.files && fileInput.files[0]) {
-    receiptBase64 = await compressImageFile(fileInput.files[0], 900, 0.7);
-  }
-  try {
-    let updateData = {
-      status_tag: 'COMPLETED_PAID',
-      status: 'COMPLETED_PAID',
-      paypal_tx_id: txId,
-      receipt_base64: receiptBase64,
-      receipt_url: receiptBase64
-    };
-    sanitizeStatusBadge(updateData);
-    const { error } = await _supabase
-      .from('commissions')
-      .update(updateData)
-      .eq('id', commId);
-    if (error) throw error;
-    document.getElementById('settlementModal').classList.add('hidden');
-    await loadVendorCommissions();
-    alert('Payment successfully settled and archived to Payment History!');
-  } catch (err) {
-    alert('Settlement execution failed: ' + err.message);
-  }
+event.preventDefault();
+const commId = document.getElementById('settleTargetCommId').value;
+const txId = document.getElementById('settleTxId').value.trim();
+const fileInput = document.getElementById('settleReceiptFile');
+if (txId.length !== 17) {
+alert('PayPal Transaction ID must be exactly 17 characters.');
+return;
 }
-
+let receiptBase64 = '';
+if (fileInput.files && fileInput.files[0]) {
+receiptBase64 = await compressImageFile(fileInput.files[0], 900, 0.7);
+}
+try {
+let updateData = {
+queue_type: 'RECEIVED_HISTORY',
+paypal_tx_id: txId,
+receipt_base64: receiptBase64,
+receipt_url: receiptBase64
+};
+const { error } = await _supabase
+.from('commissions')
+.update(updateData)
+.eq('id', commId);
+if (error) throw error;
+document.getElementById('settlementModal').classList.add('hidden');
+await loadVendorCommissions();
+alert('Payment successfully settled and archived to Payment History!');
+} catch (err) {
+alert('Settlement execution failed: ' + err.message);
+}
+}
 function inspectReceipt(txId, amount, receiptUrl) {
-  document.getElementById('inspectModalTxId').textContent = txId;
-  document.getElementById('inspectModalAmount').textContent = `$${Number(amount).toFixed(2)}`;
-  document.getElementById('inspectModalImage').src = receiptUrl || 'https://via.placeholder.com/300?text=No+Receipt+Image';
-  document.getElementById('inspectReceiptModal').classList.remove('hidden');
+document.getElementById('inspectModalTxId').textContent = txId;
+document.getElementById('inspectModalAmount').textContent = `$${Number(amount).toFixed(2)}`;
+document.getElementById('inspectModalImage').src = receiptUrl || 'https://via.placeholder.com/300?text=No+Receipt+Image';
+document.getElementById('inspectReceiptModal').classList.remove('hidden');
 }
-
 // ================= MESSAGING HUB & REVIEW STREAM =================
 async function loadVendorThreads(isPolling = false) {
-  try {
-    const { data: msgData, error: msgErr } = await _supabase
-      .from('messages')
-      .select('*')
-      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id},buyer_id.eq.${currentUser.id}`)
-      .order('created_at', { ascending: false });
-
-    if (msgErr) {
-      console.warn("Messages query error:", msgErr.message);
-    }
-
-    const allMsgs = msgData || [];
-    const threadMap = {};
-
-    allMsgs.forEach(m => {
-      const text = m.text || m.message_text || m.message || m.content || m.body || m.link || '';
-      
-      let partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id);
-      if (!partnerId || partnerId === currentUser.id) {
-        partnerId = m.buyer_id || (m.sender_id !== currentUser.id ? m.sender_id : m.receiver_id);
-      }
-      
-      const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(partnerId);
-      const displayKey = isUuid ? partnerId : (m.buyer_id || m.sender_id || 'general_shopper');
-
-      if (!threadMap[displayKey]) {
-        threadMap[displayKey] = {
-          partnerId: isUuid ? partnerId : null,
-          displayKey: displayKey,
-          lastMessage: text,
-          updatedAt: m.created_at,
-          messages: []
-        };
-      }
-      m._normalizedText = text;
-      m._normalizedImage = m.file_url || m.attachment_url || m.image || m.image_url || m.proof_base64 ||
-        (m.link && (m.link.match(/\.(jpeg|jpg|png|gif)$/i) || m.link.startsWith('data:image/')) ? m.link : null) ||
-        (m.content && m.content.startsWith('data:image/') ? m.content : null);
-      threadMap[displayKey].messages.push(m);
-    });
-
-    vendorThreads = Object.values(threadMap);
-    renderThreadsList();
-    if (activeThreadId) renderActiveChat();
-  } catch (err) {
-    console.log('Error loading threads:', err);
-  }
+try {
+const { data: msgData, error: msgErr } = await _supabase
+.from('messages')
+.select('*')
+.or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id},buyer_id.eq.${currentUser.id}`)
+.order('created_at', { ascending: false });
+if (msgErr) {
+console.warn("Messages query error:", msgErr.message);
 }
-
+const allMsgs = msgData || [];
+const threadMap = {};
+allMsgs.forEach(m => {
+const text = m.text || m.message_text || m.message || m.content || m.body || m.link || '';
+let partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id);
+if (!partnerId || partnerId === currentUser.id) {
+partnerId = m.buyer_id || (m.sender_id !== currentUser.id ? m.sender_id : m.receiver_id);
+}
+const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(partnerId);
+const displayKey = isUuid ? partnerId : (m.buyer_id || m.sender_id || 'general_shopper');
+if (!threadMap[displayKey]) {
+threadMap[displayKey] = {
+partnerId: isUuid ? partnerId : null,
+displayKey: displayKey,
+lastMessage: text,
+updatedAt: m.created_at,
+messages: []
+};
+}
+m._normalizedText = text;
+m._normalizedImage = m.file_url || m.attachment_url || m.image || m.image_url || m.proof_base64 ||
+(m.link && (m.link.match(/\.(jpeg|jpg|png|gif)$/i) || m.link.startsWith('data:image/')) ? m.link : null) ||
+(m.content && m.content.startsWith('data:image/') ? m.content : null);
+threadMap[displayKey].messages.push(m);
+});
+vendorThreads = Object.values(threadMap);
+renderThreadsList();
+if (activeThreadId) renderActiveChat();
+} catch (err) {
+console.log('Error loading threads:', err);
+}
+}
 function renderThreadsList() {
-  const listEl = document.getElementById('messagingThreadsList');
-  if (!listEl) return;
-  if (vendorThreads.length === 0) {
-    listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No conversations yet.</p>`;
-    return;
-  }
-  listEl.innerHTML = vendorThreads.map(t => {
-    const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    const isSelected = activeThreadId === t.displayKey || activeThreadId === t.partnerId;
-    return `
-      <div onclick="selectThread('${t.displayKey}')" class="p-3 bg-darkBg border ${isSelected ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-200">Shopper / Reviewer (${String(t.displayKey).substring(0,8)}...)</span>
-          <span class="text-[10px] text-slate-500">${timeString}</span>
-        </div>
-        <p class="text-xs text-slate-400 truncate">${t.lastMessage || 'Attachment or link submitted'}</p>
-      </div>
-    `;
-  }).join('');
+const listEl = document.getElementById('messagingThreadsList');
+if (!listEl) return;
+if (vendorThreads.length === 0) {
+listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No conversations yet.</p>`;
+return;
 }
-
+listEl.innerHTML = vendorThreads.map(t => {
+const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+const isSelected = activeThreadId === t.displayKey || activeThreadId === t.partnerId;
+return `
+<div onclick="selectThread('${t.displayKey}')" class="p-3 bg-darkBg border ${isSelected ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-200">Shopper / Reviewer (${String(t.displayKey).substring(0,8)}...)</span>
+<span class="text-[10px] text-slate-500">${timeString}</span>
+</div>
+<p class="text-xs text-slate-400 truncate">${t.lastMessage || 'Attachment or link submitted'}</p>
+</div>
+`;
+}).join('');
+}
 function selectThread(key) {
-  activeThreadId = key;
-  renderThreadsList();
-  renderActiveChat();
-  document.getElementById('chatInputMsg').disabled = false;
-  document.getElementById('chatSendBtn').disabled = false;
+activeThreadId = key;
+renderThreadsList();
+renderActiveChat();
+document.getElementById('chatInputMsg').disabled = false;
+document.getElementById('chatSendBtn').disabled = false;
 }
-
 function hasAmazonUrl(text) {
-  return text && (text.includes('amazon.com') || text.includes('amzn.to') || text.includes('http'));
+return text && (text.includes('amazon.com') || text.includes('amzn.to') || text.includes('http'));
 }
-
 function hasImageAttachment(msg) {
-  return (msg._normalizedImage && msg._normalizedImage.trim() !== '') ||
-    (msg.file_url && msg.file_url.trim() !== '') ||
-    (msg.proof_base64 && msg.proof_base64.trim() !== '') ||
-    (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.includes('imgur') || msg._normalizedText.includes('supabase'))));
+return (msg._normalizedImage && msg._normalizedImage.trim() !== '') ||
+(msg.file_url && msg.file_url.trim() !== '') ||
+(msg.proof_base64 && msg.proof_base64.trim() !== '') ||
+(msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.includes('imgur') || msg._normalizedText.includes('supabase'))));
 }
-
 function renderActiveChat() {
-  const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
-  const container = document.getElementById('chatMessagesContainer');
-  if (!thread || !container) return;
-  
-  document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,8)}...)`;
-  const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-
-  container.innerHTML = sorted.map(m => {
-    const isMe = m.sender_id === currentUser.id;
-    const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
-    const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
-    const fileName = m.file_name || m.attachment_name || 'Attached File';
-    const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
-    const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
-    const showAsReviewCard = isExplicitReviewType || hasValidProof;
-    const feedbackId = m.feedback_id || 'Pending Approval';
-    const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
-    const commissionAmount = m.commission_amount || 5.00;
-
-    let bubbleContent = '';
-    if (showAsReviewCard) {
-      const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
-      const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
-      bubbleContent = `
-        <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
-          <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${badgeClass}">${statusBadge}</span>
-            <span class="text-[10px] text-slate-400 font-mono feedback-id-display">ID: ${feedbackId}</span>
-          </div>
-          <div>
-            <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 underline hover:text-blue-300 truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
-            ${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-300 mt-1">${text}</p>` : ''}
-            ${fileUrl ? `
-              <div class="mt-2">
-                <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
-                  <img src="${fileUrl}" alt="Proof" class="h-28 w-full object-cover hover:scale-105 transition">
-                </a>
-              </div>
-            ` : ''}
-          </div>
-          <div class="inline-action-area pt-2 border-t border-white/10">
-            ${statusBadge === 'AWAITING_ATTENTION' ? `
-              <div class="flex space-x-2" id="actions-${m.id}">
-                <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                  <i class="fa-solid fa-check"></i><span>Approve</span>
-                </button>
-                <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                  <i class="fa-solid fa-xmark"></i><span>Deny</span>
-                </button>
-              </div>
-            ` : `
-              <div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
-            `}
-          </div>
-        </div>
-      `;
-    } else {
-      let attachmentHtml = '';
-      if (fileUrl) {
-        if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
-          attachmentHtml = `
-            <div class="mt-2.5">
-              <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-xl border border-white/20 shadow-md">
-                <img src="${fileUrl}" alt="Attachment" class="max-h-52 w-full object-cover hover:scale-105 transition duration-300">
-              </a>
-            </div>`;
-        } else {
-          attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
-        }
-      }
-      bubbleContent = `<div>${text}</div>${attachmentHtml}`;
-    }
-
-    return `
-      <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
-        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-          ${bubbleContent}
-        </div>
-        <span class="text-[9px] text-slate-500 mt-1 px-1">${timeString}</span>
-      </div>
-    `;
-  }).join('');
-  container.scrollTop = container.scrollHeight;
+const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
+const container = document.getElementById('chatMessagesContainer');
+if (!thread || !container) return;
+document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,8)}...)`;
+const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+container.innerHTML = sorted.map(m => {
+const isMe = m.sender_id === currentUser.id;
+const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
+const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
+const fileName = m.file_name || m.attachment_name || 'Attached File';
+const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
+const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
+const showAsReviewCard = isExplicitReviewType || hasValidProof;
+const feedbackId = m.feedback_id || 'Pending Approval';
+const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
+const commissionAmount = m.commission_amount || 5.00;
+let bubbleContent = '';
+if (showAsReviewCard) {
+const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
+const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
+bubbleContent = `
+<div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
+<div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
+<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${badgeClass}">${statusBadge}</span>
+<span class="text-[10px] text-slate-400 font-mono feedback-id-display">ID: ${feedbackId}</span>
+</div>
+<div>
+<p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 underline hover:text-blue-300 truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
+${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-300 mt-1">${text}</p>` : ''}
+${fileUrl ? `
+<div class="mt-2">
+<a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
+<img src="${fileUrl}" alt="Proof" class="h-28 w-full object-cover hover:scale-105 transition">
+</a>
+</div>
+` : ''}
+</div>
+<div class="inline-action-area pt-2 border-t border-white/10">
+${statusBadge === 'AWAITING_ATTENTION' ? `
+<div class="flex space-x-2" id="actions-${m.id}">
+<button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
+<i class="fa-solid fa-check"></i><span>Approve</span>
+</button>
+<button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
+<i class="fa-solid fa-xmark"></i><span>Deny</span>
+</button>
+</div>
+` : `
+<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
+`}
+</div>
+</div>
+`;
+} else {
+let attachmentHtml = '';
+if (fileUrl) {
+if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
+attachmentHtml = `
+<div class="mt-2.5">
+<a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-xl border border-white/20 shadow-md">
+<img src="${fileUrl}" alt="Attachment" class="max-h-52 w-full object-cover hover:scale-105 transition duration-300">
+</a>
+</div>`;
+} else {
+attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
 }
-
+}
+bubbleContent = `<div>${text}</div>${attachmentHtml}`;
+}
+return `
+<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
+<div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+${bubbleContent}
+</div>
+<span class="text-[9px] text-slate-500 mt-1 px-1">${timeString}</span>
+</div>
+`;
+}).join('');
+container.scrollTop = container.scrollHeight;
+}
 async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
-  const actionContainer = document.getElementById(`actions-${messageId}`);
-  if (actionContainer) {
-    actionContainer.innerHTML = `<span class="text-accentBlue italic text-[11px]">Processing Approval & Ledger Split...</span>`;
-  }
-  try {
-    const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
-    const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
-    const currentCycle = msg ? msg.submission_cycle : null;
-
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(reviewerId);
-    const validReviewerId = isUuid ? reviewerId : (msg?.sender_id || msg?.buyer_id || null);
-
-    const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
-      p_message_id: String(messageId),
-      p_vendor_id: currentUser.id,
-      p_reviewer_id: validReviewerId,
-      p_commission_amount: Number(commissionAmount) || 5.00,
-      p_platform_fee: 10.00,
-      p_link: reviewLink,
-      p_type: 'REVIEW_COMMISSION'
-    });
-
-    if (rpcError) throw rpcError;
-    if (data && data.success === false) {
-      throw new Error(data.error || 'Unknown database error');
-    }
-    const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-
-    let updatePayload = {
-      status_badge: 'APPROVED',
-      feedback_id: generatedFeedbackId
-    };
-    sanitizeStatusBadge(updatePayload);
-    let updateQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
-    if (currentCycle !== null && currentCycle !== undefined) {
-      updateQuery = updateQuery.eq('submission_cycle', currentCycle);
-    }
-    const { error: updateError } = await updateQuery;
-    if (updateError) throw updateError;
-
-    updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
-    showToast("Review approved successfully! Commission split generated.");
-    await loadVendorCommissions();
-    await loadVendorThreads(true);
-  } catch (err) {
-    console.error("Approval failed, applying direct update fallback:", err);
-    try {
-      const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
-      const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-      const currentCycle = msg ? msg.submission_cycle : null;
-      const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      let updatePayload = {
-        status_badge: 'APPROVED',
-        feedback_id: fallbackFeedbackId
-      };
-      sanitizeStatusBadge(updatePayload);
-
-      let fallbackQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
-      if (currentCycle !== null && currentCycle !== undefined) {
-        fallbackQuery = fallbackQuery.eq('submission_cycle', currentCycle);
-      }
-      const { error: fallbackUpdateError } = await fallbackQuery;
-      if (fallbackUpdateError) throw fallbackUpdateError;
-
-      updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
-      showToast("Review approved (Direct update mode).");
-      await loadVendorCommissions();
-      await loadVendorThreads(true);
-    } catch (fallbackErr) {
-      alert("Error approving review: " + err.message);
-      await loadVendorThreads(true);
-    }
-  }
+const actionContainer = document.getElementById(`actions-${messageId}`);
+if (actionContainer) {
+actionContainer.innerHTML = `<span class="text-accentBlue italic text-[11px]">Processing Approval & Ledger Split...</span>`;
 }
-
+try {
+const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
+const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
+const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
+const currentCycle = msg ? msg.submission_cycle : null;
+const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(reviewerId);
+const validReviewerId = isUuid ? reviewerId : (msg?.sender_id || msg?.buyer_id || null);
+const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
+p_message_id: String(messageId),
+p_vendor_id: currentUser.id,
+p_reviewer_id: validReviewerId,
+p_commission_amount: Number(commissionAmount) || 5.00,
+p_platform_fee: 10.00,
+p_link: reviewLink,
+p_type: 'REVIEW_COMMISSION'
+});
+if (rpcError) throw rpcError;
+if (data && data.success === false) {
+throw new Error(data.error || 'Unknown database error');
+}
+const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+let updatePayload = {
+status_badge: 'APPROVED',
+feedback_id: generatedFeedbackId
+};
+sanitizeStatusBadge(updatePayload);
+let updateQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
+if (currentCycle !== null && currentCycle !== undefined) {
+updateQuery = updateQuery.eq('submission_cycle', currentCycle);
+}
+const { error: updateError } = await updateQuery;
+if (updateError) throw updateError;
+updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
+showToast("Review approved successfully! Commission split generated.");
+await loadVendorCommissions();
+await loadVendorThreads(true);
+} catch (err) {
+console.error("Approval failed, applying direct update fallback:", err);
+try {
+const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
+const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
+const currentCycle = msg ? msg.submission_cycle : null;
+const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+let updatePayload = {
+status_badge: 'APPROVED',
+feedback_id: fallbackFeedbackId
+};
+sanitizeStatusBadge(updatePayload);
+let fallbackQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
+if (currentCycle !== null && currentCycle !== undefined) {
+fallbackQuery = fallbackQuery.eq('submission_cycle', currentCycle);
+}
+const { error: fallbackUpdateError } = await fallbackQuery;
+if (fallbackUpdateError) throw fallbackUpdateError;
+updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
+showToast("Review approved (Direct update mode).");
+await loadVendorCommissions();
+await loadVendorThreads(true);
+} catch (fallbackErr) {
+alert("Error approving review: " + err.message);
+await loadVendorThreads(true);
+}
+}
+}
 async function handleInlineDeny(messageId) {
-  const denialReason = prompt("Please enter a reason for denying this review submission:", "Order mismatch or unreadable link.");
-  if (!denialReason) return;
-  const actionContainer = document.getElementById(`actions-${messageId}`);
-  if (actionContainer) {
-    actionContainer.innerHTML = `<span class="text-rose-400 italic text-[11px]">Processing Denial...</span>`;
-  }
-  try {
-    const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
-    const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    const currentCycle = msg ? msg.submission_cycle : null;
-
-    const updatePayload = {
-      status_badge: 'DENIED',
-      status: 'DENIED',
-      denial_reason: denialReason
-    };
-    sanitizeStatusBadge(updatePayload);
-    let denyQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
-    if (currentCycle !== null && currentCycle !== undefined) {
-      denyQuery = denyQuery.eq('submission_cycle', currentCycle);
-    }
-    const { error: denyError } = await denyQuery;
-    if (denyError) throw denyError;
-
-    updateMessageCardStateLocally(messageId, 'DENIED');
-    showToast("Review submission denied. Buyer notified.");
-    await loadVendorThreads(true);
-  } catch (err) {
-    console.error("Denial failed:", err);
-    alert("Error denying review: " + err.message);
-    await loadVendorThreads(true);
-  }
+const denialReason = prompt("Please enter a reason for denying this review submission:", "Order mismatch or unreadable link.");
+if (!denialReason) return;
+const actionContainer = document.getElementById(`actions-${messageId}`);
+if (actionContainer) {
+actionContainer.innerHTML = `<span class="text-rose-400 italic text-[11px]">Processing Denial...</span>`;
 }
-
+try {
+const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
+const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
+const currentCycle = msg ? msg.submission_cycle : null;
+const updatePayload = {
+status_badge: 'DENIED',
+status: 'DENIED',
+denial_reason: denialReason
+};
+sanitizeStatusBadge(updatePayload);
+let denyQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
+if (currentCycle !== null && currentCycle !== undefined) {
+denyQuery = denyQuery.eq('submission_cycle', currentCycle);
+}
+const { error: denyError } = await denyQuery;
+if (denyError) throw denyError;
+updateMessageCardStateLocally(messageId, 'DENIED');
+showToast("Review submission denied. Buyer notified.");
+await loadVendorThreads(true);
+} catch (err) {
+console.error("Denial failed:", err);
+alert("Error denying review: " + err.message);
+await loadVendorThreads(true);
+}
+}
 function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
-  const card = document.querySelector(`[data-message-id="${messageId}"]`);
-  if (!card) return;
-  const badge = card.querySelector('.status-badge-label');
-  if (badge) {
-    badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
-    badge.innerText = newStatus;
-  }
-  if (feedbackId) {
-    const idEl = card.querySelector('.feedback-id-display');
-    if (idEl) {
-      idEl.innerText = `ID: ${feedbackId}`;
-    }
-  }
-  const actionArea = card.querySelector('.inline-action-area');
-  if (actionArea) {
-    actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
-  }
+const card = document.querySelector(`[data-message-id="${messageId}"]`);
+if (!card) return;
+const badge = card.querySelector('.status-badge-label');
+if (badge) {
+badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
+badge.innerText = newStatus;
 }
-
-function showToast(message) {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = 'bg-cardBg border-l-4 border-accentBlue text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
-  toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.classList.add('opacity-0');
-    setTimeout(() => toast.remove(), 300);
-  }, 3500);
+if (feedbackId) {
+const idEl = card.querySelector('.feedback-id-display');
+if (idEl) {
+idEl.innerText = `ID: ${feedbackId}`;
 }
-
+}
+const actionArea = card.querySelector('.inline-action-area');
+if (actionArea) {
+actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
+setTimeout(() => toast.remove(), 300);
+}, 3500);
+}
 function handleChatFileSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  chatAttachedFile = file;
-  document.getElementById('chatAttachmentName').textContent = file.name;
-  document.getElementById('chatAttachmentPreview').classList.remove('hidden');
+const file = event.target.files[0];
+if (!file) return;
+chatAttachedFile = file;
+document.getElementById('chatAttachmentName').textContent = file.name;
+document.getElementById('chatAttachmentPreview').classList.remove('hidden');
 }
-
 function clearChatAttachment() {
-  chatAttachedFile = null;
-  document.getElementById('chatFileInput').value = '';
-  document.getElementById('chatAttachmentPreview').classList.add('hidden');
+chatAttachedFile = null;
+document.getElementById('chatFileInput').value = '';
+document.getElementById('chatAttachmentPreview').classList.add('hidden');
 }
-
 async function handleSendMessage(event) {
-  event.preventDefault();
-  const input = document.getElementById('chatInputMsg');
-  const text = input.value.trim();
-  if ((!text && !chatAttachedFile) || !activeThreadId) return;
-
-  let fileDataUrl = null;
-  let fileName = null;
-  if (chatAttachedFile) {
-    fileName = chatAttachedFile.name;
-    if (chatAttachedFile.type.startsWith('image/')) {
-      fileDataUrl = await compressImageFile(chatAttachedFile, 800, 0.7);
-    } else {
-      fileDataUrl = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.readAsDataURL(chatAttachedFile);
-      });
-    }
-  }
-
-  try {
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(activeThreadId);
-    
-    let payload = {
-      sender_id: currentUser.id,
-      vendor_id: currentUser.id,
-      message_text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-      text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-      created_at: new Date().toISOString()
-    };
-
-    if (isUuid) {
-      payload.receiver_id = activeThreadId;
-      payload.buyer_id = activeThreadId;
-    }
-
-    if (fileDataUrl) {
-      payload.proof_base64 = fileDataUrl;
-      payload.file_url = fileDataUrl;
-      payload.file_name = fileName;
-    }
-
-    let { error } = await _supabase
-      .from('messages')
-      .insert([payload]);
-
-    if (error) {
-      console.warn("First insert attempt failed, trying clean fallback payload:", error.message);
-      const cleanPayload = {
-        sender_id: currentUser.id,
-        vendor_id: currentUser.id,
-        text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-        created_at: new Date().toISOString()
-      };
-      if (isUuid) {
-        cleanPayload.receiver_id = activeThreadId;
-      }
-      if (fileDataUrl) {
-        cleanPayload.proof_base64 = fileDataUrl;
-      }
-      const { error: fallbackErr } = await _supabase.from('messages').insert([cleanPayload]);
-      if (fallbackErr) throw fallbackErr;
-    }
-
-    input.value = '';
-    clearChatAttachment();
-    showToast("Message sent successfully!");
-    await loadVendorThreads(true);
-  } catch (err) {
-    alert('Error sending message: ' + err.message);
-  }
+event.preventDefault();
+const input = document.getElementById('chatInputMsg');
+const text = input.value.trim();
+if ((!text && !chatAttachedFile) || !activeThreadId) return;
+let fileDataUrl = null;
+let fileName = null;
+if (chatAttachedFile) {
+fileName = chatAttachedFile.name;
+if (chatAttachedFile.type.startsWith('image/')) {
+fileDataUrl = await compressImageFile(chatAttachedFile, 800, 0.7);
+} else {
+fileDataUrl = await new Promise((resolve) => {
+const reader = new FileReader();
+reader.onload = (e) => resolve(e.target.result);
+reader.readAsDataURL(chatAttachedFile);
+});
 }
-
+}
+try {
+const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(activeThreadId);
+let payload = {
+sender_id: currentUser.id,
+vendor_id: currentUser.id,
+message_text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
+text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
+created_at: new Date().toISOString()
+};
+if (isUuid) {
+payload.receiver_id = activeThreadId;
+payload.buyer_id = activeThreadId;
+}
+if (fileDataUrl) {
+payload.proof_base64 = fileDataUrl;
+payload.file_url = fileDataUrl;
+payload.file_name = fileName;
+}
+let { error } = await _supabase
+.from('messages')
+.insert([payload]);
+if (error) {
+console.warn("First insert attempt failed, trying clean fallback payload:", error.message);
+const cleanPayload = {
+sender_id: currentUser.id,
+vendor_id: currentUser.id,
+text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
+created_at: new Date().toISOString()
+};
+if (isUuid) {
+cleanPayload.receiver_id = activeThreadId;
+}
+if (fileDataUrl) {
+cleanPayload.proof_base64 = fileDataUrl;
+}
+const { error: fallbackErr } = await _supabase.from('messages').insert([cleanPayload]);
+if (fallbackErr) throw fallbackErr;
+}
+input.value = '';
+clearChatAttachment();
+showToast("Message sent successfully!");
+await loadVendorThreads(true);
+} catch (err) {
+alert('Error sending message: ' + err.message);
+}
+}
 window.addEventListener('DOMContentLoaded', initVendorWorkspace);
 </script>
 </body>
