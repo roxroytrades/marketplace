@@ -607,6 +607,8 @@ let activeSelectedThreadId = null;
 let currentLeftFilter = 'ALL';
 let selectedOutreachTargetUser = null;
 let currentInspectingUserId = null;
+let adminPollingInterval = null;
+let adminRealtimeChannel = null;
 
 /* Contact Risk Detection Regex Patterns */
 const CONTACT_RISK_REGEX = {
@@ -647,6 +649,40 @@ async function initAdminDashboard() {
   await loadCommissionsData();
   await loadMessagingData();
   await loadReferralsData();
+
+  /* 3. Initialize Automated Polling Engine (8s) & Supabase Realtime Subscription */
+  if (adminPollingInterval) clearInterval(adminPollingInterval);
+  adminPollingInterval = setInterval(pollAdminData, 8000);
+
+  setupAdminRealtimeSubscription();
+}
+
+/* Background Polling Function for Admin Workspace */
+async function pollAdminData() {
+  try {
+    await loadCommissionsData(true);
+    await loadMessagingData(true);
+    await loadUsersData(true);
+    await loadProductsData(true);
+    await loadReferralsData(true);
+  } catch (err) {
+    console.warn("Admin polling background update:", err);
+  }
+}
+
+/* Supabase Realtime Subscription for Commissions & Messages */
+function setupAdminRealtimeSubscription() {
+  if (adminRealtimeChannel) _supabase.removeChannel(adminRealtimeChannel);
+
+  adminRealtimeChannel = _supabase
+    .channel('admin-realtime-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'commissions' }, async () => {
+      await loadCommissionsData(true);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, async () => {
+      await loadMessagingData(true);
+    })
+    .subscribe();
 }
 
 /* Tab Navigation Handler */
@@ -896,7 +932,7 @@ async function deleteProductRecord(prodId) {
 /* ==========================================================================
    TAB 3: MASTER COMMISSIONS LEDGER
    ========================================================================== */
-async function loadCommissionsData() {
+async function loadCommissionsData(isSilent = false) {
   try {
     const { data, error } = await _supabase
       .from('commissions')
@@ -905,9 +941,9 @@ async function loadCommissionsData() {
 
     if (error) throw error;
     allCommissionsCache = data || [];
-    renderAdminCommissionsTable(allCommissionsCache);
+    filterAdminCommissions();
   } catch (err) {
-    console.error("Commissions load error:", err);
+    if (!isSilent) console.error("Commissions load error:", err);
   }
 }
 
@@ -1139,7 +1175,7 @@ async function declineAdminOffer(commId) {
 /* ==========================================================================
    TAB 4: SYSTEM MESSAGING & DIRECT OUTREACH HUB
    ========================================================================== */
-async function loadMessagingData() {
+async function loadMessagingData(isSilent = false) {
   try {
     const { data, error } = await _supabase
       .from('messages')
@@ -1151,9 +1187,12 @@ async function loadMessagingData() {
     
     /* Group raw messages into distinct conversation channels */
     allThreadsCache = groupMessagesIntoThreads(rawMessages);
-    renderLeftPaneThreadsList();
+    filterLeftPaneThreads();
+    if (activeSelectedThreadId) {
+      renderActiveThreadTranscript();
+    }
   } catch (err) {
-    console.error("Messaging load error:", err);
+    if (!isSilent) console.error("Messaging load error:", err);
   }
 }
 
