@@ -203,7 +203,44 @@ form.addEventListener('submit', async (e) => {
   try {
 
 
-    // Register vendor with Supabase Auth including correct invited_by_code mapping in metadata
+    // Helper function to resolve referee/inviter profile UUID safely without Postgres type errors
+    async function resolveRefereeProfile(client, rawCode) {
+      if (!rawCode) return { refereeUuid: null, refereeCode: null };
+      let refereeUuid = null;
+      let refereeCode = rawCode;
+      try {
+        const cleanCode = rawCode.replace(/^(vendor_|buyer_|seller_)/i, '').trim();
+        const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanCode);
+
+        if (isUuid) {
+          const { data } = await client.from('profiles').select('id, referral_code').eq('id', cleanCode).maybeSingle();
+          if (data) return { refereeUuid: data.id, refereeCode: data.referral_code || rawCode };
+        }
+
+        const { data: byCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', rawCode).maybeSingle();
+        if (byCode) return { refereeUuid: byCode.id, refereeCode: byCode.referral_code || rawCode };
+
+        const { data: byCleanCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', cleanCode).maybeSingle();
+        if (byCleanCode) return { refereeUuid: byCleanCode.id, refereeCode: byCleanCode.referral_code || rawCode };
+
+        if (cleanCode.length >= 6) {
+          const { data: byPrefix } = await client.from('profiles').select('id, referral_code').ilike('id', cleanCode + '%').limit(1);
+          if (byPrefix && byPrefix.length > 0) {
+            return { refereeUuid: byPrefix[0].id, refereeCode: byPrefix[0].referral_code || rawCode };
+          }
+        }
+      } catch (err) {
+        console.warn('Referee resolution warning:', err);
+      }
+      return { refereeUuid, refereeCode };
+    }
+
+    // Resolve referee profile BEFORE auth.signUp so metadata receives both fields
+    const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, referralCode);
+    const finalInvitedByCode = refereeCode || referralCode || null;
+    const finalReferredBy = refereeUuid || refereeCode || referralCode || null;
+
+    // Register vendor with Supabase Auth including correct invited_by_code and referred_by in metadata
     const { data: authData, error: authError } = await _supabase.auth.signUp({
       email: email,
       password: password,
@@ -215,7 +252,8 @@ form.addEventListener('submit', async (e) => {
           vendor_type: vendorType,
           commission_amount: commissionAmount,
           business_description: businessDescription,
-          invited_by_code: referralCode || null,
+          invited_by_code: finalInvitedByCode,
+          referred_by: finalReferredBy,
           paypal_email: paypalEmail,
           role: 'seller'
         }
@@ -229,44 +267,6 @@ form.addEventListener('submit', async (e) => {
       throw new Error('User registration failed to return an authenticated ID.');
     }
 
-    // Helper function to resolve referee/inviter profile UUID safely without Postgres type errors
-    async function resolveRefereeProfile(client, rawCode) {
-      if (!rawCode) return { refereeUuid: null, refereeCode: null };
-      let refereeUuid = null;
-      let refereeCode = rawCode;
-      try {
-        const cleanCode = rawCode.replace(/^(vendor_|buyer_|seller_)/i, '').trim();
-        const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanCode);
-
-        // 1. If rawCode is a full UUID, query by id
-        if (isUuid) {
-          const { data } = await client.from('profiles').select('id, referral_code').eq('id', cleanCode).maybeSingle();
-          if (data) return { refereeUuid: data.id, refereeCode: data.referral_code || rawCode };
-        }
-
-        // 2. Query by referral_code exact match
-        const { data: byCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', rawCode).maybeSingle();
-        if (byCode) return { refereeUuid: byCode.id, refereeCode: byCode.referral_code || rawCode };
-
-        // 3. Query by referral_code with cleanCode
-        const { data: byCleanCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', cleanCode).maybeSingle();
-        if (byCleanCode) return { refereeUuid: byCleanCode.id, refereeCode: byCleanCode.referral_code || rawCode };
-
-        // 4. Query by UUID prefix (e.g. 8-char substring from currentUser.id)
-        if (cleanCode.length >= 6) {
-          const { data: byPrefix } = await client.from('profiles').select('id, referral_code').ilike('id', cleanCode + '%').limit(1);
-          if (byPrefix && byPrefix.length > 0) {
-            return { refereeUuid: byPrefix[0].id, refereeCode: byPrefix[0].referral_code || rawCode };
-          }
-        }
-      } catch (err) {
-        console.warn('Referee resolution warning:', err);
-      }
-      return { refereeUuid, refereeCode };
-    }
-
-    const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, referralCode);
-
     // Upsert directly into public.profiles matching exact 13-column live schema
     const { error: profileError } = await _supabase
       .from('profiles')
@@ -275,8 +275,8 @@ form.addEventListener('submit', async (e) => {
         full_name: fullName,
         email: email,
         paypal_email: paypalEmail,
-        invited_by_code: refereeCode || referralCode || null,
-        referred_by: refereeUuid || refereeCode || referralCode || null,
+        invited_by_code: finalInvitedByCode,
+        referred_by: finalReferredBy,
         role: 'seller',
         verification_status: 'VERIFIED',
         created_at: new Date().toISOString()
@@ -319,3 +319,5 @@ form.addEventListener('submit', async (e) => {
 </script>
 </body>
 </html>
+
+
