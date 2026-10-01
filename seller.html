@@ -98,7 +98,6 @@ eh
 </button>
 </div>
 </div>
-
 <!-- ================= SECTION A: PRODUCT CATALOG MANAGEMENT ================= -->
 <div id="catalogSection" class="space-y-6">
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -119,7 +118,6 @@ eh
 </div>
 </div>
 </div>
-
 <!-- ================= SECTION B: 5-TAB COMMISSIONS DISBURSEMENT DASHBOARD ================= -->
 <div id="commissionsSection" class="space-y-6 hidden">
 <div class="space-y-1">
@@ -160,7 +158,6 @@ eh
 </div>
 </div>
 </div>
-
 <!-- ================= SECTION C: MESSAGING THREADS HUB ================= -->
 <div id="messagesSection" class="space-y-6 hidden">
 <div class="flex items-center justify-between">
@@ -213,7 +210,6 @@ eh
 </div>
 </div>
 </div>
-
 <!-- ================= SECTION D: REFERRAL NETWORK WIDGET ================= -->
 <div id="referralsSection" class="space-y-6 hidden">
 <div class="space-y-1">
@@ -243,7 +239,6 @@ eh
 </div>
 </div>
 </main>
-
 <!-- ================= MODALS ================= -->
 <!-- Add/Edit Product Modal -->
 <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -283,7 +278,6 @@ Save Product Listing
 </form>
 </div>
 </div>
-
 <!-- Pay & Settle Modal (Working Queue Settlement) -->
 <div id="settlementModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
@@ -312,7 +306,6 @@ Complete & Archive to History
 </form>
 </div>
 </div>
-
 <!-- Inspect Receipt Modal (Payment History Audit) -->
 <div id="inspectReceiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
@@ -343,7 +336,6 @@ Close Inspector
 </div>
 </div>
 </div>
-
 <!-- Proactive Top-Down Offer Modal (Main Queue) -->
 <div id="topDownOfferModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
@@ -374,15 +366,12 @@ Send Offer to Outgoing Requests
 </form>
 </div>
 </div>
-
 <!-- Toast Notification Container -->
 <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2"></div>
-
 <!-- Footer -->
 <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
 <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace Engine.</p>
 </footer>
-
 <!-- Vendor Workspace Script -->
 <script>
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
@@ -414,18 +403,32 @@ async function initVendorWorkspace() {
   }
   currentUser = session.user;
 
-  // Verify Role Gating
+  // Multi-layer Role Gating & Auto-Healing Check
   try {
+    let metadataRole = (currentUser.user_metadata?.role || '').toLowerCase();
+    let dbRole = '';
+    
     const { data: profile } = await _supabase
       .from('profiles')
       .select('role')
       .eq('id', currentUser.id)
       .maybeSingle();
 
-    if (profile && profile.role && profile.role.toLowerCase() === 'buyer') {
+    if (profile && profile.role) {
+      dbRole = profile.role.toLowerCase();
+    }
+
+    const isSeller = metadataRole === 'seller' || metadataRole === 'vendor' || dbRole === 'seller' || dbRole === 'vendor' || metadataRole === 'admin' || dbRole === 'admin';
+
+    if (!isSeller && (dbRole === 'buyer' || metadataRole === 'buyer')) {
       alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
       window.location.href = 'index.html';
       return;
+    }
+
+    // Auto-heal profile role if metadata indicates seller/vendor but profile is set to buyer or unassigned
+    if ((metadataRole === 'seller' || metadataRole === 'vendor') && dbRole !== 'seller' && dbRole !== 'vendor') {
+      await _supabase.from('profiles').update({ role: 'seller' }).eq('id', currentUser.id);
     }
   } catch (profileErr) {
     console.warn("Profile role check bypassed:", profileErr);
@@ -663,7 +666,7 @@ async function loadVendorCommissions(isPolling = false) {
           .from('profiles')
           .select('id, email, full_name')
           .in('id', missingRecipientIds);
-        
+
         if (profs && profs.length > 0) {
           const profMap = new Map(profs.map(p => [p.id, p]));
           data.forEach(c => {
@@ -716,7 +719,6 @@ function renderSellerCommissions() {
     const matchesSearch = refId.includes(search) || recipientEmail.includes(search);
 
     let matchesTab = false;
-
     // Status classifications
     const isCompleted = statusField === 'COMPLETED_PAID' || statusField === 'PAID';
     const isRequested = statusField === 'REQUESTED_BY_RECIPIENT' || statusField === 'REQUESTED' || statusField === 'REQUESTED_BY_BUYER';
@@ -727,10 +729,10 @@ function renderSellerCommissions() {
       matchesTab = isRequested && !isCompleted;
     } else if (activeSubTab === 'mainQueue') {
       // Main Queue includes:
-      // 1) Newly created review commissions (queue_type = 'MAIN_ACCOUNT' or status = 'Approved' or status_tag = 'UNREQUESTED_BALANCE')
+      // 1) Newly created review commissions (queue_type = 'MAIN_ACCOUNT' or status = 'APPROVED' or status_tag = 'UNREQUESTED_BALANCE')
       // 2) Any balance not in incoming requests, working queue, outgoing, or paid history
       matchesTab = (queueType === 'MAIN_ACCOUNT' || statusField === 'APPROVED' || statusField === 'UNREQUESTED_BALANCE' || statusField === '' || !c.status_tag) && 
-                   !isRequested && !isWorking && !isCompleted && !isOutgoing;
+                 !isRequested && !isWorking && !isCompleted && !isOutgoing;
     } else if (activeSubTab === 'outgoing') {
       matchesTab = isOutgoing;
     } else if (activeSubTab === 'workingQueue') {
@@ -985,7 +987,6 @@ function inspectReceipt(txId, amount, receiptUrl) {
 // ================= MESSAGING HUB & REVIEW STREAM =================
 async function loadVendorThreads(isPolling = false) {
   try {
-    // FIX 1 & 2: Corrected typo 'receiverid' -> 'receiver_id' and query structure
     const { data: msgData, error: msgErr } = await _supabase
       .from('messages')
       .select('*')
@@ -1002,13 +1003,11 @@ async function loadVendorThreads(isPolling = false) {
     allMsgs.forEach(m => {
       const text = m.text || m.message_text || m.message || m.content || m.body || m.link || '';
       
-      // FIX 3: Safe partnerId resolution avoiding invalid non-UUID strings
       let partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id);
       if (!partnerId || partnerId === currentUser.id) {
         partnerId = m.buyer_id || (m.sender_id !== currentUser.id ? m.sender_id : m.receiver_id);
       }
       
-      // Fallback display key if no valid UUID partner exists
       const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(partnerId);
       const displayKey = isUuid ? partnerId : (m.buyer_id || m.sender_id || 'general_shopper');
 
@@ -1347,7 +1346,6 @@ async function handleSendMessage(event) {
   try {
     const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(activeThreadId);
     
-    // Primary payload matching multi-schema configurations
     let payload = {
       sender_id: currentUser.id,
       vendor_id: currentUser.id,
