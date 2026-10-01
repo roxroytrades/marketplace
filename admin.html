@@ -941,9 +941,74 @@ async function loadCommissionsData(isSilent = false) {
 
     if (error) throw error;
     allCommissionsCache = data || [];
+
+    /* Calculate KPI Summary Metrics */
+    let adminAvailable = 0;
+    let adminLifetime = 0;
+    let workingLiquidity = 0;
+    let workingCount = 0;
+
+    allCommissionsCache.forEach(c => {
+      const qType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
+      const statusVal = (c.status || '').toUpperCase();
+      const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
+      const amt = Number(c.amount || 0);
+
+      const isMyComm = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE') ||
+                       (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
+
+      if (isMyComm) {
+        if (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT') {
+          adminAvailable += amt;
+        } else if (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') {
+          adminLifetime += amt;
+        }
+      }
+
+      if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING' || statusVal === 'IN_WORKING') {
+        workingLiquidity += amt;
+        workingCount++;
+      }
+    });
+
+    setElemText('commStatAdminAvailable', `$${adminAvailable.toFixed(2)}`);
+    setElemText('commStatAdminLifetime', `$${adminLifetime.toFixed(2)}`);
+    setElemText('commStatWorkingLiquidity', `$${workingLiquidity.toFixed(2)}`);
+    setElemText('commStatWorkingCount', `${workingCount} Item${workingCount === 1 ? '' : 's'}`);
+
     filterAdminCommissions();
   } catch (err) {
     if (!isSilent) console.error("Commissions load error:", err);
+  }
+}
+
+async function requestAllAvailableAdminPayouts() {
+  try {
+    const eligibleComms = allCommissionsCache.filter(c => {
+      const qType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
+      const statusVal = (c.status || '').toUpperCase();
+      const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
+      const isMyComm = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE') ||
+                       (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
+      return isMyComm && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT');
+    });
+
+    if (eligibleComms.length === 0) {
+      showToast("No available admin balance to request payout.");
+      return;
+    }
+
+    for (const c of eligibleComms) {
+      await _supabase
+        .from('commissions')
+        .update({ queue_type: 'OUTGOING_REQUESTS', status: 'REQUESTED_BY_RECIPIENT' })
+        .eq('id', c.id);
+    }
+
+    showToast(`Requested payout for ${eligibleComms.length} admin commission(s)!`);
+    await loadCommissionsData();
+  } catch (err) {
+    alert("Bulk payout request error: " + err.message);
   }
 }
 
