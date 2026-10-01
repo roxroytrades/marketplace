@@ -969,7 +969,7 @@ function filterAdminCommissions() {
 }
 
 /* Admin Recipient Actions */
-async async function requestAdminPayout(commId) {
+async function requestAdminPayout(commId) {
   try {
     const { error } = await _supabase
       .from('commissions')
