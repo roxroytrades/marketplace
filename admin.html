@@ -564,7 +564,7 @@ function renderAccountsTable() {
           <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] uppercase font-semibold">${a.role || 'buyer'}</span>
         </div>
         <div class="col-span-3">
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border badgeClass">{status}</span>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeClass}">${status}</span>
         </div>
         <div class="col-span-2">
           <button onclick="viewNationalIDModal('${a.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
@@ -619,7 +619,7 @@ async function loadAdminProducts() {
   try {
     const { data, error } = await _supabase
       .from('products')
-      .select('id, title, price, status, seller_id, created_at')
+      .select('id, title, price, status, vendor_id, created_at')
       .order('created_at', { ascending: false });
     if (error) throw error;
     adminProducts = data || [];
@@ -644,13 +644,13 @@ function renderProductsTable() {
         <p class="text-xs text-emerald-400 font-semibold">$${Number(p.price || 0).toFixed(2)}</p>
       </div>
       <div class="col-span-3 font-mono text-[10px] text-slate-400">
-        ${p.seller_id || 'N/A'}
+        ${p.vendor_id || 'N/A'}
       </div>
       <div class="col-span-2">
         <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
       </div>
       <div class="col-span-3 flex items-center justify-end space-x-2">
-        <button onclick="toggleProductStatus('p.id','{p.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
+        <button onclick="toggleProductStatus('${p.id}', '${p.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
           ${p.status === 'ACTIVE' ? 'Pause' : 'Activate'}
         </button>
         <button onclick="deleteProductAdmin('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] px-3 py-1.5 rounded-xl transition">
@@ -690,7 +690,7 @@ async function loadAdminCommissions() {
     // SOLUTION 1 FIX: Select valid columns only (removed status_tag)
     const { data, error } = await _supabase
       .from('commissions')
-      .select('id, amount, status_tag, recipient_role, recipient_id, vendor_id, product_id, paypal_tx_id, receipt_base64, created_at, updated_at')
+      .select('id, feedback_id, vendor_id, recipient_id, role_type, amount, queue_type, status, paypal_tx_id, created_at')
       .order('created_at', { ascending: false });
     if (error) throw error;
     adminCommissions = data || [];
@@ -708,9 +708,9 @@ function calculateMasterSummary() {
   let adminCollected = 0;
   adminCommissions.forEach(c => {
     const amt = Number(c.amount) || 0;
-    const tag = c.status_tag || 'MAIN_QUEUE';
+    const tag = c.status || c.queue_type || '';
     const isCompleted = tag === 'COMPLETED_PAID';
-    const isAdmin = (c.recipient_role || '').toUpperCase() === 'ADMIN';
+    const isAdmin = (c.role_type || '').toUpperCase() === 'ADMIN';
     if (isCompleted) {
       marketplaceCollected += amt;
       if (isAdmin) adminCollected += amt;
@@ -746,11 +746,11 @@ function renderMasterCommissions() {
   const toolbar = document.getElementById('masterCommToolbar');
   const search = (document.getElementById('masterCommSearch')?.value || '').toLowerCase();
   const filtered = adminCommissions.filter(c => {
-    const statusField = c.status_tag || 'MAIN_QUEUE';
-    const matchesSearch = String(c.id || '').toLowerCase().includes(search) || String(c.recipient_id || '').toLowerCase().includes(search);
+    const statusField = c.status || c.queue_type || 'MAIN_QUEUE';
+    const matchesSearch = String(c.id || '').toLowerCase().includes(search) || String(c.feedback_id || '').toLowerCase().includes(search);
     let matchesTab = false;
     if (activeMasterSubTab === 'incoming') matchesTab = statusField === 'REQUESTED_BY_RECIPIENT';
-    else if (activeMasterSubTab === 'outgoing') matchesTab = statusField === 'OFFERED_BY_SELLER';
+    else if (activeMasterSubTab === 'outgoing') matchesTab = statusField === 'OFFERED_BY_SELLER' || statusField === 'OFFERED_AWAITING_ACCEPTANCE';
     else if (activeMasterSubTab === 'working') matchesTab = statusField === 'APPROVED_IN_WORKING';
     else if (activeMasterSubTab === 'history') matchesTab = statusField === 'COMPLETED_PAID';
     return matchesSearch && matchesTab;
@@ -785,20 +785,20 @@ function renderMasterCommissions() {
         </button>
       `;
     } else {
-      actionHtml = `<span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.status_tag || 'MAIN_QUEUE'}</span>`;
+      actionHtml = `<span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.status || 'MAIN_QUEUE'}</span>`;
     }
     
     return `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
         <div class="col-span-1">
-          <input type="checkbox" value="${c.id}" selectedMasterCommIds.has(c.id)?'checked':''onchange="toggleSelectMasterComm('{c.id}')" class="rounded border-borderSlate bg-darkBg text-purple-600">
+          <input type="checkbox" value="${c.id}" ${selectedMasterCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectMasterComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-purple-600">
         </div>
         <div class="col-span-3 space-y-0.5">
-          <span class="font-bold text-white font-mono">Ref: ${String(c.id).substring(0,8)}</span>
+          <span class="font-bold text-white font-mono">${c.feedback_id || 'FB-N/A'}</span>
           <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
         </div>
         <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-semibold">${c.recipient_role || 'REVIEWER'}</span>
+          <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-semibold">${c.role_type || 'REVIEWER'}</span>
           <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_id || 'Recipient'}</p>
         </div>
         <div class="col-span-2 font-bold text-emerald-400">
@@ -833,7 +833,7 @@ async function batchAdminApprove() {
   }
   try {
     for (const id of selectedMasterCommIds) {
-      await _supabase.from('commissions').update({ status_tag: 'APPROVED_IN_WORKING' }).eq('id', id);
+      await _supabase.from('commissions').update({ status: 'APPROVED_IN_WORKING' }).eq('id', id);
     }
     selectedMasterCommIds.clear();
     await loadAdminCommissions();
@@ -845,7 +845,7 @@ async function batchAdminApprove() {
 
 async function approveMasterComm(id) {
   try {
-    const { error } = await _supabase.from('commissions').update({ status_tag: 'APPROVED_IN_WORKING' }).eq('id', id);
+    const { error } = await _supabase.from('commissions').update({ status: 'APPROVED_IN_WORKING' }).eq('id', id);
     if (error) throw error;
     await loadAdminCommissions();
     showToast("Claim approved.");
@@ -857,7 +857,7 @@ async function approveMasterComm(id) {
 async function denyMasterComm(id) {
   if (!confirm("Revert this claim back to main queue?")) return;
   try {
-    const { error } = await _supabase.from('commissions').update({ status_tag: 'MAIN_QUEUE' }).eq('id', id);
+    const { error } = await _supabase.from('commissions').update({ status: 'PENDING' }).eq('id', id);
     if (error) throw error;
     await loadAdminCommissions();
     showToast("Claim reversed.");
@@ -870,7 +870,7 @@ async function inspectReceiptModal(commId) {
   try {
     const { data, error } = await _supabase
       .from('commissions')
-      .select('receipt_base64, paypal_tx_id, id')
+      .select('receipt_base64, receipt_url, paypal_tx_id, id')
       .eq('id', commId)
       .single();
     if (error || !data) {
@@ -879,7 +879,7 @@ async function inspectReceiptModal(commId) {
     }
     document.getElementById('masterReceiptTxId').textContent = data.paypal_tx_id || 'N/A';
     document.getElementById('masterReceiptCommId').textContent = data.id.substring(0, 8);
-    document.getElementById('masterReceiptImg').src = data.receipt_base64 || 'https://via.placeholder.com/300?text=No+Receipt+Uploaded';
+    document.getElementById('masterReceiptImg').src = data.receipt_base64 || data.receipt_url || 'https://via.placeholder.com/300?text=No+Receipt+Uploaded';
     document.getElementById('masterReceiptModal').classList.remove('hidden');
   } catch (err) {
     showToast("Error reading receipt: " + err.message);
@@ -889,19 +889,20 @@ async function inspectReceiptModal(commId) {
 // ================= TAB 4: MESSAGING THREADS =================
 async function loadAdminThreads() {
   try {
+    // SOLUTION 1 FIX: Select valid columns only (removed message_text and content)
     const { data: msgs, error } = await _supabase
       .from('messages')
-      .select('id, buyer_id, vendor_id, product_id, sender_id, content, attachment_url, review_url, proof_base64, feedback_id, status_badge, created_at')
+      .select('id, feedback_id, sender_id, receiver_id, buyer_id, vendor_id, text, link, status_badge, created_at')
       .order('created_at', { ascending: false });
     if (error) throw error;
     
     const threadMap = {};
     (msgs || []).forEach(m => {
-      const displayKey = m.feedback_id || m.buyer_id || m.sender_id || 'general';
+      const displayKey = m.feedback_id || m.sender_id || 'general';
       if (!threadMap[displayKey]) {
         threadMap[displayKey] = {
           key: displayKey,
-          lastMsg: m.content || m.review_url || m.attachment_url || 'Conversation updated',
+          lastMsg: m.text || m.link || 'Conversation updated',
           updatedAt: m.created_at,
           messages: []
         };
@@ -954,7 +955,7 @@ function renderAdminActiveChat() {
   document.getElementById('adminActiveChatTitle').textContent = `Thread Inspection — ${thread.key}`;
   const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
   container.innerHTML = sorted.map(m => {
-    const text = m.content || m.review_url || m.attachment_url || '';
+    const text = m.text || m.link || '';
     const isAdminSender = m.sender_id === currentUser.id;
     const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
     return `
@@ -978,19 +979,14 @@ async function handleAdminSendMessage(event) {
   try {
     const thread = adminThreads.find(t => t.key === activeAdminThreadId);
     const sampleMsg = thread && thread.messages.length > 0 ? thread.messages[0] : null;
-    const buyerId = sampleMsg ? sampleMsg.buyer_id : currentUser.id;
-    const vendorId = sampleMsg ? sampleMsg.vendor_id : currentUser.id;
-    
-    const payload = {
+    const receiverId = sampleMsg ? (sampleMsg.sender_id !== currentUser.id ? sampleMsg.sender_id : sampleMsg.receiver_id) : currentUser.id;
+    // SOLUTION 1 FIX: insert into text column instead of message_text
+    const { error } = await _supabase.from('messages').insert([{
       sender_id: currentUser.id,
-      buyer_id: buyerId,
-      vendor_id: vendorId,
-      content: msgText
-    };
-    if (sampleMsg && sampleMsg.feedback_id) {
-      payload.feedback_id = sampleMsg.feedback_id;
-    }
-    const { error } = await _supabase.from('messages').insert([payload]);
+      receiver_id: receiverId,
+      text: msgText,
+      feedback_id: activeAdminThreadId
+    }]);
     if (error) throw error;
     input.value = '';
     await loadAdminThreads();
@@ -1007,7 +1003,7 @@ async function openNewOutreachModal() {
   adminAccounts.forEach(a => {
     const opt = document.createElement('option');
     opt.value = a.id;
-    opt.textContent = `a.fullname||'User'({a.email || a.id}) [${a.role || 'user'}]`;
+    opt.textContent = `${a.full_name || 'User'} (${a.email || a.id}) [${a.role || 'user'}]`;
     select.appendChild(opt);
   });
   document.getElementById('outreachModal').classList.remove('hidden');
@@ -1019,11 +1015,11 @@ async function handleOutreachSubmit(event) {
   const msgText = document.getElementById('outreachMsgText').value.trim();
   if (!targetId || !msgText) return;
   try {
+    // SOLUTION 1 FIX: insert into text column instead of message_text
     const { error } = await _supabase.from('messages').insert([{
       sender_id: currentUser.id,
-      buyer_id: targetId,
-      vendor_id: currentUser.id,
-      content: `[ADMIN NOTICE]: ${msgText}`
+      receiver_id: targetId,
+      text: `[ADMIN NOTICE]: ${msgText}`
     }]);
     if (error) throw error;
     closeModal('outreachModal');
@@ -1058,7 +1054,7 @@ function renderReferralsTable() {
         <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px]">${a.verification_status || 'VERIFIED'}</span>
       </div>
       <div class="col-span-2 flex items-center justify-end">
-        <button onclick="openReassignModal('a.id','{a.full_name || 'User'}', '${a.invited_by_code || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
+        <button onclick="openReassignModal('${a.id}', '${a.full_name || 'User'}', '${a.invited_by_code || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
           Reassign Inviter
         </button>
       </div>
@@ -1068,7 +1064,7 @@ function renderReferralsTable() {
 
 function openReassignModal(userId, userName, currentCode) {
   document.getElementById('reassignTargetUserId').value = userId;
-  document.getElementById('reassignUserName').value = `userName({userId.substring(0,8)})`;
+  document.getElementById('reassignUserName').value = `${userName} (${userId.substring(0,8)})`;
   document.getElementById('reassignNewCode').value = currentCode;
   document.getElementById('reassignInviterModal').classList.remove('hidden');
 }
@@ -1124,5 +1120,3 @@ window.addEventListener('DOMContentLoaded', initAdminWorkspace);
 </script>
 </body>
 </html>
-
-
