@@ -562,7 +562,7 @@ body.innerHTML = refs.map(r => `
 <div class="col-span-4 font-mono text-[11px] text-purple-400">${r.recipient_id ? r.recipient_id.substring(0,8) : 'User'}</div>
 <div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.role_type}</span></div>
 <div class="col-span-2 font-bold text-emerald-400">$${Number(r.amount || 0).toFixed(2)}</div>
-<div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.status_tag || 'ACTIVE'}</span></div>
+<div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.queue_type || 'ACTIVE'}</span></div>
 </div>
 `).join('');
 }
@@ -702,7 +702,8 @@ function updateCommissionStats() {
 let pendingSum = 0;
 let collectedSum = 0;
 commissionsList.forEach(c => {
-if (c.queue_type === 'RECEIVED_HISTORY' || c.status_tag === 'COMPLETED_PAID' || c.status === 'COMPLETED_PAID') {
+const q = (c.queue_type || '').toUpperCase();
+if (q === 'RECEIVED_HISTORY' || q === 'PAID') {
 collectedSum += Number(c.amount || 0);
 } else {
 pendingSum += Number(c.amount || 0);
@@ -722,13 +723,13 @@ const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) ||
 (c.vendor_id || '').toLowerCase().includes(search) ||
 (c.id || '').toLowerCase().includes(search);
 const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter || c.recipient_role === typeFilter;
-const qType = c.queue_type || c.status_tag || c.status || 'MAIN_ACCOUNT';
+const queueType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
 let matchesTab = false;
-if (activeCommTab === 'incoming') matchesTab = qType === 'INCOMING_REQUESTS' || qType === 'OFFERED_BY_SELLER' || qType === 'OFFERED_BY_VENDOR';
-else if (activeCommTab === 'outgoing') matchesTab = qType === 'OUTGOING_REQUESTS' || qType === 'REQUESTED_BY_RECIPIENT';
-else if (activeCommTab === 'mainAccount') matchesTab = qType === 'MAIN_ACCOUNT' || qType === 'MAIN_QUEUE' || !c.queue_type;
-else if (activeCommTab === 'workingQueue') matchesTab = qType === 'WORKING_QUEUE' || qType === 'APPROVED_IN_WORKING';
-else if (activeCommTab === 'receivedHistory') matchesTab = qType === 'RECEIVED_HISTORY' || qType === 'COMPLETED_PAID';
+if (activeCommTab === 'incoming') matchesTab = queueType === 'INCOMING_REQUESTS';
+else if (activeCommTab === 'outgoing') matchesTab = queueType === 'OUTGOING_REQUESTS';
+else if (activeCommTab === 'mainAccount') matchesTab = queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || !c.queue_type;
+else if (activeCommTab === 'workingQueue') matchesTab = queueType === 'WORKING_QUEUE';
+else if (activeCommTab === 'receivedHistory') matchesTab = queueType === 'RECEIVED_HISTORY';
 return matchesSearch && matchesType && matchesTab;
 });
 if (activeCommTab === 'incoming') {
@@ -778,7 +779,7 @@ ${activeCommTab === 'receivedHistory' ? `
 <i class="fa-solid fa-receipt mr-1 text-purple-400"></i> View Receipt
 </button>
 ` : `
-<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.queue_type || c.status_tag || c.status || 'MAIN_ACCOUNT'}</span>
+<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">${c.queue_type || 'MAIN_ACCOUNT'}</span>
 `}
 </div>
 </div>
@@ -805,7 +806,7 @@ selectedCommIds.delete(cb.value);
 });
 }
 
-async function batchUpdateShopperStatus(newQueueType) {
+async function batchUpdateShopperStatus(targetQueueType) {
 if (selectedCommIds.size === 0) {
 alert('Please select at least one record.');
 return;
@@ -814,7 +815,7 @@ try {
 for (const id of selectedCommIds) {
 const { error } = await _supabase
 .from('commissions')
-.update({ queue_type: newQueueType, status_tag: newQueueType, status: newQueueType })
+.update({ queue_type: targetQueueType })
 .eq('id', id);
 if (error) throw error;
 }
