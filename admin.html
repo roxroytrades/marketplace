@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Echo Hub - System Administration & Oversight</title>
-<!-- Tailwind CSS CDN with Dark Mode Enabled -->
+<title>Echo Hub - Master Admin Operations Dashboard</title>
+<!-- Tailwind CSS CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -24,1099 +24,1183 @@ tailwind.config = {
 </script>
 <!-- FontAwesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Google Fonts: Inter / Space Grotesk -->
+<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <!-- Supabase JS Client CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 body { font-family: 'Inter', sans-serif; }
 h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0F172A; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
 </style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
-<!-- Top Navigation Bar -->
-<header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
-<div class="flex items-center space-x-3">
-<div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-purple-500/20 font-heading font-bold text-lg">
-eh
-</div>
-<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-purple-400">hub</span> <span class="text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full ml-2">Admin Panel</span></span>
-</div>
-<div class="flex items-center space-x-4">
-<!-- Logged-in Admin Badge -->
-<div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
-<div class="w-6 h-6 bg-purple-600/30 text-purple-400 border border-purple-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
-<i class="fa-solid fa-user-shield text-[10px]"></i>
-</div>
-<span id="headerUserName" class="text-xs font-semibold text-slate-200">System Admin</span>
-</div>
-<!-- Portals Dropdown -->
-<div class="relative group">
-<button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
-<i class="fa-solid fa-link text-slate-400"></i>
-<span>Quick Navigation</span>
-<i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
-</button>
-<div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
-<a href="index.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Marketplace</a>
-<a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Portal</a>
-<a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
-</div>
-</div>
-<!-- Logout Button -->
-<button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
-<i class="fa-solid fa-right-from-bracket"></i>
-<span>Sign Out</span>
-</button>
-</div>
+
+<!-- Header Bar -->
+<header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-lg">
+  <div class="flex items-center space-x-3">
+    <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-slate-900 shadow-lg shadow-amber-500/20 font-heading font-bold text-lg">
+      eh
+    </div>
+    <div>
+      <div class="flex items-center space-x-2">
+        <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-amber-400">hub</span></span>
+        <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Master Admin Workspace</span>
+      </div>
+      <p class="text-[11px] text-slate-400">Global Oversight, Security Verification, Communications & Financial Ledger</p>
+    </div>
+  </div>
+
+  <div class="flex items-center space-x-4">
+    <div class="hidden md:flex items-center space-x-2 bg-darkBg border border-borderSlate px-3 py-1.5 rounded-xl text-xs">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="text-slate-300 font-medium" id="adminUserLabel">Admin User</span>
+    </div>
+    <button onclick="handleAdminSignOut()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      <span>Sign Out</span>
+    </button>
+  </div>
 </header>
-<!-- Main Workspace Container -->
-<main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
-<!-- Hero Banner & Database Status -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
-<div class="space-y-1">
-<span class="text-xs text-purple-400 font-semibold uppercase tracking-wider">SYSTEM ADMINISTRATION & OVERSIGHT</span>
-<h1 id="welcomeTitle" class="text-2xl font-bold text-white">Admin Control Center</h1>
-<p class="text-xs text-slate-400">Monitor system accounts, review National ID proofs, inspect product listings, and oversee master ledgers.</p>
+
+<!-- Primary Navigation Tabs -->
+<div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-6 py-2 sticky top-[73px] z-20">
+  <div class="max-w-7xl mx-auto flex items-center space-x-2 overflow-x-auto no-scrollbar text-xs">
+    <button onclick="switchAdminTab('users')" id="tabBtn-users" class="admin-tab-btn active px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30">
+      <i class="fa-solid fa-users-gear text-xs"></i>
+      <span>Accounts & ID Verification</span>
+    </button>
+    <button onclick="switchAdminTab('products')" id="tabBtn-products" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
+      <i class="fa-solid fa-box-archive text-xs"></i>
+      <span>Product Catalog</span>
+    </button>
+    <button onclick="switchAdminTab('commissions')" id="tabBtn-commissions" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
+      <i class="fa-solid fa-receipt text-xs"></i>
+      <span>Master Commissions Ledger</span>
+    </button>
+    <button onclick="switchAdminTab('messaging')" id="tabBtn-messaging" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent relative">
+      <i class="fa-solid fa-comments text-xs"></i>
+      <span>System Messaging & Outreach</span>
+      <span id="unreadMessagesBadge" class="hidden bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+    </button>
+    <button onclick="switchAdminTab('referrals')" id="tabBtn-referrals" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
+      <i class="fa-solid fa-sitemap text-xs"></i>
+      <span>Referral Network Hub</span>
+    </button>
+  </div>
 </div>
-<div class="flex items-center space-x-2 bg-darkBg border border-borderSlate px-4 py-2 rounded-xl">
-<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-<span class="text-xs font-medium text-slate-300">Database Status: <strong class="text-emerald-400">Connected</strong></span>
-</div>
-</div>
-<!-- Top-Level Statistics (Metric Cards Row) -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
-<div class="flex items-center justify-between text-slate-400">
-<span class="text-xs">Registered Accounts</span>
-<i class="fa-solid fa-users text-purple-400"></i>
-</div>
-<h3 id="statTotalAccounts" class="text-2xl font-bold text-white">0</h3>
-<p class="text-[10px] text-slate-500">Shoppers, Sellers, and Admins</p>
-</div>
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
-<div class="flex items-center justify-between text-slate-400">
-<span class="text-xs">Pending ID Verifications</span>
-<i class="fa-solid fa-id-card text-amber-400"></i>
-</div>
-<h3 id="statPendingIds" class="text-2xl font-bold text-amber-400">0</h3>
-<p class="text-[10px] text-slate-500">Awaiting administrator approval</p>
-</div>
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
-<div class="flex items-center justify-between text-slate-400">
-<span class="text-xs">Active Products</span>
-<i class="fa-solid fa-store text-blue-400"></i>
-</div>
-<h3 id="statActiveProducts" class="text-2xl font-bold text-blue-400">0</h3>
-<p class="text-[10px] text-slate-500">Live seller marketplace listings</p>
-</div>
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
-<div class="flex items-center justify-between text-slate-400">
-<span class="text-xs">Master Commission Volume</span>
-<i class="fa-solid fa-sack-dollar text-emerald-400"></i>
-</div>
-<h3 id="statTotalVolume" class="text-2xl font-bold text-emerald-400">$0.00</h3>
-<p class="text-[10px] text-slate-500">Total ledger transaction value</p>
-</div>
-</div>
-<!-- Tab Navigation Bar -->
-<div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-<button onclick="switchAdminTab('accounts')" id="tabAccountsBtn" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2">
-<i class="fa-solid fa-users-gear"></i>
-<span>Accounts & Verification</span>
-</button>
-<button onclick="switchAdminTab('products')" id="tabProductsBtn" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
-<i class="fa-solid fa-boxes-stacked"></i>
-<span>Product Catalog</span>
-</button>
-<button onclick="switchAdminTab('commissions')" id="tabCommissionsBtn" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
-<i class="fa-solid fa-file-invoice-dollar"></i>
-<span>Master Commissions Ledger</span>
-</button>
-<button onclick="switchAdminTab('messages')" id="tabMessagesBtn" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
-<i class="fa-solid fa-comments"></i>
-<span>Messaging Threads</span>
-</button>
-<button onclick="switchAdminTab('referrals')" id="tabReferralsBtn" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
-<i class="fa-solid fa-diagram-project"></i>
-<span>Referral Hub</span>
-</button>
-</div>
-<!-- ================= TAB 1: ACCOUNTS & NATIONAL ID VERIFICATION ================= -->
-<div id="accountsSection" class="space-y-6">
-<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-<div>
-<h2 class="text-lg font-bold text-white tracking-tight">User Accounts & National ID Verification</h2>
-<p class="text-xs text-slate-400">Review uploaded identification documents and approve or reject user verification status.</p>
-</div>
-<div class="flex items-center space-x-3 w-full sm:w-auto">
-<input type="text" id="accountsSearchInput" oninput="renderAccountsTable()" placeholder="Search user name or email..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-purple-500 w-full sm:w-64 transition">
-<select id="accountsFilterStatus" onchange="renderAccountsTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500 transition">
-<option value="ALL">All Statuses</option>
-<option value="PENDING_VERIFICATION">PENDING_VERIFICATION</option>
-<option value="VERIFIED">VERIFIED</option>
-<option value="REJECTED">REJECTED</option>
-</select>
-</div>
-</div>
-<!-- Accounts Data Table -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
-<span class="col-span-3">User Details</span>
-<span class="col-span-2">Role</span>
-<span class="col-span-3">Verification Status</span>
-<span class="col-span-2">National ID Proof</span>
-<span class="col-span-2 text-right">Actions</span>
-</div>
-<div id="accountsTableBody" class="divide-y divide-borderSlate">
-<div class="p-8 text-center text-xs text-slate-400">
-<i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-<p>Loading system profiles...</p>
-</div>
-</div>
-</div>
-</div>
-<!-- ================= TAB 2: MARKETPLACE PRODUCT CATALOG OVERSIGHT ================= -->
-<div id="productsSection" class="space-y-6 hidden">
-<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-<div>
-<h2 class="text-lg font-bold text-white tracking-tight">Marketplace Product Oversight</h2>
-<p class="text-xs text-slate-400">Monitor all seller product submissions across the platform.</p>
-</div>
-<input type="text" id="productsSearchInput" oninput="renderProductsTable()" placeholder="Search product title..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-purple-500 w-full sm:w-64 transition">
-</div>
-<!-- Products Data Table -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
-<span class="col-span-4">Product Title & Price</span>
-<span class="col-span-3">Seller UUID / Owner</span>
-<span class="col-span-2">Status</span>
-<span class="col-span-3 text-right">Moderation Actions</span>
-</div>
-<div id="productsTableBody" class="divide-y divide-borderSlate">
-<div class="p-8 text-center text-xs text-slate-400">
-<i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-<p>Loading marketplace products...</p>
-</div>
-</div>
-</div>
-</div>
-<!-- ================= TAB 3: MASTER COMMISSIONS LEDGER ================= -->
-<div id="commissionsSection" class="space-y-6 hidden">
-<div class="space-y-1">
-<h2 class="text-lg font-bold text-white tracking-tight">Master Financial Queue Audit & Global Settlement Operations</h2>
-<p class="text-xs text-slate-400">Track cumulative marketplace balances, process incoming requests, and inspect payment receipts.</p>
-</div>
-<!-- Marketplace & Admin Summary Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-<div class="bg-darkBg border border-borderSlate rounded-xl p-4 space-y-1">
-<span class="text-[10px] text-slate-400 uppercase font-semibold">Total Pending Marketplace</span>
-<p id="sumMarketplacePending" class="text-lg font-bold text-amber-400">$0.00</p>
-</div>
-<div class="bg-darkBg border border-borderSlate rounded-xl p-4 space-y-1">
-<span class="text-[10px] text-slate-400 uppercase font-semibold">Total Collected Marketplace</span>
-<p id="sumMarketplaceCollected" class="text-lg font-bold text-emerald-400">$0.00</p>
-</div>
-<div class="bg-darkBg border border-borderSlate rounded-xl p-4 space-y-1">
-<span class="text-[10px] text-purple-400 uppercase font-semibold">Admin Pending Splits</span>
-<p id="sumAdminPending" class="text-lg font-bold text-purple-300">$0.00</p>
-</div>
-<div class="bg-darkBg border border-borderSlate rounded-xl p-4 space-y-1">
-<span class="text-[10px] text-purple-400 uppercase font-semibold">Admin Collected Splits</span>
-<p id="sumAdminCollected" class="text-lg font-bold text-purple-400">$0.00</p>
-</div>
-</div>
-<!-- Master Commissions 4-Sub-Tab Navigation -->
-<div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-<button onclick="switchMasterCommSubTab('incoming')" id="subMasterIncoming" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-md transition">Incoming Requests</button>
-<button onclick="switchMasterCommSubTab('outgoing')" id="subMasterOutgoing" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Outgoing Requests</button>
-<button onclick="switchMasterCommSubTab('working')" id="subMasterWorking" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
-<button onclick="switchMasterCommSubTab('history')" id="subMasterHistory" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Received History</button>
-</div>
-<!-- Master Search & Action Toolbar -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
-<input type="text" id="masterCommSearch" oninput="renderMasterCommissions()" placeholder="Search Feedback ID, PayPal Email, or User..." class="w-full sm:w-80 bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-purple-500 transition">
-<div id="masterCommToolbar" class="flex items-center space-x-2"></div>
-</div>
-<!-- Master Table -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
-<span class="col-span-1"><input type="checkbox" id="selectAllMasterComms" onclick="toggleSelectAllMaster(this)" class="rounded border-borderSlate bg-darkBg text-purple-600"></span>
-<span class="col-span-3">Feedback ID & Link</span>
-<span class="col-span-3">Recipient & Role</span>
-<span class="col-span-2">Amount</span>
-<span class="col-span-3 text-right">Status & Action</span>
-</div>
-<div id="masterCommsTableBody" class="divide-y divide-borderSlate">
-<div class="p-8 text-center text-xs text-slate-400">
-<i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-<p>Loading master financial ledger...</p>
-</div>
-</div>
-</div>
-</div>
-<!-- ================= TAB 4: SYSTEM-WIDE MESSAGING HUB ================= -->
-<div id="messagesSection" class="space-y-6 hidden">
-<div class="flex items-center justify-between">
-<div>
-<h2 class="text-lg font-bold text-white tracking-tight">System-Wide Message Center & Direct Outreach</h2>
-<p class="text-xs text-slate-400">Initiate direct messages to any platform user, monitor global communications, and intervene in active disputes.</p>
-</div>
-<button onclick="openNewOutreachModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-lg shadow-purple-500/20 flex items-center space-x-2">
-<i class="fa-solid fa-plus"></i>
-<span>+ Start Direct Outreach</span>
-</button>
-</div>
-<!-- Messaging Grid Layout -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<!-- Left Panel: Threads Directory -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 h-[520px] flex flex-col">
-<input type="text" id="adminThreadSearch" oninput="renderAdminThreadsList()" placeholder="Filter threads by Feedback ID, user..." class="bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2 text-xs text-slate-200 outline-none focus:border-purple-500 w-full transition">
-<div id="adminThreadsList" class="space-y-2 flex-1 overflow-y-auto pr-1">
-<div class="text-center py-10 text-xs text-slate-500">Loading global message streams...</div>
-</div>
-</div>
-<!-- Right Panel: Active Chat Window -->
-<div class="lg:col-span-2 bg-cardBg border border-borderSlate rounded-2xl p-6 flex flex-col justify-between h-[520px]">
-<div id="adminChatHeader" class="border-b border-borderSlate pb-3 flex items-center justify-between">
-<div>
-<h3 id="adminActiveChatTitle" class="text-sm font-bold text-white">Select a thread or compose outreach</h3>
-<p id="adminActiveChatSub" class="text-[10px] text-slate-400">Global Oversight & Administrative Intervention</p>
-</div>
-</div>
-<div id="adminChatContainer" class="flex-1 overflow-y-auto py-4 space-y-3 pr-2">
-<div class="text-center py-20 text-xs text-slate-500">
-<i class="fa-solid fa-comments text-3xl mb-2 text-purple-400"></i>
-<p>Select a thread on the left to inspect or send direct messages.</p>
-</div>
-</div>
-<form id="adminChatForm" onsubmit="handleAdminSendMessage(event)" class="pt-3 border-t border-borderSlate flex gap-2 items-center">
-<input type="text" id="adminChatMsgInput" placeholder="Type administrative response or notification..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-purple-500 transition" disabled>
-<button type="submit" id="adminChatSendBtn" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition shadow-md" disabled>Send</button>
-</form>
-</div>
-</div>
-</div>
-<!-- ================= TAB 5: REFERRAL HUB OVERSIGHT ================= -->
-<div id="referralsSection" class="space-y-6 hidden">
-<div class="space-y-1">
-<h2 class="text-lg font-bold text-white tracking-tight">Platform Referral Oversight & Master Management</h2>
-<p class="text-xs text-slate-400">Monitor system-wide referral performance, track global affiliate links, and audit commission bonuses.</p>
-</div>
-<!-- Referral Audit Table -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
-<span class="col-span-3">User & Referral Code</span>
-<span class="col-span-3">Inviter Code (invited_by_code)</span>
-<span class="col-span-2">Role</span>
-<span class="col-span-2">Status</span>
-<span class="col-span-2 text-right">Action</span>
-</div>
-<div id="referralsTableBody" class="divide-y divide-borderSlate">
-<div class="p-8 text-center text-xs text-slate-400">
-<i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-<p>Loading referral network tree...</p>
-</div>
-</div>
-</div>
-</div>
+
+<!-- Main Workspace Body -->
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 space-y-6">
+
+  <!-- TAB 1: ACCOUNTS & ID VERIFICATION -->
+  <section id="adminTab-users" class="admin-tab-content space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Platform Accounts & ID Verification</h2>
+        <p class="text-xs text-slate-400 mt-1">Review buyer National ID verification cards, manage account access status, and audit user roles.</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search users by name, email, ID..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+        <select id="userRoleFilter" onchange="filterUsersTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
+          <option value="ALL">All Roles</option>
+          <option value="BUYER">Buyers</option>
+          <option value="SELLER">Sellers / Vendors</option>
+          <option value="ADMIN">Admins</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3.5 px-4">User Details</th>
+              <th class="py-3.5 px-4">Role</th>
+              <th class="py-3.5 px-4">ID Verification</th>
+              <th class="py-3.5 px-4">Referral Code</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="divide-y divide-borderSlate/60 text-slate-300">
+            <tr>
+              <td colspan="5" class="py-8 text-center text-slate-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading user accounts...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: PRODUCT CATALOG MODERATION -->
+  <section id="adminTab-products" class="admin-tab-content space-y-6 hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Marketplace Product Catalog Moderation</h2>
+        <p class="text-xs text-slate-400 mt-1">Audit active vendor offerings, verify commission allocations, and moderate listings.</p>
+      </div>
+      <input type="text" id="productSearchInput" onkeyup="filterProductsTable()" placeholder="Search products or vendors..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+    </div>
+
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3.5 px-4">Product Info</th>
+              <th class="py-3.5 px-4">Vendor</th>
+              <th class="py-3.5 px-4">Price</th>
+              <th class="py-3.5 px-4">Commission (USD)</th>
+              <th class="py-3.5 px-4">Type</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody" class="divide-y divide-borderSlate/60 text-slate-300">
+            <tr>
+              <td colspan="6" class="py-8 text-center text-slate-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading catalog...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: MASTER COMMISSIONS LEDGER -->
+  <section id="adminTab-commissions" class="admin-tab-content space-y-6 hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Master Financial Ledger & Payout Queue</h2>
+        <p class="text-xs text-slate-400 mt-1">Monitor real-time balances, payout requests, working queues, and settlement receipts across all roles.</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <select id="adminCommTabFilter" onchange="filterAdminCommissions()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
+          <option value="ALL">All Queues & Statuses</option>
+          <option value="MAIN_ACCOUNT">Main Queue / Unclaimed</option>
+          <option value="OUTGOING_REQUESTS">Payout Requested</option>
+          <option value="WORKING_QUEUE">Approved In Working</option>
+          <option value="HISTORY">Completed & Paid</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3.5 px-4">Recipient Role</th>
+              <th class="py-3.5 px-4">Recipient ID / Email</th>
+              <th class="py-3.5 px-4">Vendor ID</th>
+              <th class="py-3.5 px-4">Amount</th>
+              <th class="py-3.5 px-4">Queue Placement</th>
+              <th class="py-3.5 px-4">Status</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminCommissionsTableBody" class="divide-y divide-borderSlate/60 text-slate-300">
+            <tr>
+              <td colspan="7" class="py-8 text-center text-slate-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading ledger records...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: SYSTEM MESSAGING & DIRECT OUTREACH HUB -->
+  <section id="adminTab-messaging" class="admin-tab-content space-y-6 hidden">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl shadow-xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">System-Wide Messaging & Direct Outreach</h2>
+        <p class="text-xs text-slate-400 mt-1">Audit communications, inspect review submissions, detect contact policy risks, and initiate direct outreach.</p>
+      </div>
+      <button onclick="openDirectOutreachModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>+ Start Direct Outreach</span>
+      </button>
+    </div>
+
+    <!-- Main Messaging Workspace Grid (Left Thread List + Right Transcript Inspector) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px]">
+
+      <!-- LEFT PANE: 5-Tab Quick-Switch Thread Manager & Search -->
+      <div class="lg:col-span-5 bg-cardBg border border-borderSlate rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+        
+        <!-- Left Pane Filter Header & Search -->
+        <div class="p-4 border-b border-borderSlate space-y-3 bg-darkBg/60">
+          
+          <!-- Live Text Search Input -->
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+            <input type="text" id="leftPaneThreadSearch" onkeyup="filterLeftPaneThreads()" placeholder="Search threads by user, product, or text..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+          </div>
+
+          <!-- 5-Tab Quick-Switch View Tabs -->
+          <div class="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5 text-[10px]">
+            <button onclick="switchLeftPaneFilter('ALL')" id="leftTab-ALL" class="left-pane-filter-btn active px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
+              All
+            </button>
+            <button onclick="switchLeftPaneFilter('ADMIN_DIRECT')" id="leftTab-ADMIN_DIRECT" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
+              Admin Direct
+            </button>
+            <button onclick="switchLeftPaneFilter('MARKETPLACE')" id="leftTab-MARKETPLACE" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
+              Reviews
+            </button>
+            <button onclick="switchLeftPaneFilter('ACTION_REQUIRED')" id="leftTab-ACTION_REQUIRED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
+              Needs Attention
+            </button>
+            <button onclick="switchLeftPaneFilter('FLAGGED')" id="leftTab-FLAGGED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20">
+              🚨 Contact Risk
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrollable Left Thread Cards List -->
+        <div id="adminThreadsList" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
+          <div class="p-8 text-center text-slate-500 text-xs">
+            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading communication threads...
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANE: Transcript Inspector & Inline Admin Reply -->
+      <div class="lg:col-span-7 bg-cardBg border border-borderSlate rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+        
+        <!-- Active Thread Header Bar -->
+        <div id="activeThreadHeader" class="p-4 border-b border-borderSlate bg-darkBg/60 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center justify-center text-amber-400 font-bold text-xs">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+            <div>
+              <h3 id="activeThreadTitle" class="text-xs font-bold text-white">Select a thread to view transcript</h3>
+              <p id="activeThreadSubtitle" class="text-[10px] text-slate-400">Choose a channel from the left pane to begin live auditing.</p>
+            </div>
+          </div>
+          <div id="activeThreadHeaderActions" class="flex items-center space-x-2"></div>
+        </div>
+
+        <!-- Chat Transcript Container -->
+        <div id="adminChatContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-darkBg/40">
+          <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs space-y-2">
+            <i class="fa-solid fa-comment-dots text-3xl opacity-30"></i>
+            <p>Select a thread from the left menu to inspect conversation transcript.</p>
+          </div>
+        </div>
+
+        <!-- Admin Direct Reply Bar -->
+        <form id="adminReplyForm" onsubmit="handleAdminSendMessage(event)" class="p-3 border-t border-borderSlate bg-darkBg flex items-center space-x-2">
+          <input type="text" id="adminMessageInput" placeholder="Type a direct administrator reply..." class="flex-1 bg-cardBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+          <button type="submit" id="adminSendBtn" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+            <span>Send</span>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TAB 5: REFERRAL NETWORK HUB -->
+  <section id="adminTab-referrals" class="admin-tab-content space-y-6 hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Referral Network Hub & Inviter Trees</h2>
+        <p class="text-xs text-slate-400 mt-1">Audit multi-tier affiliate referral codes, inviter ties, and platform commission distributions.</p>
+      </div>
+      <input type="text" id="referralSearchInput" onkeyup="filterReferralsTable()" placeholder="Search referral codes or user IDs..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+    </div>
+
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3.5 px-4">User</th>
+              <th class="py-3.5 px-4">Role</th>
+              <th class="py-3.5 px-4">Referral Code</th>
+              <th class="py-3.5 px-4">Invited By Code</th>
+              <th class="py-3.5 px-4">Joined Date</th>
+            </tr>
+          </thead>
+          <tbody id="referralsTableBody" class="divide-y divide-borderSlate/60 text-slate-300">
+            <tr>
+              <td colspan="5" class="py-8 text-center text-slate-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading referral network data...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
 </main>
-<!-- ================= MODALS ================= -->
-<!-- 1. National ID Inspection Modal -->
-<div id="idViewerModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-3">
-<h3 id="idModalTitle" class="text-sm font-bold text-white">National ID Verification Proof</h3>
-<button onclick="closeModal('idViewerModal')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-</div>
-<div class="bg-darkBg border border-borderSlate rounded-xl p-2 text-center max-h-80 overflow-y-auto">
-<img id="modalIdImg" src="" alt="National ID Proof" class="mx-auto rounded object-contain max-h-72">
-</div>
-<div class="flex justify-end">
-<button onclick="closeModal('idViewerModal')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs px-4 py-2 rounded-xl transition">Close Viewer</button>
-</div>
-</div>
-</div>
-<!-- 2. Master Receipt Inspection Modal -->
-<div id="masterReceiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-3">
-<h3 class="text-sm font-bold text-white">Master Receipt Audit Proof</h3>
-<button onclick="closeModal('masterReceiptModal')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-</div>
-<div class="grid grid-cols-2 gap-3 text-xs">
-<div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1">
-<span class="text-slate-500">PayPal Transaction ID</span>
-<p id="masterReceiptTxId" class="font-mono font-bold text-white">-</p>
-</div>
-<div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1">
-<span class="text-slate-500">Commission ID</span>
-<p id="masterReceiptCommId" class="font-mono text-emerald-400 font-bold">-</p>
-</div>
-</div>
-<div class="bg-darkBg border border-borderSlate rounded-xl p-2 text-center max-h-72 overflow-y-auto">
-<img id="masterReceiptImg" src="" alt="Payment Receipt" class="mx-auto rounded object-contain max-h-64">
-</div>
-<button onclick="closeModal('masterReceiptModal')" class="w-full bg-darkBg hover:bg-slate-800 border border-borderSlate text-white text-xs font-semibold py-2.5 rounded-xl transition">Close</button>
-</div>
-</div>
-<!-- 3. Direct Outreach Modal -->
-<div id="outreachModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-3">
-<h3 class="text-sm font-bold text-white">Start Direct Administrative Outreach</h3>
-<button onclick="closeModal('outreachModal')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-</div>
-<form onsubmit="handleOutreachSubmit(event)" class="space-y-4">
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Target User</label>
-<select id="outreachUserSelect" required class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-purple-500 transition">
-<option value="">Select a registered user...</option>
-</select>
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Initial Message / Notice</label>
-<textarea id="outreachMsgText" required rows="3" placeholder="Enter administrative inquiry or compliance notice..." class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-xs text-slate-200 outline-none focus:border-purple-500 transition"></textarea>
-</div>
-<button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-purple-500/20">
-Initiate Thread
-</button>
-</form>
-</div>
-</div>
-<!-- 4. Reassign Inviter Code Modal -->
-<div id="reassignInviterModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-3">
-<h3 class="text-sm font-bold text-white">Reassign Account Inviter Code</h3>
-<button onclick="closeModal('reassignInviterModal')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-</div>
-<form onsubmit="handleReassignInviterSubmit(event)" class="space-y-4">
-<input type="hidden" id="reassignTargetUserId">
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Target User</label>
-<input type="text" id="reassignUserName" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-400 outline-none">
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">New Inviter Code (invited_by_code)</label>
-<input type="text" id="reassignNewCode" required placeholder="e.g., vendor_12345678 or REF-XXXX" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500 transition">
-</div>
-<button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-purple-500/20">
-Confirm Code Reassignment
-</button>
-</form>
-</div>
-</div>
-<!-- Toast Container -->
-<div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2"></div>
+
 <!-- Footer -->
-<footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-<p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
+<footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500 mt-12">
+  <p>&copy; 2026 Echo Hub Marketplace. Master System Operations & Security Oversight Console.</p>
 </footer>
-<!-- Main Admin Script -->
+
+<!-- MODAL 1: NATIONAL ID BASE64 VERIFICATION INSPECTOR -->
+<div id="nationalIdModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+        <i class="fa-solid fa-id-card text-amber-400"></i>
+        <span>National ID Document Inspection</span>
+      </h3>
+      <button onclick="closeNationalIdModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
+    </div>
+    
+    <div class="space-y-3">
+      <div id="idModalUserInfo" class="text-xs text-slate-300"></div>
+      <div class="border border-borderSlate rounded-2xl overflow-hidden bg-darkBg flex items-center justify-center min-h-[220px]">
+        <img id="idModalImage" src="" alt="National ID Base64 Document" class="max-h-80 w-full object-contain">
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end space-x-3 pt-2">
+      <button onclick="closeNationalIdModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition">Close</button>
+      <button id="idModalVerifyBtn" onclick="approveUserVerificationFromModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
+        <i class="fa-solid fa-check-circle mr-1.5"></i> Set Status to VERIFIED
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: TYPEAHEAD OMNIBOX DIRECT OUTREACH COMPOSER -->
+<div id="outreachModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
+    
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center justify-center text-amber-400 font-bold text-xs">
+          <i class="fa-solid fa-paper-plane"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Direct Admin Outreach</h3>
+          <p class="text-[10px] text-slate-400">Initiate an isolated support communication channel with any user</p>
+        </div>
+      </div>
+      <button onclick="closeDirectOutreachModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
+    </div>
+
+    <div class="space-y-4 text-xs">
+      
+      <!-- Typeahead Search Recipient Field -->
+      <div class="space-y-1.5 relative">
+        <label class="font-semibold text-slate-300">Select Recipient</label>
+        
+        <!-- Target Lock Pill Tag (Hidden until target selected) -->
+        <div id="outreachTargetPill" class="hidden flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 text-amber-300 font-medium">
+          <span id="outreachTargetLabel">Roxroy Gough • Buyer</span>
+          <button onclick="clearOutreachTarget()" class="text-amber-400 hover:text-amber-200 transition ml-2"><i class="fa-solid fa-circle-xmark"></i></button>
+        </div>
+
+        <!-- Omnibox Search Input -->
+        <div id="outreachSearchContainer" class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user-gear text-xs"></i></span>
+          <input type="text" id="outreachSearchInput" onkeyup="handleOutreachSearch()" placeholder="Type name, email, or user ID to search..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+        </div>
+
+        <!-- Dynamic Typeahead Results Dropdown -->
+        <div id="outreachSearchResults" class="hidden absolute left-0 right-0 top-full mt-1 bg-cardBg border border-borderSlate rounded-2xl shadow-2xl max-h-52 overflow-y-auto z-50 divide-y divide-borderSlate/60">
+        </div>
+      </div>
+
+      <!-- Outreach Message Body -->
+      <div class="space-y-1.5">
+        <label class="font-semibold text-slate-300">Outreach Message Content</label>
+        <textarea id="outreachMessageText" rows="4" placeholder="Write official administrator message or inquiry here..." class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-xs text-slate-200 outline-none focus:border-amber-500 transition resize-none"></textarea>
+      </div>
+
+      <div id="outreachAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+    </div>
+
+    <div class="flex items-center justify-end space-x-3 pt-2">
+      <button onclick="closeDirectOutreachModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition">Cancel</button>
+      <button id="outreachSubmitBtn" onclick="submitDirectOutreach()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold px-5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>Send Direct Message</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- SUPABASE INTEGRATION & ENGINE SCRIPT -->
 <script>
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const { createClient } = supabase;
+const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null;
-let adminAccounts = [];
-let adminProducts = [];
-let adminCommissions = [];
-let adminThreads = [];
-let activeAdminThreadId = null;
-let activeAdminTab = 'accounts';
-let activeMasterSubTab = 'incoming';
-let selectedMasterCommIds = new Set();
-let isPollingActive = false;
-let pollingTimer = null;
+/* Global State Caches */
+let currentAdminUser = null;
+let allUsersCache = [];
+let allProductsCache = [];
+let allCommissionsCache = [];
+let allThreadsCache = [];
+let activeSelectedThreadId = null;
+let currentLeftFilter = 'ALL';
+let selectedOutreachTargetUser = null;
+let currentInspectingUserId = null;
 
-// ================= INITIALIZATION & AUTHENTICATION =================
-async function initAdminWorkspace() {
-  try {
-    const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
-    if (sessionErr || !session) {
-      window.location.href = 'login.html';
-      return;
-    }
-    currentUser = session.user;
-    // Check role in profiles
-    try {
-      const { data: prof } = await _supabase
-        .from('profiles')
-        .select('role, full_name')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-      if (prof && prof.full_name) {
-        document.getElementById('headerUserName').textContent = prof.full_name;
-      }
-    } catch (e) {
-      console.warn("Profile check bypassed:", e);
-    }
-    await loadAllAdminData();
-    if (pollingTimer) clearInterval(pollingTimer);
-    pollingTimer = setInterval(pollAdminData, 15000); // 15s concurrency guard
-  } catch (err) {
-    console.error("Admin init error:", err);
+/* Contact Risk Detection Regex Patterns */
+const CONTACT_RISK_REGEX = {
+  email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi,
+  phone: /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
+  links: /(wa\.me|t\.me|telegram|whatsapp|instagram\.com|facebook\.com|tiktok\.com|twitter\.com|x\.com|paypal\.me)/gi,
+  offplatform: /\b(text me|call me|zelle|venmo|cashapp|paypal outside|off platform|external pay|pay me direct|contact me at)\b/gi
+};
+
+/* Check if a message text contains contact risk indicators */
+function hasContactRisk(text) {
+  if (!text) return false;
+  return CONTACT_RISK_REGEX.email.test(text) ||
+         CONTACT_RISK_REGEX.phone.test(text) ||
+         CONTACT_RISK_REGEX.links.test(text) ||
+         CONTACT_RISK_REGEX.offplatform.test(text);
+}
+
+/* Initialization on DOM Load */
+window.addEventListener('DOMContentLoaded', async () => {
+  await initAdminDashboard();
+});
+
+async function initAdminDashboard() {
+  /* 1. Authenticate Session */
+  const { data: { session }, error: sessErr } = await _supabase.auth.getSession();
+  if (sessErr || !session) {
+    window.location.href = 'login.html';
+    return;
   }
+  currentAdminUser = session.user;
+  document.getElementById('adminUserLabel').textContent = currentAdminUser.email;
+
+  /* 2. Load Core Admin Datasets */
+  await loadUsersData();
+  await loadProductsData();
+  await loadCommissionsData();
+  await loadMessagingData();
+  await loadReferralsData();
 }
 
-async function loadAllAdminData() {
-  await Promise.all([
-    loadAdminAccounts(),
-    loadAdminProducts(),
-    loadAdminCommissions(),
-    loadAdminThreads()
-  ]);
-  updateAdminMetrics();
-}
-
-async function pollAdminData() {
-  if (isPollingActive) return;
-  isPollingActive = true;
-  try {
-    await loadAllAdminData();
-  } catch (e) {
-    console.warn("Polling retry notice:", e);
-  } finally {
-    isPollingActive = false;
-  }
-}
-
-function updateAdminMetrics() {
-  document.getElementById('statTotalAccounts').textContent = adminAccounts.length;
-  const pendingIds = adminAccounts.filter(a => a.verification_status === 'PENDING_VERIFICATION').length;
-  document.getElementById('statPendingIds').textContent = pendingIds;
-  const activeProds = adminProducts.filter(p => p.status === 'ACTIVE').length;
-  document.getElementById('statActiveProducts').textContent = activeProds;
-  const totalVol = adminCommissions.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
-  document.getElementById('statTotalVolume').textContent = `$${totalVol.toFixed(2)}`;
-}
-
-// ================= NAVIGATION =================
-function switchAdminTab(tab) {
-  activeAdminTab = tab;
-  const sections = ['accountsSection', 'productsSection', 'commissionsSection', 'messagesSection', 'referralsSection'];
-  const buttons = ['tabAccountsBtn', 'tabProductsBtn', 'tabCommissionsBtn', 'tabMessagesBtn', 'tabReferralsBtn'];
-  
-  sections.forEach(s => document.getElementById(s).classList.add('hidden'));
-  buttons.forEach(b => {
-    document.getElementById(b).className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2';
+/* Tab Navigation Handler */
+function switchAdminTab(tabKey) {
+  document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+    btn.className = "admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent";
   });
-  
-  if (tab === 'accounts') {
-    document.getElementById('accountsSection').classList.remove('hidden');
-    document.getElementById('tabAccountsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
-  } else if (tab === 'products') {
-    document.getElementById('productsSection').classList.remove('hidden');
-    document.getElementById('tabProductsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
-  } else if (tab === 'commissions') {
-    document.getElementById('commissionsSection').classList.remove('hidden');
-    document.getElementById('tabCommissionsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
-  } else if (tab === 'messages') {
-    document.getElementById('messagesSection').classList.remove('hidden');
-    document.getElementById('tabMessagesBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
-  } else if (tab === 'referrals') {
-    document.getElementById('referralsSection').classList.remove('hidden');
-    document.getElementById('tabReferralsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
-    renderReferralsTable();
+  const activeBtn = document.getElementById(`tabBtn-${tabKey}`);
+  if (activeBtn) {
+    activeBtn.className = "admin-tab-btn active px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30";
   }
+
+  document.querySelectorAll('.admin-tab-content').forEach(sec => sec.classList.add('hidden'));
+  const targetSec = document.getElementById(`adminTab-${tabKey}`);
+  if (targetSec) targetSec.classList.remove('hidden');
 }
 
-// ================= TAB 1: ACCOUNTS & NATIONAL ID =================
-async function loadAdminAccounts() {
+/* ==========================================================================
+   TAB 1: USERS & ID VERIFICATION ENGINE
+   ========================================================================== */
+async function loadUsersData() {
   try {
     const { data, error } = await _supabase
       .from('profiles')
-      .select('id, full_name, email, role, verification_status, created_at, invited_by_code, referral_code')
+      .select('*')
       .order('created_at', { ascending: false });
+
     if (error) throw error;
-    adminAccounts = data || [];
-    renderAccountsTable();
+    allUsersCache = data || [];
+    renderUsersTable(allUsersCache);
   } catch (err) {
-    console.error("Error loading profiles:", err);
+    console.error("Users load error:", err);
   }
 }
 
-function renderAccountsTable() {
-  const tableBody = document.getElementById('accountsTableBody');
-  const search = (document.getElementById('accountsSearchInput')?.value || '').toLowerCase();
-  const filterStatus = document.getElementById('accountsFilterStatus')?.value || 'ALL';
-  const filtered = adminAccounts.filter(a => {
-    const matchSearch = (a.full_name || '').toLowerCase().includes(search) || (a.email || '').toLowerCase().includes(search);
-    const matchStatus = filterStatus === 'ALL' || a.verification_status === filterStatus;
-    return matchSearch && matchStatus;
-  });
-  if (filtered.length === 0) {
-    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No profile records found matching criteria.</div>`;
+function renderUsersTable(users) {
+  const tbody = document.getElementById('usersTableBody');
+  if (!users || users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No matching user accounts found.</td></tr>`;
     return;
   }
-  tableBody.innerHTML = filtered.map(a => {
-    const status = a.verification_status || 'PENDING_VERIFICATION';
-    const badgeClass = status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : (status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20');
+
+  tbody.innerHTML = users.map(u => {
+    const roleUpper = (u.role || 'BUYER').toUpperCase();
+    const roleBadge = roleUpper === 'ADMIN' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                      (roleUpper === 'SELLER' || roleUpper === 'VENDOR' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'bg-blue-500/10 text-blue-400 border-blue-500/30');
+
+    const statusUpper = (u.verification_status || 'UNVERIFIED').toUpperCase();
+    const statusBadge = statusUpper === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                       (statusUpper === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30');
+
+    const hasIdDoc = u.national_id_base64 && u.national_id_base64.length > 50;
+
     return `
-      <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-        <div class="col-span-3 space-y-0.5">
-          <p class="font-bold text-white">${a.full_name || 'Unnamed User'}</p>
-          <p class="text-[10px] text-slate-400 font-mono">${a.email || a.id}</p>
-        </div>
-        <div class="col-span-2">
-          <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] uppercase font-semibold">${a.role || 'buyer'}</span>
-        </div>
-        <div class="col-span-3">
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeClass}">${status}</span>
-        </div>
-        <div class="col-span-2">
-          <button onclick="viewNationalIDModal('${a.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
-            <i class="fa-solid fa-id-card text-purple-400"></i>
-            <span>View ID</span>
+      <tr class="hover:bg-darkBg/40 transition">
+        <td class="py-3 px-4">
+          <div class="font-bold text-white">${u.full_name || 'Unnamed Account'}</div>
+          <div class="text-[11px] text-slate-400 font-mono">${u.email || u.id}</div>
+        </td>
+        <td class="py-3 px-4">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${roleBadge}">${roleUpper}</span>
+        </td>
+        <td class="py-3 px-4">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge}">${statusUpper}</span>
+            ${hasIdDoc ? `
+              <button onclick="inspectNationalId('${u.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-lg text-[10px] font-semibold transition">
+                <i class="fa-solid fa-id-card mr-1"></i> Inspect ID
+              </button>
+            ` : ''}
+          </div>
+        </td>
+        <td class="py-3 px-4 font-mono text-slate-400">${u.referral_code || 'N/A'}</td>
+        <td class="py-3 px-4 text-right space-x-1">
+          <button onclick="toggleUserStatus('${u.id}', '${statusUpper === 'VERIFIED' ? 'UNVERIFIED' : 'VERIFIED'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-semibold px-2.5 py-1 rounded-lg transition">
+            ${statusUpper === 'VERIFIED' ? 'Revoke Verification' : 'Mark Verified'}
           </button>
-        </div>
-        <div class="col-span-2 flex items-center justify-end space-x-1.5">
-          <button onclick="updateUserVerification('${a.id}', 'VERIFIED')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Verify</button>
-          <button onclick="updateUserVerification('${a.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Reject</button>
-        </div>
-      </div>
+        </td>
+      </tr>
     `;
   }).join('');
 }
 
-async function viewNationalIDModal(userId) {
-  try {
-    const { data, error } = await _supabase
-      .from('profiles')
-      .select('national_id_base64, full_name')
-      .eq('id', userId)
-      .single();
-    if (error || !data || !data.national_id_base64) {
-      showToast("No National ID document uploaded for this user.");
-      return;
-    }
-    document.getElementById('idModalTitle').textContent = `National ID Verification — ${data.full_name || 'User'}`;
-    document.getElementById('modalIdImg').src = data.national_id_base64;
-    document.getElementById('idViewerModal').classList.remove('hidden');
-  } catch (err) {
-    showToast("Error loading ID document: " + err.message);
-  }
+function filterUsersTable() {
+  const search = document.getElementById('userSearchInput').value.toLowerCase();
+  const role = document.getElementById('userRoleFilter').value;
+
+  const filtered = allUsersCache.filter(u => {
+    const matchesSearch = (u.full_name || '').toLowerCase().includes(search) ||
+                          (u.email || '').toLowerCase().includes(search) ||
+                          (u.id || '').toLowerCase().includes(search);
+    const uRole = (u.role || 'BUYER').toUpperCase();
+    const matchesRole = role === 'ALL' || uRole === role || (role === 'SELLER' && uRole === 'VENDOR');
+    return matchesSearch && matchesRole;
+  });
+
+  renderUsersTable(filtered);
 }
 
-async function updateUserVerification(userId, newStatus) {
+function inspectNationalId(userId) {
+  const user = allUsersCache.find(u => u.id === userId);
+  if (!user || !user.national_id_base64) {
+    alert("No National ID document submitted for this account.");
+    return;
+  }
+  currentInspectingUserId = userId;
+  document.getElementById('idModalUserInfo').innerHTML = `
+    <strong>User:</strong> ${user.full_name} (${user.email})<br>
+    <strong>Verification Status:</strong> ${user.verification_status || 'UNVERIFIED'}
+  `;
+  document.getElementById('idModalImage').src = user.national_id_base64;
+  document.getElementById('nationalIdModal').classList.remove('hidden');
+}
+
+function closeNationalIdModal() {
+  document.getElementById('nationalIdModal').classList.add('hidden');
+  currentInspectingUserId = null;
+}
+
+async function approveUserVerificationFromModal() {
+  if (!currentInspectingUserId) return;
+  await toggleUserStatus(currentInspectingUserId, 'VERIFIED');
+  closeNationalIdModal();
+}
+
+async function toggleUserStatus(userId, newStatus) {
   try {
     const { error } = await _supabase
       .from('profiles')
       .update({ verification_status: newStatus })
       .eq('id', userId);
+
     if (error) throw error;
-    showToast(`Verification status updated to ${newStatus}`);
-    await loadAdminAccounts();
+    await loadUsersData();
   } catch (err) {
-    alert("Failed to update status: " + err.message);
+    alert("Status update failed: " + err.message);
   }
 }
 
-// ================= TAB 2: PRODUCT CATALOG =================
-async function loadAdminProducts() {
+/* ==========================================================================
+   TAB 2: PRODUCT CATALOG ENGINE
+   ========================================================================== */
+async function loadProductsData() {
   try {
     const { data, error } = await _supabase
       .from('products')
-      .select('id, title, price, status, vendor_id, created_at')
+      .select('*')
       .order('created_at', { ascending: false });
+
     if (error) throw error;
-    adminProducts = data || [];
-    renderProductsTable();
+    allProductsCache = data || [];
+    renderProductsTable(allProductsCache);
   } catch (err) {
-    console.error("Error loading products:", err);
+    console.error("Products load error:", err);
   }
 }
 
-function renderProductsTable() {
-  const tableBody = document.getElementById('productsTableBody');
-  const search = (document.getElementById('productsSearchInput')?.value || '').toLowerCase();
-  const filtered = adminProducts.filter(p => (p.title || '').toLowerCase().includes(search));
-  if (filtered.length === 0) {
-    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No products found matching search.</div>`;
+function renderProductsTable(products) {
+  const tbody = document.getElementById('productsTableBody');
+  if (!products || products.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No products found.</td></tr>`;
     return;
   }
-  tableBody.innerHTML = filtered.map(p => `
-    <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-      <div class="col-span-4 space-y-0.5">
-        <p class="font-bold text-white">${p.title}</p>
-        <p class="text-xs text-emerald-400 font-semibold">$${Number(p.price || 0).toFixed(2)}</p>
-      </div>
-      <div class="col-span-3 font-mono text-[10px] text-slate-400">
-        ${p.vendor_id || 'N/A'}
-      </div>
-      <div class="col-span-2">
-        <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
-      </div>
-      <div class="col-span-3 flex items-center justify-end space-x-2">
-        <button onclick="toggleProductStatus('${p.id}', '${p.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
-          ${p.status === 'ACTIVE' ? 'Pause' : 'Activate'}
+
+  tbody.innerHTML = products.map(p => `
+    <tr class="hover:bg-darkBg/40 transition">
+      <td class="py-3 px-4">
+        <div class="font-bold text-white">${p.title}</div>
+        <div class="text-[10px] text-slate-500">${p.id}</div>
+      </td>
+      <td class="py-3 px-4 font-mono text-slate-400">${p.seller_id}</td>
+      <td class="py-3 px-4 font-bold text-white">$${Number(p.price || 0).toFixed(2)}</td>
+      <td class="py-3 px-4 font-bold text-emerald-400">$${Number(p.commission || 0).toFixed(2)}</td>
+      <td class="py-3 px-4 text-slate-400 text-[11px]">${p.vendor_type || 'UPFRONT'}</td>
+      <td class="py-3 px-4 text-right">
+        <button onclick="deleteProductRecord('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition">
+          <i class="fa-solid fa-trash mr-1"></i> Delete
         </button>
-        <button onclick="deleteProductAdmin('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] px-3 py-1.5 rounded-xl transition">
-          Delete
-        </button>
-      </div>
-    </div>
+      </td>
+    </tr>
   `).join('');
 }
 
-async function toggleProductStatus(prodId, newStatus) {
-  try {
-    const { error } = await _supabase.from('products').update({ status: newStatus }).eq('id', prodId);
-    if (error) throw error;
-    showToast(`Product status updated to ${newStatus}`);
-    await loadAdminProducts();
-  } catch (err) {
-    alert("Error updating product: " + err.message);
-  }
+function filterProductsTable() {
+  const search = document.getElementById('productSearchInput').value.toLowerCase();
+  const filtered = allProductsCache.filter(p => 
+    (p.title || '').toLowerCase().includes(search) ||
+    (p.seller_id || '').toLowerCase().includes(search)
+  );
+  renderProductsTable(filtered);
 }
 
-async function deleteProductAdmin(prodId) {
-  if (!confirm("Delete this marketplace product listing?")) return;
+async function deleteProductRecord(prodId) {
+  if (!confirm("Are you sure you want to remove this product listing?")) return;
   try {
     const { error } = await _supabase.from('products').delete().eq('id', prodId);
     if (error) throw error;
-    showToast("Product deleted.");
-    await loadAdminProducts();
+    await loadProductsData();
   } catch (err) {
-    alert("Error deleting product: " + err.message);
+    alert("Delete failed: " + err.message);
   }
 }
 
-// ================= TAB 3: MASTER COMMISSIONS LEDGER =================
-async function loadAdminCommissions() {
+/* ==========================================================================
+   TAB 3: MASTER COMMISSIONS LEDGER
+   ========================================================================== */
+async function loadCommissionsData() {
   try {
-    // SOLUTION 1 FIX: Select valid columns only (removed status_tag)
     const { data, error } = await _supabase
       .from('commissions')
-      .select('id, feedback_id, vendor_id, recipient_id, role_type, amount, queue_type, status, paypal_tx_id, created_at')
+      .select('*')
       .order('created_at', { ascending: false });
+
     if (error) throw error;
-    adminCommissions = data || [];
-    calculateMasterSummary();
-    renderMasterCommissions();
+    allCommissionsCache = data || [];
+    renderAdminCommissionsTable(allCommissionsCache);
   } catch (err) {
-    console.error("Error loading commissions:", err);
+    console.error("Commissions load error:", err);
   }
 }
 
-function calculateMasterSummary() {
-  let marketplacePending = 0;
-  let marketplaceCollected = 0;
-  let adminPending = 0;
-  let adminCollected = 0;
-  adminCommissions.forEach(c => {
-    const amt = Number(c.amount) || 0;
-    const tag = c.status || c.queue_type || '';
-    const isCompleted = tag === 'COMPLETED_PAID';
-    const isAdmin = (c.role_type || '').toUpperCase() === 'ADMIN';
-    if (isCompleted) {
-      marketplaceCollected += amt;
-      if (isAdmin) adminCollected += amt;
-    } else {
-      marketplacePending += amt;
-      if (isAdmin) adminPending += amt;
-    }
-  });
-  document.getElementById('sumMarketplacePending').textContent = `$${marketplacePending.toFixed(2)}`;
-  document.getElementById('sumMarketplaceCollected').textContent = `$${marketplaceCollected.toFixed(2)}`;
-  document.getElementById('sumAdminPending').textContent = `$${adminPending.toFixed(2)}`;
-  document.getElementById('sumAdminCollected').textContent = `$${adminCollected.toFixed(2)}`;
-}
+function renderAdminCommissionsTable(comms) {
+  const tbody = document.getElementById('adminCommissionsTableBody');
+  if (!comms || comms.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No ledger entries found.</td></tr>`;
+    return;
+  }
 
-function switchMasterCommSubTab(subTab) {
-  activeMasterSubTab = subTab;
-  selectedMasterCommIds.clear();
-  document.getElementById('selectAllMasterComms').checked = false;
-  const tabs = ['incoming', 'outgoing', 'working', 'history'];
-  tabs.forEach(t => {
-    const btn = document.getElementById('subMaster' + t.charAt(0).toUpperCase() + t.slice(1));
-    if (t === subTab) {
-      btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-md transition';
-    } else {
-      btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
-    }
-  });
-  renderMasterCommissions();
-}
+  tbody.innerHTML = comms.map(c => {
+    const qType = c.queue_type || 'MAIN_ACCOUNT';
+    const statusVal = c.status || 'Approved';
 
-function renderMasterCommissions() {
-  const tableBody = document.getElementById('masterCommsTableBody');
-  const toolbar = document.getElementById('masterCommToolbar');
-  const search = (document.getElementById('masterCommSearch')?.value || '').toLowerCase();
-  const filtered = adminCommissions.filter(c => {
-    const statusField = c.status || c.queue_type || 'MAIN_QUEUE';
-    const matchesSearch = String(c.id || '').toLowerCase().includes(search) || String(c.feedback_id || '').toLowerCase().includes(search);
-    let matchesTab = false;
-    if (activeMasterSubTab === 'incoming') matchesTab = statusField === 'REQUESTED_BY_RECIPIENT';
-    else if (activeMasterSubTab === 'outgoing') matchesTab = statusField === 'OFFERED_BY_SELLER' || statusField === 'OFFERED_AWAITING_ACCEPTANCE';
-    else if (activeMasterSubTab === 'working') matchesTab = statusField === 'APPROVED_IN_WORKING';
-    else if (activeMasterSubTab === 'history') matchesTab = statusField === 'COMPLETED_PAID';
-    return matchesSearch && matchesTab;
-  });
-  
-  if (activeMasterSubTab === 'incoming') {
-    toolbar.innerHTML = `
-      <button onclick="batchAdminApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-        <i class="fa-solid fa-check mr-1.5"></i> Batch Approve Selected
-      </button>
+    return `
+      <tr class="hover:bg-darkBg/40 transition">
+        <td class="py-3 px-4 font-bold text-amber-400">${c.recipient_role || 'REVIEWER'}</td>
+        <td class="py-3 px-4 font-mono text-slate-300 text-[11px]">${c.recipient_id || c.recipient_email || 'System'}</td>
+        <td class="py-3 px-4 font-mono text-slate-400 text-[11px]">${c.vendor_id || 'N/A'}</td>
+        <td class="py-3 px-4 font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</td>
+        <td class="py-3 px-4 text-slate-300 font-mono text-[10px]">${qType}</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${statusVal}</span></td>
+        <td class="py-3 px-4 text-right">
+          ${statusVal === 'REQUESTED_BY_RECIPIENT' ? `
+            <button onclick="approveAdminPayout('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition">
+              Approve Payout
+            </button>
+          ` : '<span class="text-slate-600 text-[10px]">Logged</span>'}
+        </td>
+      </tr>
     `;
+  }).join('');
+}
+
+function filterAdminCommissions() {
+  const filterVal = document.getElementById('adminCommTabFilter').value;
+  if (filterVal === 'ALL') {
+    renderAdminCommissionsTable(allCommissionsCache);
   } else {
-    toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Sub-Tab: ${activeMasterSubTab}</span>`;
+    const filtered = allCommissionsCache.filter(c => (c.queue_type || 'MAIN_ACCOUNT') === filterVal || (c.status || '') === filterVal);
+    renderAdminCommissionsTable(filtered);
   }
-  
-  if (filtered.length === 0) {
-    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No records found in this view.</div>`;
-    return;
-  }
-  
-  tableBody.innerHTML = filtered.map(c => {
-    let actionHtml = '';
-    if (activeMasterSubTab === 'incoming') {
-      actionHtml = `
-        <button onclick="approveMasterComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
-        <button onclick="denyMasterComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
-      `;
-    } else if (activeMasterSubTab === 'history') {
-      actionHtml = `
-        <button onclick="inspectReceiptModal('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
-          <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
-        </button>
-      `;
-    } else {
-      actionHtml = `<span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.status || 'MAIN_QUEUE'}</span>`;
-    }
-    
-    return `
-      <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-        <div class="col-span-1">
-          <input type="checkbox" value="${c.id}" ${selectedMasterCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectMasterComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-purple-600">
-        </div>
-        <div class="col-span-3 space-y-0.5">
-          <span class="font-bold text-white font-mono">${c.feedback_id || 'FB-N/A'}</span>
-          <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
-        </div>
-        <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-semibold">${c.role_type || 'REVIEWER'}</span>
-          <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_id || 'Recipient'}</p>
-        </div>
-        <div class="col-span-2 font-bold text-emerald-400">
-          $${Number(c.amount || 0).toFixed(2)}
-        </div>
-        <div class="col-span-3 flex items-center justify-end space-x-2">
-          ${actionHtml}
-        </div>
-      </div>
-    `;
-  }).join('');
 }
 
-function toggleSelectMasterComm(id) {
-  if (selectedMasterCommIds.has(id)) selectedMasterCommIds.delete(id);
-  else selectedMasterCommIds.add(id);
-}
-
-function toggleSelectAllMaster(master) {
-  const boxes = document.querySelectorAll('#masterCommsTableBody input[type="checkbox"]');
-  boxes.forEach(b => {
-    b.checked = master.checked;
-    if (master.checked) selectedMasterCommIds.add(b.value);
-    else selectedMasterCommIds.delete(b.value);
-  });
-}
-
-async function batchAdminApprove() {
-  if (selectedMasterCommIds.size === 0) {
-    alert("Please select at least one record.");
-    return;
-  }
+async function approveAdminPayout(id) {
   try {
-    for (const id of selectedMasterCommIds) {
-      await _supabase.from('commissions').update({ status: 'APPROVED_IN_WORKING' }).eq('id', id);
-    }
-    selectedMasterCommIds.clear();
-    await loadAdminCommissions();
-    showToast("Selected claims approved into Working Queue.");
-  } catch (err) {
-    alert("Batch action failed: " + err.message);
-  }
-}
+    const { error } = await _supabase
+      .from('commissions')
+      .update({ queue_type: 'WORKING_QUEUE', status: 'APPROVED_IN_WORKING' })
+      .eq('id', id);
 
-async function approveMasterComm(id) {
-  try {
-    const { error } = await _supabase.from('commissions').update({ status: 'APPROVED_IN_WORKING' }).eq('id', id);
     if (error) throw error;
-    await loadAdminCommissions();
-    showToast("Claim approved.");
+    await loadCommissionsData();
   } catch (err) {
-    alert("Approval failed: " + err.message);
+    alert("Approval error: " + err.message);
   }
 }
 
-async function denyMasterComm(id) {
-  if (!confirm("Revert this claim back to main queue?")) return;
-  try {
-    const { error } = await _supabase.from('commissions').update({ status: 'PENDING' }).eq('id', id);
-    if (error) throw error;
-    await loadAdminCommissions();
-    showToast("Claim reversed.");
-  } catch (err) {
-    alert("Reversal failed: " + err.message);
-  }
-}
-
-async function inspectReceiptModal(commId) {
+/* ==========================================================================
+   TAB 4: SYSTEM MESSAGING & DIRECT OUTREACH HUB
+   ========================================================================== */
+async function loadMessagingData() {
   try {
     const { data, error } = await _supabase
-      .from('commissions')
-      .select('receipt_base64, receipt_url, paypal_tx_id, id')
-      .eq('id', commId)
-      .single();
-    if (error || !data) {
-      showToast("Unable to load receipt details.");
-      return;
-    }
-    document.getElementById('masterReceiptTxId').textContent = data.paypal_tx_id || 'N/A';
-    document.getElementById('masterReceiptCommId').textContent = data.id.substring(0, 8);
-    document.getElementById('masterReceiptImg').src = data.receipt_base64 || data.receipt_url || 'https://via.placeholder.com/300?text=No+Receipt+Uploaded';
-    document.getElementById('masterReceiptModal').classList.remove('hidden');
-  } catch (err) {
-    showToast("Error reading receipt: " + err.message);
-  }
-}
-
-// ================= TAB 4: MESSAGING THREADS =================
-async function loadAdminThreads() {
-  try {
-    // SOLUTION 1 FIX: Select valid columns only (removed message_text and content)
-    const { data: msgs, error } = await _supabase
       .from('messages')
-      .select('id, feedback_id, sender_id, receiver_id, buyer_id, vendor_id, text, link, status_badge, created_at')
+      .select('*')
       .order('created_at', { ascending: false });
+
     if (error) throw error;
+    const rawMessages = data || [];
     
-    const threadMap = {};
-    (msgs || []).forEach(m => {
-      const displayKey = m.feedback_id || m.sender_id || 'general';
-      if (!threadMap[displayKey]) {
-        threadMap[displayKey] = {
-          key: displayKey,
-          lastMsg: m.text || m.link || 'Conversation updated',
-          updatedAt: m.created_at,
-          messages: []
-        };
-      }
-      threadMap[displayKey].messages.push(m);
-    });
-    adminThreads = Object.values(threadMap);
-    renderAdminThreadsList();
-    if (activeAdminThreadId) renderAdminActiveChat();
+    /* Group raw messages into distinct conversation channels */
+    allThreadsCache = groupMessagesIntoThreads(rawMessages);
+    renderLeftPaneThreadsList();
   } catch (err) {
-    console.error("Error loading global threads:", err);
+    console.error("Messaging load error:", err);
   }
 }
 
-function renderAdminThreadsList() {
-  const listEl = document.getElementById('adminThreadsList');
-  const search = (document.getElementById('adminThreadSearch')?.value || '').toLowerCase();
-  const filtered = adminThreads.filter(t => t.key.toLowerCase().includes(search) || t.lastMsg.toLowerCase().includes(search));
+/* Group messages by thread target (Direct Outreach vs Marketplace Product Thread) */
+function groupMessagesIntoThreads(messages) {
+  const threadMap = {};
+
+  messages.forEach(m => {
+    /* Determine unique thread key */
+    let threadKey;
+    let isDirect = false;
+
+    if (m.channel_type === 'ADMIN_DIRECT' || !m.product_id) {
+      /* Direct support channel between Admin and single user */
+      const targetUserId = (m.sender_id === currentAdminUser?.id) ? (m.buyer_id || m.vendor_id) : m.sender_id;
+      threadKey = `DIRECT_${targetUserId}`;
+      isDirect = true;
+    } else {
+      /* Marketplace review thread */
+      threadKey = `PROD_${m.buyer_id}_${m.vendor_id}_${m.product_id}`;
+    }
+
+    if (!threadMap[threadKey]) {
+      threadMap[threadKey] = {
+        key: threadKey,
+        isDirect: isDirect,
+        buyerId: m.buyer_id,
+        vendorId: m.vendor_id,
+        productId: m.product_id,
+        partnerId: isDirect ? ((m.sender_id === currentAdminUser?.id) ? (m.buyer_id || m.vendor_id) : m.sender_id) : (m.buyer_id || m.vendor_id),
+        statusBadge: m.status_badge || 'AWAITING_ATTENTION',
+        messages: [],
+        hasFlaggedRisk: false,
+        lastTimestamp: m.created_at
+      };
+    }
+
+    threadMap[threadKey].messages.push(m);
+    if (hasContactRisk(m.content)) {
+      threadMap[threadKey].hasFlaggedRisk = true;
+    }
+  });
+
+  /* Convert to array and sort by newest message first */
+  return Object.values(threadMap).sort((a, b) => new Date(b.lastTimestamp) - new Date(a.lastTimestamp));
+}
+
+/* 5-Tab Quick-Switch Filter for Left Pane */
+function switchLeftPaneFilter(filterKey) {
+  currentLeftFilter = filterKey;
+  document.querySelectorAll('.left-pane-filter-btn').forEach(btn => {
+    btn.className = "left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200";
+  });
+
+  const activeBtn = document.getElementById(`leftTab-${filterKey}`);
+  if (activeBtn) {
+    if (filterKey === 'FLAGGED') {
+      activeBtn.className = "left-pane-filter-btn active px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/20 text-rose-400 border-rose-500/40";
+    } else {
+      activeBtn.className = "left-pane-filter-btn active px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-amber-500/20 text-amber-400 border-amber-500/30";
+    }
+  }
+
+  renderLeftPaneThreadsList();
+}
+
+function filterLeftPaneThreads() {
+  renderLeftPaneThreadsList();
+}
+
+function renderLeftPaneThreadsList() {
+  const container = document.getElementById('adminThreadsList');
+  const search = (document.getElementById('leftPaneThreadSearch')?.value || '').toLowerCase();
+
+  /* Apply Tab Filter */
+  let filtered = allThreadsCache.filter(t => {
+    if (currentLeftFilter === 'ADMIN_DIRECT') return t.isDirect;
+    if (currentLeftFilter === 'MARKETPLACE') return !t.isDirect;
+    if (currentLeftFilter === 'ACTION_REQUIRED') return t.statusBadge === 'AWAITING_ATTENTION';
+    if (currentLeftFilter === 'FLAGGED') return t.hasFlaggedRisk;
+    return true; // 'ALL'
+  });
+
+  /* Apply Search Filter */
+  if (search) {
+    filtered = filtered.filter(t => {
+      const partnerUser = allUsersCache.find(u => u.id === t.partnerId);
+      const partnerName = partnerUser ? partnerUser.full_name : '';
+      const partnerEmail = partnerUser ? partnerUser.email : '';
+      const lastMsgText = t.messages[0]?.content || '';
+      return partnerName.toLowerCase().includes(search) ||
+             partnerEmail.toLowerCase().includes(search) ||
+             t.partnerId.toLowerCase().includes(search) ||
+             lastMsgText.toLowerCase().includes(search);
+    });
+  }
+
   if (filtered.length === 0) {
-    listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No global message threads found.</p>`;
+    container.innerHTML = `<div class="p-8 text-center text-slate-500 text-xs">No threads match current filter criteria.</div>`;
     return;
   }
-  listEl.innerHTML = filtered.map(t => {
-    const isSelected = activeAdminThreadId === t.key;
-    const timeStr = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+
+  container.innerHTML = filtered.map(t => {
+    const partnerUser = allUsersCache.find(u => u.id === t.partnerId);
+    const partnerName = partnerUser ? partnerUser.full_name : `User: ${t.partnerId.substring(0, 8)}`;
+    const partnerRole = partnerUser ? (partnerUser.role || 'BUYER').toUpperCase() : 'USER';
+    const lastMsg = t.messages[0];
+    const timeStr = lastMsg ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    const isSelected = t.key === activeSelectedThreadId;
+
+    const roleBadgeClass = partnerRole === 'SELLER' || partnerRole === 'VENDOR' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+
     return `
-      <div onclick="selectAdminThread('${t.key}')" class="p-3 bg-darkBg border ${isSelected ? 'border-purple-500' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-purple-500 transition space-y-1">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-200 truncate">Thread: ${t.key}</span>
-          <span class="text-[10px] text-slate-500">${timeStr}</span>
+      <div onclick="selectThreadForInspection('${t.key}')" class="p-4 cursor-pointer transition ${isSelected ? 'bg-amber-500/10 border-l-4 border-amber-500' : 'hover:bg-darkBg/60'}">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center space-x-2 truncate">
+            <span class="font-bold text-xs text-white truncate">${partnerName}</span>
+            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border ${roleBadgeClass}">${partnerRole}</span>
+          </div>
+          <span class="text-[9px] text-slate-500 shrink-0">${timeStr}</span>
         </div>
-        <p class="text-xs text-slate-400 truncate">${t.lastMsg}</p>
+
+        <div class="flex items-center space-x-1.5 mt-1">
+          <span class="text-[9px] font-bold px-1.5 py-0.2 rounded border ${t.isDirect ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-borderSlate'}">
+            ${t.isDirect ? 'ADMIN DIRECT' : 'REVIEW CHAT'}
+          </span>
+          ${t.hasFlaggedRisk ? `
+            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
+              🚨 Contact Risk
+            </span>
+          ` : ''}
+        </div>
+
+        <p class="text-[11px] text-slate-400 truncate mt-1">${lastMsg ? (lastMsg.content || 'Attachment / Image sent') : ''}</p>
       </div>
     `;
   }).join('');
 }
 
-function selectAdminThread(key) {
-  activeAdminThreadId = key;
-  renderAdminThreadsList();
-  renderAdminActiveChat();
-  document.getElementById('adminChatMsgInput').disabled = false;
-  document.getElementById('adminChatSendBtn').disabled = false;
+function selectThreadForInspection(threadKey) {
+  activeSelectedThreadId = threadKey;
+  renderLeftPaneThreadsList();
+  renderActiveThreadTranscript();
 }
 
-function renderAdminActiveChat() {
-  const thread = adminThreads.find(t => t.key === activeAdminThreadId);
+function renderActiveThreadTranscript() {
   const container = document.getElementById('adminChatContainer');
-  if (!thread) return;
-  document.getElementById('adminActiveChatTitle').textContent = `Thread Inspection — ${thread.key}`;
-  const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-  container.innerHTML = sorted.map(m => {
-    const text = m.text || m.link || '';
-    const isAdminSender = m.sender_id === currentUser.id;
-    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+  const thread = allThreadsCache.find(t => t.key === activeSelectedThreadId);
+
+  if (!thread) {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs space-y-2">
+        <i class="fa-solid fa-comment-dots text-3xl opacity-30"></i>
+        <p>Select a thread from the left menu to inspect conversation transcript.</p>
+      </div>`;
+    return;
+  }
+
+  const partnerUser = allUsersCache.find(u => u.id === thread.partnerId);
+  const partnerName = partnerUser ? partnerUser.full_name : thread.partnerId;
+
+  document.getElementById('activeThreadTitle').textContent = `Auditing Channel: ${partnerName}`;
+  document.getElementById('activeThreadSubtitle').textContent = thread.isDirect ? `Isolated Support Channel (${thread.partnerId})` : `Marketplace Review Thread (${thread.productId || 'N/A'})`;
+
+  /* Render Message Bubbles chronologically */
+  const sortedMsgs = [...thread.messages].reverse();
+
+  container.innerHTML = sortedMsgs.map(m => {
+    const isMe = m.sender_id === currentAdminUser?.id;
+    const isRisk = hasContactRisk(m.content);
+    const timeStr = new Date(m.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+
+    let attachmentHtml = '';
+    if (m.proof_base64 || m.attachment_url) {
+      const imgUrl = m.proof_base64 || m.attachment_url;
+      attachmentHtml = `
+        <div class="mt-2">
+          <a href="${imgUrl}" target="_blank" class="block rounded-xl overflow-hidden border border-white/20">
+            <img src="${imgUrl}" alt="Proof Attachment" class="max-h-48 w-full object-cover">
+          </a>
+        </div>
+      `;
+    }
+
     return `
-      <div class="flex flex-col ${isAdminSender ? 'items-end' : 'items-start'} my-2">
-        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isAdminSender ? 'bg-purple-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-          <div class="font-bold text-[10px] mb-1 text-purple-300">Sender: ${m.sender_id ? m.sender_id.substring(0,8) : 'User'}</div>
-          <p>${text}</p>
+      <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
+        <div class="max-w-[85%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-amber-500 text-slate-950 font-medium rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+          ${isRisk ? `
+            <div class="mb-1.5 px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold flex items-center space-x-1">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Off-Platform Contact Risk Detected</span>
+            </div>
+          ` : ''}
+          <div>${m.content || ''}</div>
+          ${m.review_url ? `<div class="mt-1 text-[10px] text-amber-300 underline font-mono">Review Link: ${m.review_url}</div>` : ''}
+          ${attachmentHtml}
         </div>
         <span class="text-[9px] text-slate-500 mt-1 px-1">${timeStr}</span>
       </div>
     `;
   }).join('');
+
   container.scrollTop = container.scrollHeight;
 }
 
-async function handleAdminSendMessage(event) {
-  event.preventDefault();
-  const input = document.getElementById('adminChatMsgInput');
-  const msgText = input.value.trim();
-  if (!msgText || !activeAdminThreadId) return;
+/* Admin Direct Message Reply */
+async function handleAdminSendMessage(e) {
+  e.preventDefault();
+  const input = document.getElementById('adminMessageInput');
+  const text = input.value.trim();
+  if (!text || !activeSelectedThreadId) return;
+
+  const thread = allThreadsCache.find(t => t.key === activeSelectedThreadId);
+  if (!thread) return;
+
   try {
-    const thread = adminThreads.find(t => t.key === activeAdminThreadId);
-    const sampleMsg = thread && thread.messages.length > 0 ? thread.messages[0] : null;
-    const receiverId = sampleMsg ? (sampleMsg.sender_id !== currentUser.id ? sampleMsg.sender_id : sampleMsg.receiver_id) : currentUser.id;
-    // SOLUTION 1 FIX: insert into text column instead of message_text
-    const { error } = await _supabase.from('messages').insert([{
-      sender_id: currentUser.id,
-      receiver_id: receiverId,
-      text: msgText,
-      feedback_id: activeAdminThreadId
-    }]);
+    const { error } = await _supabase.from('messages').insert({
+      sender_id: currentAdminUser.id,
+      buyer_id: thread.isDirect ? thread.partnerId : thread.buyerId,
+      vendor_id: thread.isDirect ? currentAdminUser.id : thread.vendorId,
+      product_id: thread.isDirect ? null : thread.productId,
+      channel_type: thread.isDirect ? 'ADMIN_DIRECT' : 'MARKETPLACE',
+      content: text
+    });
+
     if (error) throw error;
     input.value = '';
-    await loadAdminThreads();
-    showToast("Administrative message dispatched.");
+    await loadMessagingData();
+    selectThreadForInspection(activeSelectedThreadId);
   } catch (err) {
-    alert("Failed to send message: " + err.message);
+    alert("Message send failed: " + err.message);
   }
 }
 
-// Direct Outreach Modal Populator
-async function openNewOutreachModal() {
-  const select = document.getElementById('outreachUserSelect');
-  select.innerHTML = '<option value="">Select a registered user...</option>';
-  adminAccounts.forEach(a => {
-    const opt = document.createElement('option');
-    opt.value = a.id;
-    opt.textContent = `${a.full_name || 'User'} (${a.email || a.id}) [${a.role || 'user'}]`;
-    select.appendChild(opt);
-  });
+/* ==========================================================================
+   DIRECT OUTREACH OMNIBOX TYPEAHEAD MODAL
+   ========================================================================== */
+function openDirectOutreachModal() {
+  selectedOutreachTargetUser = null;
+  document.getElementById('outreachTargetPill').classList.add('hidden');
+  document.getElementById('outreachSearchContainer').classList.remove('hidden');
+  document.getElementById('outreachSearchInput').value = '';
+  document.getElementById('outreachSearchResults').classList.add('hidden');
+  document.getElementById('outreachMessageText').value = '';
+  document.getElementById('outreachAlert').classList.add('hidden');
   document.getElementById('outreachModal').classList.remove('hidden');
 }
 
-async function handleOutreachSubmit(event) {
-  event.preventDefault();
-  const targetId = document.getElementById('outreachUserSelect').value;
-  const msgText = document.getElementById('outreachMsgText').value.trim();
-  if (!targetId || !msgText) return;
+function closeDirectOutreachModal() {
+  document.getElementById('outreachModal').classList.add('hidden');
+}
+
+/* Typeahead Search Handler */
+function handleOutreachSearch() {
+  const query = document.getElementById('outreachSearchInput').value.toLowerCase().trim();
+  const dropdown = document.getElementById('outreachSearchResults');
+
+  if (!query) {
+    dropdown.classList.add('hidden');
+    return;
+  }
+
+  const matches = allUsersCache.filter(u => 
+    (u.full_name || '').toLowerCase().includes(query) ||
+    (u.email || '').toLowerCase().includes(query) ||
+    (u.id || '').toLowerCase().includes(query)
+  ).slice(0, 6);
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs">No users match "${query}"</div>`;
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  dropdown.innerHTML = matches.map(u => {
+    const roleUpper = (u.role || 'BUYER').toUpperCase();
+    const badgeClass = roleUpper === 'SELLER' || roleUpper === 'VENDOR' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+    return `
+      <div onclick="selectOutreachTarget('${u.id}')" class="p-3 hover:bg-darkBg/80 cursor-pointer transition flex items-center justify-between">
+        <div>
+          <div class="font-bold text-white text-xs">${u.full_name || 'Unnamed User'}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${u.email || u.id}</div>
+        </div>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ${badgeClass}">${roleUpper}</span>
+      </div>
+    `;
+  }).join('');
+
+  dropdown.classList.remove('hidden');
+}
+
+function selectOutreachTarget(userId) {
+  const user = allUsersCache.find(u => u.id === userId);
+  if (!user) return;
+
+  selectedOutreachTargetUser = user;
+  document.getElementById('outreachTargetLabel').textContent = `${user.full_name || user.email} • ${(user.role || 'BUYER').toUpperCase()}`;
+  document.getElementById('outreachSearchResults').classList.add('hidden');
+  document.getElementById('outreachSearchContainer').classList.add('hidden');
+  document.getElementById('outreachTargetPill').classList.remove('hidden');
+}
+
+function clearOutreachTarget() {
+  selectedOutreachTargetUser = null;
+  document.getElementById('outreachTargetPill').classList.add('hidden');
+  document.getElementById('outreachSearchContainer').classList.remove('hidden');
+  document.getElementById('outreachSearchInput').value = '';
+}
+
+async function submitDirectOutreach() {
+  const alertBox = document.getElementById('outreachAlert');
+  const btn = document.getElementById('outreachSubmitBtn');
+  const text = document.getElementById('outreachMessageText').value.trim();
+
+  if (!selectedOutreachTargetUser) {
+    alertBox.className = "p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+    alertBox.textContent = "Please select a recipient from the typeahead search field.";
+    alertBox.classList.remove('hidden');
+    return;
+  }
+
+  if (!text) {
+    alertBox.className = "p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+    alertBox.textContent = "Please enter outreach message content.";
+    alertBox.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Sending Message...`;
+
   try {
-    // SOLUTION 1 FIX: insert into text column instead of message_text
-    const { error } = await _supabase.from('messages').insert([{
-      sender_id: currentUser.id,
-      receiver_id: targetId,
-      text: `[ADMIN NOTICE]: ${msgText}`
-    }]);
+    const { error } = await _supabase.from('messages').insert({
+      sender_id: currentAdminUser.id,
+      buyer_id: selectedOutreachTargetUser.id,
+      vendor_id: currentAdminUser.id,
+      product_id: null,
+      channel_type: 'ADMIN_DIRECT',
+      content: text
+    });
+
     if (error) throw error;
-    closeModal('outreachModal');
-    document.getElementById('outreachMsgText').value = '';
-    await loadAdminThreads();
-    showToast("Direct outreach thread initiated!");
+
+    alertBox.className = "p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+    alertBox.textContent = "Direct outreach message sent successfully! Isolated support thread initiated.";
+    alertBox.classList.remove('hidden');
+
+    setTimeout(async () => {
+      closeDirectOutreachModal();
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5"></i> Send Direct Message`;
+      await loadMessagingData();
+      switchAdminTab('messaging');
+      selectThreadForInspection(`DIRECT_${selectedOutreachTargetUser.id}`);
+    }, 1200);
+
   } catch (err) {
-    alert("Outreach failed: " + err.message);
+    alertBox.className = "p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+    alertBox.textContent = err.message || "Failed to send direct outreach message.";
+    alertBox.classList.remove('hidden');
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5"></i> Send Direct Message`;
   }
 }
 
-// ================= TAB 5: REFERRAL HUB =================
-function renderReferralsTable() {
-  const tableBody = document.getElementById('referralsTableBody');
-  if (adminAccounts.length === 0) {
-    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No referral accounts found.</div>`;
+/* ==========================================================================
+   TAB 5: REFERRAL HUB ENGINE
+   ========================================================================== */
+async function loadReferralsData() {
+  /* Profiles data is already loaded in allUsersCache */
+  renderReferralsTable(allUsersCache);
+}
+
+function renderReferralsTable(users) {
+  const tbody = document.getElementById('referralsTableBody');
+  if (!users || users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No referral network records.</td></tr>`;
     return;
   }
-  tableBody.innerHTML = adminAccounts.map(a => `
-    <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
-      <div class="col-span-3 space-y-0.5">
-        <p class="font-bold text-white">${a.full_name || 'User'}</p>
-        <p class="text-[10px] text-purple-400 font-mono">Code: ${a.referral_code || 'N/A'}</p>
-      </div>
-      <div class="col-span-3 font-mono text-[11px] text-amber-400">
-        ${a.invited_by_code || 'None (Direct Sign-up)'}
-      </div>
-      <div class="col-span-2 uppercase font-semibold text-[10px] text-slate-400">
-        ${a.role || 'buyer'}
-      </div>
-      <div class="col-span-2">
-        <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px]">${a.verification_status || 'VERIFIED'}</span>
-      </div>
-      <div class="col-span-2 flex items-center justify-end">
-        <button onclick="openReassignModal('${a.id}', '${a.full_name || 'User'}', '${a.invited_by_code || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
-          Reassign Inviter
-        </button>
-      </div>
-    </div>
+
+  tbody.innerHTML = users.map(u => `
+    <tr class="hover:bg-darkBg/40 transition">
+      <td class="py-3 px-4">
+        <div class="font-bold text-white">${u.full_name || 'User'}</div>
+        <div class="text-[10px] text-slate-500 font-mono">${u.email || u.id}</div>
+      </td>
+      <td class="py-3 px-4 font-bold text-slate-300 text-[11px]">${(u.role || 'BUYER').toUpperCase()}</td>
+      <td class="py-3 px-4 font-mono text-amber-400 font-bold">${u.referral_code || 'N/A'}</td>
+      <td class="py-3 px-4 font-mono text-slate-400">${u.invited_by_code || 'Direct Sign-Up'}</td>
+      <td class="py-3 px-4 text-slate-500 text-[11px]">${new Date(u.created_at).toLocaleDateString()}</td>
+    </tr>
   `).join('');
 }
 
-function openReassignModal(userId, userName, currentCode) {
-  document.getElementById('reassignTargetUserId').value = userId;
-  document.getElementById('reassignUserName').value = `${userName} (${userId.substring(0,8)})`;
-  document.getElementById('reassignNewCode').value = currentCode;
-  document.getElementById('reassignInviterModal').classList.remove('hidden');
+function filterReferralsTable() {
+  const search = document.getElementById('referralSearchInput').value.toLowerCase();
+  const filtered = allUsersCache.filter(u =>
+    (u.full_name || '').toLowerCase().includes(search) ||
+    (u.referral_code || '').toLowerCase().includes(search) ||
+    (u.invited_by_code || '').toLowerCase().includes(search)
+  );
+  renderReferralsTable(filtered);
 }
 
-async function handleReassignInviterSubmit(event) {
-  event.preventDefault();
-  const userId = document.getElementById('reassignTargetUserId').value;
-  const newCode = document.getElementById('reassignNewCode').value.trim();
-  try {
-    const { error } = await _supabase
-      .from('profiles')
-      .update({ invited_by_code: newCode || null })
-      .eq('id', userId);
-    if (error) throw error;
-    closeModal('reassignInviterModal');
-    showToast("Inviter code reassigned successfully.");
-    await loadAdminAccounts();
-    renderReferralsTable();
-  } catch (err) {
-    alert("Reassignment failed: " + err.message);
-  }
+async function handleAdminSignOut() {
+  await _supabase.auth.signOut();
+  window.location.href = 'login.html';
 }
-
-// ================= UTILITIES =================
-function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
-}
-
-function showToast(message) {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = 'bg-cardBg border-l-4 border-purple-500 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
-  toast.innerHTML = `<i class="fa-solid fa-circle-check text-purple-400"></i><span>${message}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.classList.add('opacity-0');
-    setTimeout(() => toast.remove(), 300);
-  }, 3500);
-}
-
-async function handleLogout() {
-  try {
-    if (pollingTimer) clearInterval(pollingTimer);
-    await _supabase.auth.signOut();
-  } catch (err) {
-    console.error("Logout error:", err);
-  } finally {
-    window.location.href = 'login.html';
-  }
-}
-
-window.addEventListener('DOMContentLoaded', initAdminWorkspace);
 </script>
 </body>
 </html>
