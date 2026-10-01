@@ -595,6 +595,17 @@ function showToast(msg) {
   setTimeout(() => toast.remove(), 3500);
 }
 
+/* Global DOM Element Helpers */
+function setElemText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setElemVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
 /* Global State Caches */
 let currentAdminUser = null;
 let currentUser = null;
@@ -1631,8 +1642,8 @@ async function submitDirectOutreach() {
 async function loadReferralsData() {
   try {
     /* Safe DOM Setter Helpers */
-    const setElemText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    const setElemVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    
+    
 
     /* 1. Get Admin referral code */
     const adminCode = (currentUser && currentUser.referral_code) ? currentUser.referral_code : 'ADMIN_PROMO_2026';
