@@ -40,7 +40,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
 eh
 </div>
-<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal Invite</span></span>
+<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal</span></span>
 </div>
 <div class="flex items-center space-x-3">
 <a href="login.html" class="text-xs text-slate-400 hover:text-white transition flex items-center space-x-1">
@@ -63,15 +63,7 @@ eh
 <div id="formAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
 <!-- Detailed Vendor Registration Form -->
 <form id="sellerRegisterForm" class="space-y-4">
-<!-- Invitation Token Validation Field -->
-<div class="space-y-1">
-<label class="text-xs font-semibold text-slate-300">Invitation Token</label>
-<div class="relative">
-<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-key text-xs"></i></span>
-<input type="text" id="inviteToken" required placeholder="Enter your unique invite token" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition font-mono">
-</div>
-<p class="text-[10px] text-slate-500 pl-1">Required: Vendor registration is invitation-gated.</p>
-</div>
+
 <!-- First Name & Last Name (Side by side grid) -->
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <div class="space-y-1">
@@ -173,10 +165,7 @@ const submitBtn = document.getElementById('submitBtn');
 // Auto-populate invite token and referral code from URL query params if present (e.g., ?token=XYZ&ref=REF-123)
 window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const tokenParam = urlParams.get('token');
-  if (tokenParam) {
-    document.getElementById('inviteToken').value = tokenParam.trim();
-  }
+
   const refParam = urlParams.get('ref') || urlParams.get('ref_code') || urlParams.get('invited_by');
   if (refParam) {
     document.getElementById('referralCode').value = refParam.trim();
@@ -185,7 +174,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const inviteToken = document.getElementById('inviteToken').value.trim();
   const firstName = document.getElementById('firstName').value.trim();
   const lastName = document.getElementById('lastName').value.trim();
   const fullName = `${firstName} ${lastName}`;
@@ -205,31 +193,15 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Architectural Check: Invitation Token Validation
-  if (!inviteToken) {
-    alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
-    alertBox.textContent = 'An invitation token is required to register as a vendor.';
-    alertBox.classList.remove('hidden');
-    return;
-  }
+
 
   // UI Loading state
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Verifying token & creating vendor profile...';
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating vendor profile...';
   alertBox.classList.add('hidden');
 
   try {
-    // Verify invitation token against backend / database table check
-    const { data: tokenData, error: tokenError } = await _supabase
-      .from('vendor_invites')
-      .select('*')
-      .eq('token', inviteToken)
-      .eq('is_used', false)
-      .maybeSingle();
 
-    if (tokenError || !tokenData) {
-      throw new Error('Invalid or already used invitation token.');
-    }
 
     // Register vendor with Supabase Auth including correct invited_by_code mapping in metadata
     const { data: authData, error: authError } = await _supabase.auth.signUp({
@@ -245,7 +217,6 @@ form.addEventListener('submit', async (e) => {
           business_description: businessDescription,
           invited_by_code: referralCode || null,
           paypal_email: paypalEmail,
-          invite_token: inviteToken,
           role: 'seller'
         }
       }
@@ -321,11 +292,7 @@ form.addEventListener('submit', async (e) => {
       console.warn('Profiles table upsert notice:', profileError.message);
     }
 
-    // Mark invitation token as used
-    await _supabase
-      .from('vendor_invites')
-      .update({ is_used: true, used_by: email })
-      .eq('token', inviteToken);
+
 
     // Automatically sign them in
     const { error: loginError } = await _supabase.auth.signInWithPassword({
@@ -358,5 +325,3 @@ form.addEventListener('submit', async (e) => {
 </script>
 </body>
 </html>
-
-
