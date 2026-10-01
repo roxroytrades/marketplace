@@ -818,20 +818,102 @@ function renderAdminCommissionsTable(comms) {
     const qType = c.queue_type || 'MAIN_ACCOUNT';
     const statusVal = c.status || 'Approved';
 
+    /* Lookup recipient profile */
+    const recipient = allUsersCache.find(u => u.id === c.recipient_id || (u.email && u.email === c.recipient_email));
+    const recipientName = recipient ? (recipient.full_name || recipient.email) : (c.recipient_email || 'System / Admin');
+    const recipientEmail = recipient ? recipient.email : (c.recipient_email || 'N/A');
+    const recipientPaypal = recipient ? (recipient.paypal_email || recipient.email || 'Not Configured') : (c.recipient_paypal || 'Not Configured');
+
+    /* Lookup vendor profile */
+    const vendor = allUsersCache.find(u => u.id === c.vendor_id);
+    const vendorName = vendor ? (vendor.full_name || vendor.email) : (c.vendor_id || 'System');
+    const vendorEmail = vendor ? vendor.email : 'N/A';
+
+    /* Recipient Role Badge Mapping */
+    const roleUpper = (c.recipient_role || 'REVIEWER').toUpperCase();
+    let roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/30">${roleUpper}</span>`;
+    if (roleUpper === 'ADMIN' || roleUpper === 'ADMIN_SHARE') {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-[9px]"></i>ADMIN SHARE</span>`;
+    } else if (roleUpper === 'REVIEWER' || roleUpper === 'BUYER') {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">REVIEWER</span>`;
+    } else if (roleUpper === 'BUYER_INVITER') {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">BUYER INVITER</span>`;
+    } else if (roleUpper === 'SELLER_INVITER' || roleUpper === 'VENDOR_INVITER') {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">SELLER INVITER</span>`;
+    }
+
+    /* Check if this commission belongs to the Admin */
+    const isAdminComm = (roleUpper === 'ADMIN' || roleUpper === 'ADMIN_SHARE') || 
+                        (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
+
+    /* Action Buttons Logic */
+    let actionButtons = '';
+
+    if (isAdminComm) {
+      /* Admin is the recipient -> Provide Buyer-like Commission Actions */
+      if (statusVal === 'Approved' || statusVal === 'UNREQUESTED_BALANCE' || qType === 'MAIN_ACCOUNT') {
+        actionButtons = `
+          <button onclick="requestAdminPayout('${c.id}')" class="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-md shadow-amber-500/20 flex items-center space-x-1 inline-flex">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Request Payout</span>
+          </button>`;
+      } else if (statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'OFFERED_AWAITING_ACCEPTANCE') {
+        actionButtons = `
+          <button onclick="acceptAdminOffer('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition inline-flex items-center space-x-1 mr-1">
+            <i class="fa-solid fa-check"></i><span>Accept</span>
+          </button>
+          <button onclick="declineAdminOffer('${c.id}')" class="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition inline-flex items-center space-x-1">
+            <i class="fa-solid fa-xmark"></i><span>Decline</span>
+          </button>`;
+      } else if (statusVal === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+        actionButtons = `<span class="text-amber-400 font-bold text-[10px] flex items-center justify-end"><i class="fa-solid fa-clock mr-1"></i>Payout Requested</span>`;
+      } else if (statusVal === 'COMPLETED_PAID' || qType === 'HISTORY') {
+        actionButtons = `<span class="text-emerald-400 font-bold text-[10px] flex items-center justify-end"><i class="fa-solid fa-circle-check mr-1"></i>Paid</span>`;
+      } else {
+        actionButtons = `<span class="text-slate-500 text-[10px]">${statusVal}</span>`;
+      }
+    } else {
+      /* Operator Actions for Other Users */
+      if (statusVal === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+        actionButtons = `
+          <button onclick="approveAdminPayout('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-md shadow-emerald-500/20 inline-flex items-center space-x-1">
+            <i class="fa-solid fa-credit-card"></i>
+            <span>Settle / Pay</span>
+          </button>`;
+      } else if (statusVal === 'APPROVED_IN_WORKING' || qType === 'WORKING_QUEUE') {
+        actionButtons = `<span class="text-blue-400 text-[10px] font-medium"><i class="fa-solid fa-spinner fa-spin mr-1"></i>In Working Queue</span>`;
+      } else if (statusVal === 'COMPLETED_PAID' || qType === 'HISTORY') {
+        actionButtons = `<span class="text-emerald-400 text-[10px] font-bold flex items-center justify-end"><i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i>Settled</span>`;
+      } else {
+        actionButtons = `<span class="text-slate-500 text-[10px]">${statusVal}</span>`;
+      }
+    }
+
+    /* Append Universal Inspection & Contact Buttons */
+    const inspectBtn = `<button onclick="viewCommissionDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
+    const contactBtn = `<button onclick="openDirectOutreachForUser('${c.recipient_id || c.vendor_id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-amber-400 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="Direct Contact"><i class="fa-solid fa-comment-dots"></i></button>`;
+
     return `
       <tr class="hover:bg-darkBg/40 transition">
-        <td class="py-3 px-4 font-bold text-amber-400">${c.recipient_role || 'REVIEWER'}</td>
-        <td class="py-3 px-4 font-mono text-slate-300 text-[11px]">${c.recipient_id || c.recipient_email || 'System'}</td>
-        <td class="py-3 px-4 font-mono text-slate-400 text-[11px]">${c.vendor_id || 'N/A'}</td>
-        <td class="py-3 px-4 font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</td>
-        <td class="py-3 px-4 text-slate-300 font-mono text-[10px]">${qType}</td>
+        <td class="py-3 px-4">${roleBadge}</td>
+        <td class="py-3 px-4">
+          <div class="font-bold text-white text-xs">${recipientName}</div>
+          <div class="text-[10px] text-slate-400 font-mono flex items-center space-x-1 mt-0.5">
+            <i class="fa-brands fa-paypal text-blue-400 text-[9px]"></i>
+            <span>${recipientPaypal}</span>
+          </div>
+        </td>
+        <td class="py-3 px-4">
+          <div class="font-semibold text-slate-200 text-xs">${vendorName}</div>
+          <div class="text-[10px] text-slate-500 font-mono">${vendorEmail}</div>
+        </td>
+        <td class="py-3 px-4 font-bold text-emerald-400 text-xs">$${Number(c.amount || 0).toFixed(2)}</td>
+        <td class="py-3 px-4 text-slate-300 font-mono text-[10px]"><span class="bg-darkBg border border-borderSlate px-2 py-0.5 rounded-md">${qType}</span></td>
         <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${statusVal}</span></td>
-        <td class="py-3 px-4 text-right">
-          ${statusVal === 'REQUESTED_BY_RECIPIENT' ? `
-            <button onclick="approveAdminPayout('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition">
-              Approve Payout
-            </button>
-          ` : '<span class="text-slate-600 text-[10px]">Logged</span>'}
+        <td class="py-3 px-4 text-right flex items-center justify-end space-x-1">
+          ${actionButtons}
+          ${inspectBtn}
+          ${contactBtn}
         </td>
       </tr>
     `;
@@ -848,19 +930,58 @@ function filterAdminCommissions() {
   }
 }
 
-async function approveAdminPayout(id) {
+/* Admin Recipient Actions */
+async function requestAdminPayout(commId) {
   try {
     const { error } = await _supabase
       .from('commissions')
-      .update({ queue_type: 'WORKING_QUEUE', status: 'APPROVED_IN_WORKING' })
-      .eq('id', id);
+      .update({ queue_type: 'OUTGOING_REQUESTS', status: 'REQUESTED_BY_RECIPIENT', updated_at: new Date().toISOString() })
+      .eq('id', commId);
 
     if (error) throw error;
+    showToast("Payout requested successfully! Placed in Outgoing Requests.");
     await loadCommissionsData();
   } catch (err) {
-    alert("Approval error: " + err.message);
+    alert("Payout request error: " + err.message);
   }
 }
+
+async function acceptAdminOffer(commId) {
+  try {
+    const { error } = await _supabase
+      .from('commissions')
+      .update({ queue_type: 'MAIN_ACCOUNT', status: 'Approved', updated_at: new Date().toISOString() })
+      .eq('id', commId);
+
+    if (error) throw error;
+    showToast("Commission offer accepted!");
+    await loadCommissionsData();
+  } catch (err) {
+    alert("Error accepting offer: " + err.message);
+  }
+}
+
+async function declineAdminOffer(commId) {
+  try {
+    const { error } = await _supabase
+      .from('commissions')
+      .update({ queue_type: 'HISTORY', status: 'DECLINED', updated_at: new Date().toISOString() })
+      .eq('id', commId);
+
+    if (error) throw error;
+    showToast("Commission offer declined.");
+    await loadCommissionsData();
+  } catch (err) {
+    alert("Error declining offer: " + err.message);
+  }
+}
+
+/* Settlement Modal Functions */
+
+
+
+
+
 
 /* ==========================================================================
    TAB 4: SYSTEM MESSAGING & DIRECT OUTREACH HUB
@@ -1253,35 +1374,109 @@ async function loadReferralsData() {
   renderReferralsTable(allUsersCache);
 }
 
+async function loadReferralsData() {
+  try {
+    /* 1. Get Admin referral code */
+    const adminCode = (currentUser && currentUser.referral_code) ? currentUser.referral_code : 'ADMIN_PROMO_2026';
+    
+    const adminCodeElem = document.getElementById('adminRefCodeDisplay');
+    if (adminCodeElem) adminCodeElem.textContent = adminCode;
+
+    const shopperInput = document.getElementById('adminShopperRefLink');
+    if (shopperInput) shopperInput.value = `https://echo-hub.app/buyer-register.html?ref=${adminCode}`;
+
+    const vendorInput = document.getElementById('adminVendorRefLink');
+    if (vendorInput) vendorInput.value = `https://echo-hub.app/seller-register.html?ref=${adminCode}`;
+
+    /* 2. Compute KPI Performance Stats */
+    let totalRevenue = 0;
+    allCommissionsCache.forEach(c => {
+      const rRole = (c.recipient_role || '').toUpperCase();
+      if (rRole === 'ADMIN' || rRole === 'ADMIN_SHARE' || (currentUser && c.recipient_id === currentUser.id)) {
+        totalRevenue += Number(c.amount || 0);
+      }
+    });
+
+    const referredUsers = allUsersCache.filter(u => u.invited_by_code === adminCode || u.referred_by === currentUser?.id);
+    const totalMembers = referredUsers.length;
+    const shoppersCount = referredUsers.filter(u => (u.role || '').toLowerCase() === 'buyer').length;
+    const vendorsCount = referredUsers.filter(u => (u.role || '').toLowerCase() === 'seller' || (u.role || '').toLowerCase() === 'vendor').length;
+
+    document.getElementById('refStatTotalRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
+    document.getElementById('refStatTotalMembers').textContent = totalMembers;
+    document.getElementById('refStatShoppers').textContent = shoppersCount;
+    document.getElementById('refStatVendors').textContent = vendorsCount;
+
+    /* 3. Render Network Ledger Table */
+    renderReferralsTable(allUsersCache);
+  } catch (err) {
+    console.error("Referral network load error:", err);
+  }
+}
+
 function renderReferralsTable(users) {
   const tbody = document.getElementById('referralsTableBody');
   if (!users || users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No referral network records.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No referral network records found.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = users.map(u => `
-    <tr class="hover:bg-darkBg/40 transition">
-      <td class="py-3 px-4">
-        <div class="font-bold text-white">${u.full_name || 'User'}</div>
-        <div class="text-[10px] text-slate-500 font-mono">${u.email || u.id}</div>
-      </td>
-      <td class="py-3 px-4 font-bold text-slate-300 text-[11px]">${(u.role || 'BUYER').toUpperCase()}</td>
-      <td class="py-3 px-4 font-mono text-amber-400 font-bold">${u.referral_code || 'N/A'}</td>
-      <td class="py-3 px-4 font-mono text-slate-400">${u.invited_by_code || 'Direct Sign-Up'}</td>
-      <td class="py-3 px-4 text-slate-500 text-[11px]">${new Date(u.created_at).toLocaleDateString()}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = users.map(u => {
+    const roleUpper = (u.role || 'BUYER').toUpperCase();
+    const roleBadge = roleUpper === 'SELLER' || roleUpper === 'VENDOR' ? 
+      `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">VENDOR</span>` :
+      `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">BUYER</span>`;
+
+    /* Calculate Inviter Earnings generated by this user */
+    let userEarnings = 0;
+    allCommissionsCache.forEach(c => {
+      if (c.recipient_id === u.id || c.vendor_id === u.id) {
+        userEarnings += Number(c.amount || 0);
+      }
+    });
+
+    return `
+      <tr class="hover:bg-darkBg/40 transition">
+        <td class="py-3 px-4">
+          <div class="font-bold text-white text-xs">${u.full_name || 'User'}</div>
+          <div class="text-[10px] text-slate-400 font-mono flex items-center space-x-1 mt-0.5">
+            <i class="fa-solid fa-envelope text-slate-500 text-[9px]"></i>
+            <span>${u.email || u.id}</span>
+          </div>
+          ${u.paypal_email ? `<div class="text-[9px] text-blue-400 font-mono mt-0.5"><i class="fa-brands fa-paypal mr-1"></i>${u.paypal_email}</div>` : ''}
+        </td>
+        <td class="py-3 px-4">${roleBadge}</td>
+        <td class="py-3 px-4 font-mono text-amber-400 font-bold text-xs">${u.referral_code || 'N/A'}</td>
+        <td class="py-3 px-4 font-mono text-slate-400 text-xs">${u.invited_by_code || 'Direct Sign-Up'}</td>
+        <td class="py-3 px-4 text-slate-400 text-[11px]">${new Date(u.created_at || Date.now()).toLocaleDateString()}</td>
+        <td class="py-3 px-4 font-bold text-emerald-400 text-xs">$${userEarnings.toFixed(2)}</td>
+        <td class="py-3 px-4 text-right">
+          <button onclick="openDirectOutreachForUser('${u.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition">
+            <i class="fa-solid fa-comment-dots mr-1"></i> Message
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function filterReferralsTable() {
   const search = document.getElementById('referralSearchInput').value.toLowerCase();
   const filtered = allUsersCache.filter(u =>
     (u.full_name || '').toLowerCase().includes(search) ||
+    (u.email || '').toLowerCase().includes(search) ||
     (u.referral_code || '').toLowerCase().includes(search) ||
     (u.invited_by_code || '').toLowerCase().includes(search)
   );
   renderReferralsTable(filtered);
+}
+
+function copyRefLink(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.select();
+  navigator.clipboard.writeText(input.value);
+  showToast("Referral link copied to clipboard!");
 }
 
 async function handleAdminSignOut() {
