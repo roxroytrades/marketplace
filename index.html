@@ -886,14 +886,12 @@ try {
 const { error } = await _supabase
 .from('commissions')
 .update({
-queue_type: 'WORKING_QUEUE',
-status_tag: 'REQUESTED_BY_RECIPIENT',
 status: 'REQUESTED_BY_RECIPIENT'
 })
 .eq('id', commId);
 
 if (error) throw error;
-alert("Payout request submitted! Moved to Working Queue for seller settlement.");
+alert("Payout request submitted! Moved to Outgoing Requests for vendor approval.");
 await loadCommissionsData();
 } catch (err) {
 alert("Error requesting payout: " + err.message);
@@ -908,10 +906,9 @@ return;
 try {
 for (const id of selectedCommIds) {
 const updateData = {
-status_tag: newStatusTag,
 status: newStatusTag
 };
-if (newStatusTag === 'REQUESTED_BY_RECIPIENT') {
+if (newStatusTag === 'APPROVED_IN_WORKING') {
 updateData.queue_type = 'WORKING_QUEUE';
 }
 const { error } = await _supabase
@@ -922,7 +919,7 @@ if (error) throw error;
 }
 selectedCommIds.clear();
 await loadCommissionsData();
-alert('Commission status successfully updated!');
+alert('Payout request successfully submitted to Outgoing Requests!');
 } catch (err) {
 alert('Action failed: ' + err.message);
 }
