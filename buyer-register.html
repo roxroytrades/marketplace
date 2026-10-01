@@ -173,26 +173,10 @@ const password = document.getElementById('password').value.trim();
 
 // Capture optional referral query parameter if present
 const urlParams = new URLSearchParams(window.location.search);
-const invitedByCode = urlParams.get('ref') || null;
+const invitedByCode = urlParams.get('ref') || urlParams.get('ref_code') || urlParams.get('invited_by') || null;
 submitBtn.disabled = true;
 submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Creating Account...</span>`;
 try {
-// 1. Sign up user via Supabase Auth
-const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-email: email,
-password: password,
-options: {
-data: {
-full_name: fullName,
-role: 'buyer'
-}
-}
-});
-if (authError) throw authError;
-const userId = authData.user ? authData.user.id : null;
-if (!userId) {
-throw new Error('User registration failed to return an authenticated ID.');
-}
 // Helper function to resolve referee/inviter profile UUID safely without Postgres type errors
 async function resolveRefereeProfile(client, rawCode) {
   if (!rawCode) return { refereeUuid: null, refereeCode: null };
@@ -225,7 +209,29 @@ async function resolveRefereeProfile(client, rawCode) {
   return { refereeUuid, refereeCode };
 }
 
+// 1. Resolve referee profile BEFORE signUp
 const { refereeUuid, refereeCode } = await resolveRefereeProfile(supabaseClient, invitedByCode);
+const finalInvitedByCode = refereeCode || invitedByCode || null;
+const finalReferredBy = refereeUuid || refereeCode || invitedByCode || null;
+
+// 2. Sign up user via Supabase Auth with metadata containing invited_by_code and referred_by
+const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+email: email,
+password: password,
+options: {
+data: {
+full_name: fullName,
+role: 'buyer',
+invited_by_code: finalInvitedByCode,
+referred_by: finalReferredBy
+}
+}
+});
+if (authError) throw authError;
+const userId = authData.user ? authData.user.id : null;
+if (!userId) {
+throw new Error('User registration failed to return an authenticated ID.');
+}
 
 // 3. Insert profile record matching exact 13-column live schema
 const { error: profileError } = await supabaseClient
@@ -240,8 +246,8 @@ categories: categories,
 national_id_base64: compressedIdBase64,
 role: 'buyer',
 verification_status: 'PENDING_VERIFICATION',
-invited_by_code: refereeCode || invitedByCode || null,
-referred_by: refereeUuid || refereeCode || invitedByCode || null,
+invited_by_code: finalInvitedByCode,
+referred_by: finalReferredBy,
 created_at: new Date().toISOString()
 });
 if (profileError) throw profileError;
@@ -256,5 +262,3 @@ submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i><span>Register Shopp
 </script>
 </body>
 </html>
-
-
