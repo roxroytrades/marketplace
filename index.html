@@ -769,11 +769,8 @@ const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter;
 let matchesTab = false;
 if (activeCommTab === 'mainAccount') {
 // Main Account shows all active/approved uncollected commissions assigned to the user
-matchesTab = (queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || statusTag === 'MAIN_QUEUE' || statusTag === 'UNREQUESTED_BALANCE' || statusTag === 'APPROVED' || !c.queue_type) && 
+matchesTab = (queueType === 'MAIN_ACCOUNT' || statusTag === 'MAIN_QUEUE' || statusTag === 'UNREQUESTED_BALANCE' || statusTag === 'APPROVED' || !c.status_tag) && 
 queueType !== 'WORKING_QUEUE' && 
-queueType !== 'OUTGOING_REQUESTS' && 
-queueType !== 'INCOMING_REQUESTS' && 
-queueType !== 'HISTORY' && 
 statusTag !== 'APPROVED_IN_WORKING' && 
 statusTag !== 'COMPLETED_PAID' && 
 statusTag !== 'REQUESTED_BY_RECIPIENT' && 
@@ -782,11 +779,11 @@ statusTag !== 'OFFERED_AWAITING_ACCEPTANCE';
 } else if (activeCommTab === 'incoming') {
 matchesTab = statusTag === 'OFFERED_BY_VENDOR' || statusTag === 'OFFERED_AWAITING_ACCEPTANCE';
 } else if (activeCommTab === 'outgoing') {
-matchesTab = queueType === 'OUTGOING_REQUESTS' || statusTag === 'REQUESTED_BY_RECIPIENT' || (c.status || '').toUpperCase() === 'REQUESTED_BY_RECIPIENT';
+matchesTab = statusTag === 'REQUESTED_BY_RECIPIENT';
 } else if (activeCommTab === 'workingQueue') {
-matchesTab = queueType === 'WORKING_QUEUE' || statusTag === 'APPROVED_IN_WORKING' || (c.status || '').toUpperCase() === 'APPROVED_IN_WORKING';
+matchesTab = queueType === 'WORKING_QUEUE' || statusTag === 'APPROVED_IN_WORKING';
 } else if (activeCommTab === 'receivedHistory') {
-matchesTab = queueType === 'HISTORY' || statusTag === 'COMPLETED_PAID' || statusTag === 'PAID' || (c.status || '').toUpperCase() === 'COMPLETED_PAID' || (c.status || '').toUpperCase() === 'PAID';
+matchesTab = statusTag === 'COMPLETED_PAID' || statusTag === 'PAID';
 }
 
 return matchesSearch && matchesType && matchesTab;
@@ -895,14 +892,14 @@ status: 'REQUESTED_BY_RECIPIENT'
 .eq('id', commId);
 
 if (error) throw error;
-alert("Payout request submitted! Moved to Outgoing Requests for vendor approval.");
+alert("Payout request submitted! Moved to Working Queue for seller settlement.");
 await loadCommissionsData();
 } catch (err) {
 alert("Error requesting payout: " + err.message);
 }
 }
 
-async function batchUpdateShopperStatus(newStatus) {
+async function batchUpdateShopperStatus(newStatusTag) {
 if (selectedCommIds.size === 0) {
 alert('Please select at least one record.');
 return;
@@ -910,12 +907,10 @@ return;
 try {
 for (const id of selectedCommIds) {
 const updateData = {
-status: newStatus
+status: newStatusTag
 };
-if (newStatus === 'REQUESTED_BY_RECIPIENT') {
+if (newStatusTag === 'REQUESTED_BY_RECIPIENT') {
 updateData.queue_type = 'OUTGOING_REQUESTS';
-} else if (newStatus === 'APPROVED_IN_WORKING') {
-updateData.queue_type = 'WORKING_QUEUE';
 }
 const { error } = await _supabase
 .from('commissions')
