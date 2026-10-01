@@ -1192,8 +1192,20 @@ idEl.innerText = `ID: ${feedbackId}`;
 const actionArea = card.querySelector('.inline-action-area');
 if (actionArea) {
 actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
-setTimeout(() => toast.remove(), 300);
-}, 3500);
+}
+
+function showToast(message) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = 'bg-cardBg border-l-4 border-blue-500 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
+  toast.innerHTML = `<i class="fa-solid fa-circle-check text-blue-400"></i><span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('opacity-0');
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
 }
 function handleChatFileSelect(event) {
 const file = event.target.files[0];
