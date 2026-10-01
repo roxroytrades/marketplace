@@ -382,9 +382,37 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
   </div>
 </div>
 
+
+<!-- Commission Details Modal -->
+<div id="commissionDetailsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 font-bold text-xs">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Commission Transaction Ledger Details</h3>
+          <p class="text-[10px] text-slate-400">Complete transaction metadata, participant links, and receipt audit</p>
+        </div>
+      </div>
+      <button onclick="closeCommissionDetailsModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
+    </div>
+
+    <div id="commissionDetailsContent" class="space-y-4 text-xs">
+      <!-- Dynamic Details Filled via JS -->
+    </div>
+
+    <div class="flex justify-end space-x-2 border-t border-borderSlate pt-3">
+      <button onclick="closeCommissionDetailsModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Close</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- MODAL 2: TYPEAHEAD OMNIBOX DIRECT OUTREACH COMPOSER -->
 <div id="outreachModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
     
     <div class="flex items-center justify-between border-b border-borderSlate pb-3">
       <div class="flex items-center space-x-2">
@@ -393,54 +421,81 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         </div>
         <div>
           <h3 class="text-sm font-bold text-white">Direct Admin Outreach</h3>
-          <p class="text-[10px] text-slate-400">Initiate an isolated support communication channel with any user</p>
+          <p class="text-[10px] text-slate-400">Initiate an isolated support communication channel with any user or vendor</p>
         </div>
       </div>
       <button onclick="closeDirectOutreachModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
     </div>
 
-    <div class="space-y-4 text-xs">
-      
-      <!-- Typeahead Search Recipient Field -->
-      <div class="space-y-1.5 relative">
-        <label class="font-semibold text-slate-300">Select Recipient</label>
-        
-        <!-- Target Lock Pill Tag (Hidden until target selected) -->
-        <div id="outreachTargetPill" class="hidden flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 text-amber-300 font-medium">
-          <span id="outreachTargetLabel">Roxroy Gough • Buyer</span>
-          <button onclick="clearOutreachTarget()" class="text-amber-400 hover:text-amber-200 transition ml-2"><i class="fa-solid fa-circle-xmark"></i></button>
-        </div>
-
-        <!-- Omnibox Search Input -->
-        <div id="outreachSearchContainer" class="relative">
-          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user-gear text-xs"></i></span>
-          <input type="text" id="outreachSearchInput" onkeyup="handleOutreachSearch()" placeholder="Type name, email, or user ID to search..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
-        </div>
-
-        <!-- Dynamic Typeahead Results Dropdown -->
-        <div id="outreachSearchResults" class="hidden absolute left-0 right-0 top-full mt-1 bg-cardBg border border-borderSlate rounded-2xl shadow-2xl max-h-52 overflow-y-auto z-50 divide-y divide-borderSlate/60">
-        </div>
-      </div>
-
-      <!-- Outreach Message Body -->
-      <div class="space-y-1.5">
-        <label class="font-semibold text-slate-300">Outreach Message Content</label>
-        <textarea id="outreachMessageText" rows="4" placeholder="Write official administrator message or inquiry here..." class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-xs text-slate-200 outline-none focus:border-amber-500 transition resize-none"></textarea>
-      </div>
-
-      <div id="outreachAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
-    </div>
-
-    <div class="flex items-center justify-end space-x-3 pt-2">
-      <button onclick="closeDirectOutreachModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition">Cancel</button>
-      <button id="outreachSubmitBtn" onclick="submitDirectOutreach()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold px-5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
-        <i class="fa-solid fa-paper-plane"></i>
-        <span>Send Direct Message</span>
+    <!-- Outreach Mode Switcher Tabs (Option 1 Integration) -->
+    <div class="flex space-x-2 border-b border-borderSlate pb-2">
+      <button id="outreachTabSearchBtn" onclick="switchOutreachTab('search')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 transition">
+        <i class="fa-solid fa-magnifying-glass mr-1"></i> Search Recipient
+      </button>
+      <button id="outreachTabDirBtn" onclick="switchOutreachTab('directory')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-darkBg text-slate-400 border border-borderSlate hover:text-white transition">
+        <i class="fa-solid fa-store mr-1"></i> Browse Vendor Directory
       </button>
     </div>
 
+    <div class="space-y-4 text-xs">
+      
+      <!-- Section A: Search Recipient Omnibox View -->
+      <div id="outreachSearchSection" class="space-y-3">
+        <div class="space-y-1.5 relative">
+          <label class="font-semibold text-slate-300">Target Recipient</label>
+          
+          <!-- Target Lock Pill Tag -->
+          <div id="outreachTargetPill" class="hidden flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 text-amber-300 font-medium">
+            <span id="outreachTargetLabel">Roxroy Gough • Buyer</span>
+            <button onclick="clearOutreachTarget()" class="text-amber-400 hover:text-amber-200 transition ml-2"><i class="fa-solid fa-circle-xmark"></i></button>
+          </div>
+
+          <!-- Omnibox Search Input -->
+          <div id="outreachSearchContainer" class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user-gear text-xs"></i></span>
+            <input type="text" id="outreachSearchInput" onkeyup="handleOutreachSearch()" placeholder="Type name, email, or user ID to search..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+          </div>
+
+          <!-- Dynamic Typeahead Results Dropdown -->
+          <div id="outreachSearchResults" class="hidden absolute left-0 right-0 top-full mt-1 bg-cardBg border border-borderSlate rounded-2xl shadow-2xl max-h-52 overflow-y-auto z-50 divide-y divide-borderSlate">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Vendor Directory View (Option 1) -->
+      <div id="outreachVendorDirectorySection" class="hidden space-y-3">
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-store text-xs"></i></span>
+          <input type="text" id="vendorDirectorySearchInput" onkeyup="renderVendorDirectory()" placeholder="Filter vendors by name, email, or category..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+        </div>
+
+        <div id="vendorDirectoryContainer" class="max-h-60 overflow-y-auto space-y-2.5 pr-1">
+          <!-- Dynamically populated vendor cards -->
+        </div>
+      </div>
+
+      <!-- Message Text Area -->
+      <div class="space-y-1.5">
+        <label class="font-semibold text-slate-300">Outreach Message</label>
+        <textarea id="outreachMessageText" rows="4" placeholder="Type your direct message to this user. This will create an isolated direct support thread..." class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-xs text-slate-200 outline-none focus:border-amber-500 transition resize-none"></textarea>
+      </div>
+
+      <!-- Alert Banner -->
+      <div id="outreachAlert" class="hidden p-3 rounded-xl text-xs font-medium border"></div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-borderSlate">
+        <button onclick="closeDirectOutreachModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 font-medium px-4 py-2.5 rounded-xl transition">Cancel</button>
+        <button onclick="submitDirectOutreach()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Send Direct Message</span>
+        </button>
+      </div>
+
+    </div>
   </div>
-</div>
+</div>>
 
 
 <!-- SUPABASE INTEGRATION & ENGINE SCRIPT -->
@@ -659,27 +714,59 @@ async function loadProductsData() {
 function renderProductsTable(products) {
   const tbody = document.getElementById('productsTableBody');
   if (!products || products.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No products found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No products found.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = products.map(p => `
-    <tr class="hover:bg-darkBg/40 transition">
-      <td class="py-3 px-4">
-        <div class="font-bold text-white">${p.title}</div>
-        <div class="text-[10px] text-slate-500">${p.id}</div>
-      </td>
-      <td class="py-3 px-4 font-mono text-slate-400">${p.seller_id}</td>
-      <td class="py-3 px-4 font-bold text-white">$${Number(p.price || 0).toFixed(2)}</td>
-      <td class="py-3 px-4 font-bold text-emerald-400">$${Number(p.commission || 0).toFixed(2)}</td>
-      <td class="py-3 px-4 text-slate-400 text-[11px]">${p.vendor_type || 'UPFRONT'}</td>
-      <td class="py-3 px-4 text-right">
-        <button onclick="deleteProductRecord('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition">
-          <i class="fa-solid fa-trash mr-1"></i> Delete
-        </button>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = products.map(p => {
+    /* Resolve Vendor Details to avoid undefined data */
+    const vendor = profilesCache[p.seller_id] || allUsersCache.find(u => u.id === p.seller_id);
+    const vendorName = vendor ? (vendor.full_name || vendor.email || 'Registered Vendor') : (p.seller_id || 'Unknown Vendor');
+    const vendorEmail = vendor ? (vendor.email || '') : '';
+    const safeVendorName = vendorName.replace(/'/g, "\'");
+    const safeVendorEmail = vendorEmail.replace(/'/g, "\'");
+
+    /* Product Image Thumbnail */
+    const imageHtml = p.image_url ? `
+      <img src="${p.image_url}" alt="${p.title}" class="w-10 h-10 object-cover rounded-xl border border-borderSlate shadow-sm flex-shrink-0">
+    ` : `
+      <div class="w-10 h-10 bg-darkBg border border-borderSlate rounded-xl flex items-center justify-center text-slate-500 font-bold text-xs flex-shrink-0">
+        <i class="fa-solid fa-box"></i>
+      </div>
+    `;
+
+    return `
+      <tr class="hover:bg-darkBg/40 transition">
+        <td class="py-3 px-4">
+          <div class="flex items-center space-x-3">
+            ${imageHtml}
+            <div>
+              <div class="font-bold text-white line-clamp-1">${p.title}</div>
+              <div class="text-[10px] text-slate-500 font-mono">${p.id}</div>
+            </div>
+          </div>
+        </td>
+        <td class="py-3 px-4">
+          <div class="font-bold text-slate-200 text-xs">${vendorName}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${vendorEmail || p.seller_id}</div>
+        </td>
+        <td class="py-3 px-4 font-bold text-white">$${Number(p.price || 0).toFixed(2)}</td>
+        <td class="py-3 px-4 font-bold text-emerald-400">
+          $${Number(p.commission || 15).toFixed(2)}
+          <span class="block text-[9px] text-slate-500 font-normal">Standard Review Fee</span>
+        </td>
+        <td class="py-3 px-4 text-slate-400 text-[11px]"><span class="px-2 py-0.5 bg-slate-800 border border-borderSlate rounded-full text-[10px] font-semibold">${p.vendor_type || 'UPFRONT'}</span></td>
+        <td class="py-3 px-4 text-right space-x-1">
+          <button onclick="openDirectOutreachForUser('${p.seller_id}', '${safeVendorName}', 'SELLER', '${safeVendorEmail}')" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition">
+            <i class="fa-solid fa-comment-dots mr-1"></i> Contact Vendor
+          </button>
+          <button onclick="deleteProductRecord('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition">
+            <i class="fa-solid fa-trash mr-1"></i> Delete
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function filterProductsTable() {
@@ -1201,6 +1288,192 @@ async function handleAdminSignOut() {
   await _supabase.auth.signOut();
   window.location.href = 'login.html';
 }
+
+/* ============================================================================
+   COMMISSION TRANSACTION DETAILS INSPECTOR & OUTREACH PRE-SELECT
+   ============================================================================ */
+
+function viewCommissionDetails(commId) {
+  const c = allCommissionsCache.find(item => item.id == commId);
+  const container = document.getElementById('commissionDetailsContent');
+  if (!c || !container) return;
+
+  const recipient = profilesCache[c.recipient_id] || allUsersCache.find(u => u.id === c.recipient_id);
+  const recipientName = recipient ? (recipient.full_name || recipient.email) : (c.recipient_email || c.recipient_id || 'System / Admin');
+  const recipientEmail = recipient ? recipient.email : 'N/A';
+  const recipientPaypal = recipient ? (recipient.paypal_email || 'Not Configured') : 'N/A';
+
+  const vendor = profilesCache[c.vendor_id] || allUsersCache.find(u => u.id === c.vendor_id);
+  const vendorName = vendor ? (vendor.full_name || vendor.email) : (c.vendor_id || 'N/A');
+  const vendorEmail = vendor ? vendor.email : 'N/A';
+
+  const product = allProductsCache.find(p => p.id === c.product_id);
+  const productTitle = product ? product.title : (c.product_id || 'General Marketplace Review');
+
+  const recRoleUpper = (c.recipient_role || 'REVIEWER').toUpperCase();
+  const safeRecName = recipientName.replace(/'/g, "\'");
+  const safeRecEmail = recipientEmail.replace(/'/g, "\'");
+  const safeVenName = vendorName.replace(/'/g, "\'");
+  const safeVenEmail = vendorEmail.replace(/'/g, "\'");
+
+  const receiptHtml = (c.receipt_base64 || c.receipt_url) ? `
+    <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
+      <div class="text-[10px] text-slate-400 font-semibold mb-1">Uploaded Payout Proof Receipt:</div>
+      <a href="${c.receipt_base64 || c.receipt_url}" target="_blank" class="block overflow-hidden rounded-lg">
+        <img src="${c.receipt_base64 || c.receipt_url}" alt="Payout Receipt" class="max-h-48 w-full object-contain rounded-lg border border-borderSlate">
+      </a>
+    </div>
+  ` : '<div class="text-slate-500 italic text-[11px]">No proof receipt image attached yet.</div>';
+
+  container.innerHTML = `
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
+        <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Transaction ID</span>
+        <div class="font-mono text-xs text-white break-all">${c.id}</div>
+      </div>
+      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
+        <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Disbursement Amount</span>
+        <div class="text-lg font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)} USD</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] text-slate-400 font-semibold uppercase">Recipient Info</span>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">${recRoleUpper}</span>
+        </div>
+        <div class="font-bold text-slate-200">${recipientName}</div>
+        <div class="text-slate-400 text-[11px]">Email: ${recipientEmail}</div>
+        <div class="text-slate-400 text-[11px]">PayPal: <span class="font-mono text-slate-300">${recipientPaypal}</span></div>
+        ${c.recipient_id ? `
+          <button onclick="closeCommissionDetailsModal(); openDirectOutreachForUser('${c.recipient_id}', '${safeRecName}', '${recRoleUpper}', '${safeRecEmail}');" class="mt-2 w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 py-1.5 rounded-xl text-[10px] font-semibold transition">
+            <i class="fa-solid fa-comment-dots mr-1"></i> Message Recipient
+          </button>
+        ` : ''}
+      </div>
+
+      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] text-slate-400 font-semibold uppercase">Vendor / Merchant Info</span>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">SELLER</span>
+        </div>
+        <div class="font-bold text-slate-200">${vendorName}</div>
+        <div class="text-slate-400 text-[11px]">Email: ${vendorEmail}</div>
+        <div class="text-slate-400 text-[11px]">Vendor ID: <span class="font-mono text-slate-500">${c.vendor_id || 'N/A'}</span></div>
+        ${c.vendor_id ? `
+          <button onclick="closeCommissionDetailsModal(); openDirectOutreachForUser('${c.vendor_id}', '${safeVenName}', 'SELLER', '${safeVenEmail}');" class="mt-2 w-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-borderSlate py-1.5 rounded-xl text-[10px] font-semibold transition">
+            <i class="fa-solid fa-store mr-1"></i> Message Vendor
+          </button>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-2">
+      <div class="grid grid-cols-2 gap-2 text-[11px]">
+        <div><span class="text-slate-500">Product Channel:</span> <span class="text-slate-200 font-medium">${productTitle}</span></div>
+        <div><span class="text-slate-500">Queue Placement:</span> <span class="text-amber-400 font-mono">${c.queue_type || 'MAIN_ACCOUNT'}</span></div>
+        <div><span class="text-slate-500">Transaction Status:</span> <span class="text-blue-400 font-semibold">${c.status || 'Approved'}</span></div>
+        <div><span class="text-slate-500">PayPal Tx ID:</span> <span class="text-slate-300 font-mono">${c.paypal_tx_id || 'Pending Settlement'}</span></div>
+        <div><span class="text-slate-500">Created Timestamp:</span> <span class="text-slate-400">${new Date(c.created_at || Date.now()).toLocaleString()}</span></div>
+      </div>
+      ${receiptHtml}
+    </div>
+  `;
+
+  document.getElementById('commissionDetailsModal').classList.remove('hidden');
+}
+
+function closeCommissionDetailsModal() {
+  document.getElementById('commissionDetailsModal').classList.add('hidden');
+}
+
+function openDirectOutreachForUser(userId, userName, userRole, userEmail) {
+  selectedOutreachTargetUser = {
+    id: userId,
+    full_name: userName || 'User',
+    role: userRole || 'BUYER',
+    email: userEmail || ''
+  };
+
+  document.getElementById('outreachTargetLabel').textContent = `${userName || 'User'} • ${(userRole || 'BUYER').toUpperCase()}`;
+  document.getElementById('outreachTargetPill').classList.remove('hidden');
+  document.getElementById('outreachSearchContainer').classList.add('hidden');
+  document.getElementById('outreachSearchResults').classList.add('hidden');
+  document.getElementById('outreachMessageText').value = '';
+  document.getElementById('outreachAlert').classList.add('hidden');
+
+  switchOutreachTab('search');
+  document.getElementById('outreachModal').classList.remove('hidden');
+}
+
+function switchOutreachTab(mode) {
+  const searchSection = document.getElementById('outreachSearchSection');
+  const dirSection = document.getElementById('outreachVendorDirectorySection');
+  const searchBtn = document.getElementById('outreachTabSearchBtn');
+  const dirBtn = document.getElementById('outreachTabDirBtn');
+
+  if (mode === 'directory') {
+    searchSection.classList.add('hidden');
+    dirSection.classList.remove('hidden');
+    dirBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 transition';
+    searchBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-darkBg text-slate-400 border border-borderSlate hover:text-white transition';
+    renderVendorDirectory();
+  } else {
+    dirSection.classList.add('hidden');
+    searchSection.classList.remove('hidden');
+    searchBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 transition';
+    dirBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-darkBg text-slate-400 border border-borderSlate hover:text-white transition';
+  }
+}
+
+function renderVendorDirectory() {
+  const container = document.getElementById('vendorDirectoryContainer');
+  const query = (document.getElementById('vendorDirectorySearchInput')?.value || '').toLowerCase().trim();
+
+  const vendors = allUsersCache.filter(u => {
+    const isVendor = (u.role || '').toLowerCase() === 'seller' || (u.role || '').toLowerCase() === 'vendor';
+    if (!isVendor) return false;
+    const matches = (u.full_name || '').toLowerCase().includes(query) ||
+                    (u.email || '').toLowerCase().includes(query) ||
+                    (u.id || '').toLowerCase().includes(query);
+    return matches;
+  });
+
+  if (vendors.length === 0) {
+    container.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs">No registered vendors found matching your filter.</div>`;
+    return;
+  }
+
+  container.innerHTML = vendors.map(v => {
+    const safeName = (v.full_name || v.email || 'Vendor').replace(/'/g, "\'");
+    const safeEmail = (v.email || '').replace(/'/g, "\'");
+    const prodCount = allProductsCache.filter(p => p.seller_id === v.id).length;
+
+    return `
+      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl flex items-center justify-between hover:border-amber-500/40 transition">
+        <div class="space-y-0.5">
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-white text-xs">${v.full_name || 'Vendor Account'}</span>
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">SELLER</span>
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-800 text-slate-400 border border-borderSlate">${prodCount} Products</span>
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono">${v.email || 'No Email'}</div>
+          <div class="text-[10px] text-slate-500">PayPal: ${v.paypal_email || 'Not configured'}</div>
+        </div>
+        <button onclick="selectVendorFromDirectory('${v.id}', '${safeName}', '${safeEmail}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-md shadow-amber-500/20 flex items-center space-x-1">
+          <i class="fa-solid fa-comment-dots mr-1"></i>
+          <span>Chat Now</span>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectVendorFromDirectory(vendorId, vendorName, vendorEmail) {
+  openDirectOutreachForUser(vendorId, vendorName, 'SELLER', vendorEmail);
+}
+
 </script>
 </body>
 </html>
