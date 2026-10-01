@@ -971,19 +971,23 @@ function renderAdminCommissionsTable(comms) {
 
     /* Recipient Role Identification */
     const rawRole = (c.recipient_role || '').trim().toUpperCase();
-    const isRecipientAdmin = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE') ||
-                             (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email)) ||
-                             (recipient && (recipient.role === 'admin' || recipient.role === 'ADMIN'));
+    const isMyCommission = (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email)) ||
+                           (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE');
 
+    /* Role Badge Logic - Evaluates record role explicitly */
     let roleBadge = '';
-    if (isRecipientAdmin) {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-[9px]"></i>ADMIN SHARE</span>`;
-    } else if (rawRole === 'BUYER_INVITER' || rawRole === 'BUYER_INVITE') {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">BUYER INVITER</span>`;
-    } else if (rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || rawRole === 'SELLER_INVITE') {
+    if (rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || rawRole === 'SELLER_INVITE' || rawRole === 'SELLER_REFERRAL' || rawRole === 'VENDOR_REFERRAL') {
       roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">SELLER INVITER</span>`;
-    } else {
+    } else if (rawRole === 'BUYER_INVITER' || rawRole === 'BUYER_INVITE' || rawRole === 'BUYER_REFERRAL') {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">BUYER INVITER</span>`;
+    } else if (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE' || rawRole === 'PLATFORM_FEE') {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-[9px]"></i>ADMIN SHARE</span>`;
+    } else if (rawRole === 'REVIEWER' || rawRole === 'BUYER' || rawRole === 'SHOPPER') {
       roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">REVIEWER</span>`;
+    } else if (isMyCommission && (!rawRole || rawRole === '')) {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-[9px]"></i>ADMIN SHARE</span>`;
+    } else {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${rawRole || 'REVIEWER'}</span>`;
     }
 
     /* Status Badge Styling */
@@ -1004,7 +1008,7 @@ function renderAdminCommissionsTable(comms) {
     /* Action Buttons Logic: Admin's Own Commission vs Operator Mode */
     let actionButtons = '';
 
-    if (isRecipientAdmin) {
+    if (isMyCommission) {
       /* Admin is recipient -> Buyer-equivalent commission actions */
       if (sUpper === 'APPROVED' || sUpper === 'UNREQUESTED_BALANCE' || qType === 'MAIN_ACCOUNT') {
         actionButtons = `
@@ -1731,7 +1735,7 @@ function viewCommissionDetails(commId) {
       <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
         <div class="flex items-center justify-between">
           <span class="text-[10px] text-slate-400 font-semibold uppercase">Recipient Info</span>
-          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">${recRoleUpper}</span>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${recRoleUpper.includes('SELLER') || recRoleUpper.includes('VENDOR') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (recRoleUpper.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : (recRoleUpper.includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${recRoleUpper}</span>
         </div>
         <div class="font-bold text-slate-200">${recipientName}</div>
         <div class="text-slate-400 text-[11px]">Email: ${recipientEmail}</div>
