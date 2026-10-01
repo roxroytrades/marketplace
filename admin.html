@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+  <link rel="icon" href="data:,">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Echo Hub - Master Admin Operations Dashboard</title>
@@ -507,6 +508,8 @@ const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* Global State Caches */
 let currentAdminUser = null;
+let currentUser = null;
+let profilesCache = {};
 let allUsersCache = [];
 let allProductsCache = [];
 let allCommissionsCache = [];
@@ -546,6 +549,7 @@ async function initAdminDashboard() {
     return;
   }
   currentAdminUser = session.user;
+  currentUser = session.user;
   document.getElementById('adminUserLabel').textContent = currentAdminUser.email;
 
   /* 2. Load Core Admin Datasets */
@@ -583,6 +587,17 @@ async function loadUsersData() {
 
     if (error) throw error;
     allUsersCache = data || [];
+    profilesCache = {};
+    allUsersCache.forEach(u => { profilesCache[u.id] = u; });
+
+    if (currentAdminUser) {
+      const adminProf = profilesCache[currentAdminUser.id];
+      if (adminProf) {
+        currentAdminUser = { ...currentAdminUser, ...adminProf };
+      }
+      currentUser = currentAdminUser;
+    }
+
     renderUsersTable(allUsersCache);
   } catch (err) {
     console.error("Users load error:", err);
