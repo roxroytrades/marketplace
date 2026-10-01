@@ -227,7 +227,7 @@ async function resolveRefereeProfile(client, rawCode) {
 
 const { refereeUuid, refereeCode } = await resolveRefereeProfile(supabaseClient, invitedByCode);
 
-// 3. Insert profile record with referee UUID saved to all referral UUID columns
+// 3. Insert profile record matching exact 13-column live schema
 const { error: profileError } = await supabaseClient
 .from('profiles')
 .upsert({
@@ -240,11 +240,8 @@ categories: categories,
 national_id_base64: compressedIdBase64,
 role: 'buyer',
 verification_status: 'PENDING_VERIFICATION',
-invited_by_code: refereeCode,
-referred_by: refereeUuid,
-invited_by: refereeUuid,
-invited_by_id: refereeUuid,
-inviter_id: refereeUuid,
+invited_by_code: refereeCode || invitedByCode || null,
+referred_by: refereeUuid || refereeCode || invitedByCode || null,
 created_at: new Date().toISOString()
 });
 if (profileError) throw profileError;
