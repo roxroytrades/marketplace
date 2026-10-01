@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-  <link rel="icon" href="data:,">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Echo Hub - Master Admin Operations Dashboard</title>
@@ -506,6 +505,16 @@ const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+
+/* Toast Notification Helper */
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-900 border border-amber-500/40 text-amber-300 px-4 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center space-x-2';
+  toast.innerHTML = `<i class="fa-solid fa-bell text-amber-400"></i><span>${msg}</span>`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+
 /* Global State Caches */
 let currentAdminUser = null;
 let currentUser = null;
@@ -844,35 +853,50 @@ function renderAdminCommissionsTable(comms) {
     const vendorName = vendor ? (vendor.full_name || vendor.email) : (c.vendor_id || 'System');
     const vendorEmail = vendor ? vendor.email : 'N/A';
 
-    /* Recipient Role Badge Mapping */
-    const roleUpper = (c.recipient_role || 'REVIEWER').toUpperCase();
-    let roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/30">${roleUpper}</span>`;
-    if (roleUpper === 'ADMIN' || roleUpper === 'ADMIN_SHARE') {
+    /* Recipient Role Identification */
+    const rawRole = (c.recipient_role || '').trim().toUpperCase();
+    const isRecipientAdmin = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE') ||
+                             (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email)) ||
+                             (recipient && (recipient.role === 'admin' || recipient.role === 'ADMIN'));
+
+    let roleBadge = '';
+    if (isRecipientAdmin) {
       roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-[9px]"></i>ADMIN SHARE</span>`;
-    } else if (roleUpper === 'REVIEWER' || roleUpper === 'BUYER') {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">REVIEWER</span>`;
-    } else if (roleUpper === 'BUYER_INVITER') {
+    } else if (rawRole === 'BUYER_INVITER' || rawRole === 'BUYER_INVITE') {
       roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">BUYER INVITER</span>`;
-    } else if (roleUpper === 'SELLER_INVITER' || roleUpper === 'VENDOR_INVITER') {
+    } else if (rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || rawRole === 'SELLER_INVITE') {
       roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">SELLER INVITER</span>`;
+    } else {
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">REVIEWER</span>`;
     }
 
-    /* Check if this commission belongs to the Admin */
-    const isAdminComm = (roleUpper === 'ADMIN' || roleUpper === 'ADMIN_SHARE') || 
-                        (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
+    /* Status Badge Styling */
+    let statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${statusVal}</span>`;
+    const sUpper = (statusVal || '').toUpperCase();
+    if (sUpper === 'APPROVED' || sUpper === 'UNREQUESTED_BALANCE' || sUpper === 'ACTIVE' || qType === 'MAIN_ACCOUNT') {
+      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">APPROVED</span>`;
+    } else if (sUpper === 'REQUESTED_BY_RECIPIENT' || sUpper === 'REQUESTED' || qType === 'OUTGOING_REQUESTS') {
+      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">REQUESTED</span>`;
+    } else if (sUpper === 'APPROVED_IN_WORKING' || sUpper === 'IN_WORKING' || qType === 'WORKING_QUEUE') {
+      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">IN WORKING</span>`;
+    } else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') {
+      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">PAID</span>`;
+    } else if (sUpper === 'DENIED' || sUpper === 'DECLINED' || sUpper === 'REJECTED') {
+      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">DENIED</span>`;
+    }
 
-    /* Action Buttons Logic */
+    /* Action Buttons Logic: Admin's Own Commission vs Operator Mode */
     let actionButtons = '';
 
-    if (isAdminComm) {
-      /* Admin is the recipient -> Provide Buyer-like Commission Actions */
-      if (statusVal === 'Approved' || statusVal === 'UNREQUESTED_BALANCE' || qType === 'MAIN_ACCOUNT') {
+    if (isRecipientAdmin) {
+      /* Admin is recipient -> Buyer-equivalent commission actions */
+      if (sUpper === 'APPROVED' || sUpper === 'UNREQUESTED_BALANCE' || qType === 'MAIN_ACCOUNT') {
         actionButtons = `
           <button onclick="requestAdminPayout('${c.id}')" class="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-md shadow-amber-500/20 flex items-center space-x-1 inline-flex">
             <i class="fa-solid fa-paper-plane"></i>
             <span>Request Payout</span>
           </button>`;
-      } else if (statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'OFFERED_AWAITING_ACCEPTANCE') {
+      } else if (sUpper === 'OFFERED_BY_VENDOR' || sUpper === 'OFFERED_AWAITING_ACCEPTANCE') {
         actionButtons = `
           <button onclick="acceptAdminOffer('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition inline-flex items-center space-x-1 mr-1">
             <i class="fa-solid fa-check"></i><span>Accept</span>
@@ -880,31 +904,31 @@ function renderAdminCommissionsTable(comms) {
           <button onclick="declineAdminOffer('${c.id}')" class="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition inline-flex items-center space-x-1">
             <i class="fa-solid fa-xmark"></i><span>Decline</span>
           </button>`;
-      } else if (statusVal === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+      } else if (sUpper === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
         actionButtons = `<span class="text-amber-400 font-bold text-[10px] flex items-center justify-end"><i class="fa-solid fa-clock mr-1"></i>Payout Requested</span>`;
-      } else if (statusVal === 'COMPLETED_PAID' || qType === 'HISTORY') {
+      } else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY') {
         actionButtons = `<span class="text-emerald-400 font-bold text-[10px] flex items-center justify-end"><i class="fa-solid fa-circle-check mr-1"></i>Paid</span>`;
       } else {
         actionButtons = `<span class="text-slate-500 text-[10px]">${statusVal}</span>`;
       }
     } else {
       /* Operator Actions for Other Users */
-      if (statusVal === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+      if (sUpper === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
         actionButtons = `
           <button onclick="approveAdminPayout('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-md shadow-emerald-500/20 inline-flex items-center space-x-1">
-            <i class="fa-solid fa-credit-card"></i>
-            <span>Settle / Pay</span>
+            <i class="fa-solid fa-check-circle"></i>
+            <span>Approve Payout</span>
           </button>`;
-      } else if (statusVal === 'APPROVED_IN_WORKING' || qType === 'WORKING_QUEUE') {
+      } else if (sUpper === 'APPROVED_IN_WORKING' || qType === 'WORKING_QUEUE') {
         actionButtons = `<span class="text-blue-400 text-[10px] font-medium"><i class="fa-solid fa-spinner fa-spin mr-1"></i>In Working Queue</span>`;
-      } else if (statusVal === 'COMPLETED_PAID' || qType === 'HISTORY') {
+      } else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY') {
         actionButtons = `<span class="text-emerald-400 text-[10px] font-bold flex items-center justify-end"><i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i>Settled</span>`;
       } else {
         actionButtons = `<span class="text-slate-500 text-[10px]">${statusVal}</span>`;
       }
     }
 
-    /* Append Universal Inspection & Contact Buttons */
+    /* Universal Inspection & Contact Buttons */
     const inspectBtn = `<button onclick="viewCommissionDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
     const contactBtn = `<button onclick="openDirectOutreachForUser('${c.recipient_id || c.vendor_id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-amber-400 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="Direct Contact"><i class="fa-solid fa-comment-dots"></i></button>`;
 
@@ -924,7 +948,7 @@ function renderAdminCommissionsTable(comms) {
         </td>
         <td class="py-3 px-4 font-bold text-emerald-400 text-xs">$${Number(c.amount || 0).toFixed(2)}</td>
         <td class="py-3 px-4 text-slate-300 font-mono text-[10px]"><span class="bg-darkBg border border-borderSlate px-2 py-0.5 rounded-md">${qType}</span></td>
-        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${statusVal}</span></td>
+        <td class="py-3 px-4">${statusBadge}</td>
         <td class="py-3 px-4 text-right flex items-center justify-end space-x-1">
           ${actionButtons}
           ${inspectBtn}
@@ -934,7 +958,6 @@ function renderAdminCommissionsTable(comms) {
     `;
   }).join('');
 }
-
 function filterAdminCommissions() {
   const filterVal = document.getElementById('adminCommTabFilter').value;
   if (filterVal === 'ALL') {
@@ -946,7 +969,7 @@ function filterAdminCommissions() {
 }
 
 /* Admin Recipient Actions */
-async function requestAdminPayout(commId) {
+async async function requestAdminPayout(commId) {
   try {
     const { error } = await _supabase
       .from('commissions')
@@ -958,6 +981,22 @@ async function requestAdminPayout(commId) {
     await loadCommissionsData();
   } catch (err) {
     alert("Payout request error: " + err.message);
+  }
+}
+
+
+async function approveAdminPayout(commId) {
+  try {
+    const { error } = await _supabase
+      .from('commissions')
+      .update({ queue_type: 'HISTORY', status: 'COMPLETED_PAID', updated_at: new Date().toISOString() })
+      .eq('id', commId);
+
+    if (error) throw error;
+    showToast("Payout approved and marked as completed!");
+    await loadCommissionsData();
+  } catch (err) {
+    alert("Payout approval error: " + err.message);
   }
 }
 
