@@ -1036,14 +1036,20 @@ async function loadCommissionsData(isSilent = false) {
       const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
       const amt = Number(c.amount || 0);
 
-      const isMyComm = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE') ||
-                       (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
+      const isAdminRole = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE' || rawRole === 'PLATFORM_FEE');
+      const isUserMatch = Boolean(currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
+      
+      /* A commission belongs to the Admin if it is an Admin Share OR a Reviewer/Inviter earning assigned to the Admin user */
+      const isMyComm = isAdminRole || (isUserMatch && (rawRole === 'REVIEWER' || rawRole === 'BUYER_INVITER' || rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || !rawRole));
 
       if (isMyComm) {
-        if (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT') {
-          adminAvailable += amt;
-        } else if (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') {
+        const isPaid = (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') && statusVal !== 'DECLINED';
+        const isAvailable = !isPaid && statusVal !== 'DECLINED' && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT');
+
+        if (isPaid) {
           adminLifetime += amt;
+        } else if (isAvailable) {
+          adminAvailable += amt;
         }
       }
 
@@ -1070,9 +1076,15 @@ async function requestAllAvailableAdminPayouts() {
       const qType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
       const statusVal = (c.status || '').toUpperCase();
       const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
-      const isMyComm = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE') ||
-                       (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
-      return isMyComm && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT');
+
+      const isAdminRole = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE' || rawRole === 'PLATFORM_FEE');
+      const isUserMatch = Boolean(currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
+      const isMyComm = isAdminRole || (isUserMatch && (rawRole === 'REVIEWER' || rawRole === 'BUYER_INVITER' || rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || !rawRole));
+
+      const isPaid = (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') && statusVal !== 'DECLINED';
+      const isAvailable = !isPaid && statusVal !== 'DECLINED' && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT');
+
+      return isMyComm && isAvailable;
     });
 
     if (eligibleComms.length === 0) {
