@@ -8,18 +8,18 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
-  darkMode: 'class',
-  theme: {
-    extend: {
-      colors: {
-        darkBg: '#0F172A',
-        cardBg: '#1E293B',
-        accentBlue: '#2563EB',
-        accentHover: '#1D4ED8',
-        borderSlate: '#334155'
-      }
-    }
-  }
+darkMode: 'class',
+theme: {
+extend: {
+colors: {
+darkBg: '#0F172A',
+cardBg: '#1E293B',
+accentBlue: '#2563EB',
+accentHover: '#1D4ED8',
+borderSlate: '#334155'
+}
+}
+}
 }
 </script>
 <!-- FontAwesome for Icons -->
@@ -98,7 +98,6 @@ eh
 </button>
 </div>
 </div>
-
 <!-- ================= SECTION A: PRODUCT CATALOG MANAGEMENT ================= -->
 <div id="catalogSection" class="space-y-6">
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -119,7 +118,6 @@ eh
 </div>
 </div>
 </div>
-
 <!-- ================= SECTION B: 5-TAB COMMISSIONS DISBURSEMENT DASHBOARD ================= -->
 <div id="commissionsSection" class="space-y-6 hidden">
 <div class="space-y-1">
@@ -160,7 +158,6 @@ eh
 </div>
 </div>
 </div>
-
 <!-- ================= SECTION C: MESSAGING THREADS HUB ================= -->
 <div id="messagesSection" class="space-y-6 hidden">
 <div class="flex items-center justify-between">
@@ -213,7 +210,6 @@ eh
 </div>
 </div>
 </div>
-
 <!-- ================= SECTION D: REFERRAL NETWORK WIDGET ================= -->
 <div id="referralsSection" class="space-y-6 hidden">
 <div class="space-y-1">
@@ -243,7 +239,6 @@ eh
 </div>
 </div>
 </main>
-
 <!-- ================= MODALS ================= -->
 <!-- Add/Edit Product Modal -->
 <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -283,7 +278,6 @@ Save Product Listing
 </form>
 </div>
 </div>
-
 <!-- Pay & Settle Modal (Working Queue Settlement) -->
 <div id="settlementModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
@@ -312,7 +306,6 @@ Complete & Archive to History
 </form>
 </div>
 </div>
-
 <!-- Inspect Receipt Modal (Payment History Audit) -->
 <div id="inspectReceiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
@@ -343,7 +336,6 @@ Close Inspector
 </div>
 </div>
 </div>
-
 <!-- Proactive Top-Down Offer Modal (Main Queue) -->
 <div id="topDownOfferModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
@@ -374,15 +366,12 @@ Send Offer to Outgoing Requests
 </form>
 </div>
 </div>
-
 <!-- Toast Notification Container -->
 <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2"></div>
-
 <!-- Footer -->
 <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
 <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace Engine.</p>
 </footer>
-
 <!-- Vendor Workspace Script -->
 <script>
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
@@ -398,7 +387,7 @@ let selectedSellerCommIds = new Set();
 let pollingInterval = null;
 let chatAttachedFile = null;
 
-// Status Badge Sanitizer
+/* Status Badge Sanitizer Helper */
 const sanitizeStatusBadge = (payload) => {
   if (payload.status_badge) {
     payload.status_badge = payload.status_badge.trim().toUpperCase();
@@ -406,43 +395,66 @@ const sanitizeStatusBadge = (payload) => {
   return payload;
 };
 
-async function initVendorWorkspace() {
-  const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
-  if (sessionError || !session) {
-    window.location.href = 'login.html';
-    return;
-  }
-  currentUser = session.user;
-
-  // Verify Role Gating
+/* 1. Page-Load Workspace Initialization & Role Security Guard */
+async function initSellerWorkspace() {
   try {
-    const { data: profile } = await _supabase
+    /* Step A: Check for active Supabase auth session */
+    const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+    if (sessionError || !session) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    /* Step B: Fetch user role from public.profiles */
+    const { data: profile, error: profileError } = await _supabase
       .from('profiles')
       .select('role')
-      .eq('id', currentUser.id)
-      .maybeSingle();
+      .eq('id', session.user.id)
+      .single();
 
-    if (profile && profile.role && profile.role.toLowerCase() === 'buyer') {
+    if (profileError || !profile || !profile.role) {
+      await _supabase.auth.signOut();
+      window.location.href = 'login.html';
+      return;
+    }
+
+    /* Step C: Enforce role isolation (Block Buyers from Vendor Portal) */
+    if (profile.role.toLowerCase() === 'buyer') {
       alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
       window.location.href = 'index.html';
       return;
     }
-  } catch (profileErr) {
-    console.warn("Profile role check bypassed:", profileErr);
+
+    /* Step D: Initialize Authorized Vendor UI */
+    currentUser = session.user;
+    const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+    const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+    if (document.getElementById('headerUserName')) {
+      document.getElementById('headerUserName').textContent = fullName;
+    }
+    if (document.getElementById('welcomeTitle')) {
+      document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
+    }
+    if (document.getElementById('refLinkInput')) {
+      document.getElementById('refLinkInput').value = `https://echohub.ja/register?ref=vendor_${currentUser.id.substring(0, 8)}`;
+    }
+
+    /* Step E: Load Vendor Workspace Data */
+    await loadVendorProducts();
+    await loadVendorCommissions();
+    await loadVendorThreads();
+
+    /* Step F: Start Live Polling Loop (10-second sync) */
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+    pollingInterval = setInterval(pollVendorData, 10000);
+
+  } catch (err) {
+    console.error("Initialization error:", err.message);
+    window.location.href = 'login.html';
   }
-
-  const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
-  const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-  if (document.getElementById('headerUserName')) document.getElementById('headerUserName').textContent = fullName;
-  if (document.getElementById('welcomeTitle')) document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
-  if (document.getElementById('refLinkInput')) document.getElementById('refLinkInput').value = `https://echohub.ja/register?ref=vendor_${currentUser.id.substring(0,8)}`;
-
-  await loadVendorProducts();
-  await loadVendorCommissions();
-  await loadVendorThreads();
-
-  if (pollingInterval) clearInterval(pollingInterval);
-  pollingInterval = setInterval(pollVendorData, 10000);
 }
 
 async function pollVendorData() {
@@ -451,12 +463,17 @@ async function pollVendorData() {
   await loadVendorThreads(true);
 }
 
-function copyReferralLink() {
-  const input = document.getElementById('refLinkInput');
-  if (input) {
-    input.select();
-    navigator.clipboard.writeText(input.value);
-    showToast("Referral link copied to clipboard!");
+/* 2. Sign Out Handler */
+async function handleLogout() {
+  try {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+    await _supabase.auth.signOut();
+  } catch (err) {
+    console.error("Logout error:", err.message);
+  } finally {
+    window.location.href = 'login.html';
   }
 }
 
@@ -482,18 +499,7 @@ function switchVendorTab(tab) {
   }
 }
 
-async function handleLogout() {
-  try {
-    if (pollingInterval) clearInterval(pollingInterval);
-    await _supabase.auth.signOut();
-  } catch (err) {
-    console.error("Logout error:", err.message);
-  } finally {
-    window.location.href = 'login.html';
-  }
-}
-
-// Image Compression Utility
+/* Image Compression Utility */
 async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -519,7 +525,7 @@ async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
   });
 }
 
-// Product Catalog
+/* Product Catalog Management */
 async function loadVendorProducts(isPolling = false) {
   const grid = document.getElementById('vendorProductGrid');
   try {
@@ -599,7 +605,6 @@ async function handleSaveProduct(event) {
     const existing = vendorProducts.find(p => p.id == id);
     if (existing) imageUrl = existing.image_url || existing.image;
   }
-
   if (fileInput.files && fileInput.files[0]) {
     imageUrl = await compressImageFile(fileInput.files[0]);
   }
@@ -635,7 +640,7 @@ async function deleteProduct(id) {
   }
 }
 
-// 5-Tab Commissions Architecture
+/* 5-Tab Commissions Architecture */
 async function loadVendorCommissions(isPolling = false) {
   try {
     let { data, error } = await _supabase
@@ -681,31 +686,18 @@ function renderSellerCommissions() {
   const filtered = vendorCommissions.filter(c => {
     const statusUpper = (c.status || '').toUpperCase();
     const queueTypeUpper = (c.queue_type || '').toUpperCase();
-    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) || 
+    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) ||
                           (c.recipient_email || '').toLowerCase().includes(search) ||
                           (c.feedback_id || '').toLowerCase().includes(search);
-
     let matchesTab = false;
     if (activeSubTab === 'incoming') {
-      matchesTab = queueTypeUpper === 'INCOMING_REQUESTS' || 
-                   queueTypeUpper === 'OUTGOING_REQUESTS' || 
-                   statusUpper === 'REQUESTED_BY_RECIPIENT' || 
-                   statusUpper === 'REQUESTED';
+      matchesTab = queueTypeUpper === 'INCOMING_REQUESTS' || queueTypeUpper === 'OUTGOING_REQUESTS' || statusUpper === 'REQUESTED_BY_RECIPIENT' || statusUpper === 'REQUESTED';
     } else if (activeSubTab === 'mainQueue') {
-      // Main Queue shows all unrequested commission balances (MAIN_ACCOUNT queue or Approved status)
       matchesTab = (queueTypeUpper === 'MAIN_ACCOUNT' || queueTypeUpper === 'MAIN_QUEUE' || statusUpper === 'APPROVED' || statusUpper === 'UNREQUESTED_BALANCE' || !c.queue_type) &&
-                   queueTypeUpper !== 'WORKING_QUEUE' &&
-                   queueTypeUpper !== 'HISTORY' &&
-                   queueTypeUpper !== 'PAYMENT_HISTORY' &&
-                   statusUpper !== 'REQUESTED_BY_RECIPIENT' &&
-                   statusUpper !== 'OUTGOING_REQUESTS' &&
-                   statusUpper !== 'OFFERED_AWAITING_ACCEPTANCE' &&
-                   statusUpper !== 'OFFERED_BY_VENDOR' &&
-                   statusUpper !== 'APPROVED_IN_WORKING' &&
-                   statusUpper !== 'COMPLETED_PAID' &&
-                   statusUpper !== 'PAID';
+                   queueTypeUpper !== 'WORKING_QUEUE' && queueTypeUpper !== 'HISTORY' && queueTypeUpper !== 'PAYMENT_HISTORY' &&
+                   statusUpper !== 'REQUESTED_BY_RECIPIENT' && statusUpper !== 'OUTGOING_REQUESTS' && statusUpper !== 'OFFERED_AWAITING_ACCEPTANCE' && statusUpper !== 'OFFERED_BY_VENDOR' && statusUpper !== 'APPROVED_IN_WORKING' && statusUpper !== 'COMPLETED_PAID' && statusUpper !== 'PAID';
     } else if (activeSubTab === 'outgoing') {
-      matchesTab = statusUpper === 'OFFERED_AWAITING_ACCEPTANCE' || statusUpper === 'OFFERED_BY_VENDOR';
+      matchesTab = queueTypeUpper === 'OUTGOING_REQUESTS' || statusUpper === 'OFFERED_AWAITING_ACCEPTANCE' || statusUpper === 'OFFERED_BY_VENDOR';
     } else if (activeSubTab === 'workingQueue') {
       matchesTab = queueTypeUpper === 'WORKING_QUEUE' || statusUpper === 'APPROVED_IN_WORKING';
     } else if (activeSubTab === 'history') {
@@ -755,7 +747,7 @@ function renderSellerCommissions() {
       `;
     } else if (activeSubTab === 'history') {
       actionHtml = `
-        <button onclick="inspectReceipt('${c.paypal_tx_id || c.paypaltxid || 'N/A'}','${c.amount || 0}', '${c.receipt_url || c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
+        <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}','${c.amount || 0}', '${c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
           <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
         </button>
       `;
@@ -768,7 +760,7 @@ function renderSellerCommissions() {
     return `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
         <div class="col-span-1">
-          <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id)?'checked':''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+          <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
         </div>
         <div class="col-span-3 space-y-0.5">
           <span class="font-bold text-white">Ref ID: ${String(c.id).substring(0,8)}</span>
@@ -814,7 +806,7 @@ async function batchVendorApprove() {
   try {
     for (const id of selectedSellerCommIds) {
       let updatePayload = {
-        status_tag: 'APPROVED_IN_WORKING',
+        queue_type: 'WORKING_QUEUE',
         status: 'APPROVED_IN_WORKING'
       };
       sanitizeStatusBadge(updatePayload);
@@ -834,7 +826,7 @@ async function batchVendorApprove() {
 
 async function approveSingleComm(id) {
   try {
-    let updatePayload = { status_tag: 'APPROVED_IN_WORKING', status: 'APPROVED_IN_WORKING' };
+    let updatePayload = { queue_type: 'WORKING_QUEUE', status: 'APPROVED_IN_WORKING' };
     sanitizeStatusBadge(updatePayload);
     const { error } = await _supabase
       .from('commissions')
@@ -850,7 +842,7 @@ async function approveSingleComm(id) {
 async function denySingleComm(id) {
   if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
   try {
-    let updatePayload = { status_tag: 'UNREQUESTED_BALANCE', status: 'UNREQUESTED_BALANCE' };
+    let updatePayload = { queue_type: 'MAIN_ACCOUNT', status: 'Approved' };
     sanitizeStatusBadge(updatePayload);
     const { error } = await _supabase
       .from('commissions')
@@ -869,17 +861,19 @@ async function handleTopDownOfferSubmit(event) {
   const recipientEmail = document.getElementById('offerRecipientId').value.trim();
   const recipientRole = document.getElementById('offerRecipientRole').value;
   const amount = parseFloat(document.getElementById('offerAmount').value);
+
   let insertPayload = {
     vendor_id: currentUser.id,
     recipient_email: recipientEmail,
     recipient_role: recipientRole,
     amount: amount,
-    status_tag: 'OFFERED_AWAITING_ACCEPTANCE',
-    status: 'OFFERED_AWAITING_ACCEPTANCE',
+    queue_type: 'OUTGOING_REQUESTS',
+    status: 'OFFERED_BY_VENDOR',
     link: 'N/A',
     type: 'TOP_DOWN_OFFER'
   };
   sanitizeStatusBadge(insertPayload);
+
   try {
     const { error } = await _supabase
       .from('commissions')
@@ -908,6 +902,7 @@ async function handleSettlementSubmit(event) {
   const commId = document.getElementById('settleTargetCommId').value;
   const txId = document.getElementById('settleTxId').value.trim();
   const fileInput = document.getElementById('settleReceiptFile');
+
   if (txId.length !== 17) {
     alert('PayPal Transaction ID must be exactly 17 characters.');
     return;
@@ -916,13 +911,13 @@ async function handleSettlementSubmit(event) {
   if (fileInput.files && fileInput.files[0]) {
     receiptBase64 = await compressImageFile(fileInput.files[0], 900, 0.7);
   }
+
   try {
     let updateData = {
-      status_tag: 'COMPLETED_PAID',
+      queue_type: 'HISTORY',
       status: 'COMPLETED_PAID',
       paypal_tx_id: txId,
-      receipt_base64: receiptBase64,
-      receipt_url: receiptBase64
+      receipt_base64: receiptBase64
     };
     sanitizeStatusBadge(updateData);
     const { error } = await _supabase
@@ -945,40 +940,29 @@ function inspectReceipt(txId, amount, receiptUrl) {
   document.getElementById('inspectReceiptModal').classList.remove('hidden');
 }
 
-// ================= MESSAGING HUB & REVIEW STREAM =================
+/* Messaging Hub & Review Stream */
 async function loadVendorThreads(isPolling = false) {
   try {
-    // FIX 1 & 2: Corrected typo 'receiverid' -> 'receiver_id' and query structure
-    const { data: msgData, error: msgErr } = await _supabase
+    const { data: msgData } = await _supabase
       .from('messages')
       .select('*')
-      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id},buyer_id.eq.${currentUser.id}`)
+      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
 
-    if (msgErr) {
-      console.warn("Messages query error:", msgErr.message);
-    }
+    let commData = [];
+    try {
+      const { data: cData } = await _supabase.from('commissions').select('*').eq('vendor_id', currentUser.id);
+      commData = cData || [];
+    } catch (e) {}
 
-    const allMsgs = msgData || [];
+    const allItems = [...(msgData || [])];
     const threadMap = {};
-
-    allMsgs.forEach(m => {
+    allItems.forEach(m => {
       const text = m.text || m.message_text || m.message || m.content || m.body || m.link || '';
-      
-      // FIX 3: Safe partnerId resolution avoiding invalid non-UUID strings
-      let partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id);
-      if (!partnerId || partnerId === currentUser.id) {
-        partnerId = m.buyer_id || (m.sender_id !== currentUser.id ? m.sender_id : m.receiver_id);
-      }
-      
-      // Fallback display key if no valid UUID partner exists
-      const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(partnerId);
-      const displayKey = isUuid ? partnerId : (m.buyer_id || m.sender_id || 'general_shopper');
-
-      if (!threadMap[displayKey]) {
-        threadMap[displayKey] = {
-          partnerId: isUuid ? partnerId : null,
-          displayKey: displayKey,
+      const partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id) || 'general_shopper';
+      if (!threadMap[partnerId]) {
+        threadMap[partnerId] = {
+          partnerId: partnerId,
           lastMessage: text,
           updatedAt: m.created_at,
           messages: []
@@ -988,9 +972,8 @@ async function loadVendorThreads(isPolling = false) {
       m._normalizedImage = m.file_url || m.attachment_url || m.image || m.image_url || m.proof_base64 ||
         (m.link && (m.link.match(/\.(jpeg|jpg|png|gif)$/i) || m.link.startsWith('data:image/')) ? m.link : null) ||
         (m.content && m.content.startsWith('data:image/') ? m.content : null);
-      threadMap[displayKey].messages.push(m);
+      threadMap[partnerId].messages.push(m);
     });
-
     vendorThreads = Object.values(threadMap);
     renderThreadsList();
     if (activeThreadId) renderActiveChat();
@@ -1001,18 +984,16 @@ async function loadVendorThreads(isPolling = false) {
 
 function renderThreadsList() {
   const listEl = document.getElementById('messagingThreadsList');
-  if (!listEl) return;
   if (vendorThreads.length === 0) {
     listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No conversations yet.</p>`;
     return;
   }
   listEl.innerHTML = vendorThreads.map(t => {
     const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    const isSelected = activeThreadId === t.displayKey || activeThreadId === t.partnerId;
     return `
-      <div onclick="selectThread('${t.displayKey}')" class="p-3 bg-darkBg border ${isSelected ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
+      <div onclick="selectThread('${t.partnerId}')" class="p-3 bg-darkBg border ${activeThreadId === t.partnerId ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-200">Shopper / Reviewer (${String(t.displayKey).substring(0,8)}...)</span>
+          <span class="text-xs font-semibold text-slate-200">Reviewer (${String(t.partnerId).substring(0,6)}...)</span>
           <span class="text-[10px] text-slate-500">${timeString}</span>
         </div>
         <p class="text-xs text-slate-400 truncate">${t.lastMessage || 'Attachment or link submitted'}</p>
@@ -1021,8 +1002,8 @@ function renderThreadsList() {
   }).join('');
 }
 
-function selectThread(key) {
-  activeThreadId = key;
+function selectThread(partnerId) {
+  activeThreadId = partnerId;
   renderThreadsList();
   renderActiveChat();
   document.getElementById('chatInputMsg').disabled = false;
@@ -1041,11 +1022,10 @@ function hasImageAttachment(msg) {
 }
 
 function renderActiveChat() {
-  const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
+  const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
   const container = document.getElementById('chatMessagesContainer');
-  if (!thread || !container) return;
-  
-  document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,8)}...)`;
+  if (!thread) return;
+  document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,6)}...)`;
   const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
 
   container.innerHTML = sorted.map(m => {
@@ -1068,7 +1048,7 @@ function renderActiveChat() {
       bubbleContent = `
         <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
           <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${badgeClass}">${statusBadge}</span>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
             <span class="text-[10px] text-slate-400 font-mono feedback-id-display">ID: ${feedbackId}</span>
           </div>
           <div>
@@ -1133,19 +1113,16 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
     actionContainer.innerHTML = `<span class="text-accentBlue italic text-[11px]">Processing Approval & Ledger Split...</span>`;
   }
   try {
-    const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
+    const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
     const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
     const currentCycle = msg ? msg.submission_cycle : null;
 
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(reviewerId);
-    const validReviewerId = isUuid ? reviewerId : (msg?.sender_id || msg?.buyer_id || null);
-
     const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
       p_message_id: String(messageId),
       p_vendor_id: currentUser.id,
-      p_reviewer_id: validReviewerId,
-      p_commission_amount: Number(commissionAmount) || 5.00,
+      p_reviewer_id: reviewerId,
+      p_commission_amount: Number(commissionAmount),
       p_platform_fee: 10.00,
       p_link: reviewLink,
       p_type: 'REVIEW_COMMISSION'
@@ -1162,24 +1139,26 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
       feedback_id: generatedFeedbackId
     };
     sanitizeStatusBadge(updatePayload);
+
     let updateQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
     if (currentCycle !== null && currentCycle !== undefined) {
       updateQuery = updateQuery.eq('submission_cycle', currentCycle);
     }
     const { error: updateError } = await updateQuery;
-    if (updateError) throw updateError;
 
+    if (updateError) throw updateError;
     updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
     showToast("Review approved successfully! Commission split generated.");
     await loadVendorCommissions();
     await loadVendorThreads(true);
   } catch (err) {
-    console.error("Approval failed, applying direct update fallback:", err);
+    console.error("Approval failed:", err);
     try {
-      const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
+      const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
       const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
       const currentCycle = msg ? msg.submission_cycle : null;
       const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
       let updatePayload = {
         status_badge: 'APPROVED',
         feedback_id: fallbackFeedbackId
@@ -1192,8 +1171,8 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
       }
       const { error: fallbackUpdateError } = await fallbackQuery;
       if (fallbackUpdateError) throw fallbackUpdateError;
-
       updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
+
       showToast("Review approved (Direct update mode).");
       await loadVendorCommissions();
       await loadVendorThreads(true);
@@ -1212,7 +1191,7 @@ async function handleInlineDeny(messageId) {
     actionContainer.innerHTML = `<span class="text-rose-400 italic text-[11px]">Processing Denial...</span>`;
   }
   try {
-    const thread = vendorThreads.find(t => t.displayKey === activeThreadId || t.partnerId === activeThreadId);
+    const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
     const currentCycle = msg ? msg.submission_cycle : null;
 
@@ -1222,13 +1201,13 @@ async function handleInlineDeny(messageId) {
       denial_reason: denialReason
     };
     sanitizeStatusBadge(updatePayload);
+
     let denyQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
     if (currentCycle !== null && currentCycle !== undefined) {
       denyQuery = denyQuery.eq('submission_cycle', currentCycle);
     }
     const { error: denyError } = await denyQuery;
     if (denyError) throw denyError;
-
     updateMessageCardStateLocally(messageId, 'DENIED');
     showToast("Review submission denied. Buyer notified.");
     await loadVendorThreads(true);
@@ -1261,7 +1240,6 @@ function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
 
 function showToast(message) {
   const container = document.getElementById('toast-container');
-  if (!container) return;
   const toast = document.createElement('div');
   toast.className = 'bg-cardBg border-l-4 border-accentBlue text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
   toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
@@ -1294,6 +1272,7 @@ async function handleSendMessage(event) {
 
   let fileDataUrl = null;
   let fileName = null;
+
   if (chatAttachedFile) {
     fileName = chatAttachedFile.name;
     if (chatAttachedFile.type.startsWith('image/')) {
@@ -1308,60 +1287,39 @@ async function handleSendMessage(event) {
   }
 
   try {
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(activeThreadId);
-    
-    // Primary payload matching multi-schema configurations
     let payload = {
       sender_id: currentUser.id,
+      receiver_id: activeThreadId,
       vendor_id: currentUser.id,
-      message_text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
       text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-      created_at: new Date().toISOString()
+      type: 'vendor_reply'
     };
-
-    if (isUuid) {
-      payload.receiver_id = activeThreadId;
-      payload.buyer_id = activeThreadId;
-    }
-
     if (fileDataUrl) {
-      payload.proof_base64 = fileDataUrl;
       payload.file_url = fileDataUrl;
       payload.file_name = fileName;
     }
-
     let { error } = await _supabase
       .from('messages')
       .insert([payload]);
-
     if (error) {
-      console.warn("First insert attempt failed, trying clean fallback payload:", error.message);
-      const cleanPayload = {
-        sender_id: currentUser.id,
-        vendor_id: currentUser.id,
-        text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-        created_at: new Date().toISOString()
-      };
-      if (isUuid) {
-        cleanPayload.receiver_id = activeThreadId;
-      }
+      delete payload.text;
+      payload.message = text || (fileName ? `[Attachment: ${fileName}]` : '');
       if (fileDataUrl) {
-        cleanPayload.proof_base64 = fileDataUrl;
+        payload.attachment_url = fileDataUrl;
+        payload.attachment_name = fileName;
       }
-      const { error: fallbackErr } = await _supabase.from('messages').insert([cleanPayload]);
-      if (fallbackErr) throw fallbackErr;
+      await _supabase.from('messages').insert([payload]);
     }
-
     input.value = '';
     clearChatAttachment();
-    showToast("Message sent successfully!");
     await loadVendorThreads(true);
   } catch (err) {
     alert('Error sending message: ' + err.message);
   }
 }
 
-window.addEventListener('DOMContentLoaded', initVendorWorkspace);
+/* Event Listener */
+window.addEventListener('DOMContentLoaded', initSellerWorkspace);
 </script>
 </body>
 </html>
