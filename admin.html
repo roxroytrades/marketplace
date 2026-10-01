@@ -970,11 +970,11 @@ function renderAdminCommissionsTable(comms) {
     const vendorEmail = vendor ? vendor.email : 'N/A';
 
     /* Recipient Role Identification */
-    const rawRole = (c.recipient_role || '').trim().toUpperCase();
+    const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
     const isMyCommission = (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email)) ||
                            (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE');
 
-    /* Role Badge Logic - Evaluates record role explicitly */
+    /* Role Badge Logic - Directly maps database role_type without speculative fallback overrides */
     let roleBadge = '';
     if (rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || rawRole === 'SELLER_INVITE' || rawRole === 'SELLER_REFERRAL' || rawRole === 'VENDOR_REFERRAL') {
       roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">SELLER INVITER</span>`;
@@ -984,10 +984,8 @@ function renderAdminCommissionsTable(comms) {
       roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-[9px]"></i>ADMIN SHARE</span>`;
     } else if (rawRole === 'REVIEWER' || rawRole === 'BUYER' || rawRole === 'SHOPPER') {
       roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">REVIEWER</span>`;
-    } else if (isMyCommission && (!rawRole || rawRole === '')) {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-[9px]"></i>ADMIN SHARE</span>`;
     } else {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${rawRole || 'REVIEWER'}</span>`;
+      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${rawRole || 'UNSPECIFIED'}</span>`;
     }
 
     /* Status Badge Styling */
@@ -1582,7 +1580,7 @@ async function loadReferralsData() {
     /* 2. Compute KPI Performance Stats */
     let totalRevenue = 0;
     allCommissionsCache.forEach(c => {
-      const rRole = (c.recipient_role || '').toUpperCase();
+      const rRole = (c.role_type || c.recipient_role || '').toUpperCase();
       if (rRole === 'ADMIN' || rRole === 'ADMIN_SHARE' || (currentUser && c.recipient_id === currentUser.id)) {
         totalRevenue += Number(c.amount || 0);
       }
@@ -1704,7 +1702,7 @@ function viewCommissionDetails(commId) {
   const product = allProductsCache.find(p => p.id === c.product_id);
   const productTitle = product ? product.title : (c.product_id || 'General Marketplace Review');
 
-  const recRoleUpper = (c.recipient_role || 'REVIEWER').toUpperCase();
+  const recRoleUpper = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
   const safeRecName = recipientName.replace(/'/g, "\'");
   const safeRecEmail = recipientEmail.replace(/'/g, "\'");
   const safeVenName = vendorName.replace(/'/g, "\'");
