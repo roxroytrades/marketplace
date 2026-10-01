@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+  <link rel="icon" href="data:,">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Echo Hub - Master Admin Operations Dashboard</title>
@@ -185,9 +186,10 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         <select id="adminCommTabFilter" onchange="filterAdminCommissions()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
           <option value="ALL">All Queues & Statuses</option>
           <option value="MAIN_ACCOUNT">Main Queue / Unclaimed</option>
-          <option value="OUTGOING_REQUESTS">Payout Requested</option>
+          <option value="INCOMING_REQUESTS">Incoming Vendor Offers</option>
+          <option value="OUTGOING_REQUESTS">Outgoing Payout Requests</option>
           <option value="WORKING_QUEUE">Approved In Working</option>
-          <option value="HISTORY">Completed & Paid</option>
+          <option value="HISTORY">Completed & Paid History</option>
         </select>
       </div>
     </div>
@@ -318,10 +320,88 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
   <section id="adminTab-referrals" class="admin-tab-content space-y-6 hidden">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
       <div>
-        <h2 class="text-xl font-bold text-white tracking-tight">Referral Network Hub & Inviter Trees</h2>
-        <p class="text-xs text-slate-400 mt-1">Audit multi-tier affiliate referral codes, inviter ties, and platform commission distributions.</p>
+        <h2 class="text-xl font-bold text-white tracking-tight">Referral Network Hub & Inviter Command Center</h2>
+        <p class="text-xs text-slate-400 mt-1">Audit multi-tier affiliate referral codes, share admin invitation links, and track network earnings.</p>
       </div>
       <input type="text" id="referralSearchInput" onkeyup="filterReferralsTable()" placeholder="Search referral codes or user IDs..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+    </div>
+
+    <!-- Referral KPI Performance Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+        <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 font-bold text-sm">
+          <i class="fa-solid fa-coins"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Admin Inviter Revenue</p>
+          <p id="refStatTotalRevenue" class="text-lg font-extrabold text-emerald-400">$0.00</p>
+        </div>
+      </div>
+
+      <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+        <div class="w-10 h-10 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 font-bold text-sm">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Total Network Members</p>
+          <p id="refStatTotalMembers" class="text-lg font-extrabold text-white">0</p>
+        </div>
+      </div>
+
+      <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+        <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 font-bold text-sm">
+          <i class="fa-solid fa-bag-shopping"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Referred Shoppers</p>
+          <p id="refStatShoppers" class="text-lg font-extrabold text-emerald-400">0</p>
+        </div>
+      </div>
+
+      <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+        <div class="w-10 h-10 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 font-bold text-sm">
+          <i class="fa-solid fa-store"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Referred Vendors</p>
+          <p id="refStatVendors" class="text-lg font-extrabold text-indigo-400">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Direct Invitation Links -->
+    <div class="bg-cardBg border border-borderSlate p-6 rounded-2xl space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-link text-amber-400 text-sm"></i>
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider">Admin Invitation Generators</h3>
+        </div>
+        <div class="text-[11px] text-slate-400">
+          Admin Referral Code: <span id="adminRefCodeDisplay" class="font-mono text-amber-400 font-bold">ADMIN_PROMO_2026</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="space-y-1.5">
+          <label class="font-semibold text-slate-300">Shopper Invite Link</label>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="adminShopperRefLink" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none">
+            <button onclick="copyRefLink('adminShopperRefLink')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-2 rounded-xl transition text-xs whitespace-nowrap">
+              <i class="fa-solid fa-copy mr-1"></i> Copy
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="font-semibold text-slate-300">Vendor Invite Link</label>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="adminVendorRefLink" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none">
+            <button onclick="copyRefLink('adminVendorRefLink')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-2 rounded-xl transition text-xs whitespace-nowrap">
+              <i class="fa-solid fa-copy mr-1"></i> Copy
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
@@ -963,7 +1043,26 @@ function filterAdminCommissions() {
   if (filterVal === 'ALL') {
     renderAdminCommissionsTable(allCommissionsCache);
   } else {
-    const filtered = allCommissionsCache.filter(c => (c.queue_type || 'MAIN_ACCOUNT') === filterVal || (c.status || '') === filterVal);
+    const filtered = allCommissionsCache.filter(c => {
+      const q = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
+      const s = (c.status || '').toUpperCase();
+      const val = filterVal.toUpperCase();
+
+      if (val === 'MAIN_ACCOUNT') {
+        return (q === 'MAIN_ACCOUNT' || q === 'MAIN_QUEUE' || s === 'APPROVED' || s === 'UNREQUESTED_BALANCE') &&
+               q !== 'WORKING_QUEUE' && q !== 'OUTGOING_REQUESTS' && q !== 'INCOMING_REQUESTS' && q !== 'HISTORY' && q !== 'PAYMENT_HISTORY' &&
+               s !== 'APPROVED_IN_WORKING' && s !== 'COMPLETED_PAID' && s !== 'PAID' && s !== 'REQUESTED_BY_RECIPIENT' && s !== 'OFFERED_BY_VENDOR';
+      } else if (val === 'INCOMING_REQUESTS') {
+        return q === 'INCOMING_REQUESTS' || s === 'OFFERED_BY_VENDOR' || s === 'OFFERED_AWAITING_ACCEPTANCE';
+      } else if (val === 'OUTGOING_REQUESTS') {
+        return q === 'OUTGOING_REQUESTS' || s === 'REQUESTED_BY_RECIPIENT';
+      } else if (val === 'WORKING_QUEUE') {
+        return q === 'WORKING_QUEUE' || s === 'APPROVED_IN_WORKING';
+      } else if (val === 'HISTORY') {
+        return q === 'HISTORY' || q === 'PAYMENT_HISTORY' || s === 'COMPLETED_PAID' || s === 'PAID' || s === 'DECLINED';
+      }
+      return q === val || s === val;
+    });
     renderAdminCommissionsTable(filtered);
   }
 }
@@ -973,7 +1072,7 @@ async function requestAdminPayout(commId) {
   try {
     const { error } = await _supabase
       .from('commissions')
-      .update({ queue_type: 'OUTGOING_REQUESTS', status: 'REQUESTED_BY_RECIPIENT', updated_at: new Date().toISOString() })
+      .update({ queue_type: 'OUTGOING_REQUESTS', status: 'REQUESTED_BY_RECIPIENT' })
       .eq('id', commId);
 
     if (error) throw error;
@@ -989,7 +1088,7 @@ async function approveAdminPayout(commId) {
   try {
     const { error } = await _supabase
       .from('commissions')
-      .update({ queue_type: 'HISTORY', status: 'COMPLETED_PAID', updated_at: new Date().toISOString() })
+      .update({ queue_type: 'HISTORY', status: 'COMPLETED_PAID' })
       .eq('id', commId);
 
     if (error) throw error;
@@ -1004,7 +1103,7 @@ async function acceptAdminOffer(commId) {
   try {
     const { error } = await _supabase
       .from('commissions')
-      .update({ queue_type: 'MAIN_ACCOUNT', status: 'Approved', updated_at: new Date().toISOString() })
+      .update({ queue_type: 'MAIN_ACCOUNT', status: 'Approved' })
       .eq('id', commId);
 
     if (error) throw error;
@@ -1019,7 +1118,7 @@ async function declineAdminOffer(commId) {
   try {
     const { error } = await _supabase
       .from('commissions')
-      .update({ queue_type: 'HISTORY', status: 'DECLINED', updated_at: new Date().toISOString() })
+      .update({ queue_type: 'HISTORY', status: 'DECLINED' })
       .eq('id', commId);
 
     if (error) throw error;
@@ -1424,23 +1523,18 @@ async function submitDirectOutreach() {
    TAB 5: REFERRAL HUB ENGINE
    ========================================================================== */
 async function loadReferralsData() {
-  /* Profiles data is already loaded in allUsersCache */
-  renderReferralsTable(allUsersCache);
-}
-
-async function loadReferralsData() {
   try {
+    /* Safe DOM Setter Helpers */
+    const setElemText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const setElemVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+
     /* 1. Get Admin referral code */
     const adminCode = (currentUser && currentUser.referral_code) ? currentUser.referral_code : 'ADMIN_PROMO_2026';
-    
-    const adminCodeElem = document.getElementById('adminRefCodeDisplay');
-    if (adminCodeElem) adminCodeElem.textContent = adminCode;
+    const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
 
-    const shopperInput = document.getElementById('adminShopperRefLink');
-    if (shopperInput) shopperInput.value = `https://echo-hub.app/buyer-register.html?ref=${adminCode}`;
-
-    const vendorInput = document.getElementById('adminVendorRefLink');
-    if (vendorInput) vendorInput.value = `https://echo-hub.app/seller-register.html?ref=${adminCode}`;
+    setElemText('adminRefCodeDisplay', adminCode);
+    setElemVal('adminShopperRefLink', `${baseUrl}buyer-register.html?ref=${adminCode}`);
+    setElemVal('adminVendorRefLink', `${baseUrl}seller-register.html?ref=${adminCode}`);
 
     /* 2. Compute KPI Performance Stats */
     let totalRevenue = 0;
@@ -1456,16 +1550,24 @@ async function loadReferralsData() {
     const shoppersCount = referredUsers.filter(u => (u.role || '').toLowerCase() === 'buyer').length;
     const vendorsCount = referredUsers.filter(u => (u.role || '').toLowerCase() === 'seller' || (u.role || '').toLowerCase() === 'vendor').length;
 
-    document.getElementById('refStatTotalRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
-    document.getElementById('refStatTotalMembers').textContent = totalMembers;
-    document.getElementById('refStatShoppers').textContent = shoppersCount;
-    document.getElementById('refStatVendors').textContent = vendorsCount;
+    setElemText('refStatTotalRevenue', `$${totalRevenue.toFixed(2)}`);
+    setElemText('refStatTotalMembers', totalMembers);
+    setElemText('refStatShoppers', shoppersCount);
+    setElemText('refStatVendors', vendorsCount);
 
     /* 3. Render Network Ledger Table */
     renderReferralsTable(allUsersCache);
   } catch (err) {
     console.error("Referral network load error:", err);
   }
+}
+
+function copyRefLink(inputId) {
+  const inputElem = document.getElementById(inputId);
+  if (!inputElem) return;
+  inputElem.select();
+  navigator.clipboard.writeText(inputElem.value);
+  showToast("Referral link copied to clipboard!");
 }
 
 function renderReferralsTable(users) {
