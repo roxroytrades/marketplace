@@ -365,34 +365,71 @@ Close Inspector
 
 <!-- Proactive Top-Down Offer Modal (Main Queue) -->
 <div id="topDownOfferModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-4">
-<h3 class="text-lg font-bold text-white">Initiate Top-Down Commission Offer</h3>
-<button onclick="document.getElementById('topDownOfferModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-blue-400 font-bold text-xs">
+          <i class="fa-solid fa-paper-plane"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Proactive Commission Offer</h3>
+          <p class="text-[10px] text-slate-400">Initiate top-down payout offer to recipient(s)</p>
+        </div>
+      </div>
+      <button onclick="document.getElementById('topDownOfferModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+
+    <form onsubmit="handleTopDownOfferSubmit(event)" class="space-y-4">
+      <!-- Batch Mode Summary View (When rows are checked) -->
+      <div id="batchOfferFields" class="hidden space-y-3">
+        <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-layer-group text-blue-400 text-sm"></i>
+            <span class="text-xs font-semibold text-blue-300">Batch Offer Mode</span>
+          </div>
+          <span id="batchOfferCountBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">0 Selected</span>
+        </div>
+
+        <div class="bg-darkBg border border-borderSlate rounded-2xl p-3 space-y-2 max-h-48 overflow-y-auto" id="batchOfferListContainer">
+          <!-- Selected rows summarized dynamically -->
+        </div>
+
+        <div class="p-3 bg-darkBg border border-borderSlate rounded-2xl flex items-center justify-between text-xs">
+          <span class="text-slate-400 font-medium">Total Offer Amount:</span>
+          <span id="batchOfferTotalAmount" class="font-bold text-emerald-400 text-sm">$0.00 USD</span>
+        </div>
+      </div>
+
+      <!-- Manual Entry Mode View (When no rows are checked) -->
+      <div id="manualOfferFields" class="space-y-3">
+        <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-300">
+          <i class="fa-solid fa-info-circle mr-1"></i> No records selected. Enter details manually to generate a new custom top-down offer.
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Recipient Email or User ID</label>
+          <input type="text" id="offerRecipientId" placeholder="recipient@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Recipient Role</label>
+          <select id="offerRecipientRole" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+            <option value="REVIEWER">REVIEWER</option>
+            <option value="BUYER_INVITER">BUYER_INVITER</option>
+            <option value="SELLER_INVITER">SELLER_INVITER</option>
+          </select>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Commission Amount ($ USD)</label>
+          <input type="number" step="0.01" id="offerAmount" placeholder="20.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        </div>
+      </div>
+
+      <button type="submit" id="topDownOfferSubmitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
+        Send Offer to Outgoing Requests
+      </button>
+    </form>
+  </div>
 </div>
-<form onsubmit="handleTopDownOfferSubmit(event)" class="space-y-4">
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Recipient Email or User ID</label>
-<input type="text" id="offerRecipientId" required placeholder="recipient@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Recipient Role</label>
-<select id="offerRecipientRole" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-<option value="REVIEWER">REVIEWER</option>
-<option value="BUYER_INVITER">BUYER_INVITER</option>
-<option value="SELLER_INVITER">SELLER_INVITER</option>
-</select>
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Commission Amount ($ USD)</label>
-<input type="number" step="0.01" id="offerAmount" required placeholder="20.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-<button type="submit" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
-Send Offer to Outgoing Requests
-</button>
-</form>
-</div>
-</div>
+
 <!-- Toast Notification Container -->
 <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2"></div>
 <!-- Footer -->
@@ -756,7 +793,7 @@ function renderSellerCommissions() {
     `;
   } else if (activeSubTab === 'mainQueue') {
     toolbar.innerHTML = `
-      <button onclick="document.getElementById('topDownOfferModal').classList.remove('hidden')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+      <button onclick="openTopDownOfferModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
         <i class="fa-solid fa-paper-plane mr-1.5"></i> Proactive Offer
       </button>
     `;
@@ -807,7 +844,7 @@ function renderSellerCommissions() {
     return `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
         <div class="col-span-1">
-          <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+          <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(String(c.id)) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
         </div>
         <div class="col-span-3 space-y-0.5">
           <span class="font-bold text-white">Ref ID: ${String(c.id).substring(0,8)}</span>
@@ -829,10 +866,11 @@ function renderSellerCommissions() {
 }
 
 function toggleSelectSellerComm(id) {
-  if (selectedSellerCommIds.has(id)) {
-    selectedSellerCommIds.delete(id);
+  const strId = String(id);
+  if (selectedSellerCommIds.has(strId)) {
+    selectedSellerCommIds.delete(strId);
   } else {
-    selectedSellerCommIds.add(id);
+    selectedSellerCommIds.add(strId);
   }
 }
 
@@ -840,8 +878,9 @@ function toggleSelectAllSeller(master) {
   const boxes = document.querySelectorAll('#sellerCommsTableBody input[type="checkbox"]');
   boxes.forEach(b => {
     b.checked = master.checked;
-    if (master.checked) selectedSellerCommIds.add(b.value);
-    else selectedSellerCommIds.delete(b.value);
+    const strVal = String(b.value);
+    if (master.checked) selectedSellerCommIds.add(strVal);
+    else selectedSellerCommIds.delete(strVal);
   });
 }
 
@@ -903,36 +942,116 @@ async function denySingleComm(id) {
   }
 }
 
+async function openTopDownOfferModal() {
+  const modal = document.getElementById('topDownOfferModal');
+  const batchFields = document.getElementById('batchOfferFields');
+  const manualFields = document.getElementById('manualOfferFields');
+  const submitBtn = document.getElementById('topDownOfferSubmitBtn');
+  const recipientInput = document.getElementById('offerRecipientId');
+  const amountInput = document.getElementById('offerAmount');
+
+  if (selectedSellerCommIds.size > 0) {
+    /* Batch Mode: Selected Rows Exist */
+    const selectedComms = vendorCommissions.filter(c => selectedSellerCommIds.has(String(c.id)));
+    let totalAmount = 0;
+    
+    const listHtml = selectedComms.map(c => {
+      const amt = Number(c.amount || 0);
+      totalAmount += amt;
+      const roleUpper = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
+      const recipient = profilesCache[c.recipient_id] || {};
+      const recName = recipient.full_name || c.recipient_email || 'Recipient';
+      return `
+        <div class="p-2 bg-cardBg border border-borderSlate rounded-xl flex items-center justify-between text-[11px]">
+          <div class="space-y-0.5">
+            <div class="font-bold text-white flex items-center space-x-1.5">
+              <span>Ref: ${String(c.id).substring(0,8)}</span>
+              <span class="px-1.5 py-0.2 bg-blue-500/20 text-blue-400 rounded text-[9px] font-mono">${roleUpper}</span>
+            </div>
+            <div class="text-slate-400 text-[10px] truncate max-w-[200px]">${recName} (${c.recipient_email || 'N/A'})</div>
+          </div>
+          <div class="font-bold text-emerald-400">$${amt.toFixed(2)}</div>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('batchOfferCountBadge').textContent = `${selectedComms.length} Record(s) Selected`;
+    document.getElementById('batchOfferListContainer').innerHTML = listHtml;
+    document.getElementById('batchOfferTotalAmount').textContent = `$${totalAmount.toFixed(2)} USD`;
+
+    batchFields.classList.remove('hidden');
+    manualFields.classList.add('hidden');
+    recipientInput.removeAttribute('required');
+    amountInput.removeAttribute('required');
+    submitBtn.textContent = `Confirm & Send Proactive Offer for ${selectedComms.length} Commission(s) ($${totalAmount.toFixed(2)})`;
+  } else {
+    /* Manual Mode: No Rows Selected */
+    batchFields.classList.add('hidden');
+    manualFields.classList.remove('hidden');
+    recipientInput.setAttribute('required', 'true');
+    amountInput.setAttribute('required', 'true');
+    submitBtn.textContent = 'Send Proactive Offer to Outgoing Requests';
+  }
+
+  modal.classList.remove('hidden');
+}
+
 async function handleTopDownOfferSubmit(event) {
   event.preventDefault();
-  const recipientEmail = document.getElementById('offerRecipientId').value.trim();
-  const recipientRole = document.getElementById('offerRecipientRole').value;
-  const amount = parseFloat(document.getElementById('offerAmount').value);
+  
+  if (selectedSellerCommIds.size > 0) {
+    /* Execute Batch Proactive Offer on Selected Commission Records */
+    const idsToUpdate = Array.from(selectedSellerCommIds);
+    try {
+      const { error } = await _supabase
+        .from('commissions')
+        .update({
+          queue_type: 'OUTGOING_REQUESTS',
+          status: 'OFFERED_BY_VENDOR'
+        })
+        .in('id', idsToUpdate);
 
-  let insertPayload = {
-    vendor_id: currentUser.id,
-    recipient_email: recipientEmail,
-    recipient_role: recipientRole,
-    amount: amount,
-    queue_type: 'OUTGOING_REQUESTS',
-    status: 'OFFERED_BY_VENDOR',
-    link: 'N/A',
-    type: 'TOP_DOWN_OFFER'
-  };
-  sanitizeStatusBadge(insertPayload);
+      if (error) throw error;
 
-  try {
-    const { error } = await _supabase
-      .from('commissions')
-      .insert([insertPayload]);
-    if (error) throw error;
-    document.getElementById('topDownOfferModal').classList.add('hidden');
-    document.getElementById('offerRecipientId').value = '';
-    document.getElementById('offerAmount').value = '';
-    await loadVendorCommissions();
-    alert('Top-down commission offer sent successfully to Outgoing Requests.');
-  } catch (err) {
-    alert('Error creating offer: ' + err.message);
+      document.getElementById('topDownOfferModal').classList.add('hidden');
+      selectedSellerCommIds.clear();
+      document.getElementById('selectAllSellerComms').checked = false;
+      await loadVendorCommissions();
+      showToast(`Proactive offer sent for ${idsToUpdate.length} commission(s)!`);
+    } catch (err) {
+      showToast('Error sending batch proactive offer: ' + err.message);
+    }
+  } else {
+    /* Execute Manual Top-Down Offer Generation */
+    const recipientEmail = document.getElementById('offerRecipientId').value.trim();
+    const recipientRole = document.getElementById('offerRecipientRole').value;
+    const amount = parseFloat(document.getElementById('offerAmount').value);
+
+    let insertPayload = {
+      vendor_id: currentUser.id,
+      recipient_email: recipientEmail,
+      role_type: recipientRole,
+      amount: amount,
+      queue_type: 'OUTGOING_REQUESTS',
+      status: 'OFFERED_BY_VENDOR',
+      link: 'N/A',
+      type: 'TOP_DOWN_OFFER'
+    };
+
+    try {
+      const { error } = await _supabase
+        .from('commissions')
+        .insert([insertPayload]);
+      if (error) throw error;
+
+      document.getElementById('topDownOfferModal').classList.add('hidden');
+      document.getElementById('offerRecipientId').value = '';
+      document.getElementById('offerAmount').value = '';
+      await loadVendorCommissions();
+      showToast('Top-down commission offer created and sent to Outgoing Requests!');
+    } catch (err) {
+      showToast('Error creating offer: ' + err.message);
+    }
   }
 }
 
