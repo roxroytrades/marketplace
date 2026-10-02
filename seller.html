@@ -617,11 +617,21 @@ async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
 async function loadVendorProducts(isPolling = false) {
   const grid = document.getElementById('vendorProductGrid');
   try {
-    const { data, error } = await _supabase
+    let { data, error } = await _supabase
       .from('products')
       .select('*')
       .eq('seller_id', currentUser.id)
       .order('created_at', { ascending: false });
+    if (error && (error.code === '42703' || (error.message && error.message.includes('seller_id')))) {
+      console.warn('seller_id column missing on products table, falling back to vendor_id');
+      const fallback = await _supabase
+        .from('products')
+        .select('*')
+        .eq('vendor_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) throw error;
     vendorProducts = data || [];
     if (vendorProducts.length === 0) {
@@ -700,7 +710,6 @@ async function handleSaveProduct(event) {
   try {
     const productData = {
       seller_id: currentUser.id,
-      seller_id: currentUser.id,
       title,
       description,
       price,
@@ -748,7 +757,7 @@ async function loadVendorCommissions(isPolling = false) {
     let { data, error } = await _supabase
       .from('commissions')
       .select('*')
-      .eq('seller_id', currentUser.id);
+      .eq('vendor_id', currentUser.id);
     if (error) {
       const resAlt = await _supabase
         .from('commissions')
@@ -1065,7 +1074,7 @@ async function handleTopDownOfferSubmit(event) {
     const amount = parseFloat(document.getElementById('offerAmount').value);
 
     let insertPayload = {
-      seller_id: currentUser.id,
+      vendor_id: currentUser.id,
       recipient_email: recipientEmail,
       role_type: recipientRole,
       amount: amount,
@@ -1413,7 +1422,7 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
 
     const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
       p_message_id: String(messageId),
-      p_seller_id: currentUser.id,
+      p_vendor_id: currentUser.id,
       p_reviewer_id: reviewerId,
       p_commission_amount: Number(commissionAmount),
       p_platform_fee: 10.00,
@@ -1583,7 +1592,7 @@ async function handleSendMessage(event) {
     let payload = {
       sender_id: currentUser.id,
       receiver_id: activeThreadId,
-      seller_id: currentUser.id,
+      vendor_id: currentUser.id,
       text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
       type: 'vendor_reply'
     };
