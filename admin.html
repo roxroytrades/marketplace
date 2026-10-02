@@ -183,86 +183,129 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         <p class="text-xs text-slate-400 mt-1">Monitor real-time balances, payout requests, working queues, and settlement receipts across all roles.</p>
       </div>
       <div class="flex items-center space-x-3">
-        <select id="adminCommTabFilter" onchange="filterAdminCommissions()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
-          <option value="ALL">All Queues & Statuses</option>
-          <option value="MAIN_ACCOUNT">Main Queue / Unclaimed</option>
-          <option value="INCOMING_REQUESTS">Incoming Vendor Offers</option>
-          <option value="OUTGOING_REQUESTS">Outgoing Payout Requests</option>
-          <option value="WORKING_QUEUE">Approved In Working</option>
-          <option value="HISTORY">Completed & Paid History</option>
-        </select>
+        <button onclick="requestAllAvailableAdminPayouts()" class="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Request All Liquid Payouts</span>
+        </button>
       </div>
     </div>
 
-    <!-- 3 Summary KPI Cards for Admin Financial Metrics -->
+    <!-- 3 Non-Redundant Summary KPI Cards for Admin Financial Accounting -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- Card 1: Available Admin Balance (Gold Theme) -->
+      <!-- Card 1: Uncollected Admin Revenue (Gold Theme) -->
       <div class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
         <div class="absolute -right-4 -bottom-4 opacity-10 text-amber-500 text-7xl pointer-events-none group-hover:scale-110 transition">
-          <i class="fa-solid fa-crown"></i>
+          <i class="fa-solid fa-hourglass-half"></i>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
-            <i class="fa-solid fa-crown text-amber-400"></i>
-            <span>Available Admin Balance</span>
+            <i class="fa-solid fa-hourglass-half text-amber-400"></i>
+            <span>Uncollected Admin Revenue</span>
           </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">Unclaimed</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">Unpaid / Pending</span>
         </div>
         <div>
-          <div id="commStatAdminAvailable" class="text-2xl font-black text-white tracking-tight">-bash.00</div>
-          <p class="text-[10px] text-slate-400 mt-1">Platform fee shares and inviter cuts ready to cash out</p>
+          <div id="commStatAdminUncollected" class="text-2xl font-black text-white tracking-tight">$0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">Total Admin fees & referral shares across active/unsettled queues</p>
         </div>
-        <div class="pt-1">
-          <button onclick="requestAllAvailableAdminPayouts()" class="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold py-2 px-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-2">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>Request Payout</span>
-          </button>
+        <div class="pt-1 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+          <span>Liquid Available:</span>
+          <span id="commStatAdminAvailableSub" class="font-bold text-amber-400">$0.00</span>
         </div>
       </div>
 
-      <!-- Card 2: Admin Lifetime Revenue (Emerald Theme) -->
+      <!-- Card 2: Collected Admin Revenue (Emerald Theme) -->
       <div class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
         <div class="absolute -right-4 -bottom-4 opacity-10 text-emerald-500 text-7xl pointer-events-none group-hover:scale-110 transition">
-          <i class="fa-solid fa-wallet"></i>
+          <i class="fa-solid fa-sack-dollar"></i>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
             <i class="fa-solid fa-sack-dollar text-emerald-400"></i>
-            <span>Admin Lifetime Revenue</span>
+            <span>Collected Admin Revenue</span>
           </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">Total Disbursed</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">Settled & Cleared</span>
         </div>
         <div>
-          <div id="commStatAdminLifetime" class="text-2xl font-black text-white tracking-tight">-bash.00</div>
-          <p class="text-[10px] text-slate-400 mt-1">Total earnings disbursed to Admin account since platform launch</p>
+          <div id="commStatAdminCollected" class="text-2xl font-black text-white tracking-tight">$0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">Total Admin earnings paid out and archived in history</p>
         </div>
         <div class="pt-2 flex items-center text-[10px] text-emerald-400 font-medium space-x-1">
           <i class="fa-solid fa-circle-check"></i>
-          <span>Settled & Historical High Score</span>
+          <span>Archived & Fully Paid</span>
         </div>
       </div>
 
-      <!-- Card 3: Working Queue Liquidity (Blue Theme) -->
-      <div class="bg-cardBg border border-blue-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
-        <div class="absolute -right-4 -bottom-4 opacity-10 text-blue-500 text-7xl pointer-events-none group-hover:scale-110 transition">
-          <i class="fa-solid fa-arrows-rotate"></i>
+      <!-- Card 3: Total Admin Lifetime Earnings (Indigo Theme) -->
+      <div class="bg-cardBg border border-indigo-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 opacity-10 text-indigo-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+          <i class="fa-solid fa-crown"></i>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center space-x-1.5">
-            <i class="fa-solid fa-chart-line text-blue-400"></i>
-            <span>Working Queue Liquidity</span>
+          <span class="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-crown text-indigo-400"></i>
+            <span>Total Admin Earnings</span>
           </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">System-Wide</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">Grand Total</span>
         </div>
         <div>
-          <div id="commStatWorkingLiquidity" class="text-2xl font-black text-white tracking-tight">-bash.00</div>
-          <p class="text-[10px] text-slate-400 mt-1">Marketplace-wide active transactions in processing pipeline</p>
+          <div id="commStatAdminTotal" class="text-2xl font-black text-white tracking-tight">$0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">Cumulative platform revenue since launch (Uncollected + Collected)</p>
         </div>
-        <div class="pt-1 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-          <span>Active Volume:</span>
-          <span id="commStatWorkingCount" class="font-bold text-blue-400">0 Items</span>
+        <div class="pt-2 flex items-center text-[10px] text-indigo-400 font-medium space-x-1">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Lifetime Platform Revenue</span>
         </div>
       </div>
+    </div>
+
+    <!-- Sub-Tab Navigation Bar with Real-Time Queue Badges -->
+    <div class="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+      <div class="flex items-center space-x-2 bg-cardBg p-1.5 rounded-2xl border border-borderSlate min-w-max">
+        <button onclick="setAdminCommTabFilter('ALL')" id="adminCommTabBtn-ALL" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-bold transition bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-md flex items-center space-x-2">
+          <span>All Ledger Entries</span>
+          <span id="badge-comm-ALL" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/30 text-amber-200">0</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('INCOMING_REQUESTS')" id="adminCommTabBtn-INCOMING_REQUESTS" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-inbox text-blue-400"></i>
+          <span>Incoming Requests</span>
+          <span id="badge-comm-INCOMING_REQUESTS" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30">0 ($0.00)</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('MAIN_ACCOUNT')" id="adminCommTabBtn-MAIN_ACCOUNT" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-wallet text-amber-400"></i>
+          <span>Main Queue</span>
+          <span id="badge-comm-MAIN_ACCOUNT" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-400 border border-amber-500/30">0 ($0.00)</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('OUTGOING_REQUESTS')" id="adminCommTabBtn-OUTGOING_REQUESTS" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-paper-plane text-purple-400"></i>
+          <span>Outgoing Requests</span>
+          <span id="badge-comm-OUTGOING_REQUESTS" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-500/20 text-purple-400 border border-purple-500/30">0 ($0.00)</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('WORKING_QUEUE')" id="adminCommTabBtn-WORKING_QUEUE" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-arrows-rotate text-emerald-400"></i>
+          <span>Working Queue</span>
+          <span id="badge-comm-WORKING_QUEUE" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">0 ($0.00)</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('HISTORY')" id="adminCommTabBtn-HISTORY" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+          <span>Payment History</span>
+          <span id="badge-comm-HISTORY" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-700/60 text-slate-300 border border-borderSlate">0 ($0.00)</span>
+        </button>
+      </div>
+
+      <select id="adminCommTabFilter" onchange="setAdminCommTabFilter(this.value)" class="hidden">
+        <option value="ALL">All Queues & Statuses</option>
+        <option value="INCOMING_REQUESTS">Incoming Requests</option>
+        <option value="MAIN_ACCOUNT">Main Queue / Unclaimed</option>
+        <option value="OUTGOING_REQUESTS">Outgoing Payout Requests</option>
+        <option value="WORKING_QUEUE">Approved In Working</option>
+        <option value="HISTORY">Completed & Paid History</option>
+      </select>
     </div>
 
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
@@ -1024,11 +1067,17 @@ async function loadCommissionsData(isSilent = false) {
     if (error) throw error;
     allCommissionsCache = data || [];
 
-    /* Calculate KPI Summary Metrics */
+    /* Calculate KPI Summary Metrics for Admin */
+    let adminUncollected = 0;
+    let adminCollected = 0;
     let adminAvailable = 0;
-    let adminLifetime = 0;
-    let workingLiquidity = 0;
-    let workingCount = 0;
+
+    let totalAllCount = allCommissionsCache.length;
+    let incomingCount = 0, incomingAmt = 0;
+    let mainCount = 0, mainAmt = 0;
+    let outgoingCount = 0, outgoingAmt = 0;
+    let workingCount = 0, workingAmt = 0;
+    let historyCount = 0, historyAmt = 0;
 
     allCommissionsCache.forEach(c => {
       const qType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
@@ -1048,30 +1097,78 @@ async function loadCommissionsData(isSilent = false) {
 
       if (isMyComm) {
         const isPaid = (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') && statusVal !== 'DECLINED';
-        const isAvailable = !isPaid && statusVal !== 'DECLINED' && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT');
+        const isDeclined = statusVal === 'DECLINED';
 
         if (isPaid) {
-          adminLifetime += amt;
-        } else if (isAvailable) {
+          adminCollected += amt;
+        } else if (!isDeclined) {
+          adminUncollected += amt;
+        }
+
+        if (!isPaid && !isDeclined && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT')) {
           adminAvailable += amt;
         }
       }
 
-      if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING' || statusVal === 'IN_WORKING') {
-        workingLiquidity += amt;
+      /* Queue Breakdown Calculations for Badges */
+      if (qType === 'INCOMING_REQUESTS' || statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'OFFERED_AWAITING_ACCEPTANCE') {
+        incomingCount++;
+        incomingAmt += amt;
+      } else if ((qType === 'MAIN_ACCOUNT' || qType === 'MAIN_QUEUE' || statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE') &&
+                 qType !== 'WORKING_QUEUE' && qType !== 'OUTGOING_REQUESTS' && qType !== 'INCOMING_REQUESTS' && qType !== 'HISTORY' && qType !== 'PAYMENT_HISTORY' &&
+                 statusVal !== 'APPROVED_IN_WORKING' && statusVal !== 'COMPLETED_PAID' && statusVal !== 'PAID' && statusVal !== 'REQUESTED_BY_RECIPIENT' && statusVal !== 'OFFERED_BY_VENDOR') {
+        mainCount++;
+        mainAmt += amt;
+      } else if (qType === 'OUTGOING_REQUESTS' || statusVal === 'REQUESTED_BY_RECIPIENT') {
+        outgoingCount++;
+        outgoingAmt += amt;
+      } else if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING' || statusVal === 'IN_WORKING') {
         workingCount++;
+        workingAmt += amt;
+      } else if (qType === 'HISTORY' || qType === 'PAYMENT_HISTORY' || statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || statusVal === 'DECLINED') {
+        historyCount++;
+        historyAmt += amt;
       }
     });
 
-    setElemText('commStatAdminAvailable', `$${adminAvailable.toFixed(2)}`);
-    setElemText('commStatAdminLifetime', `$${adminLifetime.toFixed(2)}`);
-    setElemText('commStatWorkingLiquidity', `$${workingLiquidity.toFixed(2)}`);
-    setElemText('commStatWorkingCount', `${workingCount} Item${workingCount === 1 ? '' : 's'}`);
+    const adminTotal = adminUncollected + adminCollected;
+
+    setElemText('commStatAdminUncollected', `$${adminUncollected.toFixed(2)}`);
+    setElemText('commStatAdminCollected', `$${adminCollected.toFixed(2)}`);
+    setElemText('commStatAdminTotal', `$${adminTotal.toFixed(2)}`);
+    setElemText('commStatAdminAvailableSub', `$${adminAvailable.toFixed(2)}`);
+
+    /* Update Sub-Tab Badges */
+    setElemText('badge-comm-ALL', `${totalAllCount}`);
+    setElemText('badge-comm-INCOMING_REQUESTS', `(${incomingCount}) $${incomingAmt.toFixed(2)}`);
+    setElemText('badge-comm-MAIN_ACCOUNT', `(${mainCount}) $${mainAmt.toFixed(2)}`);
+    setElemText('badge-comm-OUTGOING_REQUESTS', `(${outgoingCount}) $${outgoingAmt.toFixed(2)}`);
+    setElemText('badge-comm-WORKING_QUEUE', `(${workingCount}) $${workingAmt.toFixed(2)}`);
+    setElemText('badge-comm-HISTORY', `(${historyCount}) $${historyAmt.toFixed(2)}`);
 
     filterAdminCommissions();
   } catch (err) {
     if (!isSilent) console.error("Commissions load error:", err);
   }
+}
+
+function setAdminCommTabFilter(val) {
+  const select = document.getElementById('adminCommTabFilter');
+  if (select) select.value = val;
+
+  const tabs = ['ALL', 'INCOMING_REQUESTS', 'MAIN_ACCOUNT', 'OUTGOING_REQUESTS', 'WORKING_QUEUE', 'HISTORY'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('adminCommTabBtn-' + t);
+    if (btn) {
+      if (t === val) {
+        btn.className = "admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-bold transition bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-md flex items-center space-x-2";
+      } else {
+        btn.className = "admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2";
+      }
+    }
+  });
+
+  filterAdminCommissions();
 }
 
 async function requestAllAvailableAdminPayouts() {
