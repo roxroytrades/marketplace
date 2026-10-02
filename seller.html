@@ -307,34 +307,7 @@ Complete & Archive to History
 </div>
 </div>
 <!-- Inspect Receipt Modal (Payment History Audit) -->
-<div 
-<!-- Seller Commission Details Modal -->
-<div id="sellerCommDetailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
-    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
-      <div class="flex items-center space-x-2">
-        <div class="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 font-bold text-xs">
-          <i class="fa-solid fa-file-invoice-dollar"></i>
-        </div>
-        <div>
-          <h3 class="text-sm font-bold text-white">Commission Transaction Details</h3>
-          <p class="text-[10px] text-slate-400">Complete transaction metadata, recipient details, review link, and uploaded screenshots</p>
-        </div>
-      </div>
-      <button onclick="closeSellerCommDetailsModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
-    </div>
-
-    <div id="sellerCommDetailsContent" class="space-y-4 text-xs">
-      <!-- Dynamic Details Filled via JS -->
-    </div>
-
-    <div class="flex justify-end space-x-2 border-t border-borderSlate pt-3">
-      <button onclick="closeSellerCommDetailsModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Close</button>
-    </div>
-  </div>
-</div>
-
-id="inspectReceiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+<div id="inspectReceiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
 <div class="flex items-center justify-between border-b border-borderSlate pb-4">
 <h3 class="text-lg font-bold text-white">Payment Receipt Audit Proof</h3>
@@ -363,6 +336,33 @@ Close Inspector
 </div>
 </div>
 </div>
+
+<!-- Seller Commission Details Modal -->
+<div id="sellerCommDetailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 font-bold text-xs">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Commission Transaction Ledger Details</h3>
+          <p class="text-[10px] text-slate-400">Complete transaction metadata, recipient details, and audit proof</p>
+        </div>
+      </div>
+      <button onclick="closeSellerCommDetailsModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
+    </div>
+
+    <div id="sellerCommDetailsContent" class="space-y-4 text-xs">
+      <!-- Dynamic Details Filled via JS -->
+    </div>
+
+    <div class="flex justify-end space-x-2 border-t border-borderSlate pt-3">
+      <button onclick="closeSellerCommDetailsModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Proactive Top-Down Offer Modal (Main Queue) -->
 <div id="topDownOfferModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
@@ -761,30 +761,33 @@ function renderSellerCommissions() {
 
   tableBody.innerHTML = filtered.map(c => {
     let actionHtml = '';
+    const detailsBtn = `<button onclick="viewSellerCommDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition" title="View Full Details"><i class="fa-solid fa-eye mr-1"></i> Details</button>`;
+
     if (activeSubTab === 'incoming') {
       actionHtml = `
         <button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
         <button onclick="denySingleComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
+        ${detailsBtn}
       `;
     } else if (activeSubTab === 'workingQueue') {
       actionHtml = `
         <button onclick="openSettlementModal('${c.id}','${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
           <i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
         </button>
+        ${detailsBtn}
       `;
     } else if (activeSubTab === 'history') {
       actionHtml = `
         <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}','${c.amount || 0}', '${c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
-          <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
+          <i class="fa-solid fa-receipt mr-1"></i> Inspect Receipt
         </button>
+        ${detailsBtn}
       `;
     } else if (activeSubTab === 'outgoing') {
-      actionHtml = `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px]">AWAITING ACCEPTANCE</span>`;
+      actionHtml = `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px] mr-1">AWAITING ACCEPTANCE</span> ${detailsBtn}`;
     } else {
-      actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px]">UNREQUESTED</span>`;
+      actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px] mr-1">UNREQUESTED</span> ${detailsBtn}`;
     }
-
-    const detailsBtn = `<button onclick="viewSellerCommissionDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-medium px-2 py-1.5 rounded-lg transition" title="View Details"><i class="fa-solid fa-eye mr-1"></i> Details</button>`;
 
     return `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
@@ -796,15 +799,14 @@ function renderSellerCommissions() {
           <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
         </div>
         <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type || c.recipient_role || 'REVIEWER'}</span>
+          <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
           <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
         </div>
         <div class="col-span-2">
           <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
         </div>
-        <div class="col-span-3 flex items-center justify-end space-x-1.5">
+        <div class="col-span-3 flex items-center justify-end space-x-2">
           ${actionHtml}
-          ${detailsBtn}
         </div>
       </div>
     `;
@@ -919,132 +921,6 @@ async function handleTopDownOfferSubmit(event) {
   }
 }
 
-
-function closeSellerCommDetailsModal() {
-  const modal = document.getElementById('sellerCommDetailsModal');
-  if (modal) modal.classList.add('hidden');
-}
-
-function viewSellerCommissionDetails(commId) {
-  const c = vendorCommissions.find(item => item.id == commId);
-  const container = document.getElementById('sellerCommDetailsContent');
-  if (!c || !container) return;
-
-  const product = vendorProducts.find(p => p.id === c.product_id);
-  const productTitle = product ? (product.title || product.name) : (c.product_id || 'General Marketplace Review');
-
-  const roleType = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
-  const recipientName = c.recipient_name || c.recipient_email || 'Recipient';
-  const recipientEmail = c.recipient_email || 'N/A';
-  const recipientPaypal = c.recipient_paypal || c.recipient_paypal_email || 'Not Configured';
-
-  /* Search vendorThreads / messages for review links & screenshots */
-  let reviewLink = c.review_url || c.amazon_review_url || null;
-  let reviewScreenshot = c.review_screenshot || null;
-  let feedbackId = c.feedback_id || null;
-
-  if (vendorThreads && Array.isArray(vendorThreads)) {
-    vendorThreads.forEach(t => {
-      if (t.messages && Array.isArray(t.messages)) {
-        t.messages.forEach(m => {
-          if ((m.feedback_id && m.feedback_id === c.feedback_id) || (m.sender_id === c.recipient_id)) {
-            if (!feedbackId && m.feedback_id) feedbackId = m.feedback_id;
-            if (!reviewLink) {
-              const text = m._normalizedText || m.text || m.content || '';
-              const match = text.match(/https?:\/\/[^\s]+/);
-              if (match) reviewLink = match[0];
-              else if (m.amazon_review_url) reviewLink = m.amazon_review_url;
-              else if (m.link) reviewLink = m.link;
-            }
-            if (!reviewScreenshot) {
-              if (m._normalizedImage) reviewScreenshot = m._normalizedImage;
-              else if (m.file_url) reviewScreenshot = m.file_url;
-              else if (m.proof_base64) reviewScreenshot = m.proof_base64;
-            }
-          }
-        });
-      }
-    });
-  }
-
-  const receiptProofHtml = (c.receipt_base64 || c.receipt_url) ? `
-    <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
-      <div class="text-[10px] text-slate-400 font-semibold mb-1">Uploaded Payment Proof Receipt:</div>
-      <a href="${c.receipt_base64 || c.receipt_url}" target="_blank" class="block overflow-hidden rounded-lg">
-        <img src="${c.receipt_base64 || c.receipt_url}" alt="Payout Receipt" class="max-h-48 w-full object-contain rounded-lg border border-borderSlate">
-      </a>
-    </div>
-  ` : '';
-
-  const reviewProofHtml = reviewScreenshot ? `
-    <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
-      <div class="text-[10px] text-slate-400 font-semibold mb-1">Uploaded Review Submission Screenshot:</div>
-      <a href="${reviewScreenshot}" target="_blank" class="block overflow-hidden rounded-lg">
-        <img src="${reviewScreenshot}" alt="Review Screenshot" class="max-h-56 w-full object-contain rounded-lg border border-borderSlate">
-      </a>
-    </div>
-  ` : '<div class="text-slate-500 italic text-[11px] mt-1">No review screenshot attached yet.</div>';
-
-  const safeRecName = (recipientName || '').replace(/'/g, "\\'");
-  const safeRecEmail = (recipientEmail || '').replace(/'/g, "\\'");
-
-  container.innerHTML = `
-    <div class="grid grid-cols-2 gap-4">
-      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
-        <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Reference ID</span>
-        <div class="font-mono text-xs text-white break-all">${c.id}</div>
-      </div>
-      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
-        <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Commission Amount</span>
-        <div class="text-lg font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)} USD</div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] text-slate-400 font-semibold uppercase">Recipient Info</span>
-          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${roleType.includes('SELLER') || roleType.includes('VENDOR') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (roleType.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : (roleType.includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${roleType}</span>
-        </div>
-        <div class="font-bold text-slate-200">${recipientName}</div>
-        <div class="text-slate-400 text-[11px]">Email: ${recipientEmail}</div>
-        <div class="text-slate-400 text-[11px]">PayPal: <span class="font-mono text-slate-300">${recipientPaypal}</span></div>
-        ${c.recipient_id ? `
-          <button onclick="closeSellerCommDetailsModal(); selectThread('${c.recipient_id}'); switchVendorTab('messages');" class="mt-2 w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 py-1.5 rounded-xl text-[10px] font-semibold transition">
-            <i class="fa-solid fa-comment-dots mr-1"></i> Open Message Thread
-          </button>
-        ` : ''}
-      </div>
-
-      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] text-slate-400 font-semibold uppercase">Product & Campaign</span>
-          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">PRODUCT</span>
-        </div>
-        <div class="font-bold text-slate-200">${productTitle}</div>
-        <div class="text-slate-400 text-[11px]">Feedback ID: <span class="font-mono text-amber-400">${feedbackId || 'N/A'}</span></div>
-        ${reviewLink ? `
-          <div class="text-slate-400 text-[11px] truncate">Review URL: <a href="${reviewLink}" target="_blank" class="text-blue-400 underline hover:text-blue-300">${reviewLink}</a></div>
-        ` : ''}
-      </div>
-    </div>
-
-    <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-2">
-      <div class="grid grid-cols-2 gap-2 text-[11px]">
-        <div><span class="text-slate-500">Queue Placement:</span> <span class="text-amber-400 font-mono">${c.queue_type || 'MAIN_ACCOUNT'}</span></div>
-        <div><span class="text-slate-500">Transaction Status:</span> <span class="text-blue-400 font-semibold">${c.status || 'Approved'}</span></div>
-        <div><span class="text-slate-500">PayPal Tx ID:</span> <span class="text-slate-300 font-mono">${c.paypal_tx_id || 'Pending Settlement'}</span></div>
-        <div><span class="text-slate-500">Timestamp:</span> <span class="text-slate-400">${new Date(c.created_at || Date.now()).toLocaleString()}</span></div>
-      </div>
-      ${reviewProofHtml}
-      ${receiptProofHtml}
-    </div>
-  `;
-
-  document.getElementById('sellerCommDetailsModal').classList.remove('hidden');
-}
-
-
 function openSettlementModal(commId, recipientEmail) {
   document.getElementById('settleTargetCommId').value = commId;
   document.getElementById('settlePaypalEmail').value = recipientEmail;
@@ -1087,6 +963,96 @@ async function handleSettlementSubmit(event) {
   } catch (err) {
     alert('Settlement execution failed: ' + err.message);
   }
+}
+
+
+function closeSellerCommDetailsModal() {
+  const modal = document.getElementById('sellerCommDetailsModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function viewSellerCommDetails(commId) {
+  const c = vendorCommissions.find(item => item.id == commId);
+  const container = document.getElementById('sellerCommDetailsContent');
+  if (!c || !container) return;
+
+  const recipientName = c.recipient_name || c.recipient_email || c.recipient_id || 'Shopper / Reviewer';
+  const recipientEmail = c.recipient_email || 'N/A';
+  const recipientPaypal = c.recipient_paypal || c.paypal_email || 'Not Configured';
+
+  const product = vendorProducts.find(p => p.id === c.product_id);
+  const productTitle = product ? product.title : (c.product_id || 'General Marketplace Review');
+
+  const recRoleUpper = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
+  const safeRecName = (recipientName || '').replace(/'/g, "\'");
+  const safeRecEmail = (recipientEmail || '').replace(/'/g, "\'");
+
+  const receiptHtml = (c.receipt_base64 || c.receipt_url) ? `
+    <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
+      <div class="text-[10px] text-slate-400 font-semibold mb-1">Uploaded Payment Receipt Proof:</div>
+      <a href="${c.receipt_base64 || c.receipt_url}" target="_blank" class="block overflow-hidden rounded-lg">
+        <img src="${c.receipt_base64 || c.receipt_url}" alt="Payment Receipt" class="max-h-48 w-full object-contain rounded-lg border border-borderSlate">
+      </a>
+    </div>
+  ` : '<div class="text-slate-500 italic text-[11px]">No payment receipt uploaded yet.</div>';
+
+  const reviewProofHtml = (c.proof_base64 || c.proof_url || c.review_screenshot) ? `
+    <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
+      <div class="text-[10px] text-slate-400 font-semibold mb-1">Submitted Review Screenshot Proof:</div>
+      <a href="${c.proof_base64 || c.proof_url || c.review_screenshot}" target="_blank" class="block overflow-hidden rounded-lg">
+        <img src="${c.proof_base64 || c.proof_url || c.review_screenshot}" alt="Review Proof" class="max-h-48 w-full object-contain rounded-lg border border-borderSlate">
+      </a>
+    </div>
+  ` : '';
+
+  container.innerHTML = `
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
+        <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Transaction ID</span>
+        <div class="font-mono text-xs text-white break-all">${c.id}</div>
+      </div>
+      <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
+        <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Disbursement Amount</span>
+        <div class="text-lg font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)} USD</div>
+      </div>
+    </div>
+
+    <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] text-slate-400 font-semibold uppercase">Recipient Info</span>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${recRoleUpper.includes('SELLER') || recRoleUpper.includes('VENDOR') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (recRoleUpper.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : (recRoleUpper.includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${recRoleUpper}</span>
+      </div>
+      <div class="font-bold text-slate-200">${recipientName}</div>
+      <div class="text-slate-400 text-[11px]">Email: ${recipientEmail}</div>
+      <div class="text-slate-400 text-[11px]">PayPal Address: <span class="font-mono text-slate-300">${recipientPaypal}</span></div>
+      ${c.recipient_id ? `
+        <button onclick="closeSellerCommDetailsModal(); selectThread('${c.recipient_id}'); switchVendorTab('messages');" class="mt-2 w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 py-1.5 rounded-xl text-[10px] font-semibold transition">
+          <i class="fa-solid fa-comment-dots mr-1"></i> Open Message Thread with Recipient
+        </button>
+      ` : ''}
+    </div>
+
+    <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-2">
+      <div class="grid grid-cols-2 gap-2 text-[11px]">
+        <div><span class="text-slate-500">Product / Campaign:</span> <span class="text-slate-200 font-medium">${productTitle}</span></div>
+        <div><span class="text-slate-500">Queue Placement:</span> <span class="text-amber-400 font-mono">${c.queue_type || 'MAIN_ACCOUNT'}</span></div>
+        <div><span class="text-slate-500">Transaction Status:</span> <span class="text-blue-400 font-semibold">${c.status || 'Approved'}</span></div>
+        <div><span class="text-slate-500">PayPal Tx ID:</span> <span class="text-slate-300 font-mono">${c.paypal_tx_id || 'Pending Settlement'}</span></div>
+        <div><span class="text-slate-500">Created Timestamp:</span> <span class="text-slate-400">${new Date(c.created_at || Date.now()).toLocaleString()}</span></div>
+        ${c.feedback_id ? `<div><span class="text-slate-500">Feedback ID:</span> <span class="text-purple-400 font-mono">${c.feedback_id}</span></div>` : ''}
+      </div>
+      ${c.amazon_review_url ? `
+        <div class="text-[11px] pt-1">
+          <span class="text-slate-500">Amazon Review URL:</span> 
+          <a href="${c.amazon_review_url}" target="_blank" class="text-blue-400 underline hover:text-blue-300 font-mono break-all">${c.amazon_review_url}</a>
+        </div>
+      ` : ''}
+      ${reviewProofHtml}
+      ${receiptHtml}
+    </div>
+  `;
+
+  document.getElementById('sellerCommDetailsModal').classList.remove('hidden');
 }
 
 function inspectReceipt(txId, amount, receiptUrl) {
