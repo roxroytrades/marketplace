@@ -1033,16 +1033,17 @@ async function loadCommissionsData(isSilent = false) {
     allCommissionsCache.forEach(c => {
       const qType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
       const statusVal = (c.status || '').toUpperCase();
-      const roleType = (c.role_type || '').trim().toUpperCase();
+      const roleType = (c.role_type || c.recipient_role || '').trim().toUpperCase();
       const amt = Number(c.amount || 0);
 
       const isAdminRole = ['ADMIN', 'ADMIN_SHARE', 'ADMIN_FEE', 'PLATFORM_FEE'].includes(roleType);
-      const hasValidRecipientMatch = Boolean(
-        currentUser && currentUser.id && 
-        ((c.recipient_id && c.recipient_id === currentUser.id) || 
-         (c.recipient_email && currentUser.email && c.recipient_email.toLowerCase() === currentUser.email.toLowerCase()))
-      );
-      const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(roleType) && hasValidRecipientMatch;
+      
+      /* Verify if recipient profile in DB is explicitly an Admin user */
+      const recUser = (c.recipient_id && allUsersCache.find(u => u.id === c.recipient_id)) ||
+                      (c.recipient_id && profilesCache[c.recipient_id]);
+      const isRecipientProfileAdmin = recUser ? ((recUser.role || '').toLowerCase() === 'admin') : false;
+
+      const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(roleType) && isRecipientProfileAdmin;
       const isMyComm = isAdminRole || isMyUserEarning;
 
       if (isMyComm) {
@@ -1078,15 +1079,14 @@ async function requestAllAvailableAdminPayouts() {
     const eligibleComms = allCommissionsCache.filter(c => {
       const qType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
       const statusVal = (c.status || '').toUpperCase();
-      const roleType = (c.role_type || '').trim().toUpperCase();
+      const roleType = (c.role_type || c.recipient_role || '').trim().toUpperCase();
 
       const isAdminRole = ['ADMIN', 'ADMIN_SHARE', 'ADMIN_FEE', 'PLATFORM_FEE'].includes(roleType);
-      const hasValidRecipientMatch = Boolean(
-        currentUser && currentUser.id && 
-        ((c.recipient_id && c.recipient_id === currentUser.id) || 
-         (c.recipient_email && currentUser.email && c.recipient_email.toLowerCase() === currentUser.email.toLowerCase()))
-      );
-      const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(roleType) && hasValidRecipientMatch;
+      const recUser = (c.recipient_id && allUsersCache.find(u => u.id === c.recipient_id)) ||
+                      (c.recipient_id && profilesCache[c.recipient_id]);
+      const isRecipientProfileAdmin = recUser ? ((recUser.role || '').toLowerCase() === 'admin') : false;
+
+      const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(roleType) && isRecipientProfileAdmin;
       const isMyComm = isAdminRole || isMyUserEarning;
 
       const isPaid = (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') && statusVal !== 'DECLINED';
@@ -1877,10 +1877,10 @@ function viewCommissionDetails(commId) {
   const productTitle = product ? product.title : (c.product_id || 'General Marketplace Review');
 
   const recRoleUpper = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
-  const safeRecName = recipientName.replace(/'/g, "\'");
-  const safeRecEmail = recipientEmail.replace(/'/g, "\'");
-  const safeVenName = vendorName.replace(/'/g, "\'");
-  const safeVenEmail = vendorEmail.replace(/'/g, "\'");
+  const safeRecName = (recipientName || '').replace(/'/g, "\'");
+  const safeRecEmail = (recipientEmail || '').replace(/'/g, "\'");
+  const safeVenName = (vendorName || '').replace(/'/g, "\'");
+  const safeVenEmail = (vendorEmail || '').replace(/'/g, "\'");
 
   const receiptHtml = (c.receipt_base64 || c.receipt_url) ? `
     <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
