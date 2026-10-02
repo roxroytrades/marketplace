@@ -37,7 +37,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <!-- Top Navigation Bar -->
 <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
 <div class="flex items-center space-x-3">
-<div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden">
 eh
 </div>
 <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Portal</span></span>
@@ -248,6 +248,25 @@ eh
 <h2 class="text-lg font-bold text-white tracking-tight">Shopper Referral Hub & Link Generator</h2>
 <p class="text-xs text-slate-400">Invite other shoppers and merchants to Echo Hub using your unique referral links and earn bonus commissions.</p>
 </div>
+
+<!-- Prominent Referral Code Banner -->
+<div class="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+  <div class="flex items-center space-x-4">
+    <div class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 rounded-xl flex items-center justify-center text-amber-400 text-xl font-bold">
+      <i class="fa-solid fa-ticket"></i>
+    </div>
+    <div>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Your Unique Inviter Referral Code</span>
+      <h3 id="shopperRefCodeDisplay" class="text-2xl font-extrabold text-white font-mono tracking-wide">REF-LOADING</h3>
+      <p class="text-[11px] text-slate-400">Give this code to friends to enter manually on registration.</p>
+    </div>
+  </div>
+  <button onclick="copyShopperRefCode()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2 whitespace-nowrap">
+    <i class="fa-solid fa-copy"></i>
+    <span>Copy Code</span>
+  </button>
+</div>
+
 <!-- Link Generation Cards -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 <!-- Buyer Referral Link Box -->
@@ -263,8 +282,11 @@ eh
 </div>
 <div class="flex items-center space-x-2">
 <input type="text" id="buyerRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
-<button onclick="copyToClipboard('buyerRefLinkInput')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+<button onclick="copyToClipboard('buyerRefLinkInput')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
 <i class="fa-solid fa-copy mr-1"></i> Copy
+</button>
+<button onclick="shareWhatsApp('buyer')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap flex items-center space-x-1">
+<i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
 </button>
 </div>
 </div>
@@ -281,8 +303,11 @@ eh
 </div>
 <div class="flex items-center space-x-2">
 <input type="text" id="vendorRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
-<button onclick="copyToClipboard('vendorRefLinkInput')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+<button onclick="copyToClipboard('vendorRefLinkInput')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
 <i class="fa-solid fa-copy mr-1"></i> Copy
+</button>
+<button onclick="shareWhatsApp('seller')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap flex items-center space-x-1">
+<i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
 </button>
 </div>
 </div>
@@ -508,7 +533,8 @@ async function initShopperWorkspace() {
     const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
     const refCode = profile?.referral_code || currentUser.id;
     if (document.getElementById('buyerRefLinkInput')) {
-      document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${refCode}`;
+      if (document.getElementById('shopperRefCodeDisplay')) document.getElementById('shopperRefCodeDisplay').textContent = profile.referral_code || currentUser.id;
+        document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${refCode}`;
     }
     if (document.getElementById('vendorRefLinkInput')) {
       document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${refCode}`;
@@ -547,6 +573,7 @@ async function fetchAndUpdateProfileState() {
       if (profile.verification_status) verificationStatus = profile.verification_status;
       if (profile.referral_code) {
         const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+        if (document.getElementById('shopperRefCodeDisplay')) document.getElementById('shopperRefCodeDisplay').textContent = profile.referral_code || currentUser.id;
         document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${profile.referral_code}`;
         document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${profile.referral_code}`;
       }
@@ -628,6 +655,23 @@ function switchShopperTab(tab) {
     refSec.classList.remove('hidden');
     refBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
   }
+}
+
+
+function copyShopperRefCode() {
+  const code = document.getElementById('shopperRefCodeDisplay').textContent;
+  if (!code || code.includes('LOADING')) return;
+  navigator.clipboard.writeText(code).then(() => {
+    alert('Referral Code copied to clipboard: ' + code);
+  });
+}
+
+function shareWhatsApp(targetRole) {
+  const code = document.getElementById('shopperRefCodeDisplay').textContent;
+  const linkInputId = targetRole === 'buyer' ? 'buyerRefLinkInput' : 'vendorRefLinkInput';
+  const url = document.getElementById(linkInputId).value;
+  const msg = encodeURIComponent(`Join me on Echo Hub! Use my Referral Code: ${code}\nRegister here: ${url}`);
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
 function copyToClipboard(elementId) {
@@ -1381,6 +1425,42 @@ async function handleLogout() {
 
 /* Initialize shopper workspace on load */
 initShopperWorkspace();
+
+/* Global System Branding Loader */
+async function loadAppBranding() {
+  try {
+    const cachedLogo = localStorage.getItem('app_logo_base64');
+    if (cachedLogo) applyLogoToElements(cachedLogo);
+
+    if (typeof _supabase !== 'undefined') {
+      const { data, error } = await _supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'app_logo_base64')
+        .maybeSingle();
+
+      if (!error && data && data.value) {
+        localStorage.setItem('app_logo_base64', data.value);
+        applyLogoToElements(data.value);
+      }
+    }
+  } catch (err) {
+    console.log('App branding database query info:', err.message || err);
+  }
+}
+
+function applyLogoToElements(logoBase64) {
+  if (!logoBase64) return;
+  const elements = document.querySelectorAll('.app-header-logo, #appHeaderLogo');
+  elements.forEach(el => {
+    el.innerHTML = `<img src="${logoBase64}" alt="App Logo" class="w-full h-full object-cover rounded-xl shadow-md">`;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadAppBranding();
+});
+
 </script>
 </body>
 </html>
