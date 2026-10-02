@@ -105,6 +105,10 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         <p class="text-xs text-slate-400 mt-1">Review buyer National ID verification cards, manage account access status, and audit user roles.</p>
       </div>
       <div class="flex items-center space-x-3">
+        <button id="btnBatchEraseUsers" onclick="deleteSelectedUsers()" class="hidden bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-trash"></i>
+          <span id="btnBatchEraseUsersText">Erase Selected (0)</span>
+        </button>
         <input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search users by name, email, ID..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
         <select id="userRoleFilter" onchange="filterUsersTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
           <option value="ALL">All Roles</option>
@@ -121,6 +125,9 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3.5 px-4 w-10 text-center">
+                <input type="checkbox" id="selectAllUsersCheckbox" onchange="toggleSelectAllUsers(this)" class="rounded border-borderSlate bg-darkBg text-amber-500 focus:ring-0 cursor-pointer">
+              </th>
               <th class="py-3.5 px-4">User Details</th>
               <th class="py-3.5 px-4">Role</th>
               <th class="py-3.5 px-4">ID Verification</th>
@@ -181,6 +188,12 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
       <div>
         <h2 class="text-xl font-bold text-white tracking-tight">Master Financial Ledger & Payout Queue</h2>
         <p class="text-xs text-slate-400 mt-1">Monitor real-time balances, payout requests, working queues, and settlement receipts across all roles.</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button onclick="openManualAdjustmentModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
+          <i class="fa-solid fa-plus-circle"></i>
+          <span>+ Manual Adjustment</span>
+        </button>
       </div>
       <div class="flex items-center space-x-3">
         <button onclick="requestAllAvailableAdminPayouts()" class="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
@@ -343,10 +356,16 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         <h2 class="text-xl font-bold text-white tracking-tight">System-Wide Messaging & Direct Outreach</h2>
         <p class="text-xs text-slate-400 mt-1">Audit communications, inspect review submissions, detect contact policy risks, and initiate direct outreach.</p>
       </div>
-      <button onclick="openDirectOutreachModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
-        <i class="fa-solid fa-paper-plane"></i>
-        <span>+ Start Direct Outreach</span>
-      </button>
+      <div class="flex items-center space-x-3">
+        <button onclick="openSystemBroadcastModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span>📢 System Broadcast</span>
+        </button>
+        <button onclick="openDirectOutreachModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>+ Start Direct Outreach</span>
+        </button>
+      </div>
     </div>
 
     <!-- Main Messaging Workspace Grid (Left Thread List + Right Transcript Inspector) -->
@@ -577,7 +596,157 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </div>
 
 
-<!-- Commission Details Modal -->
+
+  <!-- EDIT USER ACCOUNT MODAL -->
+  <div id="editUserModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-cardBg border border-borderSlate rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 relative">
+      <div class="flex items-center justify-between border-b border-borderSlate/60 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-user-gear text-amber-500"></i>
+          <span>Edit User Permissions & Profile</span>
+        </h3>
+        <button onclick="closeEditUserModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <input type="hidden" id="editUserId">
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Full Name</label>
+          <input type="text" id="editUserFullName" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Email Address</label>
+          <input type="email" id="editUserEmail" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">User Role</label>
+            <select id="editUserRole" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500">
+              <option value="buyer">Buyer / Shopper</option>
+              <option value="seller">Seller / Vendor</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">KYC Status</label>
+            <select id="editUserVerificationStatus" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500">
+              <option value="VERIFIED">VERIFIED</option>
+              <option value="PENDING">PENDING</option>
+              <option value="UNVERIFIED">UNVERIFIED</option>
+              <option value="SUSPENDED">SUSPENDED</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">PayPal Email</label>
+          <input type="email" id="editUserPaypalEmail" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500" placeholder="e.g. user@paypal.com">
+        </div>
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Invited By Code (Referral Attribution)</label>
+          <input type="text" id="editUserInvitedByCode" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" placeholder="Referral Code string">
+        </div>
+      </div>
+      <div class="flex items-center justify-end space-x-3 pt-2 border-t border-borderSlate/60">
+        <button onclick="closeEditUserModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Cancel</button>
+        <button onclick="saveUserEdit()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-amber-500/20">Save Profile Updates</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL COMMISSION ADJUSTMENT MODAL -->
+  <div id="manualAdjustmentModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-cardBg border border-borderSlate rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 relative">
+      <div class="flex items-center justify-between border-b border-borderSlate/60 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-calculator text-amber-500"></i>
+          <span>Inject Manual Ledger Commission Adjustment</span>
+        </h3>
+        <button onclick="closeManualAdjustmentModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Recipient ID / Email</label>
+          <input type="text" id="adjRecipientId" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500" placeholder="Enter recipient user UUID or email">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Amount (USD)</label>
+            <input type="number" step="0.01" id="adjAmount" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500" placeholder="0.00">
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Role Type</label>
+            <select id="adjRoleType" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500">
+              <option value="ADMIN">ADMIN (Platform Fee Cut)</option>
+              <option value="REVIEWER">REVIEWER (Shopper Reward)</option>
+              <option value="BUYER_INVITER">BUYER_INVITER (Shopper Referrer)</option>
+              <option value="SELLER_INVITER">SELLER_INVITER (Vendor Referrer)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Queue Placement</label>
+            <select id="adjQueueType" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500">
+              <option value="MAIN_ACCOUNT">MAIN_ACCOUNT (Unclaimed)</option>
+              <option value="WORKING_QUEUE">WORKING_QUEUE (Active)</option>
+              <option value="HISTORY">HISTORY (Settled)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Status</label>
+            <select id="adjStatus" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500">
+              <option value="Approved">Approved</option>
+              <option value="COMPLETED_PAID">COMPLETED_PAID</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Reference Notes / Justification</label>
+          <input type="text" id="adjNotes" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500" placeholder="Reason for manual credit/debit">
+        </div>
+      </div>
+      <div class="flex items-center justify-end space-x-3 pt-2 border-t border-borderSlate/60">
+        <button onclick="closeManualAdjustmentModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Cancel</button>
+        <button onclick="submitManualAdjustment()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-amber-500/20">Inject Adjustment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL SYSTEM BROADCAST MODAL -->
+  <div id="systemBroadcastModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-cardBg border border-borderSlate rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 relative">
+      <div class="flex items-center justify-between border-b border-borderSlate/60 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-bullhorn text-blue-400"></i>
+          <span>Publish Global System Broadcast Alert</span>
+        </h3>
+        <button onclick="closeSystemBroadcastModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Target Audience</label>
+          <select id="broadcastTarget" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-blue-500">
+            <option value="ALL">All Network Participants (Buyers, Sellers, Admins)</option>
+            <option value="BUYERS">Buyers / Shoppers Only</option>
+            <option value="SELLERS">Sellers / Vendors Only</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Broadcast Title</label>
+          <input type="text" id="broadcastTitle" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-blue-500" placeholder="e.g. Scheduled System Maintenance Notice">
+        </div>
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Broadcast Message Body</label>
+          <textarea id="broadcastBody" rows="4" class="w-full bg-darkBg border border-borderSlate rounded-xl p-3 text-slate-200 outline-none focus:border-blue-500" placeholder="Enter detailed announcement message to be dispatched to user notification feeds..."></textarea>
+        </div>
+      </div>
+      <div class="flex items-center justify-end space-x-3 pt-2 border-t border-borderSlate/60">
+        <button onclick="closeSystemBroadcastModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Cancel</button>
+        <button onclick="executeSystemBroadcast()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-blue-500/20">Dispatch Broadcast</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Commission Details Modal -->
 <div id="commissionDetailsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
   <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
     <div class="flex items-center justify-between border-b border-borderSlate pb-3">
@@ -597,7 +766,42 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
       <!-- Dynamic Details Filled via JS -->
     </div>
 
-    <div class="flex justify-end space-x-2 border-t border-borderSlate pt-3">
+    <div class="pt-3 border-t border-borderSlate bg-darkBg/50 p-3 rounded-xl border border-borderSlate/50 space-y-2">
+      <div class="text-[11px] font-bold text-amber-400 flex items-center space-x-1.5">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Admin Force Move & Dispute Resolution</span>
+      </div>
+      <input type="hidden" id="forceMoveCommId">
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1">Target Queue</label>
+          <select id="forceMoveQueueSelect" class="w-full bg-darkBg border border-borderSlate rounded-lg px-2 py-1 text-slate-200 outline-none text-xs">
+            <option value="MAIN_ACCOUNT">MAIN_ACCOUNT</option>
+            <option value="INCOMING_REQUESTS">INCOMING_REQUESTS</option>
+            <option value="OUTGOING_REQUESTS">OUTGOING_REQUESTS</option>
+            <option value="WORKING_QUEUE">WORKING_QUEUE</option>
+            <option value="HISTORY">HISTORY</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-1">Target Status</label>
+          <select id="forceMoveStatusSelect" class="w-full bg-darkBg border border-borderSlate rounded-lg px-2 py-1 text-slate-200 outline-none text-xs">
+            <option value="Approved">Approved</option>
+            <option value="OFFERED_BY_VENDOR">OFFERED_BY_VENDOR</option>
+            <option value="REQUESTED_BY_RECIPIENT">REQUESTED_BY_RECIPIENT</option>
+            <option value="APPROVED_IN_WORKING">APPROVED_IN_WORKING</option>
+            <option value="COMPLETED_PAID">COMPLETED_PAID</option>
+            <option value="DECLINED">DECLINED</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end pt-1">
+        <button onclick="executeForceMoveQueue()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition shadow-md">
+          Apply Force Move
+        </button>
+      </div>
+    </div>
+    <div class="flex justify-end space-x-2 pt-2">
       <button onclick="closeCommissionDetailsModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Close</button>
     </div>
   </div>
@@ -854,10 +1058,55 @@ async function loadUsersData() {
   }
 }
 
+let selectedUserIds = new Set();
+
+function toggleSelectAllUsers(masterCheckbox) {
+  const checkboxes = document.querySelectorAll('.user-row-checkbox');
+  selectedUserIds.clear();
+  checkboxes.forEach(cb => {
+    cb.checked = masterCheckbox.checked;
+    if (masterCheckbox.checked) {
+      selectedUserIds.add(cb.value);
+    }
+  });
+  updateUserBatchToolbar();
+}
+
+function checkUserSelection() {
+  selectedUserIds.clear();
+  const checkboxes = document.querySelectorAll('.user-row-checkbox');
+  let allChecked = checkboxes.length > 0;
+  checkboxes.forEach(cb => {
+    if (cb.checked) {
+      selectedUserIds.add(cb.value);
+    } else {
+      allChecked = false;
+    }
+  });
+  const master = document.getElementById('selectAllUsersCheckbox');
+  if (master) master.checked = allChecked;
+  updateUserBatchToolbar();
+}
+
+function updateUserBatchToolbar() {
+  const btn = document.getElementById('btnBatchEraseUsers');
+  const txt = document.getElementById('btnBatchEraseUsersText');
+  if (!btn || !txt) return;
+  if (selectedUserIds.size > 0) {
+    btn.classList.remove('hidden');
+    txt.textContent = `Erase Selected (${selectedUserIds.size})`;
+  } else {
+    btn.classList.add('hidden');
+  }
+}
+
 function renderUsersTable(users) {
   const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
   if (!users || users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No matching user accounts found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No matching user accounts found.</td></tr>`;
+    selectedUserIds.clear();
+    updateUserBatchToolbar();
     return;
   }
 
@@ -868,12 +1117,17 @@ function renderUsersTable(users) {
 
     const statusUpper = (u.verification_status || 'UNVERIFIED').toUpperCase();
     const statusBadge = statusUpper === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
-                       (statusUpper === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30');
+                       (statusUpper === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                       (statusUpper === 'SUSPENDED' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'));
 
     const hasIdDoc = u.national_id_base64 && u.national_id_base64.length > 50;
+    const isChecked = selectedUserIds.has(u.id) ? 'checked' : '';
 
     return `
       <tr class="hover:bg-darkBg/40 transition">
+        <td class="py-3 px-4 text-center">
+          <input type="checkbox" class="user-row-checkbox rounded border-borderSlate bg-darkBg text-amber-500 focus:ring-0 cursor-pointer" value="${u.id}" ${isChecked} onchange="checkUserSelection()">
+        </td>
         <td class="py-3 px-4">
           <div class="font-bold text-white">${u.full_name || 'Unnamed Account'}</div>
           <div class="text-[11px] text-slate-400 font-mono">${u.email || u.id}</div>
@@ -893,13 +1147,21 @@ function renderUsersTable(users) {
         </td>
         <td class="py-3 px-4 font-mono text-slate-400">${u.referral_code || 'N/A'}</td>
         <td class="py-3 px-4 text-right space-x-1">
-          <button onclick="toggleUserStatus('${u.id}', '${statusUpper === 'VERIFIED' ? 'UNVERIFIED' : 'VERIFIED'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-semibold px-2.5 py-1 rounded-lg transition">
+          <button onclick="openEditUserModal('${u.id}')" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-semibold px-2 py-1 rounded-lg transition" title="Edit user permissions & attributes">
+            <i class="fa-solid fa-pen-to-square"></i> Edit
+          </button>
+          <button onclick="toggleUserStatus('${u.id}', '${statusUpper === 'VERIFIED' ? 'UNVERIFIED' : 'VERIFIED'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-semibold px-2 py-1 rounded-lg transition">
             ${statusUpper === 'VERIFIED' ? 'Revoke Verification' : 'Mark Verified'}
+          </button>
+          <button onclick="deleteUserRecord('${u.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-semibold px-2 py-1 rounded-lg transition" title="Erase user account">
+            <i class="fa-solid fa-trash"></i> Delete
           </button>
         </td>
       </tr>
     `;
   }).join('');
+
+  updateUserBatchToolbar();
 }
 
 function filterUsersTable() {
@@ -2135,6 +2397,280 @@ function renderVendorDirectory() {
 
 function selectVendorFromDirectory(vendorId, vendorName, vendorEmail) {
   openDirectOutreachForUser(vendorId, vendorName, 'SELLER', vendorEmail);
+}
+
+
+
+/* ==========================================================================
+   NEW ADMINISTRATIVE CONTROL FUNCTIONS (V21)
+   ========================================================================== */
+
+/* 1. User Account Erasure Functions */
+async function deleteUserRecord(userId) {
+  const userObj = allUsersCache.find(u => u.id === userId);
+  const userName = userObj ? (userObj.full_name || userObj.email) : userId;
+  if (!confirm(`Are you sure you want to permanently erase user account: ${userName}? This action cannot be undone.`)) return;
+
+  try {
+    const { error } = await _supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (error) throw error;
+    selectedUserIds.delete(userId);
+    showToast(`User account ${userName} erased successfully.`);
+    await loadUsersData();
+  } catch (err) {
+    alert("User deletion failed: " + err.message);
+  }
+}
+
+async function deleteSelectedUsers() {
+  if (selectedUserIds.size === 0) return;
+  if (!confirm(`Are you sure you want to permanently erase ${selectedUserIds.size} selected user account(s)? This action cannot be undone.`)) return;
+
+  try {
+    const idsToErase = Array.from(selectedUserIds);
+    const { error } = await _supabase
+      .from('profiles')
+      .delete()
+      .in('id', idsToErase);
+
+    if (error) throw error;
+    selectedUserIds.clear();
+    showToast(`Successfully erased ${idsToErase.length} user account(s).`);
+    await loadUsersData();
+  } catch (err) {
+    alert("Batch user deletion failed: " + err.message);
+  }
+}
+
+/* 2. Edit User Permissions Modal Functions */
+function openEditUserModal(userId) {
+  const u = allUsersCache.find(x => x.id === userId);
+  if (!u) return;
+  document.getElementById('editUserId').value = u.id;
+  document.getElementById('editUserFullName').value = u.full_name || '';
+  document.getElementById('editUserEmail').value = u.email || '';
+  document.getElementById('editUserRole').value = (u.role || 'buyer').toLowerCase();
+  document.getElementById('editUserVerificationStatus').value = (u.verification_status || 'UNVERIFIED').toUpperCase();
+  document.getElementById('editUserPaypalEmail').value = u.paypal_email || '';
+  document.getElementById('editUserInvitedByCode').value = u.invited_by_code || '';
+  document.getElementById('editUserModal').classList.remove('hidden');
+}
+
+function closeEditUserModal() {
+  document.getElementById('editUserModal').classList.add('hidden');
+}
+
+async function saveUserEdit() {
+  const userId = document.getElementById('editUserId').value;
+  const fullName = document.getElementById('editUserFullName').value.trim();
+  const email = document.getElementById('editUserEmail').value.trim();
+  const role = document.getElementById('editUserRole').value;
+  const verificationStatus = document.getElementById('editUserVerificationStatus').value;
+  const paypalEmail = document.getElementById('editUserPaypalEmail').value.trim();
+  const invitedByCode = document.getElementById('editUserInvitedByCode').value.trim();
+
+  if (!userId) return;
+
+  try {
+    const { error } = await _supabase
+      .from('profiles')
+      .update({
+        full_name: fullName,
+        email: email,
+        role: role,
+        verification_status: verificationStatus,
+        paypal_email: paypalEmail,
+        invited_by_code: invitedByCode
+      })
+      .eq('id', userId);
+
+    if (error) throw error;
+    showToast("User profile updated successfully!");
+    closeEditUserModal();
+    await loadUsersData();
+  } catch (err) {
+    alert("Error updating user profile: " + err.message);
+  }
+}
+
+/* 3. Manual Commission Adjustment Functions */
+function openManualAdjustmentModal() {
+  document.getElementById('adjRecipientId').value = '';
+  document.getElementById('adjAmount').value = '';
+  document.getElementById('adjNotes').value = '';
+  document.getElementById('manualAdjustmentModal').classList.remove('hidden');
+}
+
+function closeManualAdjustmentModal() {
+  document.getElementById('manualAdjustmentModal').classList.add('hidden');
+}
+
+async function submitManualAdjustment() {
+  const recipientInput = document.getElementById('adjRecipientId').value.trim();
+  const amount = Number(document.getElementById('adjAmount').value);
+  const roleType = document.getElementById('adjRoleType').value;
+  const queueType = document.getElementById('adjQueueType').value;
+  const status = document.getElementById('adjStatus').value;
+  const notes = document.getElementById('adjNotes').value.trim();
+
+  if (!recipientInput || isNaN(amount) || amount <= 0) {
+    alert("Please provide a valid recipient ID/email and amount greater than zero.");
+    return;
+  }
+
+  /* Resolve recipient ID if email is provided */
+  let recipientId = recipientInput;
+  const matchedUser = allUsersCache.find(u => u.email && u.email.toLowerCase() === recipientInput.toLowerCase());
+  if (matchedUser) recipientId = matchedUser.id;
+
+  try {
+    const payload = {
+      recipient_id: recipientId,
+      amount: amount,
+      role_type: roleType,
+      queue_type: queueType,
+      status: status,
+      feedback_id: notes || 'ADMIN_MANUAL_ADJUSTMENT'
+    };
+
+    const { error } = await _supabase
+      .from('commissions')
+      .insert([payload]);
+
+    if (error) throw error;
+    showToast("Manual commission adjustment injected into ledger!");
+    closeManualAdjustmentModal();
+    await loadCommissionsData();
+  } catch (err) {
+    alert("Error injecting adjustment: " + err.message);
+  }
+}
+
+/* 4. Force Move Queue Function inside Commission Details */
+function openCommissionDetailsModal(commId) {
+  const c = allCommissionsCache.find(x => x.id === commId || String(x.id) === String(commId));
+  if (!c) return;
+
+  const content = document.getElementById('commissionDetailsContent');
+  if (!content) return;
+  document.getElementById('forceMoveCommId').value = c.id;
+  document.getElementById('forceMoveQueueSelect').value = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
+  document.getElementById('forceMoveStatusSelect').value = (c.status || 'Approved');
+
+  content.innerHTML = `
+    <div class="grid grid-cols-2 gap-2 font-mono bg-darkBg p-3 rounded-xl border border-borderSlate/60 text-slate-300">
+      <div><span class="text-slate-500">Transaction ID:</span> ${c.id}</div>
+      <div><span class="text-slate-500">Amount:</span> <strong class="text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</strong></div>
+      <div><span class="text-slate-500">Recipient ID:</span> ${c.recipient_id || 'N/A'}</div>
+      <div><span class="text-slate-500">Role Type:</span> ${c.role_type || c.recipient_role || 'N/A'}</div>
+      <div><span class="text-slate-500">Current Queue:</span> ${c.queue_type || 'MAIN_ACCOUNT'}</div>
+      <div><span class="text-slate-500">Current Status:</span> ${c.status || 'N/A'}</div>
+    </div>
+  `;
+  document.getElementById('commissionDetailsModal').classList.remove('hidden');
+}
+
+function closeCommissionDetailsModal() {
+  document.getElementById('commissionDetailsModal').classList.add('hidden');
+}
+
+async function executeForceMoveQueue() {
+  const commId = document.getElementById('forceMoveCommId').value;
+  const targetQueue = document.getElementById('forceMoveQueueSelect').value;
+  const targetStatus = document.getElementById('forceMoveStatusSelect').value;
+
+  if (!commId) return;
+
+  try {
+    const { error } = await _supabase
+      .from('commissions')
+      .update({ queue_type: targetQueue, status: targetStatus })
+      .eq('id', commId);
+
+    if (error) throw error;
+    showToast(`Transaction force-moved to ${targetQueue} / ${targetStatus}`);
+    closeCommissionDetailsModal();
+    await loadCommissionsData();
+  } catch (err) {
+    alert("Force move failed: " + err.message);
+  }
+}
+
+/* 5. Global System Broadcast Engine */
+function openSystemBroadcastModal() {
+  document.getElementById('broadcastTitle').value = '';
+  document.getElementById('broadcastBody').value = '';
+  document.getElementById('systemBroadcastModal').classList.remove('hidden');
+}
+
+function closeSystemBroadcastModal() {
+  document.getElementById('systemBroadcastModal').classList.add('hidden');
+}
+
+async function executeSystemBroadcast() {
+  const targetAudience = document.getElementById('broadcastTarget').value;
+  const title = document.getElementById('broadcastTitle').value.trim();
+  const body = document.getElementById('broadcastBody').value.trim();
+
+  if (!title || !body) {
+    alert("Please provide both a broadcast title and message body.");
+    return;
+  }
+
+  let recipients = [];
+  if (targetAudience === 'ALL') {
+    recipients = allUsersCache;
+  } else if (targetAudience === 'BUYERS') {
+    recipients = allUsersCache.filter(u => (u.role || '').toLowerCase() === 'buyer');
+  } else if (targetAudience === 'SELLERS') {
+    recipients = allUsersCache.filter(u => ['seller', 'vendor'].includes((u.role || '').toLowerCase()));
+  }
+
+  if (recipients.length === 0) {
+    alert("No target user accounts found for the selected audience.");
+    return;
+  }
+
+  try {
+    const notifications = recipients.map(u => ({
+      user_id: u.id,
+      title: title,
+      body: body,
+      is_read: false
+    }));
+
+    const { error } = await _supabase
+      .from('notifications')
+      .insert(notifications);
+
+    if (error) throw error;
+    showToast(`System broadcast dispatched to ${notifications.length} user(s)!`);
+    closeSystemBroadcastModal();
+  } catch (err) {
+    alert("Broadcast dispatch failed: " + err.message);
+  }
+}
+
+/* 6. Message Attachment Purge Function */
+async function purgeMessageAttachment(messageId) {
+  if (!confirm("Are you sure you want to purge this image attachment string to save database storage?")) return;
+
+  try {
+    const { error } = await _supabase
+      .from('messages')
+      .update({ attachment_base64: '[Attachment purged by Admin]' })
+      .eq('id', messageId);
+
+    if (error) throw error;
+    showToast("Message attachment purged successfully.");
+    await loadMessagingData();
+  } catch (err) {
+    alert("Purge failed: " + err.message);
+  }
 }
 
 </script>
