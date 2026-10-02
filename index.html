@@ -770,7 +770,7 @@ function filterMarketplaceProducts() {
         </div>
       </div>
       <div class="p-5 pt-0">
-        <button onclick="handleInquireClick('${item.id}','${item.vendor_id}')" ${isLocked ? 'disabled' : ''} class="w-full bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+        <button onclick="handleInquireClick('${item.id}','${item.seller_id || item.vendor_id}')" ${isLocked ? 'disabled' : ''} class="w-full bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
           <i class="fa-solid fa-comments"></i>
           <span>${isLocked ? 'Locked (Pending Verification)' : 'Inquire & Claim Review'}</span>
         </button>
@@ -928,7 +928,7 @@ function renderCommissionTable() {
   
   const filtered = commissionsList.filter(c => {
     const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) ||
-                          (c.vendor_id || '').toLowerCase().includes(search) ||
+                          ((c.seller_id || c.vendor_id) || '').toLowerCase().includes(search) ||
                           (c.id || '').toLowerCase().includes(search);
     const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter;
     let matchesTab = false;
@@ -988,7 +988,7 @@ function renderCommissionTable() {
       </div>
       <div class="col-span-3 space-y-0.5">
         <p class="font-semibold text-slate-200 truncate">Vendor ID</p>
-        <p class="text-[10px] text-slate-400 font-mono truncate">${c.vendor_id}</p>
+        <p class="text-[10px] text-slate-400 font-mono truncate">${c.seller_id || c.vendor_id || 'N/A'}</p>
       </div>
       <div class="col-span-2 space-y-0.5">
         <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type}</span>
