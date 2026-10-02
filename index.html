@@ -37,7 +37,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <!-- Top Navigation Bar -->
 <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
 <div class="flex items-center space-x-3">
-<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden">
+<div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
 eh
 </div>
 <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Portal</span></span>
@@ -1381,42 +1381,6 @@ async function handleLogout() {
 
 /* Initialize shopper workspace on load */
 initShopperWorkspace();
-
-/* Global System Branding Loader */
-async function loadAppBranding() {
-  try {
-    const cachedLogo = localStorage.getItem('app_logo_base64');
-    if (cachedLogo) applyLogoToElements(cachedLogo);
-
-    if (typeof _supabase !== 'undefined') {
-      const { data, error } = await _supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'app_logo_base64')
-        .maybeSingle();
-
-      if (!error && data && data.value) {
-        localStorage.setItem('app_logo_base64', data.value);
-        applyLogoToElements(data.value);
-      }
-    }
-  } catch (err) {
-    console.log('App branding database query info:', err.message || err);
-  }
-}
-
-function applyLogoToElements(logoBase64) {
-  if (!logoBase64) return;
-  const elements = document.querySelectorAll('.app-header-logo, #appHeaderLogo');
-  elements.forEach(el => {
-    el.innerHTML = `<img src="${logoBase64}" alt="App Logo" class="w-full h-full object-cover rounded-xl shadow-md">`;
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadAppBranding();
-});
-
 </script>
 </body>
 </html>
