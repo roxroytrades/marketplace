@@ -37,7 +37,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <!-- Top Navigation Bar -->
 <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
 <div class="flex items-center space-x-3">
-<div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
+<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden">
 eh
 </div>
 <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal</span></span>
@@ -216,6 +216,24 @@ eh
 <h2 class="text-lg font-bold text-white tracking-tight">Vendor Referral & Affiliate Program</h2>
 <p class="text-xs text-slate-400">Invite new vendors and reviewers to earn recurring platform commission rewards.</p>
 </div>
+
+<!-- Prominent Referral Code Banner -->
+<div class="bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-transparent border border-purple-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+  <div class="flex items-center space-x-4">
+    <div class="w-12 h-12 bg-purple-500/20 border border-purple-500/40 rounded-xl flex items-center justify-center text-purple-400 text-xl font-bold">
+      <i class="fa-solid fa-ticket"></i>
+    </div>
+    <div>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-purple-400">Your Unique Inviter Referral Code</span>
+      <h3 id="vendorRefCodeDisplay" class="text-2xl font-extrabold text-white font-mono tracking-wide">REF-LOADING</h3>
+      <p class="text-[11px] text-slate-400">Give this code to merchants or shoppers to enter on sign-up.</p>
+    </div>
+  </div>
+  <button onclick="copyVendorRefCode()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-purple-500/20 flex items-center space-x-2 whitespace-nowrap">
+    <i class="fa-solid fa-copy"></i>
+    <span>Copy Code</span>
+  </button>
+</div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
 <span class="text-xs text-slate-400">Total Referrals</span>
@@ -232,9 +250,14 @@ eh
 </div>
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
 <h3 class="text-sm font-bold text-white">Your Unique Referral Link</h3>
-<div class="flex gap-2">
-<input type="text" id="refLinkInput" readonly value="https://echohub.ja/register?ref=VENDOR_PENDING" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-300 outline-none">
-<button onclick="copyReferralLink()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition">Copy Link</button>
+<div class="flex flex-wrap gap-2">
+<input type="text" id="refLinkInput" readonly value="https://echohub.ja/register?ref=VENDOR_PENDING" class="flex-1 min-w-[200px] bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-300 outline-none">
+<button onclick="copyReferralLink()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition whitespace-nowrap">
+<i class="fa-solid fa-copy mr-1"></i> Copy Link
+</button>
+<button onclick="shareVendorWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition whitespace-nowrap flex items-center space-x-1">
+<i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
+</button>
 </div>
 </div>
 </div>
@@ -1576,6 +1599,42 @@ async function handleSendMessage(event) {
 
 /* Event Listener */
 window.addEventListener('DOMContentLoaded', initSellerWorkspace);
+
+/* Global System Branding Loader */
+async function loadAppBranding() {
+  try {
+    const cachedLogo = localStorage.getItem('app_logo_base64');
+    if (cachedLogo) applyLogoToElements(cachedLogo);
+
+    if (typeof _supabase !== 'undefined') {
+      const { data, error } = await _supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'app_logo_base64')
+        .maybeSingle();
+
+      if (!error && data && data.value) {
+        localStorage.setItem('app_logo_base64', data.value);
+        applyLogoToElements(data.value);
+      }
+    }
+  } catch (err) {
+    console.log('App branding database query info:', err.message || err);
+  }
+}
+
+function applyLogoToElements(logoBase64) {
+  if (!logoBase64) return;
+  const elements = document.querySelectorAll('.app-header-logo, #appHeaderLogo');
+  elements.forEach(el => {
+    el.innerHTML = `<img src="${logoBase64}" alt="App Logo" class="w-full h-full object-cover rounded-xl shadow-md">`;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadAppBranding();
+});
+
 </script>
 </body>
 </html>
