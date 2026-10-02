@@ -758,14 +758,7 @@ async function loadVendorCommissions(isPolling = false) {
       .from('commissions')
       .select('*')
       .eq('vendor_id', currentUser.id);
-    if (error) {
-      const resAlt = await _supabase
-        .from('commissions')
-        .select('*')
-        .eq('seller_id', currentUser.id);
-      if (resAlt.error) throw resAlt.error;
-      data = resAlt.data;
-    }
+    if (error) throw error;
     vendorCommissions = data || [];
 
     /* Fetch profiles for recipients */
@@ -1074,6 +1067,7 @@ async function handleTopDownOfferSubmit(event) {
     const amount = parseFloat(document.getElementById('offerAmount').value);
 
     let insertPayload = {
+      seller_id: currentUser.id,
       vendor_id: currentUser.id,
       recipient_email: recipientEmail,
       role_type: recipientRole,
@@ -1253,7 +1247,7 @@ async function loadVendorThreads(isPolling = false) {
 
     let commData = [];
     try {
-      const { data: cData } = await _supabase.from('commissions').select('*').eq('seller_id', currentUser.id);
+      const { data: cData } = await _supabase.from('commissions').select('*').or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
       commData = cData || [];
     } catch (e) {}
 
@@ -1422,7 +1416,8 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
 
     const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
       p_message_id: String(messageId),
-      p_vendor_id: currentUser.id,
+      p_seller_id: currentUser.id,
+      vendor_id: currentUser.id,
       p_reviewer_id: reviewerId,
       p_commission_amount: Number(commissionAmount),
       p_platform_fee: 10.00,
@@ -1592,6 +1587,7 @@ async function handleSendMessage(event) {
     let payload = {
       sender_id: currentUser.id,
       receiver_id: activeThreadId,
+      seller_id: currentUser.id,
       vendor_id: currentUser.id,
       text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
       type: 'vendor_reply'
