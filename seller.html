@@ -959,7 +959,7 @@ async function openTopDownOfferModal() {
       const amt = Number(c.amount || 0);
       totalAmount += amt;
       const roleUpper = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
-      const recipient = profilesCache[c.recipient_id] || {};
+      const recipient = vendorProfilesCache[c.recipient_id] || {};
       const recName = recipient.full_name || c.recipient_email || 'Recipient';
       return `
         <div class="p-2 bg-cardBg border border-borderSlate rounded-xl flex items-center justify-between text-[11px]">
