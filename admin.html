@@ -1033,14 +1033,17 @@ async function loadCommissionsData(isSilent = false) {
     allCommissionsCache.forEach(c => {
       const qType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
       const statusVal = (c.status || '').toUpperCase();
-      const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
+      const roleType = (c.role_type || '').trim().toUpperCase();
       const amt = Number(c.amount || 0);
 
-      const isAdminRole = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE' || rawRole === 'PLATFORM_FEE');
-      const isUserMatch = Boolean(currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
-      
-      /* A commission belongs to the Admin if it is an Admin Share OR a Reviewer/Inviter earning assigned to the Admin user */
-      const isMyComm = isAdminRole || (isUserMatch && (rawRole === 'REVIEWER' || rawRole === 'BUYER_INVITER' || rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || !rawRole));
+      const isAdminRole = ['ADMIN', 'ADMIN_SHARE', 'ADMIN_FEE', 'PLATFORM_FEE'].includes(roleType);
+      const hasValidRecipientMatch = Boolean(
+        currentUser && currentUser.id && 
+        ((c.recipient_id && c.recipient_id === currentUser.id) || 
+         (c.recipient_email && currentUser.email && c.recipient_email.toLowerCase() === currentUser.email.toLowerCase()))
+      );
+      const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(roleType) && hasValidRecipientMatch;
+      const isMyComm = isAdminRole || isMyUserEarning;
 
       if (isMyComm) {
         const isPaid = (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') && statusVal !== 'DECLINED';
@@ -1075,11 +1078,16 @@ async function requestAllAvailableAdminPayouts() {
     const eligibleComms = allCommissionsCache.filter(c => {
       const qType = (c.queue_type || 'MAIN_ACCOUNT').toUpperCase();
       const statusVal = (c.status || '').toUpperCase();
-      const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
+      const roleType = (c.role_type || '').trim().toUpperCase();
 
-      const isAdminRole = (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE' || rawRole === 'PLATFORM_FEE');
-      const isUserMatch = Boolean(currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email));
-      const isMyComm = isAdminRole || (isUserMatch && (rawRole === 'REVIEWER' || rawRole === 'BUYER_INVITER' || rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || !rawRole));
+      const isAdminRole = ['ADMIN', 'ADMIN_SHARE', 'ADMIN_FEE', 'PLATFORM_FEE'].includes(roleType);
+      const hasValidRecipientMatch = Boolean(
+        currentUser && currentUser.id && 
+        ((c.recipient_id && c.recipient_id === currentUser.id) || 
+         (c.recipient_email && currentUser.email && c.recipient_email.toLowerCase() === currentUser.email.toLowerCase()))
+      );
+      const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(roleType) && hasValidRecipientMatch;
+      const isMyComm = isAdminRole || isMyUserEarning;
 
       const isPaid = (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') && statusVal !== 'DECLINED';
       const isAvailable = !isPaid && statusVal !== 'DECLINED' && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT');
@@ -1130,8 +1138,15 @@ function renderAdminCommissionsTable(comms) {
 
     /* Recipient Role Identification */
     const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
-    const isMyCommission = (currentUser && (c.recipient_id === currentUser.id || c.recipient_email === currentUser.email)) ||
-                           (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE');
+    const roleType = (c.role_type || '').trim().toUpperCase();
+    const isAdminRole = ['ADMIN', 'ADMIN_SHARE', 'ADMIN_FEE', 'PLATFORM_FEE'].includes(roleType);
+    const hasValidRecipientMatch = Boolean(
+      currentUser && currentUser.id && 
+      ((c.recipient_id && c.recipient_id === currentUser.id) || 
+       (c.recipient_email && currentUser.email && c.recipient_email.toLowerCase() === currentUser.email.toLowerCase()))
+    );
+    const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(roleType) && hasValidRecipientMatch;
+    const isMyCommission = isAdminRole || isMyUserEarning;
 
     /* Role Badge Logic - Directly maps database role_type without speculative fallback overrides */
     let roleBadge = '';
