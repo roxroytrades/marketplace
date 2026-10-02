@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-f<html lang="en" class="dark">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -130,26 +130,85 @@ eh
 <h2 class="text-lg font-bold text-white tracking-tight">Shopper Commissions Dashboard</h2>
 <p class="text-xs text-slate-400">Track pending earnings, send payout requests to vendors, and review collected transfer history.</p>
 </div>
-<!-- Summary Balance Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-<span class="text-xs text-slate-400 font-medium">Pending Balance (Uncollected)</span>
-<h3 id="statPendingCommissions" class="text-2xl font-bold text-amber-400">$0.00</h3>
-<p class="text-[10px] text-slate-500">Commissions generated awaiting vendor settlement.</p>
+<!-- Summary Balance Cards (3 Non-Redundant Cards) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <!-- Card 1: Pending Balance (Uncollected) -->
+  <div class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+    <div class="absolute -right-4 -bottom-4 opacity-10 text-amber-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+      <i class="fa-solid fa-hourglass-half"></i>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+        <i class="fa-solid fa-hourglass-half text-amber-400"></i>
+        <span>Pending Balance</span>
+      </span>
+      <span id="badgeShopperAvailable" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">$0.00 Liquid</span>
+    </div>
+    <div>
+      <h3 id="statPendingCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400 mt-1">Uncollected review earnings across active queues</p>
+    </div>
+  </div>
+
+  <!-- Card 2: Collected Balance -->
+  <div class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+    <div class="absolute -right-4 -bottom-4 opacity-10 text-emerald-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
+        <i class="fa-solid fa-wallet text-emerald-400"></i>
+        <span>Collected Balance</span>
+      </span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">Settled</span>
+    </div>
+    <div>
+      <h3 id="statCollectedCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400 mt-1">Successfully transferred and logged into received history</p>
+    </div>
+  </div>
+
+  <!-- Card 3: Total Lifetime Earnings -->
+  <div class="bg-cardBg border border-blue-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+    <div class="absolute -right-4 -bottom-4 opacity-10 text-blue-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+      <i class="fa-solid fa-award"></i>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center space-x-1.5">
+        <i class="fa-solid fa-chart-pie text-blue-400"></i>
+        <span>Total Lifetime Earnings</span>
+      </span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">Grand Total</span>
+    </div>
+    <div>
+      <h3 id="statTotalCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400 mt-1">Combined review payouts and referral bonus earnings</p>
+    </div>
+  </div>
 </div>
-<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg" id="collected-balance-card">
-<span class="text-xs text-slate-400 font-medium">Collected Balance</span>
-<h3 id="statCollectedCommissions" class="text-2xl font-bold text-emerald-400">$0.00</h3>
-<p class="text-[10px] text-slate-500">Successfully transferred and logged into received history.</p>
-</div>
-</div>
+
 <!-- Commissions Sub-Tabs Navigation -->
 <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-<button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition">Incoming Requests</button>
-<button onclick="switchCommissionTab('outgoing')" id="tabOutgoing" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Outgoing Requests</button>
-<button onclick="switchCommissionTab('mainAccount')" id="tabMainAccount" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Main Account</button>
-<button onclick="switchCommissionTab('workingQueue')" id="tabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Working Queue</button>
-<button onclick="switchCommissionTab('receivedHistory')" id="tabReceivedHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition">Received History</button>
+  <button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-2">
+    <span>📥 Incoming Offers</span>
+    <span id="badgeShopperIncoming" class="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/30 text-blue-200 border border-blue-400/30 font-mono">(0) $0.00</span>
+  </button>
+  <button onclick="switchCommissionTab('mainAccount')" id="tabMainAccount" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
+    <span>🏦 Main Account</span>
+    <span id="badgeShopperMainAccount" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
+  </button>
+  <button onclick="switchCommissionTab('outgoing')" id="tabOutgoing" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
+    <span>📤 Outgoing Requests</span>
+    <span id="badgeShopperOutgoing" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
+  </button>
+  <button onclick="switchCommissionTab('workingQueue')" id="tabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
+    <span>⚡ Working Queue</span>
+    <span id="badgeShopperWorkingQueue" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
+  </button>
+  <button onclick="switchCommissionTab('receivedHistory')" id="tabReceivedHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
+    <span>📜 Received History</span>
+    <span id="badgeShopperReceivedHistory" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
+  </button>
 </div>
 <!-- Tab Content Filters & Action Toolbar -->
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
@@ -737,10 +796,12 @@ function switchCommissionTab(tab) {
   const tabs = ['incoming', 'outgoing', 'mainAccount', 'workingQueue', 'receivedHistory'];
   tabs.forEach(t => {
     const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-    if (t === tab) {
-      btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
-    } else {
-      btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
+    if (btn) {
+      if (t === tab) {
+        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-2';
+      } else {
+        btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2';
+      }
     }
   });
   renderCommissionTable();
@@ -749,17 +810,70 @@ function switchCommissionTab(tab) {
 function updateCommissionStats() {
   let pendingSum = 0;
   let collectedSum = 0;
+  let availableSum = 0;
+
+  let incomingCount = 0, incomingAmt = 0;
+  let mainCount = 0, mainAmt = 0;
+  let outgoingCount = 0, outgoingAmt = 0;
+  let workingCount = 0, workingAmt = 0;
+  let historyCount = 0, historyAmt = 0;
+
   commissionsList.forEach(c => {
     const statusVal = (c.status || '').toUpperCase();
     const qType = (c.queue_type || '').toUpperCase();
-    if (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') {
-      collectedSum += Number(c.amount || 0);
-    } else {
-      pendingSum += Number(c.amount || 0);
+    const amt = Number(c.amount || 0);
+
+    const isPaid = statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY';
+    const isDeclined = statusVal === 'DECLINED';
+
+    if (isPaid) {
+      collectedSum += amt;
+    } else if (!isDeclined) {
+      pendingSum += amt;
+    }
+
+    if (!isPaid && !isDeclined && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT')) {
+      availableSum += amt;
+    }
+
+    /* Sub-Tab Breakdown */
+    if (statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'OFFERED_AWAITING_ACCEPTANCE' || qType === 'INCOMING_REQUESTS') {
+      incomingCount++;
+      incomingAmt += amt;
+    } else if ((qType === 'MAIN_ACCOUNT' || qType === 'MAIN_QUEUE' || statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || !c.queue_type) &&
+               qType !== 'WORKING_QUEUE' && qType !== 'OUTGOING_REQUESTS' && qType !== 'INCOMING_REQUESTS' && qType !== 'HISTORY' && qType !== 'PAYMENT_HISTORY' &&
+               statusVal !== 'APPROVED_IN_WORKING' && statusVal !== 'COMPLETED_PAID' && statusVal !== 'PAID' && statusVal !== 'REQUESTED_BY_RECIPIENT' && statusVal !== 'OFFERED_BY_VENDOR' && statusVal !== 'DECLINED') {
+      mainCount++;
+      mainAmt += amt;
+    } else if (statusVal === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+      outgoingCount++;
+      outgoingAmt += amt;
+    } else if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING') {
+      workingCount++;
+      workingAmt += amt;
+    } else if (qType === 'HISTORY' || qType === 'PAYMENT_HISTORY' || statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || statusVal === 'DECLINED') {
+      historyCount++;
+      historyAmt += amt;
     }
   });
-  document.getElementById('statPendingCommissions').textContent = `$${pendingSum.toFixed(2)}`;
-  document.getElementById('statCollectedCommissions').textContent = `$${collectedSum.toFixed(2)}`;
+
+  const totalSum = pendingSum + collectedSum;
+
+  const setEl = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+
+  setEl('statPendingCommissions', `$${pendingSum.toFixed(2)}`);
+  setEl('statCollectedCommissions', `$${collectedSum.toFixed(2)}`);
+  setEl('statTotalCommissions', `$${totalSum.toFixed(2)}`);
+  setEl('badgeShopperAvailable', `$${availableSum.toFixed(2)} Liquid`);
+
+  setEl('badgeShopperIncoming', `(${incomingCount}) $${incomingAmt.toFixed(2)}`);
+  setEl('badgeShopperMainAccount', `(${mainCount}) $${mainAmt.toFixed(2)}`);
+  setEl('badgeShopperOutgoing', `(${outgoingCount}) $${outgoingAmt.toFixed(2)}`);
+  setEl('badgeShopperWorkingQueue', `(${workingCount}) $${workingAmt.toFixed(2)}`);
+  setEl('badgeShopperReceivedHistory', `(${historyCount}) $${historyAmt.toFixed(2)}`);
 }
 
 function renderCommissionTable() {
