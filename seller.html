@@ -407,6 +407,7 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let vendorProducts = [];
 let vendorCommissions = [];
+let vendorProfilesCache = {};
 let vendorThreads = [];
 let activeThreadId = null;
 let activeSubTab = 'incoming';
@@ -683,6 +684,20 @@ async function loadVendorCommissions(isPolling = false) {
       data = resAlt.data;
     }
     vendorCommissions = data || [];
+
+    /* Fetch profiles for recipients */
+    const recipientIds = [...new Set(vendorCommissions.map(c => c.recipient_id).filter(Boolean))];
+    if (recipientIds.length > 0) {
+      const { data: profs } = await _supabase
+        .from('profiles')
+        .select('id, full_name, paypal_email, email')
+        .in('id', recipientIds);
+      if (profs) {
+        profs.forEach(p => {
+          vendorProfilesCache[p.id] = p;
+        });
+      }
+    }
   } catch (err) {
     vendorCommissions = [];
   }
@@ -799,7 +814,7 @@ function renderSellerCommissions() {
           <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
         </div>
         <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.recipient_role || 'REVIEWER'}</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${(c.role_type || '').toUpperCase().includes('SELLER') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : ((c.role_type || '').toUpperCase().includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : ((c.role_type || '').toUpperCase().includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${(c.role_type || 'N/A').toUpperCase()}</span>
           <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
         </div>
         <div class="col-span-2">
