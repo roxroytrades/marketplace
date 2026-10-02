@@ -816,7 +816,7 @@ Apply Force Move
 <!-- Actions -->
 <div class="flex items-center justify-end space-x-2 pt-2 border-t border-borderSlate">
 <button onclick="closeDirectOutreachModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 font-medium px-4 py-2.5 rounded-xl transition">Cancel</button>
-<button id="outreachSubmitBtn" onclick="submitDirectOutreach()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-amber-500/20">
+<button onclick="submitDirectOutreach()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-amber-500/20">
 <i class="fa-solid fa-paper-plane"></i>
 <span>Send Direct Message</span>
 </button>
@@ -1081,7 +1081,7 @@ return;
 }
 currentInspectingUserId = userId;
 document.getElementById('idModalUserInfo').innerHTML = `
-<strong>User:</strong> ${user.full_name} (${user.email})<br>
+<strong>User:</strong> ${user.full_name || 'User'} (${user.email || 'N/A'})<br>
 <strong>Verification Status:</strong> ${user.verification_status || 'UNVERIFIED'}
 `;
 document.getElementById('idModalImage').src = user.national_id_base64;
@@ -1337,7 +1337,7 @@ const qType = c.queue_type || 'MAIN_ACCOUNT';
 const statusVal = c.status || 'Approved';
 /* Lookup recipient profile */
 const recipient = allUsersCache.find(u => u.id === c.recipient_id || (u.email && u.email === c.recipient_email));
-const recipientName = recipient ? (recipient.full_name || recipient.email) : (c.recipient_email || c.recipient_id || 'System / Admin');
+const recipientName = recipient ? (recipient.full_name || recipient.email) : (c.recipient_email || 'System / Admin');
 const recipientEmail = recipient ? recipient.email : (c.recipient_email || 'N/A');
 const recipientPaypal = recipient ? (recipient.paypal_email || recipient.email || 'Not Configured') : (c.recipient_paypal || 'Not Configured');
 /* Lookup vendor profile */
@@ -2128,14 +2128,35 @@ NEW ADMINISTRATIVE CONTROL FUNCTIONS (V21)
 async function deleteUserRecord(userId) {
 const userObj = allUsersCache.find(u => u.id === userId);
 const userName = userObj ? (userObj.full_name || userObj.email) : userId;
-if (!confirm(`Are you sure you want to permanently erase user account "${userName}"? This will delete their profile.`)) return;
+if (!confirm(`Are you sure you want to permanently erase user account: ${userName}? This action cannot be undone.`)) return;
 try {
-const { error } = await _supabase.from('profiles').delete().eq('id', userId);
+const { error } = await _supabase
+.from('profiles')
+.delete()
+.eq('id', userId);
 if (error) throw error;
+selectedUserIds.delete(userId);
 showToast(`User account ${userName} erased successfully.`);
 await loadUsersData();
 } catch (err) {
-alert("Delete failed: " + err.message);
+alert("User deletion failed: " + err.message);
+}
+}
+async function deleteSelectedUsers() {
+if (selectedUserIds.size === 0) return;
+if (!confirm(`Are you sure you want to permanently erase ${selectedUserIds.size} selected user account(s)? This action cannot be undone.`)) return;
+try {
+const idsToErase = Array.from(selectedUserIds);
+const { error } = await _supabase
+.from('profiles')
+.delete()
+.in('id', idsToErase);
+if (error) throw error;
+selectedUserIds.clear();
+showToast(`Successfully erased ${idsToErase.length} user account(s).`);
+await loadUsersData();
+} catch (err) {
+alert("Batch user deletion failed: " + err.message);
 }
 }
 /* 2. Edit User Permissions Modal Functions */
@@ -2270,7 +2291,7 @@ await loadCommissionsData();
 alert("Force move failed: " + err.message);
 }
 }
-/* 5. Global System Broadcast Engine (Schema Calibrated: message column) */
+/* 5. Global System Broadcast Engine */
 function openSystemBroadcastModal() {
 document.getElementById('broadcastTitle').value = '';
 document.getElementById('broadcastBody').value = '';
@@ -2300,12 +2321,17 @@ alert("No target user accounts found for the selected audience.");
 return;
 }
 try {
-// FIX SCHEMA MISMATCH: 'message' column instead of 'body' column
+// SCHEMA CALIBRATION FOR PUBLIC.NOTIFICATIONS:
+// Table 'notifications' columns in live Supabase database schema (Schema 10 01 26 8 16 am.docx):
+// - title (TEXT, NOT NULL)
+// - message (TEXT, NOT NULL) -- [Source doc admin.html.docx incorrectly used 'body']
+// - read (BOOLEAN, DEFAULT false) -- [Source doc admin.html.docx incorrectly used 'is_read']
+// - user_id (UUID / TEXT)
 const notifications = recipients.map(u => ({
 user_id: u.id,
 title: title,
 message: body,
-is_read: false
+read: false
 }));
 const { error } = await _supabase
 .from('notifications')
