@@ -37,8 +37,9 @@ tailwind.config = {
 <!-- Top Bar -->
 <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
   <div class="flex items-center space-x-3">
-    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg">
-      eh
+    <div id="headerLogoContainer" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden relative">
+      <span id="headerLogoText">eh</span>
+      <img id="headerLogoImg" src="" alt="Echo Hub Logo" class="w-full h-full object-cover hidden absolute inset-0">
     </div>
     <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Authentication Portal</span></span>
   </div>
@@ -103,6 +104,38 @@ const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+// ================= SYSTEM BRANDING HYDRATION =================
+async function loadAppBranding() {
+  try {
+    const { data, error } = await _supabase
+      .from('system_settings')
+      .select('logo_url, logo_base64, logo, value, key, id')
+      .or('id.eq.app_config,key.eq.app_config,key.eq.logo')
+      .maybeSingle();
+
+    if (error) {
+      console.warn("Branding query info:", error.message);
+      return;
+    }
+
+    const logoSrc = data ? (data.logo_url || data.logo_base64 || data.logo || data.value) : null;
+    if (logoSrc) {
+      const img = document.getElementById('headerLogoImg');
+      const text = document.getElementById('headerLogoText');
+      const container = document.getElementById('headerLogoContainer');
+      if (img) {
+        img.src = logoSrc;
+        img.classList.remove('hidden');
+      }
+      if (text) text.classList.add('hidden');
+      if (container) container.classList.add('p-0');
+    }
+  } catch (err) {
+    console.warn("Branding load bypassed:", err);
+  }
+}
 
 async function handleLogin(event) {
   event.preventDefault();
@@ -190,6 +223,7 @@ async function handleLogin(event) {
     btn.innerHTML = `<i class="fa-solid fa-right-to-bracket mr-2"></i> Sign In to Dashboard`;
   }
 }
+window.addEventListener('DOMContentLoaded', loadAppBranding);
 </script>
 </body>
 </html>
