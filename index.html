@@ -5,25 +5,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Echo Hub - Shopper Marketplace, Commissions & Referral Hub</title>
-<!-- Tailwind CSS CDN with Dark Mode Enabled -->a
+<!-- Tailwind CSS CDN with Dark Mode Enabled -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 
 
 function getProductImageUrl(item) {
-  if (!item) return 'https://via.placeholder.com/300';
+  if (!item) return '';
   let url = item.image_url || item.image || item.img_url || item.image_base64 || item.photo_url || item.picture_url || '';
   if (typeof url !== 'string' || !url || url.includes('||') || url.includes('{')) {
-    return 'https://via.placeholder.com/300';
+    return '';
   }
   url = url.trim();
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/')) {
     return url;
   }
-  return 'https://via.placeholder.com/300';
+  return '';
 }
 
-function sanitizeImgUrl(url, fallback = 'https://via.placeholder.com/300') {
+function sanitizeImgUrl(url, fallback = '') {
   if (!url || typeof url !== 'string') return fallback;
   const clean = url.trim();
   if (clean.includes('item.imageurl') || clean.includes('image_url') || clean.includes('via.placeholder')) {
@@ -748,7 +748,7 @@ eh
 <!-- Thumbnail Preview Container -->
 <div id="chatThumbnailPreviewContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center justify-between">
 <div class="flex items-center space-x-3">
-<img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate" onerror="this.src='https://via.placeholder.com/300'">
+<img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
 <span class="text-xs text-slate-300 font-medium">Screenshot attached ready to send</span>
 </div>
 <button onclick="clearChatThumbnail()" class="text-rose-400 hover:text-rose-300 text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i> Remove</button>
@@ -1114,7 +1114,7 @@ function filterMarketplaceProducts() {
         <div>
           <!-- Product Image & Floating Badges -->
           <div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 relative overflow-hidden">
-            <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.src='https://via.placeholder.com/300'">
+            <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Image Available</span></div>
             
             <!-- Review Commission Badge (Top Left) -->
             <div class="absolute top-3 left-3 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 flex items-center space-x-1 shadow-lg">
@@ -1194,7 +1194,7 @@ async function handleInquireClick(productId, vendorId) {
     const prodTitle = prod ? prod.title : 'Marketplace Item';
     const prodPrice = prod ? Number(prod.price || 0).toFixed(2) : '0.00';
     const prodReward = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
-    const prodImg = prod ? (prod.image_url || prod.image || 'https://via.placeholder.com/300') : 'https://via.placeholder.com/300';
+    const prodImg = prod ? (prod.image_url || prod.image || '') : '';
 
     const { data: existing } = await _supabase
       .from('messages')
@@ -1485,7 +1485,7 @@ function viewReceipt(id) {
         <span class="text-slate-400 font-semibold">Vendor Payment Receipt Proof (Base64):</span>
         ${receiptImg ? `
           <a href="${receiptImg}" target="_blank" class="block bg-darkBg border border-borderSlate rounded-xl p-2 text-center overflow-hidden hover:border-accentBlue/50 transition">
-            <img src="${receiptImg}" alt="Payment Receipt Proof" class="max-h-64 mx-auto rounded-lg object-contain w-full" onerror="this.src='https://via.placeholder.com/300?text=Receipt+Load+Error'">
+            <img src="${receiptImg}" alt="Payment Receipt Proof" class="max-h-64 mx-auto rounded-lg object-contain w-full" onerror="this.src='?text=Receipt+Load+Error'">
           </a>
         ` : `
           <div class="p-4 bg-darkBg border border-borderSlate rounded-xl text-center text-slate-500 italic text-xs">
@@ -2046,7 +2046,7 @@ async function loadMessageStream(recipientId, productId) {
         productHeaderCard = `
           <div class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-3 shadow-lg flex items-center justify-between gap-3 shrink-0">
             <div class="flex items-center space-x-3 truncate">
-              <img src="${prod.image_url || 'https://via.placeholder.com/150'}" alt="Product" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shrink-0" onerror="this.src='https://via.placeholder.com/300'">
+              <img src="${prod.image_url || ''}" alt="Product" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shrink-0" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
               <div class="truncate">
                 <div class="flex items-center space-x-1.5">
                   <span class="text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.2 rounded-full font-bold uppercase">Inquired Item</span>
@@ -2076,7 +2076,7 @@ async function loadMessageStream(recipientId, productId) {
         if (prod) {
           const pPrice = Number(prod.price || 0).toFixed(2);
           const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
-          const pImg = prod.image_url || prod.image || 'https://via.placeholder.com/150';
+          const pImg = prod.image_url || prod.image || '';
           const cardBg = isMe 
             ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50' 
             : 'bg-white border-slate-300 text-slate-900 hover:border-blue-600 shadow-md';
@@ -2084,7 +2084,7 @@ async function loadMessageStream(recipientId, productId) {
 
           productCardHtml = `
             <div onclick="openProductFromChat('${prod.id}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
-              <img src="${pImg}" onerror="this.src='https://via.placeholder.com/150'" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
+              <img src="${pImg}" onerror="this.src=''" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
               <div class="truncate flex-1">
                 <div class="flex items-center space-x-1">
                   <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
@@ -2107,7 +2107,7 @@ async function loadMessageStream(recipientId, productId) {
         innerHtml += productCardHtml;
       }
       if (imgUrl && !productCardHtml) {
-        innerHtml += `<img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150'" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">`;
+        innerHtml += `<img src="${imgUrl}" onerror="this.src=''" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">`;
       }
       if (text) {
         innerHtml += `<p class="leading-relaxed">${text}</p>`;
@@ -2372,7 +2372,7 @@ function applyLogoToElements(logoBase64) {
   if (!logoBase64) return;
   const elements = document.querySelectorAll('.app-header-logo, #appHeaderLogo');
   elements.forEach(el => {
-    el.innerHTML = `<img src="${logoBase64}" alt="App Logo" class="w-full h-full object-cover rounded-xl shadow-md" onerror="this.src='https://via.placeholder.com/300'">`;
+    el.innerHTML = `<img src="${logoBase64}" alt="App Logo" class="w-full h-full object-cover rounded-xl shadow-md" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">`;
   });
 }
 
@@ -2404,7 +2404,7 @@ function openProductDetailsModal(productId) {
   body.innerHTML = `
     <div class="space-y-4">
       <div class="relative w-full h-64 bg-slate-950/80 rounded-2xl border border-borderSlate overflow-hidden flex items-center justify-center p-4">
-        <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain" onerror="this.src='https://via.placeholder.com/300'">
+        <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
         <span class="absolute top-3 left-3 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-3 py-1 rounded-full text-xs font-bold text-emerald-400">
           🎁 $${rewardAmount} Commission
         </span>
@@ -2554,7 +2554,7 @@ function renderVendorStorefrontCards(products) {
       <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 hover:border-accentBlue/50 transition flex flex-col justify-between">
         <div class="space-y-2">
           <div class="w-full h-36 bg-slate-950/80 rounded-xl overflow-hidden flex items-center justify-center p-2 relative">
-            <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain" onerror="this.src='https://via.placeholder.com/300'">
+            <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
             <span class="absolute top-2 left-2 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-400">
               🎁 $${rewardAmount} Commission
             </span>
