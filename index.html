@@ -1464,20 +1464,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const DEFAULT_PLACEHOLDER_IMAGE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231E293B'/><text x='50%' y='50%' fill='%2364748B' font-family='sans-serif' font-size='14' font-weight='bold' text-anchor='middle' dy='.3em'>No Image Available</text></svg>";
 
-function getProductImageUrl(item) {
-  if (!item) return DEFAULT_PLACEHOLDER_IMAGE;
-  if (typeof item === 'string') {
-    if (item.trim() !== '' && !item.includes('placeholder.com')) return item;
-    return DEFAULT_PLACEHOLDER_IMAGE;
-  }
-  const url = item.image_url || item.image_base64 || item.image || item.proof_base64 || item.receipt_url || item.receipt_base64 || item.file_url || item.attachment_url;
-  if (!url || typeof url !== 'string' || url.trim() === '' || url.includes('placeholder.com')) {
-    return DEFAULT_PLACEHOLDER_IMAGE;
-  }
-  return url;
-}
+
+
 
 let currentUser = null;
 let currentProfile = null;
@@ -1714,7 +1703,8 @@ tableBody.innerHTML = `
 return;
 }
 tableBody.innerHTML = refs.map(r => `
-<div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+<div class="p-4
+  grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
 <div
   class="col-span-4 font-mono text-slate-400 truncate"
   r
@@ -1779,7 +1769,8 @@ filterMarketplaceProducts();
 } catch (err) {
 if (marketplaceProducts.length === 0) {
 grid.innerHTML = `
-<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+<div class="p-8
+  text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
 <p>No active marketplace products found.</p>
 </div>
 `;
@@ -1795,7 +1786,8 @@ return (item.title || '').toLowerCase().includes(search) || (item.description ||
 });
 if (filtered.length === 0) {
 grid.innerHTML = `
-<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+<div class="p-8
+  text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
 <p>No matching review products available.</p>
 </div>
 `;
@@ -1803,9 +1795,11 @@ return;
 }
 const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
 grid.innerHTML = filtered.map(item => `
-<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group">
+<div class="bg-cardBg
+  border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group">
 <div>
-<div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 overflow-hidden">
+<div class="w-full
+  h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 overflow-hidden">
 <img
   src="${item.image_url || getProductImageUrl(item)}"
   alt="Product"
@@ -1843,14 +1837,14 @@ grid.innerHTML = filtered.map(item => `
 async function shareProductLink(productId) {
   const product = marketplaceProducts.find(p => p.id === productId);
   if (!product) return;
-  const imageUrl = getProductImageUrl(product);
+  const imageUrl = product.image_url || product.image_base64 || product.image;
   const msgText = `[PRODUCT SHARE]: ${product.title} - $${Number(product.price).toFixed(2)}\nLink: ${product.link || product.affiliate_link || 'N/A'}`;
   toggleMessagingHub();
   if (product.vendor_id) {
     await openThread('share_' + product.id, product.vendor_id, product.id);
     const msgInput = document.getElementById('messageInputBox');
     if (msgInput) msgInput.value = msgText;
-    if (imageUrl && imageUrl !== DEFAULT_PLACEHOLDER_IMAGE) {
+    if (imageUrl) {
       attachedImageBase64 = imageUrl;
       const previewThumb = document.getElementById('chatPreviewThumb');
       if (previewThumb) previewThumb.src = imageUrl;
@@ -2053,7 +2047,8 @@ actionHtml = `<span class="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 bord
 }
 
 return `
-<div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+<div class="p-4
+  grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
 <div class="col-span-1 flex items-center space-x-2">
 <input
   type="checkbox"
@@ -2295,7 +2290,8 @@ return `
   onclick="openThread('${t.id}','${counterpartId}', '${t.product_id}')"
   class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}"
 >
-<div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
+<div class="w-9
+  h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
 <i class="fa-solid fa-user"></i>
 </div>
 <div class="flex-1 min-w-0">
@@ -2419,8 +2415,16 @@ const isMe = m.sender_id === currentUser.id;
 const displayImg = m.image_url || m.file_url || m.attachment_url || m.proof_base64;
 return `
 <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-<div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-${displayImg ? `<img src="${getProductImageUrl(displayImg)}" onerror="this.onerror=null; this.src='${DEFAULT_PLACEHOLDER_IMAGE}';" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">` : ''}
+<div class="max-w-[80%]
+  px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+${displayImg ? `<div class="relative w-full overflow-hidden rounded-lg border border-white/20 mb-2">
+<img src="${displayImg}" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" class="w-full h-36 object-cover rounded-lg">
+<div class="hidden
+  flex flex-col items-center justify-center py-6 bg-slate-900/80 text-slate-400 space-y-1">
+<i class="fa-solid fa-image text-xl text-slate-500"></i>
+<span class="text-[10px] font-medium">Image unavailable</span>
+</div>
+</div>` : ''}
 ${m.text || m.message_text || m.content ? `<p class="leading-relaxed">${m.text || m.message_text || m.content}</p>` : ''}
 ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
 ${renderMessageStatusBadge(m)}
