@@ -364,7 +364,7 @@ eh
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full h-[85vh] flex overflow-hidden shadow-2xl">
 <!-- Left Sidebar: Thread List -->
 <div class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden">
-<div class="p-4 border-b border-borderSlate flex items-center justify-between">
+<div class="p-3 border-b border-borderSlate flex items-center justify-between">
 <h3 class="font-bold text-white text-sm flex items-center space-x-2">
 <i class="fa-solid fa-comments text-blue-500"></i>
 <span>Messaging Hub</span>
@@ -373,11 +373,37 @@ eh
 <i class="fa-solid fa-xmark text-lg"></i>
 </button>
 </div>
-<div class="p-3 border-b border-borderSlate">
-<input type="text" id="threadSearchInput" oninput="filterThreads()" placeholder="Search conversations..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+
+<!-- Sub-tab switcher: Active Chats vs Contact List -->
+<div class="p-2 border-b border-borderSlate bg-darkBg/60">
+  <div class="flex bg-darkBg border border-borderSlate p-1 rounded-xl">
+    <button type="button" id="shopperSubTabChatsBtn" onclick="switchShopperMessagingSubTab('chats')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow">
+      <i class="fa-solid fa-comments mr-1"></i> Chats
+    </button>
+    <button type="button" id="shopperSubTabContactsBtn" onclick="switchShopperMessagingSubTab('contacts')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white">
+      <i class="fa-solid fa-address-book mr-1"></i> Contacts
+    </button>
+  </div>
 </div>
-<div id="threadsListContainer" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
-<div class="p-6 text-center text-xs text-slate-500">Loading conversations...</div>
+
+<!-- Active Chats View -->
+<div id="shopperChatsContainer" class="flex-1 flex flex-col overflow-hidden">
+  <div class="p-3 border-b border-borderSlate">
+  <input type="text" id="threadSearchInput" oninput="filterThreads()" placeholder="Search conversations..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+  </div>
+  <div id="threadsListContainer" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
+  <div class="p-6 text-center text-xs text-slate-500">Loading conversations...</div>
+  </div>
+</div>
+
+<!-- Vendor Contact List View -->
+<div id="shopperContactsContainer" class="flex-1 flex flex-col overflow-hidden hidden">
+  <div class="p-3 border-b border-borderSlate">
+  <input type="text" id="shopperContactSearchInput" oninput="renderShopperContactsList()" placeholder="Search contacts by name, email..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+  </div>
+  <div id="contactsListContainer" class="flex-1 overflow-y-auto p-2 space-y-2">
+  <div class="p-6 text-center text-xs text-slate-500">Loading contacts...</div>
+  </div>
 </div>
 </div>
 <!-- Right Panel: Active Chat Stream -->
@@ -1116,6 +1142,103 @@ function clearChatThumbnail() {
   attachedImageBase64 = null;
   document.getElementById('chatThumbnailPreviewContainer').classList.add('hidden');
   document.getElementById('inlineChatFileInput').value = '';
+}
+
+
+let currentShopperMessagingSubTab = 'chats';
+
+function switchShopperMessagingSubTab(tab) {
+  currentShopperMessagingSubTab = tab;
+  const chatsBtn = document.getElementById('shopperSubTabChatsBtn');
+  const contactsBtn = document.getElementById('shopperSubTabContactsBtn');
+  const chatsContainer = document.getElementById('shopperChatsContainer');
+  const contactsContainer = document.getElementById('shopperContactsContainer');
+
+  if (tab === 'chats') {
+    if (chatsBtn) chatsBtn.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow';
+    if (contactsBtn) contactsBtn.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white';
+    if (chatsContainer) chatsContainer.classList.remove('hidden');
+    if (contactsContainer) contactsContainer.classList.add('hidden');
+    renderThreadsList();
+  } else {
+    if (contactsBtn) contactsBtn.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow';
+    if (chatsBtn) chatsBtn.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white';
+    if (contactsContainer) contactsContainer.classList.remove('hidden');
+    if (chatsContainer) chatsContainer.classList.add('hidden');
+    renderShopperContactsList();
+  }
+}
+
+function renderShopperContactsList() {
+  const container = document.getElementById('contactsListContainer');
+  if (!container) return;
+  const searchVal = (document.getElementById('shopperContactSearchInput')?.value || '').toLowerCase();
+
+  const contacts = messagingThreads.map(t => {
+    const partnerId = t.vendorId || t.partnerId || t.receiver_id;
+    const prof = profilesCache[partnerId] || {};
+    const vendorName = prof.full_name || t.vendorName || `Vendor (${String(partnerId).substring(0, 6)})`;
+    const vendorEmail = prof.email || 'N/A';
+
+    // Check if review has been submitted in commissionsData or commissions table
+    const hasReviewSubmitted = (shopperCommissions || []).some(c => 
+      (c.vendor_id === partnerId || c.seller_id === partnerId) && 
+      (c.recipient_id === currentUser?.id)
+    );
+
+    let displayPaypal = 'Hidden (Pending review submission)';
+    if (hasReviewSubmitted) {
+      displayPaypal = prof.paypal_email || 'Not specified in profile';
+    }
+
+    return {
+      partnerId: partnerId,
+      threadId: t.id,
+      productId: t.productId,
+      name: vendorName,
+      email: vendorEmail,
+      paypal: displayPaypal,
+      role: 'SELLER',
+      lastMessage: t.lastMessage || 'No recent messages',
+      updatedAt: t.updatedAt
+    };
+  }).filter(c => {
+    if (!searchVal) return true;
+    return c.name.toLowerCase().includes(searchVal) ||
+           c.email.toLowerCase().includes(searchVal) ||
+           c.paypal.toLowerCase().includes(searchVal) ||
+           c.partnerId.toLowerCase().includes(searchVal);
+  });
+
+  if (contacts.length === 0) {
+    container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">No matching vendor contacts found.</div>`;
+    return;
+  }
+
+  container.innerHTML = contacts.map(c => `
+    <div class="p-3 bg-darkBg border border-borderSlate rounded-xl space-y-2 hover:border-accentBlue transition">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2 truncate">
+          <div class="w-7 h-7 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0">
+            ${c.name.charAt(0).toUpperCase()}
+          </div>
+          <div class="truncate">
+            <h4 class="text-xs font-bold text-white truncate">${c.name}</h4>
+            <p class="text-[10px] text-slate-400 truncate">${c.email}</p>
+          </div>
+        </div>
+        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase shrink-0">SELLER</span>
+      </div>
+      <div class="text-[10px] text-slate-400 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
+        <div class="flex justify-between"><span class="text-slate-500">PayPal:</span> <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
+        <div class="truncate"><span class="text-slate-500">Last msg:</span> ${c.lastMessage}</div>
+      </div>
+      <button onclick="openThread('${c.threadId}', '${c.partnerId}', '${c.productId || ''}'); switchShopperMessagingSubTab('chats');" class="w-full bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border border-accentBlue/30 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
+        <i class="fa-solid fa-comment-dots text-[10px]"></i>
+        <span>Chat Now</span>
+      </button>
+    </div>
+  `).join('');
 }
 
 async function loadMessagingThreads(isPolling = false) {
