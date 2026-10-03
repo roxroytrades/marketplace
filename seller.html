@@ -479,6 +479,7 @@ let vendorCommissions = [];
 let profilesCache = {};
 let vendorProfilesCache = profilesCache;
 let vendorThreads = [];
+let readVendorThreadIds = new Set();
 let activeThreadId = null;
 let activeSubTab = 'incoming';
 let selectedSellerCommIds = new Set();
@@ -1379,6 +1380,15 @@ async function loadVendorThreads(isPolling = false) {
       threadMap[partnerId].messages.push(m);
     });
     vendorThreads = Object.values(threadMap);
+    vendorThreads.forEach(t => {
+      if (readVendorThreadIds.has(t.partnerId) || t.partnerId === activeThreadId) {
+        if (t.messages) {
+          t.messages.forEach(m => {
+            if (m.sender_id !== currentUser.id) m.is_read = true;
+          });
+        }
+      }
+    });
     const partnerIds = vendorThreads.map(t => t.partnerId).filter(id => id && id.length > 20);
     if (partnerIds.length > 0) {
       try {
@@ -1435,12 +1445,18 @@ function renderThreadsList() {
   }).join('');
 }
 
-function selectThread(partnerId) {
+async function selectThread(partnerId) {
   activeThreadId = partnerId;
+  if (partnerId) readVendorThreadIds.add(partnerId);
+
+  const unreadMsgIds = [];
   const t = vendorThreads.find(x => x.partnerId === partnerId);
   if (t && t.messages) {
     t.messages.forEach(m => {
-      if (m.sender_id !== currentUser.id) m.is_read = true;
+      if (m.sender_id !== currentUser.id) {
+        if (!m.is_read && m.id) unreadMsgIds.push(m.id);
+        m.is_read = true;
+      }
     });
   }
   updateSellerUnreadBadge();
@@ -1449,9 +1465,17 @@ function selectThread(partnerId) {
   document.getElementById('chatInputMsg').disabled = false;
   document.getElementById('chatSendBtn').disabled = false;
 
-  try {
-    _supabase.from('messages').update({ is_read: true }).eq('receiver_id', currentUser.id).eq('sender_id', partnerId).eq('is_read', false);
-  } catch (e) {}
+  if (unreadMsgIds.length > 0) {
+    try {
+      await _supabase.from('messages').update({ is_read: true }).in('id', unreadMsgIds);
+    } catch (e) {
+      console.warn("Error marking vendor messages read:", e);
+    }
+  } else {
+    try {
+      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${partnerId}),and(vendor_id.eq.${currentUser.id},sender_id.eq.${partnerId})`);
+    } catch (e) {}
+  }
 }
 
 function hasAmazonUrl(text) {
