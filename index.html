@@ -1748,7 +1748,7 @@ async function loadMessageStream(recipientId, productId) {
         innerHtml += `<p class="leading-relaxed">${text}</p>`;
       }
       if (reviewUrl) {
-        innerHtml += `<a href="${reviewUrl}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${reviewUrl}</a>`;
+        innerHtml += `<a href="${reviewUrl}" target="_blank" class="block text-[11px] underline ${isMe ? 'text-blue-200 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold'} break-all"><i class="fa-solid fa-link mr-1"></i>${reviewUrl}</a>`;
       }
       if (statusBadge) {
         innerHtml += statusBadge;
@@ -1759,7 +1759,7 @@ async function loadMessageStream(recipientId, productId) {
 
       return `
         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-          <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+          <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-slate-200 text-slate-900 border border-slate-300/80 rounded-bl-none shadow-md font-medium'}">
             ${innerHtml}
           </div>
           <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>

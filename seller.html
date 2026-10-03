@@ -1717,8 +1717,8 @@ function renderActiveChat() {
             <span class="text-[10px] text-slate-400 font-mono feedback-id-display">ID: ${feedbackId}</span>
           </div>
           <div>
-            <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 underline hover:text-blue-300 truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
-            ${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-300 mt-1">${text}</p>` : ''}
+            <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="${isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold'} underline truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
+            ${text && !text.includes(amazonUrl) ? `<p class="text-xs ${isMe ? 'text-slate-300' : 'text-slate-700'} mt-1">${text}</p>` : ''}
             ${fileUrl ? `
               <div class="mt-2">
                 <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
@@ -1764,7 +1764,7 @@ function renderActiveChat() {
 
     return `
       <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
-        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-slate-200 text-slate-900 border border-slate-300/80 rounded-bl-none shadow-md font-medium'}">
           ${bubbleContent}
         </div>
         <span class="text-[9px] text-slate-500 mt-1 px-1">${timeString}</span>
