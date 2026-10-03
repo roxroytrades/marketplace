@@ -2200,15 +2200,20 @@ async function handleAdminSendMessage(e) {
   if (!thread) return;
 
   try {
-    const { error } = await _supabase.from('messages').insert({
+    const payload = {
       sender_id: currentAdminUser.id,
       buyer_id: thread.isDirect ? thread.partnerId : thread.buyerId,
       vendor_id: thread.isDirect ? currentAdminUser.id : thread.vendorId,
       product_id: thread.isDirect ? null : thread.productId,
       channel_type: thread.isDirect ? 'ADMIN_DIRECT' : 'MARKETPLACE',
       content: text
-    });
-
+    };
+    let { error } = await _supabase.from('messages').insert(payload);
+    if (error && error.message && error.message.includes('channel_type')) {
+      delete payload.channel_type;
+      const retryRes = await _supabase.from('messages').insert(payload);
+      error = retryRes.error;
+    }
     if (error) throw error;
     input.value = '';
     await loadMessagingData();
@@ -2316,15 +2321,20 @@ async function submitDirectOutreach() {
   btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Sending Message...`;
 
   try {
-    const { error } = await _supabase.from('messages').insert({
+    const payload = {
       sender_id: currentAdminUser.id,
       buyer_id: selectedOutreachTargetUser.id,
       vendor_id: currentAdminUser.id,
       product_id: null,
       channel_type: 'ADMIN_DIRECT',
       content: text
-    });
-
+    };
+    let { error } = await _supabase.from('messages').insert(payload);
+    if (error && error.message && error.message.includes('channel_type')) {
+      delete payload.channel_type;
+      const retryRes = await _supabase.from('messages').insert(payload);
+      error = retryRes.error;
+    }
     if (error) throw error;
 
     alertBox.className = "p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
