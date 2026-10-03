@@ -526,6 +526,7 @@ let currentUser = null;
 let currentProfile = null;
 let marketplaceProducts = [];
 let commissionsList = [];
+let shopperCommissions = [];
 let activeCommTab = 'incoming';
 let selectedCommIds = new Set();
 let pollingInterval = null;
@@ -980,6 +981,7 @@ async function loadCommissionsData(isPolling = false) {
       .eq('recipient_id', currentUser.id);
     if (error) throw error;
     commissionsList = data || [];
+    shopperCommissions = commissionsList;
   } catch (err) {
     console.log('Using local shopper commissions dataset fallback.');
   }
@@ -1388,7 +1390,8 @@ function renderShopperContactsList() {
     const vendorName = prof.full_name || t.vendorName || `Vendor (${String(partnerId).substring(0, 6)})`;
     const vendorEmail = prof.email || 'N/A';
 
-    const hasReviewSubmitted = (shopperCommissions || []).some(c => 
+    const comms = (typeof shopperCommissions !== 'undefined' && shopperCommissions) ? shopperCommissions : ((typeof commissionsList !== 'undefined' && commissionsList) ? commissionsList : []);
+    const hasReviewSubmitted = comms.some(c => 
       (c.vendor_id === partnerId || c.seller_id === partnerId) && 
       (c.recipient_id === currentUser?.id)
     );
