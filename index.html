@@ -495,6 +495,7 @@ let pollingInterval = null;
 
 /* Messaging Hub State Variables */
 let messagingThreads = [];
+let readThreadIds = new Set();
 let activeThreadId = null;
 let activeRecipientId = null;
 let activeProductId = null;
@@ -1302,6 +1303,17 @@ async function loadMessagingThreads(isPolling = false) {
       .order('created_at', { ascending: false });
     if (error) throw error;
     messagingThreads = data || [];
+
+    /* Preserve read state for active/opened threads */
+    messagingThreads.forEach(m => {
+      const counterpartId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
+      if (counterpartId && (readThreadIds.has(counterpartId) || counterpartId === activeRecipientId)) {
+        if (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id) {
+          m.is_read = true;
+        }
+      }
+    });
+
     renderThreadsList();
     updateUnreadBadge();
   } catch (err) {
@@ -1393,6 +1405,8 @@ async function openThread(threadId, recipientId, productId) {
   activeThreadId = threadId;
   activeRecipientId = recipientId;
   activeProductId = productId;
+  if (recipientId) readThreadIds.add(recipientId);
+
   const profile = profilesCache[recipientId] || { full_name: `User #${recipientId.substring(0, 8)}`, role: 'user' };
   document.getElementById('activeChatPanel').classList.remove('hidden');
   document.getElementById('messageInputArea').classList.remove('hidden');
@@ -1400,10 +1414,14 @@ async function openThread(threadId, recipientId, productId) {
   document.getElementById('activeChatRoleTag').textContent = `${profile.role.toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
   
   /* Clear local unread status for messages from this recipient */
+  const unreadMsgIds = [];
   messagingThreads.forEach(m => {
     const counterpartId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
-    if (counterpartId === recipientId && (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id)) {
-      m.is_read = true;
+    if (counterpartId === recipientId) {
+      if (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id) {
+        if (!m.is_read && m.id) unreadMsgIds.push(m.id);
+        m.is_read = true;
+      }
     }
   });
   updateUnreadBadge();
@@ -1412,9 +1430,13 @@ async function openThread(threadId, recipientId, productId) {
   await loadMessageStream(recipientId, productId);
   setupRealtimeMessageSubscription(recipientId, productId);
 
-  try {
-    await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${recipientId}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${recipientId})`).eq('is_read', false);
-  } catch (e) {}
+  if (unreadMsgIds.length > 0) {
+    try {
+      await _supabase.from('messages').update({ is_read: true }).in('id', unreadMsgIds);
+    } catch (e) {
+      console.warn('Error marking messages read:', e);
+    }
+  }
 }
 
 function renderMessageStatusBadge(m) {
