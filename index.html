@@ -56,19 +56,7 @@ eh
 </div>
 <span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
 </div>
-<!-- Portals Dropdown -->
-<div class="relative group">
-<button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
-<i class="fa-solid fa-link text-slate-400"></i>
-<span>Quick Navigation</span>
-<i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
-</button>
-<div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
-<a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Dashboard</a>
-<a href="admin.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Admin Panel</a>
-<a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
-</div>
-</div>
+
 <!-- Logout Button -->
 <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
 <i class="fa-solid fa-right-from-bracket"></i>
@@ -613,11 +601,12 @@ async function fetchAndUpdateProfileState() {
 
 async function preloadProfiles() {
   try {
-    const { data, error } = await _supabase.from('profiles').select('id, full_name, role');
+    const { data, error } = await _supabase.from('profiles').select('id, full_name, email, role');
     if (!error && data) {
       data.forEach(p => {
         profilesCache[p.id] = {
-          full_name: p.full_name || `User #${p.id.substring(0,6)}`,
+          full_name: p.full_name || p.email || `Merchant #${p.id.substring(0,6)}`,
+          email: p.email || '',
           role: p.role || 'user'
         };
       });
@@ -749,6 +738,9 @@ async function loadShopperReferralData(isPolling = false) {
 async function loadMarketplaceProducts(isPolling = false) {
   const grid = document.getElementById('marketplaceGrid');
   try {
+    if (Object.keys(profilesCache).length === 0) {
+      await preloadProfiles();
+    }
     const { data, error } = await _supabase
       .from('products')
       .select('*')
@@ -772,7 +764,12 @@ function filterMarketplaceProducts() {
   const search = document.getElementById('marketSearchInput').value.toLowerCase();
   const grid = document.getElementById('marketplaceGrid');
   const filtered = marketplaceProducts.filter(item => {
-    return (item.title || '').toLowerCase().includes(search) || (item.description || '').toLowerCase().includes(search);
+    const vendorId = item.seller_id || item.vendor_id;
+    const vendorProfile = profilesCache[vendorId];
+    const vendorName = vendorProfile ? (vendorProfile.full_name || vendorProfile.email || '') : '';
+    return (item.title || '').toLowerCase().includes(search) || 
+           (item.description || '').toLowerCase().includes(search) ||
+           vendorName.toLowerCase().includes(search);
   });
   if (filtered.length === 0) {
     grid.innerHTML = `
@@ -783,26 +780,80 @@ function filterMarketplaceProducts() {
     return;
   }
   const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
-  grid.innerHTML = filtered.map(item => `
-    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group">
-      <div>
-        <div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 overflow-hidden">
-          <img src="${item.image_url || 'https://via.placeholder.com/300'}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300">
+  grid.innerHTML = filtered.map(item => {
+    const vendorId = item.seller_id || item.vendor_id;
+    const vendorProfile = profilesCache[vendorId];
+    const vendorName = vendorProfile ? (vendorProfile.full_name || vendorProfile.email || 'Verified Merchant') : 'Verified Merchant';
+    
+    const retailPrice = Number(item.price || 0).toFixed(2);
+    const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
+
+    return `
+      <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-accentBlue/50 transition duration-200">
+        <div>
+          <!-- Product Image & Floating Price/Reward Badges -->
+          <div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 relative overflow-hidden">
+            <img src="${item.image_url || 'https://via.placeholder.com/300'}" alt="${item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300">
+            
+            <!-- Cash Reward Badge (Top Left) -->
+            <div class="absolute top-3 left-3 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 flex items-center space-x-1 shadow-lg">
+              <i class="fa-solid fa-gift text-emerald-400"></i>
+              <span>Earn $${rewardAmount} Cash</span>
+            </div>
+
+            <!-- Retail Price Badge (Top Right) -->
+            <div class="absolute top-3 right-3 bg-darkBg/80 backdrop-blur-md border border-borderSlate px-2.5 py-1 rounded-full text-xs font-bold text-slate-200 shadow-lg">
+              Retail: $${retailPrice}
+            </div>
+          </div>
+
+          <!-- Product Details Body -->
+          <div class="p-5 space-y-3">
+            <!-- Merchant Line -->
+            <div class="flex items-center justify-between text-xs text-slate-400 border-b border-borderSlate/60 pb-2">
+              <span class="flex items-center space-x-1.5 truncate text-slate-300 font-medium">
+                <i class="fa-solid fa-store text-amber-400"></i>
+                <span class="truncate">Sold by: <strong class="text-white">${vendorName}</strong></span>
+              </span>
+              <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full font-semibold shrink-0">Verified</span>
+            </div>
+
+            <!-- Title & Description -->
+            <div>
+              <h3 class="font-bold text-white text-base line-clamp-1">${item.title}</h3>
+              <p class="text-xs text-slate-400 line-clamp-2 mt-1">${item.description || 'No description provided.'}</p>
+            </div>
+
+            <!-- Everyday Language Reward Box -->
+            <div class="bg-darkBg/70 border border-borderSlate rounded-xl p-3 flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">
+                  <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-400 font-medium">Review Reward</p>
+                  <p class="text-xs font-bold text-emerald-400">$${rewardAmount} Cash Back</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] text-slate-400">Product Retail</p>
+                <p class="text-xs font-semibold text-slate-300">$${retailPrice}</p>
+              </div>
+            </div>
+
+          </div>
         </div>
-        <div class="p-5 space-y-2">
-          <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-0.5 rounded-full font-semibold">Verified Listing</span>
-          <h3 class="font-bold text-white text-base">${item.title}</h3>
-          <p class="text-xs text-slate-400 line-clamp-2">${item.description || ''}</p>
+
+        <!-- Action Button -->
+        <div class="p-5 pt-0">
+          <button onclick="handleInquireClick('${item.id}','${vendorId}')" ${isLocked ? 'disabled' : ''} class="w-full bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-comments"></i>
+            <span>${isLocked ? 'Locked (Pending Verification)' : 'Inquire & Claim Review'}</span>
+          </button>
         </div>
       </div>
-      <div class="p-5 pt-0">
-        <button onclick="handleInquireClick('${item.id}','${item.seller_id || item.vendor_id}')" ${isLocked ? 'disabled' : ''} class="w-full bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
-          <i class="fa-solid fa-comments"></i>
-          <span>${isLocked ? 'Locked (Pending Verification)' : 'Inquire & Claim Review'}</span>
-        </button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 async function handleInquireClick(productId, vendorId) {
@@ -1260,6 +1311,7 @@ async function loadMessagingThreads(isPolling = false) {
 
 function renderThreadsList() {
   const container = document.getElementById('threadsListContainer');
+  if (!container) return;
   if (messagingThreads.length === 0) {
     container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">No conversations yet.</div>`;
     return;
@@ -1267,17 +1319,41 @@ function renderThreadsList() {
   const threadMap = new Map();
   messagingThreads.forEach(msg => {
     const counterpartId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
-    const key = `${counterpartId}_${msg.product_id || 'general'}`;
-    if (!threadMap.has(key)) {
-      threadMap.set(key, msg);
+    if (!counterpartId) return;
+    if (!threadMap.has(counterpartId)) {
+      threadMap.set(counterpartId, { latestMsg: msg, counterpartId: counterpartId, messages: [] });
     }
+    threadMap.get(counterpartId).messages.push(msg);
   });
-  const uniqueThreads = Array.from(threadMap.values());
+
+  const searchInput = document.getElementById('threadSearchInput');
+  const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+  let uniqueThreads = Array.from(threadMap.values());
+
+  if (searchVal) {
+    uniqueThreads = uniqueThreads.filter(t => {
+      const profile = profilesCache[t.counterpartId] || { full_name: '' };
+      const lastText = t.latestMsg ? (t.latestMsg.text || t.latestMsg.content || '') : '';
+      return (profile.full_name || '').toLowerCase().includes(searchVal) || lastText.toLowerCase().includes(searchVal);
+    });
+  }
+
+  if (uniqueThreads.length === 0) {
+    container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">No matching conversations found.</div>`;
+    return;
+  }
+
   container.innerHTML = uniqueThreads.map(t => {
-    const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
-    const isSelected = activeThreadId === t.id;
+    const counterpartId = t.counterpartId;
+    const latest = t.latestMsg;
+    const isSelected = activeRecipientId === counterpartId;
     const profile = profilesCache[counterpartId] || { full_name: `User #${counterpartId.substring(0, 6)}`, role: 'user' };
-    const statusVal = (t.status_badge || t.status || '').toUpperCase();
+    
+    /* Calculate incoming unread count for this thread */
+    const unreadCount = t.messages.filter(m => (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id) && !m.is_read).length;
+    
+    const statusVal = (latest.status_badge || latest.status || '').toUpperCase();
     let threadBadge = '';
     if (statusVal.includes('APPROV') || statusVal.includes('VERIFIED') || statusVal.includes('COMPLETE')) {
       threadBadge = `<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Approved</span>`;
@@ -1286,17 +1362,23 @@ function renderThreadsList() {
     } else if (statusVal) {
       threadBadge = `<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Pending</span>`;
     }
+
+    const lastMsgText = latest.text || latest.content || latest.message_text || latest.message || 'Attachment';
+
     return `
-      <div onclick="openThread('${t.id}','${counterpartId}', '${t.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
+      <div onclick="openThread('${latest.id}','${counterpartId}', '${latest.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
         <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
           <i class="fa-solid fa-user"></i>
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex justify-between items-center mb-0.5">
             <h4 class="font-bold text-white text-xs truncate flex items-center">${profile.full_name}${threadBadge}</h4>
-            <span class="text-[9px] text-slate-500">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            <div class="flex items-center space-x-1.5 shrink-0">
+              ${unreadCount > 0 ? `<span class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">${unreadCount}</span>` : ''}
+              <span class="text-[9px] text-slate-500">${new Date(latest.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            </div>
           </div>
-          <p class="text-[11px] text-slate-400 truncate">${t.text || 'Attachment'}</p>
+          <p class="text-[11px] text-slate-400 truncate">${lastMsgText}</p>
         </div>
       </div>
     `;
@@ -1316,9 +1398,23 @@ async function openThread(threadId, recipientId, productId) {
   document.getElementById('messageInputArea').classList.remove('hidden');
   document.getElementById('activeChatTitle').textContent = profile.full_name;
   document.getElementById('activeChatRoleTag').textContent = `${profile.role.toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
+  
+  /* Clear local unread status for messages from this recipient */
+  messagingThreads.forEach(m => {
+    const counterpartId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
+    if (counterpartId === recipientId && (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id)) {
+      m.is_read = true;
+    }
+  });
+  updateUnreadBadge();
   renderThreadsList();
+  
   await loadMessageStream(recipientId, productId);
   setupRealtimeMessageSubscription(recipientId, productId);
+
+  try {
+    await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${recipientId}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${recipientId})`).eq('is_read', false);
+  } catch (e) {}
 }
 
 function renderMessageStatusBadge(m) {
@@ -1381,13 +1477,32 @@ async function loadMessageStream(recipientId, productId) {
     }
     container.innerHTML = messages.map(m => {
       const isMe = m.sender_id === currentUser.id;
+      const text = (m.text || m.content || m.message_text || m.message || m.body || '').trim();
+      const imgUrl = m.image_url || m.file_url || m.attachment_url || m.proof_base64 || m.image;
+      const reviewUrl = m.review_url || (m.link && m.link.includes('http') ? m.link : null);
+      const statusBadge = renderMessageStatusBadge(m);
+
+      let innerHtml = '';
+      if (imgUrl) {
+        innerHtml += `<img src="${imgUrl}" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">`;
+      }
+      if (text) {
+        innerHtml += `<p class="leading-relaxed">${text}</p>`;
+      }
+      if (reviewUrl) {
+        innerHtml += `<a href="${reviewUrl}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${reviewUrl}</a>`;
+      }
+      if (statusBadge) {
+        innerHtml += statusBadge;
+      }
+      if (!innerHtml) {
+        innerHtml = `<p class="leading-relaxed italic opacity-80">[Attachment / System Event]</p>`;
+      }
+
       return `
         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
           <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
-            ${m.image_url ? `<img src="${m.image_url}" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">` : ''}
-            ${m.text ? `<p class="leading-relaxed">${m.text}</p>` : ''}
-            ${m.review_url ? `<a href="${m.review_url}" target="_blank" class="block text-[11px] underline text-blue-200 hover:text-white break-all"><i class="fa-solid fa-link mr-1"></i>${m.review_url}</a>` : ''}
-            ${renderMessageStatusBadge(m)}
+            ${innerHtml}
           </div>
           <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
         </div>
