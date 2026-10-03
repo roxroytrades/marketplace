@@ -983,6 +983,7 @@ let allUsersCache = [];
 let allProductsCache = [];
 let allCommissionsCache = [];
 let allThreadsCache = [];
+let readAdminThreadKeys = new Set();
 let activeSelectedThreadId = null;
 let currentLeftFilter = 'ALL';
 let selectedOutreachTargetUser = null;
@@ -1826,6 +1827,15 @@ async function loadMessagingData(isSilent = false) {
     
     /* Group raw messages into distinct conversation channels */
     allThreadsCache = groupMessagesIntoThreads(rawMessages);
+    allThreadsCache.forEach(t => {
+      if (readAdminThreadKeys.has(t.key) || t.key === activeSelectedThreadId) {
+        if (t.messages) {
+          t.messages.forEach(m => {
+            if (m.sender_id !== currentAdminUser?.id) m.is_read = true;
+          });
+        }
+      }
+    });
     updateAdminUnreadBadge();
     filterLeftPaneThreads();
     if (activeSelectedThreadId) {
@@ -2043,21 +2053,31 @@ function renderLeftPaneThreadsList() {
   }).join('');
 }
 
-function selectThreadForInspection(threadKey) {
+async function selectThreadForInspection(threadKey) {
   activeSelectedThreadId = threadKey;
+  if (threadKey) readAdminThreadKeys.add(threadKey);
+
   const t = allThreadsCache.find(x => x.key === threadKey);
+  const unreadMsgIds = [];
   if (t && t.messages) {
     t.messages.forEach(m => {
-      if (m.sender_id !== currentAdminUser?.id) m.is_read = true;
+      if (m.sender_id !== currentAdminUser?.id) {
+        if (!m.is_read && m.id) unreadMsgIds.push(m.id);
+        m.is_read = true;
+      }
     });
   }
   updateAdminUnreadBadge();
   renderLeftPaneThreadsList();
   renderActiveThreadTranscript();
 
-  try {
-    _supabase.from('messages').update({ is_read: true }).eq('is_read', false);
-  } catch (e) {}
+  if (unreadMsgIds.length > 0) {
+    try {
+      await _supabase.from('messages').update({ is_read: true }).in('id', unreadMsgIds);
+    } catch (e) {
+      console.warn("Error marking admin messages read:", e);
+    }
+  }
 }
 
 function renderActiveThreadTranscript() {
