@@ -2211,7 +2211,7 @@ window.openSellerProductDetailsModal = function(productId) {
   const pTitle = prod.title || 'Marketplace Product';
   const pPrice = Number(prod.price || 0).toFixed(2);
   const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
-  const pImg = prod.image_url || prod.image || 'https://via.placeholder.com/300';
+  const pImg = getProductImageUrl(prod);
   const pDesc = prod.description || 'No description provided.';
   const pStatus = prod.status || 'ACTIVE';
 
@@ -2389,7 +2389,7 @@ function renderActiveChat() {
         if (prod) {
           const pPrice = Number(prod.price || 0).toFixed(2);
           const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
-          const pImg = prod.image_url || prod.image || 'https://via.placeholder.com/150';
+          const pImg = getProductImageUrl(prod);
           const cardBg = isMe 
             ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50' 
             : 'bg-white border-slate-300 text-slate-900 hover:border-blue-600 shadow-md';
