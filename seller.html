@@ -1643,6 +1643,76 @@ function hasImageAttachment(msg) {
     (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.includes('imgur') || msg._normalizedText.includes('supabase'))));
 }
 
+
+function extractProductIdFromText(text) {
+  if (!text) return null;
+  const m1 = text.match(/[?&]prod=([a-zA-Z0-9_-]+)/i);
+  if (m1 && m1[1]) return m1[1];
+  const m2 = text.match(/PROD-([a-zA-Z0-9_-]+)/i);
+  if (m2 && m2[1]) return m2[1];
+  return null;
+}
+
+window.openSellerProductDetailsModal = function(productId) {
+  let prod = (vendorProducts || []).find(p => p.id === productId);
+  if (!prod && typeof marketplaceProducts !== 'undefined') {
+    prod = marketplaceProducts.find(p => p.id === productId);
+  }
+  if (!prod) return;
+
+  const pTitle = prod.title || 'Marketplace Product';
+  const pPrice = Number(prod.price || 0).toFixed(2);
+  const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
+  const pImg = prod.image_url || prod.image || 'https://via.placeholder.com/300';
+  const pDesc = prod.description || 'No description provided.';
+  const pStatus = prod.status || 'ACTIVE';
+
+  let modalEl = document.getElementById('sellerProductDetailsModal');
+  if (!modalEl) {
+    modalEl = document.createElement('div');
+    modalEl.id = 'sellerProductDetailsModal';
+    modalEl.className = 'fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4';
+    document.body.appendChild(modalEl);
+  }
+
+  modalEl.innerHTML = `
+    <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative">
+      <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-store text-accentBlue"></i>
+          <span>Product Storefront Showcase</span>
+        </h3>
+        <button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="flex gap-4 items-start">
+        <img src="${pImg}" onerror="this.src='https://via.placeholder.com/150'" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0">
+        <div class="space-y-1.5 truncate flex-1">
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20 uppercase">${pStatus}</span>
+          <h4 class="text-sm font-bold text-white truncate">${pTitle}</h4>
+          <p class="text-xs text-slate-300">Retail Price: <strong class="text-white">$${pPrice}</strong></p>
+          <p class="text-xs text-emerald-400 font-bold">Review Reward: $${pComm} Commission</p>
+        </div>
+      </div>
+
+      <div class="bg-darkBg p-3 rounded-2xl border border-borderSlate/60 text-xs text-slate-300 leading-relaxed max-h-36 overflow-y-auto">
+        <p class="text-[11px] font-bold text-slate-400 mb-1">Product Description:</p>
+        <p>${pDesc}</p>
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-2 border-t border-borderSlate">
+        ${(vendorProducts || []).some(p => p.id === productId) ? `<button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden'); editProduct('${productId}');" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5"><i class="fa-solid fa-pen-to-square"></i><span>Edit Listing</span></button>` : ''}
+        <button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">Close</button>
+      </div>
+    </div>
+  `;
+  modalEl.classList.remove('hidden');
+};
+
+window.openProductFromChat = function(productId) {
+  if (productId) openSellerProductDetailsModal(productId);
+};
+
 function renderActiveChat() {
   let thread = vendorThreads.find(t => t.partnerId === activeThreadId);
   const container = document.getElementById('chatMessagesContainer');
@@ -1709,12 +1779,16 @@ function renderActiveChat() {
     let bubbleContent = '';
     if (showAsReviewCard) {
       const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
-      const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
+      const badgeClass = isMe 
+        ? (statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'))
+        : (statusBadge === 'APPROVED' ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold' : (statusBadge === 'DENIED' ? 'bg-rose-100 text-rose-900 border-rose-300 font-bold' : 'bg-amber-100 text-amber-950 border-amber-300 font-bold'));
+      const feedbackIdClass = isMe ? 'text-slate-400' : 'text-slate-700 font-bold';
+
       bubbleContent = `
         <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
-          <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
+          <div class="flex items-center justify-between gap-3 border-b ${isMe ? 'border-white/10' : 'border-slate-300'} pb-2">
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
-            <span class="text-[10px] text-slate-400 font-mono feedback-id-display">ID: ${feedbackId}</span>
+            <span class="text-[10px] ${feedbackIdClass} font-mono feedback-id-display">ID: ${feedbackId}</span>
           </div>
           <div>
             <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="${isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold'} underline truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
@@ -1757,8 +1831,44 @@ function renderActiveChat() {
           attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
         }
       }
+      const msgProdId = m.product_id || extractProductIdFromText(text);
+      let productCardHtml = '';
+      if (msgProdId) {
+        let prod = (vendorProducts || []).find(p => p.id === msgProdId);
+        if (!prod && typeof marketplaceProducts !== 'undefined') {
+          prod = marketplaceProducts.find(p => p.id === msgProdId || String(p.id).toLowerCase().includes(String(msgProdId).toLowerCase()));
+        }
+        if (prod) {
+          const pPrice = Number(prod.price || 0).toFixed(2);
+          const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
+          const pImg = prod.image_url || prod.image || 'https://via.placeholder.com/150';
+          const cardBg = isMe 
+            ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50' 
+            : 'bg-white border-slate-300 text-slate-900 hover:border-blue-600 shadow-md';
+          const btnColor = isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold';
+
+          productCardHtml = `
+            <div onclick="openProductFromChat('${prod.id}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
+              <img src="${pImg}" onerror="this.src='https://via.placeholder.com/150'" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
+              <div class="truncate flex-1">
+                <div class="flex items-center space-x-1">
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
+                  <span class="text-[9px] font-mono ${isMe ? 'text-slate-300' : 'text-slate-600'}">ID: ${String(prod.id).substring(0,8)}</span>
+                </div>
+                <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-900'} truncate mt-0.5 group-hover:text-blue-600 transition">${prod.title}</h5>
+                <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: <strong>$${pPrice}</strong> | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
+              </div>
+              <div class="shrink-0 text-xs ${btnColor} font-bold flex items-center space-x-1 group-hover:underline">
+                <span>View</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+              </div>
+            </div>
+          `;
+        }
+      }
+
       const textDisplay = text ? `<div>${text}</div>` : '';
-      const contentBox = (textDisplay || attachmentHtml) ? (textDisplay + attachmentHtml) : `<div class="italic text-slate-300 opacity-80">[Attachment / System Event]</div>`;
+      const contentBox = (productCardHtml || textDisplay || attachmentHtml) ? (productCardHtml + textDisplay + attachmentHtml) : `<div class="italic text-slate-300 opacity-80">[Attachment / System Event]</div>`;
       bubbleContent = contentBox;
     }
 
@@ -1974,11 +2084,17 @@ async function handleSendMessage(event) {
     const adminProf = getAdminProfile();
     const isSendingToAdmin = (targetReceiverId === adminProf.id);
 
+    let targetProdId = null;
+    if (text) {
+      targetProdId = extractProductIdFromText(text);
+    }
+
     let payload = {
       sender_id: currentUser.id,
       receiver_id: targetReceiverId,
       seller_id: currentUser.id,
       vendor_id: currentUser.id,
+      product_id: targetProdId,
       text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
       type: 'vendor_reply',
       channel_type: isSendingToAdmin ? 'ADMIN_DIRECT' : 'MARKETPLACE'
