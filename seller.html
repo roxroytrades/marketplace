@@ -901,14 +901,14 @@ function renderSellerCommissions() {
       `;
     } else if (activeSubTab === 'workingQueue') {
       actionHtml = `
-        <button onclick="openSettlementModal('${c.id}','${c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
+        <button onclick="openSettlementModal('c.id','{c.recipient_email || 'recipient@paypal.com'}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-md">
           <i class="fa-solid fa-wallet mr-1"></i> Pay & Settle
         </button>
         ${detailsBtn}
       `;
     } else if (activeSubTab === 'history') {
       actionHtml = `
-        <button onclick="inspectReceipt('${c.paypal_tx_id || 'N/A'}','${c.amount || 0}', '${c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
+        <button onclick="inspectReceipt('c.paypaltxid||'N/A'','{c.amount || 0}', '${c.receipt_base64 || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
           <i class="fa-solid fa-receipt mr-1"></i> Inspect Receipt
         </button>
         ${detailsBtn}
@@ -922,14 +922,14 @@ function renderSellerCommissions() {
     return `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
         <div class="col-span-1">
-          <input type="checkbox" value="${c.id}" ${selectedSellerCommIds.has(String(c.id)) ? 'checked' : ''} onchange="toggleSelectSellerComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+          <input type="checkbox" value="${c.id}" selectedSellerCommIds.has(String(c.id))?'checked':''onchange="toggleSelectSellerComm('{c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
         </div>
         <div class="col-span-3 space-y-0.5">
           <span class="font-bold text-white">Ref ID: ${String(c.id).substring(0,8)}</span>
           <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
         </div>
         <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${(c.role_type || '').toUpperCase().includes('SELLER') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : ((c.role_type || '').toUpperCase().includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : ((c.role_type || '').toUpperCase().includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${(c.role_type || 'N/A').toUpperCase()}</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold (c.roletype||'').toUpperCase().includes('SELLER')?'bg-indigo-500/10text-indigo-400borderborder-indigo-500/30':((c.roletype||'').toUpperCase().includes('BUYER')?'bg-purple-500/10text-purple-400borderborder-purple-500/30':((c.roletype||'').toUpperCase().includes('ADMIN')?'bg-amber-500/10text-amber-400borderborder-amber-500/30':'bg-emerald-500/10text-emerald-400borderborder-emerald-500/30'))">{(c.role_type || 'N/A').toUpperCase()}</span>
           <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
         </div>
         <div class="col-span-2">
@@ -1046,7 +1046,7 @@ async function openTopDownOfferModal() {
               <span>Ref: ${String(c.id).substring(0,8)}</span>
               <span class="px-1.5 py-0.2 bg-blue-500/20 text-blue-400 rounded text-[9px] font-mono">${roleUpper}</span>
             </div>
-            <div class="text-slate-400 text-[10px] truncate max-w-[200px]">${recName} (${c.recipient_email || 'N/A'})</div>
+            <div class="text-slate-400 text-[10px] truncate max-w-[200px]">recName({c.recipient_email || 'N/A'})</div>
           </div>
           <div class="font-bold text-emerald-400">$${amt.toFixed(2)}</div>
         </div>
@@ -1061,7 +1061,7 @@ async function openTopDownOfferModal() {
     manualFields.classList.add('hidden');
     recipientInput.removeAttribute('required');
     amountInput.removeAttribute('required');
-    submitBtn.textContent = `Confirm & Send Proactive Offer for ${selectedComms.length} Commission(s) ($${totalAmount.toFixed(2)})`;
+    submitBtn.textContent = `Confirm & Send Proactive Offer for selectedComms.lengthCommission(s)(${totalAmount.toFixed(2)})`;
   } else {
     /* Manual Mode: No Rows Selected */
     batchFields.classList.add('hidden');
@@ -1233,7 +1233,7 @@ function viewSellerCommDetails(commId) {
     <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
       <div class="flex items-center justify-between">
         <span class="text-[10px] text-slate-400 font-semibold uppercase">Recipient Info</span>
-        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${recRoleUpper.includes('SELLER') || recRoleUpper.includes('VENDOR') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (recRoleUpper.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : (recRoleUpper.includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${recRoleUpper}</span>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold recRoleUpper.includes('SELLER')||recRoleUpper.includes('VENDOR')?'bg-indigo-500/10text-indigo-400borderborder-indigo-500/30':(recRoleUpper.includes('BUYER')?'bg-purple-500/10text-purple-400borderborder-purple-500/30':(recRoleUpper.includes('ADMIN')?'bg-amber-500/10text-amber-400borderborder-amber-500/30':'bg-emerald-500/10text-emerald-400borderborder-emerald-500/30'))">{recRoleUpper}</span>
       </div>
       <div class="font-bold text-slate-200">${recipientName}</div>
       <div class="text-slate-400 text-[11px]">Email: ${recipientEmail}</div>
@@ -1257,7 +1257,7 @@ function viewSellerCommDetails(commId) {
       ${c.amazon_review_url ? `
         <div class="text-[11px] pt-1">
           <span class="text-slate-500">Amazon Review URL:</span> 
-          <a href="${c.amazon_review_url}" target="_blank" class="text-blue-400 underline hover:text-blue-300 font-mono break-all">${c.amazon_review_url}</a>
+          <a href="c.amazonreviewurl"target="blank"class="text-blue-400underlinehover:text-blue-300font-monobreak-all">{c.amazon_review_url}</a>
         </div>
       ` : ''}
       ${reviewProofHtml}
@@ -1420,10 +1420,10 @@ function renderSellerContactsList() {
               <p class="text-[10px] text-slate-400 truncate">${c.email}</p>
             </div>
           </div>
-          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} uppercase shrink-0">${isAdm ? 'SYSTEM ADMIN' : 'SHOPPER'}</span>
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border badgeBguppercaseshrink-0">{isAdm ? 'SYSTEM ADMIN' : 'SHOPPER'}</span>
         </div>
         <div class="text-[10px] text-slate-400 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
-          <div class="flex justify-between"><span class="text-slate-500">${isAdm ? 'Channel:' : 'PayPal:'}</span> <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">isAdm?'Channel:':'PayPal:'</span><spanclass="font-monotext-emerald-400font-semiboldtruncate">{c.paypal}</span></div>
           <div class="truncate"><span class="text-slate-500">Note:</span> ${c.lastMessage}</div>
         </div>
         <button onclick="selectThread('${c.partnerId}'); switchMessagingSubTab('threads');" class="w-full ${isAdm ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40' : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30'} py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
@@ -1442,12 +1442,12 @@ async function loadVendorThreads(isPolling = false) {
     const { data: msgData } = await _supabase
       .from('messages')
       .select('*')
-      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
+      .or(`sender_id.eq.currentUser.id,receiverid.eq.{currentUser.id},vendor_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
 
     let commData = [];
     try {
-      const { data: cData } = await _supabase.from('commissions').select('*').or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
+      const { data: cData } = await _supabase.from('commissions').select('*').or(`seller_id.eq.currentUser.id,vendorid.eq.{currentUser.id}`);
       commData = cData || [];
     } catch (e) {}
 
@@ -1568,7 +1568,7 @@ async function selectThread(partnerId) {
     }
   } else {
     try {
-      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${partnerId}),and(vendor_id.eq.${currentUser.id},sender_id.eq.${partnerId})`);
+      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.currentUser.id,senderid.eq.{partnerId}),and(vendor_id.eq.currentUser.id,senderid.eq.{partnerId})`);
     } catch (e) {}
   }
 }
@@ -1620,7 +1620,9 @@ function renderActiveChat() {
               <span class="text-[10px] text-slate-400 font-mono">ID: ${String(prodId).substring(0,8)}</span>
             </div>
             <h4 class="text-xs font-bold text-white truncate mt-0.5">${pTitle}</h4>
-            <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">$${pPrice}</strong> | Review Commission: <strong class="text-emerald-400">$${pComm} Commission</strong></p>
+            <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">
+pPrice</strong>|ReviewCommission:<strongclass="text-emerald-400">
+{pComm} Commission</strong></p>
           </div>
         </div>
         ${pUrl ? `<a href="${pUrl}" target="_blank" class="shrink-0 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center space-x-1"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i><span>View Listing</span></a>` : ''}
@@ -1648,11 +1650,11 @@ function renderActiveChat() {
       bubbleContent = `
         <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
           <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border badgeClassstatus-badge-label">{statusBadge}</span>
             <span class="text-[10px] text-slate-400 font-mono feedback-id-display">ID: ${feedbackId}</span>
           </div>
           <div>
-            <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 underline hover:text-blue-300 truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
+            <p class="text-xs"><strong>Review Link:</strong> <a href="amazonUrl"target="blank"class="text-blue-400underlinehover:text-blue-300truncateinline-blockmax-w-[200px]">{amazonUrl}</a></p>
             ${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-300 mt-1">${text}</p>` : ''}
             ${fileUrl ? `
               <div class="mt-2">
@@ -1665,7 +1667,7 @@ function renderActiveChat() {
           <div class="inline-action-area pt-2 border-t border-white/10">
             ${statusBadge === 'AWAITING_ATTENTION' ? `
               <div class="flex space-x-2" id="actions-${m.id}">
-                <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
+                <button onclick="handleInlineApprove('m.id','{m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
                   <i class="fa-solid fa-check"></i><span>Approve</span>
                 </button>
                 <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
@@ -1689,7 +1691,7 @@ function renderActiveChat() {
               </a>
             </div>`;
         } else {
-          attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
+          attachmentHtml = `<div class="mt-2"><a href="fileUrl"target="blank"class="flexitems-centerspace-x-2bg-black/20px-3py-1.5rounded-lgtext-xsunderline"><iclass="fa-solidfa-file-arrow-down"></i><span>{fileName}</span></a></div>`;
         }
       }
       const textDisplay = text ? `<div>${text}</div>` : '';
@@ -1965,3 +1967,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
+
