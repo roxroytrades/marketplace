@@ -2332,7 +2332,7 @@ function renderAccountsTable() {
           <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] uppercase font-semibold">${a.role || 'buyer'}</span>
         </div>
         <div class="col-span-3">
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeClass}">${status}</span>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border badgeClass">{status}</span>
         </div>
         <div class="col-span-2">
           <button onclick="viewNationalIDModal('${a.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
@@ -2425,7 +2425,7 @@ function renderProductsTable() {
         <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
       </div>
       <div class="col-span-3 flex items-center justify-end space-x-2">
-        <button onclick="toggleProductStatus('${p.id}', '${p.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
+        <button onclick="toggleProductStatus('p.id','{p.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
           ${p.status === 'ACTIVE' ? 'Pause' : 'Activate'}
         </button>
         <button onclick="deleteProductAdmin('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] px-3 py-1.5 rounded-xl transition">
@@ -2573,7 +2573,7 @@ function renderMasterCommissions() {
     return `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
         <div class="col-span-1">
-          <input type="checkbox" value="${c.id}" ${selectedMasterCommIds.has(c.id)?'checked':''} onchange="toggleSelectMasterComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-purple-600">
+          <input type="checkbox" value="${c.id}" selectedMasterCommIds.has(c.id)?'checked':''onchange="toggleSelectMasterComm('{c.id}')" class="rounded border-borderSlate bg-darkBg text-purple-600">
         </div>
         <div class="col-span-3 space-y-0.5">
           <span class="font-bold text-white font-mono">${c.feedback_id || 'FB-N/A'}</span>
@@ -2831,7 +2831,7 @@ function renderAdminThreadsList() {
     const isSelected = activeAdminThreadId === t.key;
     const timeStr = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
     return `
-      <div onclick="selectAdminThread('${t.key}')" oncontextmenu="showThreadContextMenu(event, '${t.key}')" class="p-3 bg-darkBg border ${isSelected ? 'border-purple-500' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-purple-500 transition space-y-1">
+      <div onclick="selectAdminThread('t.key')"oncontextmenu="showThreadContextMenu(event,'{t.key}')" class="p-3 bg-darkBg border ${isSelected ? 'border-purple-500' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-purple-500 transition space-y-1">
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-slate-200 truncate">Thread: ${t.key}</span>
           <span class="text-[10px] text-slate-500">${timeStr}</span>
@@ -2915,7 +2915,7 @@ async function openNewOutreachModal() {
   adminAccounts.forEach(a => {
     const opt = document.createElement('option');
     opt.value = a.id;
-    opt.textContent = `${a.full_name || 'User'} (${a.email || a.id}) [${a.role}]`;
+    opt.textContent = `a.fullname||'User'({a.email || a.id}) [${a.role}]`;
     select.appendChild(opt);
   });
 
@@ -2971,7 +2971,7 @@ function renderReferralsTable() {
         <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px]">${a.verification_status || 'VERIFIED'}</span>
       </div>
       <div class="col-span-2 flex items-center justify-end">
-        <button onclick="openReassignModal('${a.id}', '${a.full_name || 'User'}', '${a.invited_by_code || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
+        <button onclick="openReassignModal('a.id','{a.full_name || 'User'}', '${a.invited_by_code || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
           Reassign Inviter
         </button>
       </div>
@@ -2981,7 +2981,7 @@ function renderReferralsTable() {
 
 function openReassignModal(userId, userName, currentCode) {
   document.getElementById('reassignTargetUserId').value = userId;
-  document.getElementById('reassignUserName').value = `${userName} (${userId.substring(0,8)})`;
+  document.getElementById('reassignUserName').value = `userName({userId.substring(0,8)})`;
   document.getElementById('reassignNewCode').value = currentCode;
   document.getElementById('reassignInviterModal').classList.remove('hidden');
 }
@@ -3105,3 +3105,5 @@ window.addEventListener('DOMContentLoaded', initAdminWorkspace);
 </script>
 </body>
 </html>
+
+
