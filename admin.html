@@ -404,6 +404,9 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
             <button onclick="switchLeftPaneFilter('FLAGGED')" id="leftTab-FLAGGED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20">
               🚨 Contact Risk
             </button>
+            <button onclick="switchLeftPaneFilter('CONTACTS')" id="leftTab-CONTACTS" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
+              📇 User Directory
+            </button>
           </div>
         </div>
 
@@ -1879,11 +1882,77 @@ function switchLeftPaneFilter(filterKey) {
     }
   }
 
-  renderLeftPaneThreadsList();
+  if (filterKey === 'CONTACTS') {
+    renderAdminContactsList();
+  } else {
+    renderLeftPaneThreadsList();
+  }
 }
 
 function filterLeftPaneThreads() {
-  renderLeftPaneThreadsList();
+  if (currentLeftFilter === 'CONTACTS') {
+    renderAdminContactsList();
+  } else {
+    renderLeftPaneThreadsList();
+  }
+}
+
+
+function renderAdminContactsList() {
+  const container = document.getElementById('adminThreadsList');
+  if (!container) return;
+  const searchVal = (document.getElementById('leftPaneThreadSearch')?.value || '').toLowerCase();
+
+  const users = (allUsersCache || []).filter(u => {
+    if (!searchVal) return true;
+    return (u.full_name || '').toLowerCase().includes(searchVal) ||
+           (u.email || '').toLowerCase().includes(searchVal) ||
+           (u.paypal_email || '').toLowerCase().includes(searchVal) ||
+           (u.role || '').toLowerCase().includes(searchVal) ||
+           (u.id || '').toLowerCase().includes(searchVal);
+  });
+
+  if (users.length === 0) {
+    container.innerHTML = `<div class="p-8 text-center text-slate-500 text-xs">No registered contacts found.</div>`;
+    return;
+  }
+
+  container.innerHTML = users.map(u => {
+    const roleUpper = (u.role || 'BUYER').toUpperCase();
+    const roleBg = roleUpper === 'ADMIN' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
+                   roleUpper === 'SELLER' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                   'bg-blue-500/20 text-blue-400 border-blue-500/30';
+    const kycStatus = (u.id_verification_status || u.verification_status || 'unverified').toUpperCase();
+    const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A';
+    const safeName = (u.full_name || u.email || 'User').replace(/'/g, "\'");
+
+    return `
+      <div class="p-3 bg-darkBg/60 hover:bg-darkBg transition space-y-2 border-b border-borderSlate/40">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2.5 truncate">
+            <div class="w-8 h-8 rounded-full bg-slate-800 border border-borderSlate flex items-center justify-center font-bold text-xs text-amber-400 shrink-0">
+              ${(u.full_name || u.email || 'U').charAt(0).toUpperCase()}
+            </div>
+            <div class="truncate">
+              <h4 class="text-xs font-bold text-white truncate">${u.full_name || 'Unnamed User'}</h4>
+              <p class="text-[10px] text-slate-400 truncate">${u.email || 'No email'}</p>
+            </div>
+          </div>
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${roleBg} shrink-0">${roleUpper}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-400 bg-cardBg p-2 rounded-xl border border-borderSlate/50">
+          <div class="truncate"><span class="text-slate-500">PayPal:</span> <span class="font-mono text-slate-300 truncate">${u.paypal_email || 'Not set'}</span></div>
+          <div><span class="text-slate-500">KYC:</span> <span class="font-bold text-slate-300">${kycStatus}</span></div>
+          <div><span class="text-slate-500">Joined:</span> ${dateStr}</div>
+          <div><span class="text-slate-500">ID:</span> <span class="font-mono text-[9px] text-slate-500">${String(u.id).substring(0,8)}...</span></div>
+        </div>
+        <button onclick="openDirectOutreachForUser('${u.id}', '${safeName}', '${u.email || ''}', '${u.role || 'buyer'}')" class="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-paper-plane text-[10px]"></i>
+          <span>Direct Outreach</span>
+        </button>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderLeftPaneThreadsList() {
