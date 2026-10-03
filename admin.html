@@ -1958,7 +1958,11 @@ function renderAdminContactsList() {
   if (!container) return;
   const searchVal = (document.getElementById('leftPaneThreadSearch')?.value || '').toLowerCase();
 
+  const seenUserIds = new Set();
   const users = (allUsersCache || []).filter(u => {
+    if (!u || !u.id || seenUserIds.has(u.id)) return false;
+    seenUserIds.add(u.id);
+
     if (!searchVal) return true;
     return (u.full_name || '').toLowerCase().includes(searchVal) ||
            (u.email || '').toLowerCase().includes(searchVal) ||
