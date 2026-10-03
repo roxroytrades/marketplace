@@ -480,7 +480,31 @@ let profilesCache = {};
 let vendorProfilesCache = profilesCache;
 let vendorThreads = [];
 let readVendorThreadIds = new Set();
+let lastReadVendorTimeMap = {};
 let activeThreadId = null;
+
+function loadLocalVendorReadState() {
+  const userId = currentUser?.id || 'vendor';
+  try {
+    readVendorThreadIds = new Set(JSON.parse(localStorage.getItem('echohub_seller_read_threads_' + userId) || '[]'));
+    lastReadVendorTimeMap = JSON.parse(localStorage.getItem('echohub_seller_read_times_' + userId) || '{}');
+  } catch(e) {
+    readVendorThreadIds = new Set();
+    lastReadVendorTimeMap = {};
+  }
+}
+
+function saveLocalVendorReadState(partnerId) {
+  const userId = currentUser?.id || 'vendor';
+  if (partnerId) {
+    readVendorThreadIds.add(partnerId);
+    lastReadVendorTimeMap[partnerId] = Date.now();
+  }
+  try {
+    localStorage.setItem('echohub_seller_read_threads_' + userId, JSON.stringify(Array.from(readVendorThreadIds)));
+    localStorage.setItem('echohub_seller_read_times_' + userId, JSON.stringify(lastReadVendorTimeMap));
+  } catch(e) {}
+}
 let activeSubTab = 'incoming';
 let selectedSellerCommIds = new Set();
 let pollingInterval = null;
@@ -1412,6 +1436,8 @@ function renderSellerContactsList() {
 }
 
 async function loadVendorThreads(isPolling = false) {
+  if (!currentUser) return;
+  loadLocalVendorReadState();
   try {
     const { data: msgData } = await _supabase
       .from('messages')
@@ -1446,10 +1472,14 @@ async function loadVendorThreads(isPolling = false) {
     });
     vendorThreads = Object.values(threadMap);
     vendorThreads.forEach(t => {
-      if (readVendorThreadIds.has(t.partnerId) || t.partnerId === activeThreadId) {
+      const lastReadTime = lastReadVendorTimeMap[t.partnerId] || 0;
+      if (readVendorThreadIds.has(t.partnerId) || t.partnerId === activeThreadId || lastReadTime > 0) {
         if (t.messages) {
           t.messages.forEach(m => {
-            if (m.sender_id !== currentUser.id) m.is_read = true;
+            const msgTime = new Date(m.created_at).getTime();
+            if (m.sender_id !== currentUser.id && (m.is_read || readVendorThreadIds.has(t.partnerId) || t.partnerId === activeThreadId || (lastReadTime > 0 && msgTime <= lastReadTime))) {
+              m.is_read = true;
+            }
           });
         }
       }
@@ -1512,7 +1542,7 @@ function renderThreadsList() {
 
 async function selectThread(partnerId) {
   activeThreadId = partnerId;
-  if (partnerId) readVendorThreadIds.add(partnerId);
+  if (partnerId) saveLocalVendorReadState(partnerId);
 
   const unreadMsgIds = [];
   const t = vendorThreads.find(x => x.partnerId === partnerId);

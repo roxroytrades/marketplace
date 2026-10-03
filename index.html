@@ -496,7 +496,31 @@ let pollingInterval = null;
 /* Messaging Hub State Variables */
 let messagingThreads = [];
 let readThreadIds = new Set();
+let lastReadTimeMap = {};
 let activeThreadId = null;
+
+function loadLocalReadState() {
+  const userId = currentUser?.id || 'shopper';
+  try {
+    readThreadIds = new Set(JSON.parse(localStorage.getItem('echohub_read_threads_' + userId) || '[]'));
+    lastReadTimeMap = JSON.parse(localStorage.getItem('echohub_read_times_' + userId) || '{}');
+  } catch(e) {
+    readThreadIds = new Set();
+    lastReadTimeMap = {};
+  }
+}
+
+function saveLocalReadState(recipientId) {
+  const userId = currentUser?.id || 'shopper';
+  if (recipientId) {
+    readThreadIds.add(recipientId);
+    lastReadTimeMap[recipientId] = Date.now();
+  }
+  try {
+    localStorage.setItem('echohub_read_threads_' + userId, JSON.stringify(Array.from(readThreadIds)));
+    localStorage.setItem('echohub_read_times_' + userId, JSON.stringify(lastReadTimeMap));
+  } catch(e) {}
+}
 let activeRecipientId = null;
 let activeProductId = null;
 let messageSubscription = null;
@@ -1347,6 +1371,7 @@ function renderShopperContactsList() {
 
 async function loadMessagingThreads(isPolling = false) {
   if (!currentUser) return;
+  loadLocalReadState();
   try {
     const { data, error } = await _supabase
       .from('messages')
@@ -1356,12 +1381,16 @@ async function loadMessagingThreads(isPolling = false) {
     if (error) throw error;
     messagingThreads = data || [];
 
-    /* Preserve read state for active/opened threads */
+    /* Preserve read state for active/opened threads and persisted timestamps */
     messagingThreads.forEach(m => {
       const counterpartId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
-      if (counterpartId && (readThreadIds.has(counterpartId) || counterpartId === activeRecipientId)) {
-        if (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id) {
-          m.is_read = true;
+      if (counterpartId) {
+        const lastReadTime = lastReadTimeMap[counterpartId] || 0;
+        const msgTime = new Date(m.created_at).getTime();
+        if (m.is_read || readThreadIds.has(counterpartId) || counterpartId === activeRecipientId || (lastReadTime > 0 && msgTime <= lastReadTime)) {
+          if (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id) {
+            m.is_read = true;
+          }
         }
       }
     });
@@ -1457,7 +1486,7 @@ async function openThread(threadId, recipientId, productId) {
   activeThreadId = threadId;
   activeRecipientId = recipientId;
   activeProductId = productId;
-  if (recipientId) readThreadIds.add(recipientId);
+  if (recipientId) saveLocalReadState(recipientId);
 
   const profile = profilesCache[recipientId] || { full_name: `User #${recipientId.substring(0, 8)}`, role: 'user' };
   document.getElementById('activeChatPanel').classList.remove('hidden');

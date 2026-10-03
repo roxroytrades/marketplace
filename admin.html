@@ -984,7 +984,31 @@ let allProductsCache = [];
 let allCommissionsCache = [];
 let allThreadsCache = [];
 let readAdminThreadKeys = new Set();
+let lastReadAdminTimeMap = {};
 let activeSelectedThreadId = null;
+
+function loadLocalAdminReadState() {
+  const userId = currentAdminUser?.id || 'admin';
+  try {
+    readAdminThreadKeys = new Set(JSON.parse(localStorage.getItem('echohub_admin_read_threads_' + userId) || '[]'));
+    lastReadAdminTimeMap = JSON.parse(localStorage.getItem('echohub_admin_read_times_' + userId) || '{}');
+  } catch(e) {
+    readAdminThreadKeys = new Set();
+    lastReadAdminTimeMap = {};
+  }
+}
+
+function saveLocalAdminReadState(threadKey) {
+  const userId = currentAdminUser?.id || 'admin';
+  if (threadKey) {
+    readAdminThreadKeys.add(threadKey);
+    lastReadAdminTimeMap[threadKey] = Date.now();
+  }
+  try {
+    localStorage.setItem('echohub_admin_read_threads_' + userId, JSON.stringify(Array.from(readAdminThreadKeys)));
+    localStorage.setItem('echohub_admin_read_times_' + userId, JSON.stringify(lastReadAdminTimeMap));
+  } catch(e) {}
+}
 let currentLeftFilter = 'ALL';
 let selectedOutreachTargetUser = null;
 let currentInspectingUserId = null;
@@ -1825,17 +1849,24 @@ async function loadMessagingData(isSilent = false) {
     if (error) throw error;
     const rawMessages = data || [];
     
+    loadLocalAdminReadState();
+
     /* Group raw messages into distinct conversation channels */
     allThreadsCache = groupMessagesIntoThreads(rawMessages);
     allThreadsCache.forEach(t => {
-      if (readAdminThreadKeys.has(t.key) || t.key === activeSelectedThreadId) {
+      const lastReadTime = lastReadAdminTimeMap[t.key] || 0;
+      if (readAdminThreadKeys.has(t.key) || t.key === activeSelectedThreadId || lastReadTime > 0) {
         if (t.messages) {
           t.messages.forEach(m => {
-            if (m.sender_id !== currentAdminUser?.id) m.is_read = true;
+            const msgTime = new Date(m.created_at).getTime();
+            if (m.sender_id !== currentAdminUser?.id && (m.is_read || readAdminThreadKeys.has(t.key) || t.key === activeSelectedThreadId || (lastReadTime > 0 && msgTime <= lastReadTime))) {
+              m.is_read = true;
+            }
           });
         }
       }
     });
+
     updateAdminUnreadBadge();
     filterLeftPaneThreads();
     if (activeSelectedThreadId) {
@@ -2055,7 +2086,7 @@ function renderLeftPaneThreadsList() {
 
 async function selectThreadForInspection(threadKey) {
   activeSelectedThreadId = threadKey;
-  if (threadKey) readAdminThreadKeys.add(threadKey);
+  if (threadKey) saveLocalAdminReadState(threadKey);
 
   const t = allThreadsCache.find(x => x.key === threadKey);
   const unreadMsgIds = [];
@@ -3029,7 +3060,8 @@ async function uploadAndSaveBrandingIcon() {
   reader.readAsDataURL(file);
 }
 
-
+</script>
+</body>
 function updateAdminUnreadBadge() {
   const badge = document.getElementById('unreadMessagesBadge');
   if (!badge) return;
@@ -3041,8 +3073,3 @@ function updateAdminUnreadBadge() {
     badge.classList.add('hidden');
   }
 }
-
-</script>
-</body>
-</html>
-
