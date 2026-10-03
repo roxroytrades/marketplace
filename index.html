@@ -1384,8 +1384,14 @@ function renderShopperContactsList() {
     isAdmin: true
   };
 
-  const vendorContacts = messagingThreads.map(t => {
-    const partnerId = t.vendorId || t.partnerId || t.receiver_id;
+  const seenPartners = new Set();
+  const vendorContacts = [];
+
+  (messagingThreads || []).forEach(t => {
+    const partnerId = t.vendorId || t.partnerId || (t.sender_id === currentUser?.id ? t.receiver_id : t.sender_id);
+    if (!partnerId || partnerId === adminContact.partnerId || seenPartners.has(partnerId)) return;
+    seenPartners.add(partnerId);
+
     const prof = profilesCache[partnerId] || {};
     const vendorName = prof.full_name || t.vendorName || `Vendor (${String(partnerId).substring(0, 6)})`;
     const vendorEmail = prof.email || 'N/A';
@@ -1401,19 +1407,19 @@ function renderShopperContactsList() {
       displayPaypal = prof.paypal_email || 'Not specified in profile';
     }
 
-    return {
+    vendorContacts.push({
       partnerId: partnerId,
-      threadId: t.id,
-      productId: t.productId,
+      threadId: t.id || partnerId,
+      productId: t.productId || t.product_id || null,
       name: vendorName,
       email: vendorEmail,
       paypal: displayPaypal,
-      role: 'SELLER',
-      lastMessage: t.lastMessage || 'No recent messages',
-      updatedAt: t.updatedAt,
+      role: prof.role || 'SELLER',
+      lastMessage: t.lastMessage || t.text || t.content || 'No recent messages',
+      updatedAt: t.updatedAt || t.created_at,
       isAdmin: false
-    };
-  }).filter(c => c.partnerId !== adminContact.partnerId);
+    });
+  });
 
   let allContacts = [adminContact, ...vendorContacts];
 
