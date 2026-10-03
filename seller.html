@@ -298,17 +298,6 @@ eh
 <input type="file" id="prodImageFile" accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
 </div>
 <div class="space-y-1.5">
-<div class="flex items-center justify-between">
-<label class="text-xs font-medium text-slate-300">Direct Amazon Listing URL</label>
-<span class="text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full"><i class="fa-solid fa-lock mr-1"></i>Private to Vendor</span>
-</div>
-<input type="url" id="prodAmazonUrl" placeholder="https://www.amazon.com/dp/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-<p class="text-[10px] text-amber-300/80 flex items-center space-x-1 mt-0.5">
-<i class="fa-solid fa-shield-halved text-amber-400 shrink-0"></i>
-<span>🔒 Private Reference Link: Strictly visible to YOU for easy inventory reference. Shoppers will NEVER see this link.</span>
-</p>
-</div>
-<div class="space-y-1.5">
 <label class="text-xs font-medium text-slate-300">Listing Status</label>
 <select id="prodStatus" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
 <option value="ACTIVE">ACTIVE (Visible on Marketplace)</option>
@@ -575,6 +564,7 @@ async function initSellerWorkspace() {
     }
 
     /* Step E: Load Vendor Workspace Data */
+    await fetchAdminProfile();
     await preloadSellerProfiles();
     await loadVendorProducts();
     await loadVendorCommissions();
@@ -691,9 +681,7 @@ async function loadVendorProducts(isPolling = false) {
       return;
     }
     grid.innerHTML = vendorProducts.map(p => {
-      const amazonLink = p.amazon_url || p.product_url || p.amazon_link || '';
-      const priceVal = p.price !== undefined && p.price !== null ? Number(p.price).toFixed(2) : '0.00';
-      const commVal = Number(p.commission || p.commission_amount || 15.00).toFixed(2);
+            const commVal = Number(p.commission || p.commission_amount || 15.00).toFixed(2);
       const imgVal = p.image_url || p.image || 'https://via.placeholder.com/300';
 
       return `
@@ -717,224 +705,13 @@ async function loadVendorProducts(isPolling = false) {
               <h3 class="font-bold text-white text-sm line-clamp-1">${p.title}</h3>
               <p class="text-xs text-slate-400 line-clamp-2">${p.description || 'No description provided.'}</p>
 
-              <!-- Private Amazon Reference Link Box -->
-              <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 flex items-center justify-between text-[11px] mt-2">
-                <span class="text-amber-300 font-bold flex items-center"><i class="fa-solid fa-lock mr-1.5 text-amber-400"></i>Private Amazon Page:</span>
-                ${amazonLink ? `<a href="${amazonLink}" target="_blank" class="text-amber-400 font-bold underline hover:text-amber-300 flex items-center" title="🔒 Strictly private to vendor - shoppers cannot see this link"><i class="fa-brands fa-amazon mr-1"></i>Open Page <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[8px]"></i></a>` : `<span class="text-slate-500 italic text-[10px]">No private link</span>`}
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 pt-0 flex space-x-2 mt-2">
-            <button onclick="editProduct('${p.id}')" class="flex-1 bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5">
-              <i class="fa-solid fa-pen-to-square text-blue-400"></i>
-              <span>Edit Product</span>
-            </button>
-            <button onclick="deleteProduct('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition" title="Delete Product"><i class="fa-solid fa-trash"></i></button>
-          </div>
-        </div>
-      `;
-    }).join('');
-  } catch (err) {
-    console.error("Error loading products:", err);
-  }
-}
-
-function openProductModal() {
-  document.getElementById('productModalTitle').textContent = 'Add New Marketplace Product';
-  document.getElementById('editingProductId').value = '';
-  document.getElementById('productForm').reset();
-  if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = '';
-  document.getElementById('productModal').classList.remove('hidden');
-}
-
-function closeProductModal() {
-  document.getElementById('productModal').classList.add('hidden');
-}
-
-async function editProduct(id) {
-  const prod = vendorProducts.find(p => p.id == id);
-  if (!prod) return;
-  document.getElementById('productModalTitle').textContent = 'Edit Product Listing';
-  document.getElementById('editingProductId').value = prod.id;
-  document.getElementById('prodTitle').value = prod.title;
-  document.getElementById('prodDesc').value = prod.description || '';
-  document.getElementById('prodPrice').value = prod.price !== undefined ? Number(prod.price).toFixed(2) : '0.00';
-  document.getElementById('prodStatus').value = prod.status || 'ACTIVE';
-  if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = prod.amazon_url || prod.product_url || prod.amazon_link || '';
-  document.getElementById('productModal').classList.remove('hidden');
-}
-
-async function handleSaveProduct(event) {
-  event.preventDefault();
-  const id = document.getElementById('editingProductId').value;
-  const title = document.getElementById('prodTitle').value.trim();
-  const description = document.getElementById('prodDesc').value.trim();
-  const price = parseFloat(document.getElementById('prodPrice').value) || 0.00;
-  const status = document.getElementById('prodStatus').value;
-  const amazonUrl = document.getElementById('prodAmazonUrl') ? document.getElementById('prodAmazonUrl').value.trim() : '';
-  const fileInput = document.getElementById('prodImageFile');
-  let imageUrl = 'https://via.placeholder.com/300';
-
-  if (id) {
-    const existing = vendorProducts.find(p => p.id == id);
-    if (existing) imageUrl = existing.image_url || existing.image;
-  }
-  if (fileInput.files && fileInput.files[0]) {
-    imageUrl = await compressImageFile(fileInput.files[0]);
-  }
-
-  try {
-    const productData = {
-      seller_id: currentUser.id,
-      title,
-      description,
-      price,
-      status,
-      image_url: imageUrl,
-      image: imageUrl,
-      amazon_url: amazonUrl,
-      product_url: amazonUrl
-    };
-
-    if (id) {
-      const { error } = await _supabase
-        .from('products')
-        .update(productData)
-        .eq('id', id);
-      if (error) throw error;
-      showToast('Product updated successfully!');
-    } else {
-      const { error } = await _supabase
-        .from('products')
-        .insert([productData]);
-      if (error) throw error;
-      showToast('Product created successfully!');
-    }
-
-    closeProductModal();
-    await preloadSellerProfiles();
-    await loadVendorProducts();
-  } catch (err) {
-    alert('Error saving product: ' + err.message);
-  }
-}
-
-async function deleteProduct(id) {
-  if (!confirm('Are you sure you want to delete this product?')) return;
-  try {
-    const { error } = await _supabase.from('products').delete().eq('id', id);
-    if (error) throw error;
-    await preloadSellerProfiles();
-    await loadVendorProducts();
-  } catch (err) {
-    alert('Error deleting product: ' + err.message);
-  }
-}
-
-/* 5-Tab Commissions Architecture */
-async function loadVendorCommissions(isPolling = false) {
-  if (!currentUser || !currentUser.id) return;
-  try {
-    let { data, error } = await _supabase
-      .from('commissions')
-      .select('*')
-      .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
-    if (error) throw error;
-    vendorCommissions = data || [];
-
-    /* Fetch profiles for recipients */
-    const recipientIds = [...new Set(vendorCommissions.map(c => c.recipient_id).filter(Boolean))];
-    if (recipientIds.length > 0) {
-      const { data: profs } = await _supabase
-        .from('profiles')
-        .select('id, full_name, paypal_email, email')
-        .in('id', recipientIds);
-      if (profs) {
-        profs.forEach(p => {
-          vendorProfilesCache[p.id] = p;
-        });
-      }
-    }
-  } catch (err) {
-    vendorCommissions = [];
-  }
-  renderSellerCommissions();
-}
-
-function switchCommSubTab(subTab) {
-  activeSubTab = subTab;
-  selectedSellerCommIds.clear();
-  document.getElementById('selectAllSellerComms').checked = false;
-  const tabs = ['incoming', 'mainQueue', 'outgoing', 'workingQueue', 'history'];
-  tabs.forEach(t => {
-    const btn = document.getElementById('subTab' + t.charAt(0).toUpperCase() + t.slice(1));
-    if (t === subTab) {
-      btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition';
-    } else {
-      btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
-    }
-  });
-  renderSellerCommissions();
-}
-
-function renderSellerCommissions() {
-  const tableBody = document.getElementById('sellerCommsTableBody');
-  const toolbar = document.getElementById('sellerToolbar');
-  const search = document.getElementById('sellerCommSearch').value.toLowerCase();
-
-  const filtered = vendorCommissions.filter(c => {
-    const statusUpper = (c.status || '').toUpperCase();
-    const queueTypeUpper = (c.queue_type || '').toUpperCase();
-    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) ||
-                          (c.recipient_email || '').toLowerCase().includes(search) ||
-                          (c.feedback_id || '').toLowerCase().includes(search);
-    let matchesTab = false;
-    if (activeSubTab === 'incoming') {
-      matchesTab = queueTypeUpper === 'INCOMING_REQUESTS' || queueTypeUpper === 'OUTGOING_REQUESTS' || statusUpper === 'REQUESTED_BY_RECIPIENT' || statusUpper === 'REQUESTED';
-    } else if (activeSubTab === 'mainQueue') {
-      matchesTab = (queueTypeUpper === 'MAIN_ACCOUNT' || queueTypeUpper === 'MAIN_QUEUE' || statusUpper === 'APPROVED' || statusUpper === 'UNREQUESTED_BALANCE' || !c.queue_type) &&
-                   queueTypeUpper !== 'WORKING_QUEUE' && queueTypeUpper !== 'HISTORY' && queueTypeUpper !== 'PAYMENT_HISTORY' &&
-                   statusUpper !== 'REQUESTED_BY_RECIPIENT' && statusUpper !== 'OUTGOING_REQUESTS' && statusUpper !== 'OFFERED_AWAITING_ACCEPTANCE' && statusUpper !== 'OFFERED_BY_VENDOR' && statusUpper !== 'APPROVED_IN_WORKING' && statusUpper !== 'COMPLETED_PAID' && statusUpper !== 'PAID';
-    } else if (activeSubTab === 'outgoing') {
-      matchesTab = queueTypeUpper === 'OUTGOING_REQUESTS' || statusUpper === 'OFFERED_AWAITING_ACCEPTANCE' || statusUpper === 'OFFERED_BY_VENDOR';
-    } else if (activeSubTab === 'workingQueue') {
-      matchesTab = queueTypeUpper === 'WORKING_QUEUE' || statusUpper === 'APPROVED_IN_WORKING';
-    } else if (activeSubTab === 'history') {
-      matchesTab = queueTypeUpper === 'HISTORY' || queueTypeUpper === 'PAYMENT_HISTORY' || statusUpper === 'COMPLETED_PAID' || statusUpper === 'PAID';
-    }
-    return matchesSearch && matchesTab;
-  });
-
-  if (activeSubTab === 'incoming') {
-    toolbar.innerHTML = `
-      <button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-        <i class="fa-solid fa-check mr-1.5"></i> Approve Selected
-      </button>
-    `;
-  } else if (activeSubTab === 'mainQueue') {
-    toolbar.innerHTML = `
-      <button onclick="openTopDownOfferModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
-        <i class="fa-solid fa-paper-plane mr-1.5"></i> Proactive Offer
-      </button>
-    `;
-  } else {
-    toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab View: ${activeSubTab}</span>`;
-  }
-
-  if (filtered.length === 0) {
-    tableBody.innerHTML = `
-      <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-500"></i>
-        <p>No records found in this view.</p>
-      </div>
+              
     `;
     return;
   }
 
   tableBody.innerHTML = filtered.map(c => {
-    let actionHtml = '';
-    const detailsBtn = `<button onclick="viewSellerCommDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition" title="View Full Details"><i class="fa-solid fa-eye mr-1"></i> Details</button>`;
+    let actionHtml =    const detailsBtn = `<button onclick="viewSellerCommDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition" title="View Full Details"><i class="fa-solid fa-eye mr-1"></i> Details</button>`;
 
     if (activeSubTab === 'incoming') {
       actionHtml = `
@@ -1167,9 +944,7 @@ async function handleTopDownOfferSubmit(event) {
       if (error) throw error;
 
       document.getElementById('topDownOfferModal').classList.add('hidden');
-      document.getElementById('offerRecipientId').value = '';
-      document.getElementById('offerAmount').value = '';
-      await loadVendorCommissions();
+      document.getElementById('offerRecipientId').value =      document.getElementById('offerAmount').value =      await loadVendorCommissions();
       showToast('Top-down commission offer created and sent to Outgoing Requests!');
     } catch (err) {
       showToast('Error creating offer: ' + err.message);
@@ -1180,9 +955,7 @@ async function handleTopDownOfferSubmit(event) {
 function openSettlementModal(commId, recipientEmail) {
   document.getElementById('settleTargetCommId').value = commId;
   document.getElementById('settlePaypalEmail').value = recipientEmail;
-  document.getElementById('settleTxId').value = '';
-  document.getElementById('settleReceiptFile').value = '';
-  document.getElementById('settlementModal').classList.remove('hidden');
+  document.getElementById('settleTxId').value =  document.getElementById('settleReceiptFile').value =  document.getElementById('settlementModal').classList.remove('hidden');
 }
 
 async function handleSettlementSubmit(event) {
@@ -1195,8 +968,7 @@ async function handleSettlementSubmit(event) {
     alert('PayPal Transaction ID must be exactly 17 characters.');
     return;
   }
-  let receiptBase64 = '';
-  if (fileInput.files && fileInput.files[0]) {
+  let receiptBase64 =  if (fileInput.files && fileInput.files[0]) {
     receiptBase64 = await compressImageFile(fileInput.files[0], 900, 0.7);
   }
 
@@ -1259,8 +1031,7 @@ function viewSellerCommDetails(commId) {
         <img src="${c.proof_base64 || c.proof_url || c.review_screenshot}" alt="Review Proof" class="max-h-48 w-full object-contain rounded-lg border border-borderSlate">
       </a>
     </div>
-  ` : '';
-
+  ` :
   container.innerHTML = `
     <div class="grid grid-cols-2 gap-4">
       <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
@@ -1356,12 +1127,62 @@ async function preloadSellerProfiles() {
   } catch(e) {}
 }
 
-function getAdminProfile() {
+let cachedAdminProfile = null;
+
+async function fetchAdminProfile() {
+  if (cachedAdminProfile && cachedAdminProfile.id && cachedAdminProfile.id !== 'admin_system_support') {
+    return cachedAdminProfile;
+  }
   if (typeof profilesCache !== 'undefined') {
     for (const id in profilesCache) {
       const p = profilesCache[id];
       if (p && p.role && (p.role.toUpperCase() === 'ADMIN' || p.role.toUpperCase().includes('ADMIN'))) {
-        return { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
+        cachedAdminProfile = { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
+        return cachedAdminProfile;
+      }
+    }
+  }
+  try {
+    const { data, error } = await _supabase
+      .from('profiles')
+      .select('id, full_name, email, role')
+      .or('role.eq.admin,role.eq.ADMIN,role.eq.ADMIN_SHARE,role.eq.PLATFORM_ADMIN')
+      .limit(1);
+
+    if (!error && data && data.length > 0) {
+      const p = data[0];
+      cachedAdminProfile = {
+        id: p.id,
+        full_name: p.full_name || 'System Administrator',
+        email: p.email || 'admin@echohub.com',
+        role: 'ADMIN'
+      };
+      if (typeof profilesCache !== 'undefined') {
+        profilesCache[p.id] = cachedAdminProfile;
+      }
+      return cachedAdminProfile;
+    }
+  } catch (err) {
+    console.warn("Error querying admin profile:", err);
+  }
+  return {
+    id: 'admin_system_support',
+    full_name: 'System Administrator',
+    email: 'admin@echohub.com',
+    role: 'ADMIN'
+  };
+}
+
+function getAdminProfile() {
+  if (cachedAdminProfile && cachedAdminProfile.id && cachedAdminProfile.id !== 'admin_system_support') {
+    return cachedAdminProfile;
+  }
+  if (typeof profilesCache !== 'undefined') {
+    for (const id in profilesCache) {
+      const p = profilesCache[id];
+      if (p && p.role && (p.role.toUpperCase() === 'ADMIN' || p.role.toUpperCase().includes('ADMIN'))) {
+        cachedAdminProfile = { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
+        return cachedAdminProfile;
       }
     }
   }
@@ -1459,8 +1280,7 @@ function renderSellerContactsList() {
       : (c.name ? c.name.charAt(0).toUpperCase() : 'S');
     const firstContactTag = isAdm 
       ? '<span class="text-[9px] text-amber-400 font-bold ml-1">★ 1st Contact</span>' 
-      : '';
-
+      :
     return `
       <div class="p-3 border ${borderClass} rounded-xl space-y-2 transition">
         <div class="flex items-center justify-between">
@@ -1510,8 +1330,7 @@ async function loadVendorThreads(isPolling = false) {
     const allItems = [...(msgData || [])];
     const threadMap = {};
     allItems.forEach(m => {
-      const text = m.text || m.message_text || m.message || m.content || m.body || m.link || '';
-      const partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id) || 'general_shopper';
+      const text = m.text || m.message_text || m.message || m.content || m.body || m.link ||      const partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id) || 'general_shopper';
       if (!threadMap[partnerId]) {
         threadMap[partnerId] = {
           partnerId: partnerId,
@@ -1574,8 +1393,7 @@ function renderThreadsList() {
     return;
   }
   listEl.innerHTML = vendorThreads.map(t => {
-    const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    const prof = profilesCache[t.partnerId] || {};
+    const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :    const prof = profilesCache[t.partnerId] || {};
     const partnerName = prof.full_name || `Reviewer (${String(t.partnerId).substring(0,6)}...)`;
     
     /* Calculate unread count for this seller thread */
@@ -1596,12 +1414,24 @@ function renderThreadsList() {
   }).join('');
 }
 
-async function selectThread(partnerId) {
-  activeThreadId = partnerId;
-  if (partnerId) saveLocalVendorReadState(partnerId);
+async async function selectThread(partnerId) {
+  if (!currentUser || !currentUser.id) return;
+
+  let resolvedPartnerId = partnerId;
+  const isUuid = partnerId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(partnerId);
+
+  if (!isUuid || partnerId === 'admin_system_support') {
+    const adminProf = await fetchAdminProfile();
+    if (adminProf && adminProf.id && adminProf.id !== 'admin_system_support') {
+      resolvedPartnerId = adminProf.id;
+    }
+  }
+
+  activeThreadId = resolvedPartnerId;
+  if (resolvedPartnerId) saveLocalVendorReadState(resolvedPartnerId);
 
   const unreadMsgIds = [];
-  const t = vendorThreads.find(x => x.partnerId === partnerId);
+  const t = vendorThreads.find(x => x.partnerId === resolvedPartnerId || x.partnerId === partnerId);
   if (t && t.messages) {
     t.messages.forEach(m => {
       if (m.sender_id !== currentUser.id) {
@@ -1616,15 +1446,17 @@ async function selectThread(partnerId) {
   document.getElementById('chatInputMsg').disabled = false;
   document.getElementById('chatSendBtn').disabled = false;
 
+  const canQueryDb = resolvedPartnerId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(resolvedPartnerId);
+
   if (unreadMsgIds.length > 0) {
     try {
       await _supabase.from('messages').update({ is_read: true }).in('id', unreadMsgIds);
     } catch (e) {
       console.warn("Error marking vendor messages read:", e);
     }
-  } else {
+  } else if (canQueryDb) {
     try {
-      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${partnerId}),and(vendor_id.eq.${currentUser.id},sender_id.eq.${partnerId})`);
+      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${resolvedPartnerId}),and(vendor_id.eq.${currentUser.id},sender_id.eq.${resolvedPartnerId})`);
     } catch (e) {}
   }
 }
@@ -1655,8 +1487,7 @@ function renderActiveChat() {
   const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
 
   /* Product Snapshot Header Card */
-  let productHeaderCard = '';
-  const msgWithProd = sorted.find(m => m.product_id);
+  let productHeaderCard =  const msgWithProd = sorted.find(m => m.product_id);
   if (msgWithProd && msgWithProd.product_id) {
     const prodId = msgWithProd.product_id;
     let prod = (vendorProducts || []).find(p => p.id === prodId);
@@ -1667,8 +1498,7 @@ function renderActiveChat() {
     const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (msgWithProd.product_price ? Number(msgWithProd.product_price).toFixed(2) : '29.99');
     const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
     const pImg = prod ? (prod.image_url || prod.image || 'https://via.placeholder.com/150') : (msgWithProd.image_url || 'https://via.placeholder.com/150');
-    const pUrl = prod ? (prod.amazon_url || prod.product_url || prod.amazon_link || '') : '';
-
+    const pUrl = prod ? (prod.product_url || '') :
     productHeaderCard = `
       <div class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-4 shadow-lg flex items-center justify-between gap-3 shrink-0">
         <div class="flex items-center space-x-3 truncate">
@@ -1692,9 +1522,7 @@ function renderActiveChat() {
 
   const messagesHtml = sorted.map(m => {
     const isMe = m.sender_id === currentUser.id;
-    const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
-    const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
+    const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body ||    const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :    const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
     const fileName = m.file_name || m.attachment_name || 'Attached File';
     const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
     const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
@@ -1703,8 +1531,7 @@ function renderActiveChat() {
     const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
     const commissionAmount = m.commission_amount || 5.00;
 
-    let bubbleContent = '';
-    if (showAsReviewCard) {
+    let bubbleContent =    if (showAsReviewCard) {
       const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
       const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
       bubbleContent = `
@@ -1741,8 +1568,7 @@ function renderActiveChat() {
         </div>
       `;
     } else {
-      let attachmentHtml = '';
-      if (fileUrl) {
+      let attachmentHtml =      if (fileUrl) {
         if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
           attachmentHtml = `
             <div class="mt-2.5">
@@ -1754,8 +1580,7 @@ function renderActiveChat() {
           attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
         }
       }
-      const textDisplay = text ? `<div>${text}</div>` : '';
-      const contentBox = (textDisplay || attachmentHtml) ? (textDisplay + attachmentHtml) : `<div class="italic text-slate-300 opacity-80">[Attachment / System Event]</div>`;
+      const textDisplay = text ? `<div>${text}</div>` :      const contentBox = (textDisplay || attachmentHtml) ? (textDisplay + attachmentHtml) : `<div class="italic text-slate-300 opacity-80">[Attachment / System Event]</div>`;
       bubbleContent = contentBox;
     }
 
@@ -1927,15 +1752,28 @@ function handleChatFileSelect(event) {
 
 function clearChatAttachment() {
   chatAttachedFile = null;
-  document.getElementById('chatFileInput').value = '';
-  document.getElementById('chatAttachmentPreview').classList.add('hidden');
+  document.getElementById('chatFileInput').value =  document.getElementById('chatAttachmentPreview').classList.add('hidden');
 }
 
-async function handleSendMessage(event) {
+async async function handleSendMessage(event) {
   event.preventDefault();
   const input = document.getElementById('chatInputMsg');
   const text = input.value.trim();
   if ((!text && !chatAttachedFile) || !activeThreadId) return;
+
+  let targetReceiverId = activeThreadId;
+  const isUuid = targetReceiverId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetReceiverId);
+
+  if (!isUuid || targetReceiverId === 'admin_system_support') {
+    const adminProf = await fetchAdminProfile();
+    if (adminProf && adminProf.id && adminProf.id !== 'admin_system_support') {
+      targetReceiverId = adminProf.id;
+      activeThreadId = targetReceiverId;
+    } else {
+      alert("Unable to locate System Administrator profile in database. Please verify an admin account exists.");
+      return;
+    }
+  }
 
   let fileDataUrl = null;
   let fileName = null;
@@ -1954,35 +1792,51 @@ async function handleSendMessage(event) {
   }
 
   try {
+    const adminProf = getAdminProfile();
+    const isSendingToAdmin = (targetReceiverId === adminProf.id);
+
     let payload = {
       sender_id: currentUser.id,
-      receiver_id: activeThreadId,
+      receiver_id: targetReceiverId,
       seller_id: currentUser.id,
       vendor_id: currentUser.id,
       text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-      type: 'vendor_reply'
+      type: 'vendor_reply',
+      channel_type: isSendingToAdmin ? 'ADMIN_DIRECT' : 'MARKETPLACE'
     };
+
     if (fileDataUrl) {
       payload.file_url = fileDataUrl;
       payload.file_name = fileName;
     }
+
     let { error } = await _supabase
       .from('messages')
       .insert([payload]);
+
     if (error) {
-      delete payload.text;
-      payload.message = text || (fileName ? `[Attachment: ${fileName}]` : '');
-      if (fileDataUrl) {
-        payload.attachment_url = fileDataUrl;
-        payload.attachment_name = fileName;
+      console.warn("Primary payload insert failed, retrying:", error.message);
+      delete payload.channel_type;
+      let retry1 = await _supabase.from('messages').insert([payload]);
+      if (retry1.error) {
+        delete payload.text;
+        payload.message = text || (fileName ? `[Attachment: ${fileName}]` : '');
+        if (fileDataUrl) {
+          payload.attachment_url = fileDataUrl;
+          payload.attachment_name = fileName;
+        }
+        const { error: err2 } = await _supabase.from('messages').insert([payload]);
+        if (err2) throw err2;
       }
-      await _supabase.from('messages').insert([payload]);
     }
+
     input.value = '';
     clearChatAttachment();
     await loadVendorThreads(true);
+    showToast('Message sent successfully!');
   } catch (err) {
-    alert('Error sending message: ' + err.message);
+    console.error("Error sending message:", err);
+    alert('Error sending message: ' + (err.message || err));
   }
 }
 
