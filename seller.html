@@ -12,15 +12,34 @@
    ========================================================================== */
 
 function getProductImageUrl(item) {
-  if (!item) return 'https://via.placeholder.com/150';
-  let url = item.image_url || item.image || item.img_url || item.image_base64 || item.photo_url || item.picture_url || '';
-  if (typeof url !== 'string' || !url || url.includes('||') || url.includes('{')) {
-    return 'https://via.placeholder.com/150';
+  if (!item || typeof item !== 'object') return 'https://via.placeholder.com/150';
+
+  const candidates = [
+    item.image_url,
+    item.image,
+    item.image_base64,
+    item.product_image_url,
+    item.product_image,
+    item.cover_image,
+    item.thumbnail,
+    item.photo_url,
+    item.photo,
+    item.img_url,
+    item.media_url,
+    item.picture_url,
+    item.picture,
+    item.file_url
+  ];
+
+  for (const value of candidates) {
+    if (typeof value !== 'string') continue;
+    const url = value.trim();
+    if (!url || url.includes('||') || url.includes('{')) continue;
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/') || url.startsWith('/')) {
+      return url;
+    }
   }
-  url = url.trim();
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/')) {
-    return url;
-  }
+
   return 'https://via.placeholder.com/150';
 }
 
@@ -808,6 +827,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let vendorProducts = [];
+let chatProducts = {};
 let vendorCommissions = [];
 let profilesCache = {};
 let vendorProfilesCache = profilesCache;
@@ -815,6 +835,13 @@ let vendorThreads = [];
 let readVendorThreadIds = new Set();
 let lastReadVendorTimeMap = {};
 let activeThreadId = null;
+
+function getSellerChatProduct(productId) {
+  const id = String(productId);
+  return (vendorProducts || []).find(product => String(product.id) === id) ||
+    (typeof marketplaceProducts !== 'undefined' ? marketplaceProducts.find(product => String(product.id) === id) : null) ||
+    chatProducts[id] || null;
+}
 
 function loadLocalVendorReadState() {
   const userId = currentUser?.id || 'vendor';
@@ -1020,7 +1047,7 @@ async function loadVendorProducts(isPolling = false) {
       const amazonLink = p.amazon_url || p.product_url || p.amazon_link || '';
       const priceVal = p.price !== undefined && p.price !== null ? Number(p.price).toFixed(2) : '0.00';
       const commVal = Number(p.commission || p.commission_amount || 15.00).toFixed(2);
-      const imgVal = p.image_url || p.image || 'https://via.placeholder.com/300';
+      const imgVal = getProductImageUrl(p);
 
       return `
         <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-accentBlue/40 transition">
@@ -1991,6 +2018,20 @@ async function loadVendorThreads(isPolling = false) {
       .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
 
+    const productIds = [...new Set((msgData || []).map(message => message.product_id).filter(Boolean).map(String))];
+    chatProducts = {};
+    if (productIds.length) {
+      const { data: products, error: productsError } = await _supabase
+        .from('products')
+        .select('*')
+        .in('id', productIds);
+      if (productsError) {
+        console.warn('Could not load products linked to seller messages:', productsError.message);
+      } else {
+        (products || []).forEach(product => { chatProducts[String(product.id)] = product; });
+      }
+    }
+
     let commData = [];
     try {
       const { data: cData } = await _supabase.from('commissions').select('*').or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
@@ -2202,10 +2243,7 @@ function extractProductIdFromText(text) {
 }
 
 window.openSellerProductDetailsModal = function(productId) {
-  let prod = (vendorProducts || []).find(p => p.id === productId);
-  if (!prod && typeof marketplaceProducts !== 'undefined') {
-    prod = marketplaceProducts.find(p => p.id === productId);
-  }
+  const prod = getSellerChatProduct(productId);
   if (!prod) return;
 
   const pTitle = prod.title || 'Marketplace Product';
@@ -2280,14 +2318,11 @@ function renderActiveChat() {
   const msgWithProd = sorted.find(m => m.product_id);
   if (msgWithProd && msgWithProd.product_id) {
     const prodId = msgWithProd.product_id;
-    let prod = (vendorProducts || []).find(p => p.id === prodId);
-    if (!prod && typeof marketplaceProducts !== 'undefined') {
-      prod = marketplaceProducts.find(p => p.id === prodId);
-    }
+    const prod = getSellerChatProduct(prodId);
     const pTitle = prod ? prod.title : (msgWithProd.product_title || 'Marketplace Review Listing');
     const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (msgWithProd.product_price ? Number(msgWithProd.product_price).toFixed(2) : '29.99');
     const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
-    const pImg = prod ? getProductImageUrl(prod) : (msgWithProd.image_url || 'https://via.placeholder.com/150');
+    const pImg = getProductImageUrl(prod || msgWithProd || {});
     const pUrl = prod ? (prod.amazon_url || prod.product_url || prod.amazon_link || '') : '';
 
     productHeaderCard = `
@@ -2382,10 +2417,7 @@ function renderActiveChat() {
       const msgProdId = m.product_id || extractProductIdFromText(text);
       let productCardHtml = '';
       if (msgProdId) {
-        let prod = (vendorProducts || []).find(p => p.id === msgProdId);
-        if (!prod && typeof marketplaceProducts !== 'undefined') {
-          prod = marketplaceProducts.find(p => p.id === msgProdId || String(p.id).toLowerCase().includes(String(msgProdId).toLowerCase()));
-        }
+        const prod = getSellerChatProduct(msgProdId);
         if (prod) {
           const pPrice = Number(prod.price || 0).toFixed(2);
           const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
