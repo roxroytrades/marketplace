@@ -5,7 +5,233 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Echo Hub - Vendor Management Workspace</title>
 <!-- Tailwind CSS CDN with Dark Mode Enabled -->
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+/* ==========================================================================
+   WHATSAPP-STYLE SIDEBAR CONTEXT MENU ENGINE (PIN, UNREAD, HIDE & UNDO)
+   ========================================================================== */
+let contextMenuTargetId = null;
+let touchTimer = null;
+let touchStartPos = { x: 0, y: 0 };
+let undoToastTimeout = null;
+
+function getThreadMetaStorageKey() {
+  let uId = 'guest';
+  if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
+    uId = currentUser.id;
+  } else if (typeof currentAdminUser !== 'undefined' && currentAdminUser && currentAdminUser.id) {
+    uId = currentAdminUser.id;
+  }
+  return 'echo_thread_meta_' + uId;
+}
+
+function getThreadMeta() {
+  try {
+    return JSON.parse(localStorage.getItem(getThreadMetaStorageKey()) || '{}');
+  } catch(e) {
+    return {};
+  }
+}
+
+function saveThreadMeta(meta) {
+  try {
+    localStorage.setItem(getThreadMetaStorageKey(), JSON.stringify(meta));
+  } catch(e) {}
+}
+
+function hideThreadTile(threadId) {
+  const meta = getThreadMeta();
+  if (!meta.hidden) meta.hidden = {};
+  meta.hidden[threadId] = new Date().toISOString();
+  saveThreadMeta(meta);
+  
+  showUndoToast(threadId);
+  refreshThreadsUI();
+}
+
+function undoHideThreadTile(threadId) {
+  const meta = getThreadMeta();
+  if (meta.hidden && meta.hidden[threadId]) {
+    delete meta.hidden[threadId];
+    saveThreadMeta(meta);
+  }
+  hideUndoToast();
+  refreshThreadsUI();
+}
+
+function togglePinThread(threadId) {
+  const meta = getThreadMeta();
+  if (!meta.pinned) meta.pinned = [];
+  const idx = meta.pinned.indexOf(threadId);
+  if (idx >= 0) {
+    meta.pinned.splice(idx, 1);
+  } else {
+    if (meta.pinned.length >= 3) {
+      alert('You can pin up to 3 priority conversations at top.');
+      return;
+    }
+    meta.pinned.push(threadId);
+  }
+  saveThreadMeta(meta);
+  refreshThreadsUI();
+}
+
+function toggleMarkUnreadThread(threadId) {
+  const meta = getThreadMeta();
+  if (!meta.manualUnread) meta.manualUnread = {};
+  if (meta.manualUnread[threadId]) {
+    delete meta.manualUnread[threadId];
+  } else {
+    meta.manualUnread[threadId] = true;
+  }
+  saveThreadMeta(meta);
+  refreshThreadsUI();
+}
+
+function clearManualUnreadThread(threadId) {
+  const meta = getThreadMeta();
+  if (meta.manualUnread && meta.manualUnread[threadId]) {
+    delete meta.manualUnread[threadId];
+    saveThreadMeta(meta);
+  }
+}
+
+function handlePinAction(threadId) {
+  togglePinThread(threadId);
+  hideThreadContextMenu();
+}
+
+function handleUnreadAction(threadId) {
+  toggleMarkUnreadThread(threadId);
+  hideThreadContextMenu();
+}
+
+function handleHideAction(threadId) {
+  hideThreadTile(threadId);
+  hideThreadContextMenu();
+}
+
+function showThreadContextMenu(e, threadId) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (e && e.stopPropagation) e.stopPropagation();
+  contextMenuTargetId = threadId;
+
+  let menu = document.getElementById('threadContextMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'threadContextMenu';
+    menu.className = 'fixed z-50 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-md p-1.5 w-52 text-xs space-y-1 text-slate-200 transition-opacity duration-150';
+    document.body.appendChild(menu);
+  }
+
+  const meta = getThreadMeta();
+  const isPinned = (meta.pinned || []).includes(threadId);
+  const isUnread = meta.manualUnread && meta.manualUnread[threadId];
+
+  menu.innerHTML = `
+    <button onclick="handlePinAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-blue-600/20 hover:text-blue-400 transition flex items-center space-x-2 font-medium">
+      <i class="fa-solid fa-thumbtack ${isPinned ? 'text-amber-400 rotate-45' : 'text-slate-400'}"></i>
+      <span>${isPinned ? 'Unpin Conversation' : 'Pin to Top (Max 3)'}</span>
+    </button>
+    <button onclick="handleUnreadAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-blue-600/20 hover:text-blue-400 transition flex items-center space-x-2 font-medium">
+      <i class="fa-solid ${isUnread ? 'fa-envelope-open text-emerald-400' : 'fa-envelope text-blue-400'}"></i>
+      <span>${isUnread ? 'Mark as Read' : 'Mark as Unread'}</span>
+    </button>
+    <div class="border-t border-slate-800 my-1"></div>
+    <button onclick="handleHideAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition flex items-center space-x-2 font-medium">
+      <i class="fa-solid fa-eye-slash"></i>
+      <span>Hide Conversation Tile</span>
+    </button>
+  `;
+
+  const clickX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 100);
+  const clickY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 100);
+
+  const menuWidth = 210;
+  const menuHeight = 140;
+
+  let posX = clickX;
+  let posY = clickY;
+
+  if (posX + menuWidth > window.innerWidth) posX = window.innerWidth - menuWidth - 10;
+  if (posY + menuHeight > window.innerHeight) posY = window.innerHeight - menuHeight - 10;
+
+  menu.style.left = posX + 'px';
+  menu.style.top = posY + 'px';
+  menu.style.display = 'block';
+}
+
+function hideThreadContextMenu() {
+  const menu = document.getElementById('threadContextMenu');
+  if (menu) menu.style.display = 'none';
+}
+
+function showUndoToast(threadId) {
+  let toast = document.getElementById('undoHideToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'undoHideToast';
+    toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900/95 border border-slate-700/80 text-white px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md text-xs flex items-center space-x-3';
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `
+    <div class="flex items-center space-x-2">
+      <i class="fa-solid fa-eye-slash text-amber-400"></i>
+      <span>Conversation tile hidden from sidebar.</span>
+    </div>
+    <button onclick="undoHideThreadTile('${threadId}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-xl text-xs font-bold transition shadow-md">
+      Undo
+    </button>
+  `;
+
+  toast.style.display = 'flex';
+  if (undoToastTimeout) clearTimeout(undoToastTimeout);
+  undoToastTimeout = setTimeout(() => {
+    hideUndoToast();
+  }, 5000);
+}
+
+function hideUndoToast() {
+  const toast = document.getElementById('undoHideToast');
+  if (toast) toast.style.display = 'none';
+}
+
+function handleTouchStart(e, threadId) {
+  if (!e.touches || !e.touches[0]) return;
+  touchStartPos = {
+    x: e.touches[0].clientX,
+    y: e.touches[0].clientY
+  };
+  touchTimer = setTimeout(() => {
+    showThreadContextMenu(e.touches[0], threadId);
+  }, 500);
+}
+
+function handleTouchMove(e) {
+  if (!touchTimer || !e.touches || !e.touches[0]) return;
+  const moveX = e.touches[0].clientX;
+  const moveY = e.touches[0].clientY;
+  if (Math.abs(moveX - touchStartPos.x) > 10 || Math.abs(moveY - touchStartPos.y) > 10) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+}
+
+function handleTouchEnd() {
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#threadContextMenu')) hideThreadContextMenu();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideThreadContextMenu();
+});
+
+</script>
 <script>
 tailwind.config = {
 darkMode: 'class',
@@ -60,6 +286,24 @@ eh
 </header>
 <!-- Main Workspace Container -->
 <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+
+<!-- Receipt Upload 24-Hour Countdown & Lockout Banner -->
+<div id="receiptCountdownBanner" class="hidden rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6">
+  <div class="flex items-center space-x-3.5">
+    <div id="receiptBannerIconBg" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0">
+      <i id="receiptBannerIcon" class="fa-solid fa-clock"></i>
+    </div>
+    <div>
+      <h4 id="receiptBannerTitle" class="font-bold text-sm text-white">Action Required: Payment Receipt Pending</h4>
+      <p id="receiptBannerText" class="text-xs mt-0.5 text-slate-300">Upload payment receipt screenshot for approved review payout.</p>
+    </div>
+  </div>
+  <button id="receiptBannerActionBtn" onclick="openPendingReceiptModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5">
+    <i class="fa-solid fa-file-arrow-up"></i>
+    <span id="receiptBannerBtnText">Upload Receipt Now</span>
+  </button>
+</div>
+
 <!-- Welcome Banner & Section Switcher Tabs -->
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
 <div class="space-y-1">
@@ -677,6 +921,10 @@ async function handleLogout() {
 }
 
 function switchVendorTab(tab) {
+  if (isReceiptLockoutActive && tab !== 'commissions' && tab !== 'messages') {
+    alert('🚨 Account Restricted: 24-hour receipt deadline elapsed. Please upload the missing payment receipt in the Commissions tab or contact Admin in the Messaging Hub to restore full workspace access.');
+    return;
+  }
   const sections = ['catalogSection', 'commissionsSection', 'messagesSection', 'referralsSection'];
   const buttons = ['navCatalogBtn', 'navCommissionsBtn', 'navMessagesBtn', 'navReferralsBtn'];
   sections.forEach(s => document.getElementById(s).classList.add('hidden'));
@@ -892,6 +1140,99 @@ async function deleteProduct(id) {
 }
 
 /* 5-Tab Commissions Architecture */
+
+/* Receipt Countdown & Account Lockout Engine */
+let isReceiptLockoutActive = false;
+let overdueBuyerIds = new Set();
+let activePendingReceiptComm = null;
+
+function checkReceiptDeadlinesAndLockout() {
+  overdueBuyerIds.clear();
+  activePendingReceiptComm = null;
+  let activeWindowComm = null;
+  let shortestRemainingMs = Infinity;
+  let expiredComm = null;
+
+  const now = Date.now();
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+  (vendorCommissions || []).forEach(c => {
+    const statusUpper = (c.status || '').toUpperCase();
+    const qTypeUpper = (c.queue_type || '').toUpperCase();
+    const isApprovedOrWorking = statusUpper === 'APPROVED' || statusUpper === 'APPROVED_IN_WORKING' || qTypeUpper === 'WORKING_QUEUE' || qTypeUpper === 'OUTGOING_REQUESTS';
+    const hasNoReceipt = !c.receipt_base64 && !c.receipt_url && !c.proof_base64;
+
+    if (isApprovedOrWorking && hasNoReceipt) {
+      const approvedAtTime = new Date(c.approved_at || c.updated_at || c.created_at || now).getTime();
+      const deadline = approvedAtTime + TWENTY_FOUR_HOURS;
+      const remainingMs = deadline - now;
+
+      if (c.recipient_id) overdueBuyerIds.add(c.recipient_id);
+
+      if (remainingMs <= 0) {
+        if (!expiredComm) expiredComm = c;
+      } else {
+        if (remainingMs < shortestRemainingMs) {
+          shortestRemainingMs = remainingMs;
+          activeWindowComm = c;
+        }
+      }
+    }
+  });
+
+  const banner = document.getElementById('receiptCountdownBanner');
+  const iconBg = document.getElementById('receiptBannerIconBg');
+  const icon = document.getElementById('receiptBannerIcon');
+  const title = document.getElementById('receiptBannerTitle');
+  const text = document.getElementById('receiptBannerText');
+  const actionBtn = document.getElementById('receiptBannerActionBtn');
+  const btnText = document.getElementById('receiptBannerBtnText');
+
+  if (expiredComm) {
+    isReceiptLockoutActive = true;
+    activePendingReceiptComm = expiredComm;
+    if (banner) {
+      banner.classList.remove('hidden');
+      banner.className = 'rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6 bg-rose-500/20 border-rose-500/40 text-rose-200 animate-pulse';
+      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-rose-500/30 text-rose-300';
+      if (icon) icon.className = 'fa-solid fa-triangle-exclamation';
+      if (title) title.textContent = '🚨 Account Restricted: 24-Hour Receipt Deadline Elapsed';
+      if (text) text.textContent = `24 hours elapsed for ${expiredComm.recipient_name || expiredComm.recipient_email || 'Reviewer'} ($${Number(expiredComm.amount||0).toFixed(2)} payout). Upload receipt proof now to restore full workspace features.`;
+      if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white cursor-pointer';
+      if (btnText) btnText.textContent = 'Upload Receipt Now';
+    }
+  } else if (activeWindowComm) {
+    isReceiptLockoutActive = false;
+    activePendingReceiptComm = activeWindowComm;
+    const hours = Math.floor(shortestRemainingMs / (1000 * 60 * 60));
+    const mins = Math.floor((shortestRemainingMs % (1000 * 60 * 60)) / (1000 * 60));
+    if (banner) {
+      banner.classList.remove('hidden');
+      banner.className = 'rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6 bg-amber-500/15 border-amber-500/30 text-amber-200';
+      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-amber-500/25 text-amber-300';
+      if (icon) icon.className = 'fa-solid fa-clock';
+      if (title) title.textContent = '⏱️ Action Required: Payment Receipt Pending';
+      if (text) text.textContent = `Pending receipt for ${activeWindowComm.recipient_name || activeWindowComm.recipient_email || 'Reviewer'} ($${Number(activeWindowComm.amount||0).toFixed(2)}). ${hours}h ${mins}m remaining before account lockout.`;
+      if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer';
+      if (btnText) btnText.textContent = 'Upload Receipt Now';
+    }
+  } else {
+    isReceiptLockoutActive = false;
+    activePendingReceiptComm = null;
+    if (banner) banner.classList.add('hidden');
+  }
+}
+
+function openPendingReceiptModal() {
+  if (activePendingReceiptComm && activePendingReceiptComm.id) {
+    openSettleModal(activePendingReceiptComm.id);
+  } else {
+    switchVendorTab('commissions');
+    switchCommSubTab('workingQueue');
+  }
+}
+
+
 async function loadVendorCommissions(isPolling = false) {
   if (!currentUser || !currentUser.id) return;
   try {
@@ -918,6 +1259,7 @@ async function loadVendorCommissions(isPolling = false) {
   } catch (err) {
     vendorCommissions = [];
   }
+  checkReceiptDeadlinesAndLockout();
   renderSellerCommissions();
 }
 
@@ -1700,25 +2042,86 @@ function updateSellerUnreadBadge() {
   }
 }
 
+function refreshThreadsUI() {
+  if (typeof renderThreadsList === 'function') renderThreadsList();
+}
+
 function renderThreadsList() {
   const listEl = document.getElementById('messagingThreadsList');
   if (vendorThreads.length === 0) {
     listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No conversations yet.</p>`;
     return;
   }
-  listEl.innerHTML = vendorThreads.map(t => {
+  let displayThreads = vendorThreads;
+  if (isReceiptLockoutActive) {
+    displayThreads = vendorThreads.filter(t => {
+      const prof = profilesCache[t.partnerId] || {};
+      const isOverdueBuyer = overdueBuyerIds.has(t.partnerId);
+      const isAdmin = t.partnerId === 'admin' || prof.role === 'admin' || (prof.full_name && prof.full_name.toLowerCase().includes('admin'));
+      return isOverdueBuyer || isAdmin;
+    });
+  }
+
+  const meta = getThreadMeta();
+  const hiddenMap = meta.hidden || {};
+  const pinnedList = meta.pinned || [];
+  const manualUnreadMap = meta.manualUnread || {};
+
+  /* Auto-unhide if latest message is newer than when hidden */
+  displayThreads = displayThreads.filter(t => {
+    const pid = t.partnerId;
+    if (hiddenMap[pid]) {
+      const hiddenTime = new Date(hiddenMap[pid]).getTime();
+      const latestMsgDate = t.messages && t.messages[0] ? new Date(t.messages[0].created_at).getTime() : 0;
+      const latestTime = Math.max(new Date(t.updatedAt || 0).getTime(), latestMsgDate);
+      if (latestTime > hiddenTime) {
+        delete hiddenMap[pid];
+        meta.hidden = hiddenMap;
+        saveThreadMeta(meta);
+        return true;
+      }
+      return false;
+    }
+    return true;
+  });
+
+  /* Sort: Pinned threads first, then by updatedAt */
+  displayThreads.sort((a, b) => {
+    const isPinnedA = pinnedList.includes(a.partnerId);
+    const isPinnedB = pinnedList.includes(b.partnerId);
+    if (isPinnedA && !isPinnedB) return -1;
+    if (!isPinnedA && isPinnedB) return 1;
+    return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+  });
+
+  if (displayThreads.length === 0) {
+    listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No authorized conversations available.</p>`;
+    return;
+  }
+
+  listEl.innerHTML = displayThreads.map(t => {
     const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
     const prof = profilesCache[t.partnerId] || {};
     const partnerName = prof.full_name || `Reviewer (${String(t.partnerId).substring(0,6)}...)`;
+    const isPinned = pinnedList.includes(t.partnerId);
     
-    /* Calculate unread count for this seller thread */
-    const unreadCount = (t.messages || []).filter(m => m.sender_id !== currentUser.id && !m.is_read).length;
+    /* Calculate unread count + manual unread */
+    let unreadCount = (t.messages || []).filter(m => m.sender_id !== currentUser.id && !m.is_read).length;
+    if (manualUnreadMap[t.partnerId]) unreadCount = Math.max(1, unreadCount);
 
     return `
-      <div onclick="selectThread('${t.partnerId}')" class="p-3 bg-darkBg border ${activeThreadId === t.partnerId ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
+      <div onclick="selectThread('${t.partnerId}')"
+           oncontextmenu="showThreadContextMenu(event, '${t.partnerId}')"
+           ontouchstart="handleTouchStart(event, '${t.partnerId}')"
+           ontouchmove="handleTouchMove(event)"
+           ontouchend="handleTouchEnd()"
+           class="p-3 bg-darkBg border ${activeThreadId === t.partnerId ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-200">${partnerName}</span>
-          <div class="flex items-center space-x-1.5 shrink-0">
+          <div class="flex items-center space-x-1 truncate">
+            ${isPinned ? `<i class="fa-solid fa-thumbtack text-amber-400 text-[10px] mr-1" title="Pinned"></i>` : ''}
+            <span class="text-xs font-semibold text-slate-200 truncate">${partnerName}</span>
+          </div>
+          <div class="flex items-center space-x-1.5 shrink-0 ml-1">
             ${unreadCount > 0 ? `<span class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">${unreadCount}</span>` : ''}
             <span class="text-[10px] text-slate-500">${timeString}</span>
           </div>
@@ -1731,7 +2134,7 @@ function renderThreadsList() {
 
 async function selectThread(partnerId) {
   activeThreadId = partnerId;
-  if (partnerId) saveLocalVendorReadState(partnerId);
+  if (partnerId) { saveLocalVendorReadState(partnerId); clearManualUnreadThread(partnerId); }
 
   const unreadMsgIds = [];
   const t = vendorThreads.find(x => x.partnerId === partnerId);
@@ -2012,7 +2415,19 @@ function renderActiveChat() {
     `;
   }).join('');
 
-  container.innerHTML = productHeaderCard + messagesHtml;
+  let receiptThreadBanner = '';
+  if (overdueBuyerIds.has(activeThreadId)) {
+    receiptThreadBanner = `
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 mb-3 text-xs text-amber-300 flex items-center justify-between gap-2">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-clock text-amber-400"></i>
+          <span><strong>Pending Disbursement:</strong> Upload payment receipt screenshot to clear this review transaction.</span>
+        </div>
+        <button onclick="switchVendorTab('commissions'); switchCommSubTab('workingQueue');" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1 rounded-lg text-[11px] transition shrink-0">Upload Receipt</button>
+      </div>
+    `;
+  }
+  container.innerHTML = receiptThreadBanner + productHeaderCard + messagesHtml;
   container.scrollTop = container.scrollHeight;
 }
 
