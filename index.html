@@ -1297,12 +1297,62 @@ function switchShopperMessagingSubTab(tab) {
   }
 }
 
-function getAdminProfile() {
+let cachedAdminProfile = null;
+
+async function fetchAdminProfile() {
+  if (cachedAdminProfile && cachedAdminProfile.id && cachedAdminProfile.id !== 'admin_system_support') {
+    return cachedAdminProfile;
+  }
   if (typeof profilesCache !== 'undefined') {
     for (const id in profilesCache) {
       const p = profilesCache[id];
       if (p && p.role && (p.role.toUpperCase() === 'ADMIN' || p.role.toUpperCase().includes('ADMIN'))) {
-        return { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
+        cachedAdminProfile = { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
+        return cachedAdminProfile;
+      }
+    }
+  }
+  try {
+    const { data, error } = await _supabase
+      .from('profiles')
+      .select('id, full_name, email, role')
+      .or('role.eq.admin,role.eq.ADMIN,role.eq.ADMIN_SHARE,role.eq.PLATFORM_ADMIN')
+      .limit(1);
+
+    if (!error && data && data.length > 0) {
+      const p = data[0];
+      cachedAdminProfile = {
+        id: p.id,
+        full_name: p.full_name || 'System Administrator',
+        email: p.email || 'admin@echohub.com',
+        role: 'ADMIN'
+      };
+      if (typeof profilesCache !== 'undefined') {
+        profilesCache[p.id] = cachedAdminProfile;
+      }
+      return cachedAdminProfile;
+    }
+  } catch (err) {
+    console.warn("Error fetching admin profile:", err);
+  }
+  return {
+    id: 'admin_system_support',
+    full_name: 'System Administrator',
+    email: 'admin@echohub.com',
+    role: 'ADMIN'
+  };
+}
+
+function getAdminProfile() {
+  if (cachedAdminProfile && cachedAdminProfile.id && cachedAdminProfile.id !== 'admin_system_support') {
+    return cachedAdminProfile;
+  }
+  if (typeof profilesCache !== 'undefined') {
+    for (const id in profilesCache) {
+      const p = profilesCache[id];
+      if (p && p.role && (p.role.toUpperCase() === 'ADMIN' || p.role.toUpperCase().includes('ADMIN'))) {
+        cachedAdminProfile = { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
+        return cachedAdminProfile;
       }
     }
   }
@@ -1535,22 +1585,32 @@ function filterThreads() {
 }
 
 async function openThread(threadId, recipientId, productId) {
-  activeThreadId = threadId;
-  activeRecipientId = recipientId;
-  activeProductId = productId;
-  if (recipientId) saveLocalReadState(recipientId);
+  let resolvedRecipientId = recipientId;
+  const isUuid = recipientId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(recipientId);
 
-  const profile = profilesCache[recipientId] || { full_name: `User #${recipientId.substring(0, 8)}`, role: 'user' };
+  if (!isUuid || recipientId === 'admin_system_support') {
+    const adminProf = await fetchAdminProfile();
+    if (adminProf && adminProf.id && adminProf.id !== 'admin_system_support') {
+      resolvedRecipientId = adminProf.id;
+    }
+  }
+
+  activeThreadId = threadId;
+  activeRecipientId = resolvedRecipientId;
+  activeProductId = productId;
+  if (resolvedRecipientId) readThreadIds.add(resolvedRecipientId);
+
+  const profile = profilesCache[resolvedRecipientId] || { full_name: `User #${String(resolvedRecipientId).substring(0, 8)}`, role: 'user' };
   document.getElementById('activeChatPanel').classList.remove('hidden');
   document.getElementById('messageInputArea').classList.remove('hidden');
   document.getElementById('activeChatTitle').textContent = profile.full_name;
-  document.getElementById('activeChatRoleTag').textContent = `${profile.role.toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
+  document.getElementById('activeChatRoleTag').textContent = `${(profile.role || 'user').toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
   
   /* Clear local unread status for messages from this recipient */
   const unreadMsgIds = [];
   messagingThreads.forEach(m => {
     const counterpartId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
-    if (counterpartId === recipientId) {
+    if (counterpartId === resolvedRecipientId || counterpartId === recipientId) {
       if (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id) {
         if (!m.is_read && m.id) unreadMsgIds.push(m.id);
         m.is_read = true;
@@ -1560,8 +1620,10 @@ async function openThread(threadId, recipientId, productId) {
   updateUnreadBadge();
   renderThreadsList();
   
-  await loadMessageStream(recipientId, productId);
-  setupRealtimeMessageSubscription(recipientId, productId);
+  await loadMessageStream(resolvedRecipientId, productId);
+  setupRealtimeMessageSubscription(resolvedRecipientId, productId);
+
+  const canQueryDb = resolvedRecipientId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(resolvedRecipientId);
 
   if (unreadMsgIds.length > 0) {
     try {
@@ -1569,6 +1631,10 @@ async function openThread(threadId, recipientId, productId) {
     } catch (e) {
       console.warn('Error marking messages read:', e);
     }
+  } else if (canQueryDb) {
+    try {
+      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${resolvedRecipientId}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${resolvedRecipientId})`).eq('is_read', false);
+    } catch (e) {}
   }
 }
 
@@ -1732,31 +1798,54 @@ async function handleSendMessage(event) {
 
 async function sendChatMessage(text, imageUrl, reviewUrl) {
   try {
+    let targetReceiverId = activeRecipientId;
+    const isUuid = targetReceiverId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetReceiverId);
+
+    if (!isUuid || targetReceiverId === 'admin_system_support') {
+      const adminProf = await fetchAdminProfile();
+      if (adminProf && adminProf.id && adminProf.id !== 'admin_system_support') {
+        targetReceiverId = adminProf.id;
+        activeRecipientId = targetReceiverId;
+      } else {
+        alert("Unable to locate system administrator profile in database. Please ensure an admin account exists.");
+        return;
+      }
+    }
+
+    const adminProf = getAdminProfile();
+    const isSendingToAdmin = (targetReceiverId === adminProf.id);
+
     const payload = {
       sender_id: currentUser.id,
       buyer_id: currentUser.id,
-      receiver_id: activeRecipientId,
-      vendor_id: activeRecipientId,
+      receiver_id: targetReceiverId,
+      vendor_id: targetReceiverId,
       product_id: (activeProductId !== 'null' && activeProductId) ? activeProductId : null,
       text: text || '',
       status_badge: 'AWAITING_ATTENTION',
-      channel_type: (activeRecipientId && (activeRecipientId === getAdminProfile().id || activeRecipientId === 'admin_system_support')) ? 'ADMIN_DIRECT' : 'MARKETPLACE'
+      channel_type: isSendingToAdmin ? 'ADMIN_DIRECT' : 'MARKETPLACE'
     };
-    if (imageUrl) {
-      payload.image_url = imageUrl;
-    }
+    if (imageUrl) payload.image_url = imageUrl;
     if (reviewUrl) {
       payload.review_url = reviewUrl;
       payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
     }
-    const { error } = await _supabase
-      .from('messages')
-      .insert([payload]);
+
+    let { error } = await _supabase.from('messages').insert([payload]);
+    if (error && error.message && error.message.includes('channel_type')) {
+      console.warn('channel_type column missing in database schema, retrying without channel_type');
+      delete payload.channel_type;
+      const retryRes = await _supabase.from('messages').insert([payload]);
+      error = retryRes.error;
+    }
     if (error) throw error;
-    await loadMessageStream(activeRecipientId, activeProductId);
+
+    await loadMessageStream(targetReceiverId, activeProductId);
     await loadMessagingThreads(true);
+    showToast('Message sent successfully!');
   } catch (err) {
-    alert('Failed to send message: ' + err.message);
+    console.error("Error sending message:", err);
+    alert('Failed to send message: ' + (err.message || err));
   }
 }
 
@@ -1802,10 +1891,17 @@ window.submitReviewUrlMessage = async function(productId, receiverId) {
   };
   
   try {
-    const { data, error } = await _supabase
+    let { data, error } = await _supabase
       .from('messages')
       .insert([payload])
       .select();
+    if (error && error.message && error.message.includes('channel_type')) {
+      console.warn('channel_type column missing in database schema, retrying without channel_type');
+      delete payload.channel_type;
+      const retryRes = await _supabase.from('messages').insert([payload]).select();
+      data = retryRes.data;
+      error = retryRes.error;
+    }
     if (error) throw error;
     
     console.log('Review URL message sent successfully:', data);
