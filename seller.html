@@ -540,6 +540,7 @@ async function initSellerWorkspace() {
     }
 
     /* Step E: Load Vendor Workspace Data */
+    await preloadSellerProfiles();
     await loadVendorProducts();
     await loadVendorCommissions();
     await loadVendorThreads();
@@ -557,6 +558,7 @@ async function initSellerWorkspace() {
 }
 
 async function pollVendorData() {
+  await preloadSellerProfiles();
   await loadVendorProducts(true);
   await loadVendorCommissions(true);
   await loadVendorThreads(true);
@@ -745,6 +747,7 @@ async function handleSaveProduct(event) {
     }
 
     closeProductModal();
+    await preloadSellerProfiles();
     await loadVendorProducts();
   } catch (err) {
     alert('Error saving product: ' + err.message);
@@ -756,6 +759,7 @@ async function deleteProduct(id) {
   try {
     const { error } = await _supabase.from('products').delete().eq('id', id);
     if (error) throw error;
+    await preloadSellerProfiles();
     await loadVendorProducts();
   } catch (err) {
     alert('Error deleting product: ' + err.message);
@@ -1273,22 +1277,60 @@ function switchMessagingSubTab(tab) {
   }
 }
 
+
+async function preloadSellerProfiles() {
+  try {
+    const { data } = await _supabase.from('profiles').select('id, full_name, email, role, paypal_email');
+    if (data) {
+      data.forEach(p => {
+        profilesCache[p.id] = p;
+      });
+    }
+  } catch(e) {}
+}
+
+function getAdminProfile() {
+  if (typeof profilesCache !== 'undefined') {
+    for (const id in profilesCache) {
+      const p = profilesCache[id];
+      if (p && p.role && (p.role.toUpperCase() === 'ADMIN' || p.role.toUpperCase().includes('ADMIN'))) {
+        return { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
+      }
+    }
+  }
+  return {
+    id: 'admin_system_support',
+    full_name: 'System Administrator',
+    email: 'admin@echohub.com',
+    role: 'ADMIN'
+  };
+}
+
 function renderSellerContactsList() {
   const container = document.getElementById('messagingContactsList');
   if (!container) return;
   const searchVal = (document.getElementById('sellerContactSearchInput')?.value || '').toLowerCase();
 
-  const contacts = vendorThreads.map(t => {
+  const adminProf = getAdminProfile();
+  const adminContact = {
+    partnerId: adminProf.id,
+    name: adminProf.full_name || 'System Administrator',
+    email: adminProf.email || 'admin@echohub.com',
+    paypal: 'Official Platform Support Channel',
+    role: 'ADMIN',
+    lastMessage: 'Direct communication line with Echo Hub Admin.',
+    isAdmin: true
+  };
+
+  const shopperContacts = vendorThreads.map(t => {
     const prof = profilesCache[t.partnerId] || {};
     const partnerName = prof.full_name || `Shopper (${String(t.partnerId).substring(0, 6)})`;
     const partnerEmail = prof.email || 'N/A';
     
-    // Check if review submitted in vendorCommissions or commissions table
     const hasReviewSubmitted = (vendorCommissions || []).some(c => 
       c.recipient_id === t.partnerId || c.vendor_id === currentUser?.id || c.seller_id === currentUser?.id
     );
     
-    // Check if PayPal email provided in chat messages
     const chatText = (t.messages || []).map(m => m._normalizedText || '').join(' ');
     const paypalInChatMatch = chatText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const hasProvidedPaypalInChat = paypalInChatMatch != null;
@@ -1305,45 +1347,68 @@ function renderSellerContactsList() {
       paypal: displayPaypal,
       role: prof.role || 'buyer',
       lastMessage: t.lastMessage || 'No recent messages',
-      updatedAt: t.updatedAt
+      updatedAt: t.updatedAt,
+      isAdmin: false
     };
-  }).filter(c => {
-    if (!searchVal) return true;
-    return c.name.toLowerCase().includes(searchVal) ||
-           c.email.toLowerCase().includes(searchVal) ||
-           c.paypal.toLowerCase().includes(searchVal) ||
-           c.partnerId.toLowerCase().includes(searchVal);
-  });
+  }).filter(c => c.partnerId !== adminContact.partnerId);
 
-  if (contacts.length === 0) {
-    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No matching shopper contacts found.</p>`;
+  let allContacts = [adminContact, ...shopperContacts];
+
+  if (searchVal) {
+    allContacts = allContacts.filter(c => 
+      c.name.toLowerCase().includes(searchVal) ||
+      c.email.toLowerCase().includes(searchVal) ||
+      c.paypal.toLowerCase().includes(searchVal) ||
+      c.role.toLowerCase().includes(searchVal) ||
+      c.partnerId.toLowerCase().includes(searchVal)
+    );
+  }
+
+  if (allContacts.length === 0) {
+    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No matching contacts found.</p>`;
     return;
   }
 
-  container.innerHTML = contacts.map(c => `
-    <div class="p-3 bg-darkBg border border-borderSlate rounded-xl space-y-2 hover:border-accentBlue transition">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2 truncate">
-          <div class="w-7 h-7 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0">
-            ${c.name.charAt(0).toUpperCase()}
+  container.innerHTML = allContacts.map(c => {
+    const isAdm = c.isAdmin || c.role === 'ADMIN';
+    const badgeBg = isAdm 
+      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
+      : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    const avatarBg = isAdm
+      ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+      : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    const borderClass = isAdm
+      ? 'border-amber-500/40 bg-amber-500/10 shadow-lg shadow-amber-500/5'
+      : 'border-borderSlate bg-darkBg hover:border-accentBlue';
+
+    return `
+      <div class="p-3 border ${borderClass} rounded-xl space-y-2 transition">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2 truncate">
+            <div class="w-7 h-7 ${avatarBg} border rounded-full flex items-center justify-center font-bold text-[10px] shrink-0">
+              ${isAdm ? '<i class="fa-solid fa-user-shield text-xs"></i>' : c.name.charAt(0).toUpperCase()}
+            </div>
+            <div class="truncate">
+              <h4 class="text-xs font-bold text-white truncate flex items-center space-x-1">
+                <span>${c.name}</span>
+                ${isAdm ? '<span class="text-[9px] text-amber-400 font-bold ml-1">★ 1st Contact</span>' : ''}
+              </h4>
+              <p class="text-[10px] text-slate-400 truncate">${c.email}</p>
+            </div>
           </div>
-          <div class="truncate">
-            <h4 class="text-xs font-bold text-white truncate">${c.name}</h4>
-            <p class="text-[10px] text-slate-400 truncate">${c.email}</p>
-          </div>
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} uppercase shrink-0">${isAdm ? 'SYSTEM ADMIN' : 'SHOPPER'}</span>
         </div>
-        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase shrink-0">SHOPPER</span>
+        <div class="text-[10px] text-slate-400 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
+          <div class="flex justify-between"><span class="text-slate-500">${isAdm ? 'Channel:' : 'PayPal:'}</span> <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
+          <div class="truncate"><span class="text-slate-500">Note:</span> ${c.lastMessage}</div>
+        </div>
+        <button onclick="selectThread('${c.partnerId}'); switchMessagingSubTab('threads');" class="w-full ${isAdm ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40' : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30'} py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
+          <i class="fa-solid ${isAdm ? 'fa-headset' : 'fa-comment-dots'} text-[10px]"></i>
+          <span>${isAdm ? 'Contact Admin' : 'Chat Now'}</span>
+        </button>
       </div>
-      <div class="text-[10px] text-slate-400 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
-        <div class="flex justify-between"><span class="text-slate-500">PayPal:</span> <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
-        <div class="truncate"><span class="text-slate-500">Last msg:</span> ${c.lastMessage}</div>
-      </div>
-      <button onclick="selectThread('${c.partnerId}'); switchMessagingSubTab('threads');" class="w-full bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border border-accentBlue/30 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
-        <i class="fa-solid fa-comment-dots text-[10px]"></i>
-        <span>Chat Now</span>
-      </button>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 async function loadVendorThreads(isPolling = false) {
@@ -1490,8 +1555,16 @@ function hasImageAttachment(msg) {
 }
 
 function renderActiveChat() {
-  const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
+  let thread = vendorThreads.find(t => t.partnerId === activeThreadId);
   const container = document.getElementById('chatMessagesContainer');
+  if (!container) return;
+
+  if (!thread) {
+    const prof = profilesCache[activeThreadId] || getAdminProfile();
+    document.getElementById('activeChatTitle').textContent = `Direct Chat with ${prof.full_name || 'Admin'}`;
+    container.innerHTML = `<div class="m-auto text-center text-xs text-slate-500"><i class="fa-solid fa-headset text-2xl text-amber-400 mb-2 block"></i>Direct channel ready. Type a message below to contact ${prof.full_name || 'Admin'}!</div>`;
+    return;
+  }
   if (!thread) return;
   document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,6)}...)`;
   const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
