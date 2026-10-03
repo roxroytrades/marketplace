@@ -31,820 +31,497 @@ tailwind.config = {
 <style>
 body { font-family: 'Inter', sans-serif; }
 h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0F172A; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
 </style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
-
 <!-- Top Navigation Bar -->
 <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
-  <div class="flex items-center space-x-3">
-    <div
-      div
-      id="appHeaderLogo"
-      class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden relative"
-    >
-      <span id="headerLogoText">eh</span>
-      <img id="headerLogoImg" src="" alt="Echo Hub Logo" class="w-full h-full object-cover hidden absolute inset-0">
-    </div>
-    <span class="font-heading text-xl font-bold tracking-wide text-white">
-      echo<span class="text-blue-500">hub</span>
-      <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Portal</span>
-    </span>
-  </div>
-  <div class="flex items-center space-x-4">
-    <!-- Messaging Hub Shortcut Button with Unread Counter -->
-    <button
-      button
-      onclick="toggleMessagingHub()"
-      class="relative bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shadow-inner"
-    >
-      <i class="fa-solid fa-comments text-blue-400"></i>
-      <span class="hidden sm:inline">Messages</span>
-      <span id="unreadBadge" class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
-    </button>
-    <!-- Logged-in User Badge -->
-    <div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
-      <div
-        div
-        class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold"
-      >
-        <i class="fa-solid fa-user text-[10px]"></i>
-      </div>
-      <span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
-    </div>
-    <!-- Portals Navigation Dropdown -->
-    <div class="relative group">
-      <button
-        button
-        class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2"
-      >
-        <i class="fa-solid fa-link text-slate-400"></i>
-        <span>Quick Navigation</span>
-        <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
-      </button>
-      <div
-        div
-        class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50"
-      >
-        <a href="seller.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Vendor Portal</a>
-        <a href="admin.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Admin Dashboard</a>
-        <a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
-      </div>
-    </div>
-    <!-- Logout Button -->
-    <button
-      button
-      onclick="handleLogout()"
-      class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5"
-    >
-      <i class="fa-solid fa-right-from-bracket"></i>
-      <span>Sign Out</span>
-    </button>
-  </div>
-</header>
-
-<!-- Verification Banner Warning -->
-<div
-  div
-  id="verificationBanner"
-  class="bg-amber-500/10 border-b border-amber-500/20 px-6 py-3 text-center text-xs text-amber-300 hidden"
->
-  <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-  <span>Your account is currently <strong>pending verification</strong>. Interactive features (Inquire, Submit Review, Request Payout) will unlock once your National ID is reviewed and approved by an administrator.</span>
+<div class="flex items-center space-x-3">
+<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden">
+eh
+</div>
+<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Portal</span></span>
+</div>
+<div class="flex items-center space-x-4">
+<!-- Messaging Hub Shortcut Button with Unread Counter -->
+<button onclick="toggleMessagingHub()" class="relative bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shadow-inner">
+<i class="fa-solid fa-comments text-blue-400"></i>
+<span class="hidden sm:inline">Messages</span>
+<span id="unreadBadge" class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+</button>
+<!-- Logged-in User Badge -->
+<div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
+<div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
+<i class="fa-solid fa-user text-[10px]"></i>
+</div>
+<span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
 </div>
 
+<!-- Logout Button -->
+<button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
+<i class="fa-solid fa-right-from-bracket"></i>
+<span>Sign Out</span>
+</button>
+</div>
+</header>
+<!-- Verification Banner Warning -->
+<div id="verificationBanner" class="bg-amber-500/10 border-b border-amber-500/20 px-6 py-3 text-center text-xs text-amber-300 hidden">
+<i class="fa-solid fa-triangle-exclamation mr-2"></i> Your account is currently <strong>pending verification</strong>. Interactive features (Inquire, Submit Review, Request Payout) will unlock once your National ID is reviewed and approved by an administrator.
+</div>
 <!-- Main Workspace Container -->
 <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
-
-  <!-- Welcome Banner & Portal Switcher Header -->
-  <div
-    div
-    class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl"
-  >
-    <div class="space-y-1">
-      <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Shopper & Reviewer Hub</span>
-      <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Shopper!</h1>
-      <p class="text-xs text-slate-400">Discover vetted marketplace products, claim review tasks, invite peers & merchants, and manage commissions.</p>
+<!-- Welcome Banner & Portal Switcher Header -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
+<div class="space-y-1">
+<span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Shopper & Reviewer Hub</span>
+<h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Shopper!</h1>
+<p class="text-xs text-slate-400">Discover vetted marketplace products, claim review tasks, invite peers & merchants, and manage commissions.</p>
+</div>
+<div class="flex flex-wrap items-center gap-2">
+<button onclick="switchShopperTab('marketplace')" id="navMarketplaceBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+<i class="fa-solid fa-store"></i>
+<span>Product Catalog</span>
+</button>
+<button onclick="switchShopperTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+<i class="fa-solid fa-wallet"></i>
+<span>Commissions</span>
+</button>
+<button onclick="switchShopperTab('referrals')" id="navReferralsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+<i class="fa-solid fa-users-rectangle"></i>
+<span>Referral Hub</span>
+</button>
+</div>
+</div>
+<!-- ================= SECTION A: MARKETPLACE PRODUCT GRID ================= -->
+<div id="marketplaceSection" class="space-y-6">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div>
+<h2 class="text-lg font-bold text-white tracking-tight">Marketplace Review Opportunities</h2>
+<p class="text-xs text-slate-400">Browse verified listings, review product guidelines, and connect directly with vendors.</p>
+</div>
+<div class="relative w-full sm:w-72">
+<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+<input type="text" id="marketSearchInput" oninput="filterMarketplaceProducts()" placeholder="Search active listings..." class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+</div>
+</div>
+<!-- Product Cards Grid -->
+<div id="marketplaceGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+<i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+<p>Loading marketplace inventory...</p>
+</div>
+</div>
+</div>
+<!-- ================= SECTION B: SHOPPER COMMISSIONS DASHBOARD ================= -->
+<div id="commissionsSection" class="space-y-6 hidden">
+<div class="space-y-1">
+<h2 class="text-lg font-bold text-white tracking-tight">Shopper Commissions Dashboard</h2>
+<p class="text-xs text-slate-400">Track pending earnings, send payout requests to vendors, and review collected transfer history.</p>
+</div>
+<!-- Summary Balance Cards (3 Non-Redundant Cards) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <!-- Card 1: Pending Balance (Uncollected) -->
+  <div class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+    <div class="absolute -right-4 -bottom-4 opacity-10 text-amber-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+      <i class="fa-solid fa-hourglass-half"></i>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
-      <button
-        button
-        onclick="switchShopperTab('marketplace')"
-        id="navMarketplaceBtn"
-        class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20"
-      >
-        <i class="fa-solid fa-store"></i>
-        <span>Product Catalog</span>
-      </button>
-      <button
-        button
-        onclick="switchShopperTab('commissions')"
-        id="navCommissionsBtn"
-        class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2"
-      >
-        <i class="fa-solid fa-wallet"></i>
-        <span>Commissions</span>
-      </button>
-      <button
-        button
-        onclick="switchShopperTab('referrals')"
-        id="navReferralsBtn"
-        class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2"
-      >
-        <i class="fa-solid fa-users-rectangle"></i>
-        <span>Referral Hub</span>
-      </button>
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+        <i class="fa-solid fa-hourglass-half text-amber-400"></i>
+        <span>Pending Balance</span>
+      </span>
+      <span id="badgeShopperAvailable" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">$0.00 Liquid</span>
     </div>
-  </div>
-
-  <!-- ================= SECTION A: MARKETPLACE PRODUCT GRID ================= -->
-  <div id="marketplaceSection" class="space-y-6">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div>
-        <h2 class="text-lg font-bold text-white tracking-tight">Marketplace Review Opportunities</h2>
-        <p class="text-xs text-slate-400">Browse verified listings, review product guidelines, and connect directly with vendors.</p>
-      </div>
-      <div class="relative w-full sm:w-72">
-        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
-          <i class="fa-solid fa-search text-xs"></i>
-        </span>
-        <input
-          input
-          type="text"
-          id="marketSearchInput"
-          oninput="filterMarketplaceProducts()"
-          placeholder="Search active listings..."
-          class="w-full bg-cardBg border border-borderSlate rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition"
-        >
-      </div>
-    </div>
-    <!-- Product Cards Grid -->
-    <div id="marketplaceGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
-        <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-        <p>Loading marketplace inventory...</p>
-      </div>
+    <div>
+      <h3 id="statPendingCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400 mt-1">Uncollected review earnings across active queues</p>
     </div>
   </div>
 
-  <!-- ================= SECTION B: SHOPPER COMMISSIONS DASHBOARD ================= -->
-  <div id="commissionsSection" class="space-y-6 hidden">
-    <div class="space-y-1">
-      <h2 class="text-lg font-bold text-white tracking-tight">Shopper Commissions Dashboard</h2>
-      <p class="text-xs text-slate-400">Track pending earnings, send payout requests to vendors, and review collected transfer history.</p>
+  <!-- Card 2: Collected Balance -->
+  <div class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+    <div class="absolute -right-4 -bottom-4 opacity-10 text-emerald-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+      <i class="fa-solid fa-circle-check"></i>
     </div>
-    <!-- Summary Balance Cards (3 Non-Redundant Cards) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- Card 1: Pending Balance (Uncollected) -->
-      <div
-        div
-        class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group"
-      >
-        <div class="absolute -right-4 -bottom-4 opacity-10 text-amber-500 text-7xl pointer-events-none group-hover:scale-110 transition">
-          <i class="fa-solid fa-hourglass-half"></i>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
-            <i class="fa-solid fa-hourglass-half text-amber-400"></i>
-            <span>Pending Balance</span>
-          </span>
-          <span id="badgeShopperAvailable" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">$0.00 Liquid</span>
-        </div>
-        <div>
-          <h3 id="statPendingCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-          <p class="text-[10px] text-slate-400 mt-1">Unrequested and active pipeline review rewards</p>
-        </div>
-      </div>
-      <!-- Card 2: Collected Balance -->
-      <div
-        div
-        class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group"
-      >
-        <div
-          div
-          class="absolute -right-4 -bottom-4 opacity-10 text-emerald-500 text-7xl pointer-events-none group-hover:scale-110 transition"
-        >
-          <i class="fa-solid fa-wallet"></i>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
-            <i class="fa-solid fa-wallet text-emerald-400"></i>
-            <span>Collected Balance</span>
-          </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">Settled</span>
-        </div>
-        <div>
-          <h3 id="statCollectedCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-          <p class="text-[10px] text-slate-400 mt-1">Successfully transferred and logged into received history</p>
-        </div>
-      </div>
-      <!-- Card 3: Total Lifetime Earnings -->
-      <div
-        div
-        class="bg-cardBg border border-blue-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group"
-      >
-        <div class="absolute -right-4 -bottom-4 opacity-10 text-blue-500 text-7xl pointer-events-none group-hover:scale-110 transition">
-          <i class="fa-solid fa-award"></i>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center space-x-1.5">
-            <i class="fa-solid fa-chart-pie text-blue-400"></i>
-            <span>Total Lifetime Earnings</span>
-          </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">Grand Total</span>
-        </div>
-        <div>
-          <h3 id="statTotalCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-          <p class="text-[10px] text-slate-400 mt-1">Combined review payouts and referral bonus earnings</p>
-        </div>
-      </div>
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
+        <i class="fa-solid fa-wallet text-emerald-400"></i>
+        <span>Collected Balance</span>
+      </span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">Settled</span>
     </div>
-
-    <!-- Commissions Sub-Tabs Navigation -->
-    <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-      <button
-        button
-        onclick="switchCommissionTab('incoming')"
-        id="tabIncoming"
-        class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-2"
-      >
-        <span>📥 Incoming Offers</span>
-        <span id="badgeShopperIncoming" class="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/30 text-blue-200 border border-blue-400/30 font-mono">(0) $0.00</span>
-      </button>
-      <button
-        button
-        onclick="switchCommissionTab('mainAccount')"
-        id="tabMainAccount"
-        class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"
-      >
-        <span>🏦 Main Account</span>
-        <span id="badgeShopperMainAccount" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
-      </button>
-      <button
-        button
-        onclick="switchCommissionTab('outgoing')"
-        id="tabOutgoing"
-        class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"
-      >
-        <span>📤 Outgoing Requests</span>
-        <span id="badgeShopperOutgoing" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
-      </button>
-      <button
-        button
-        onclick="switchCommissionTab('workingQueue')"
-        id="tabWorkingQueue"
-        class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"
-      >
-        <span>⚡ Working Queue</span>
-        <span id="badgeShopperWorkingQueue" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
-      </button>
-      <button
-        button
-        onclick="switchCommissionTab('receivedHistory')"
-        id="tabReceivedHistory"
-        class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2"
-      >
-        <span>📜 Received History</span>
-        <span id="badgeShopperReceivedHistory" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
-      </button>
-    </div>
-
-    <!-- Tab Content Filters & Action Toolbar -->
-    <div
-      div
-      class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md"
-    >
-      <div class="flex items-center space-x-3 w-full sm:w-auto">
-        <div class="relative w-full sm:w-72">
-          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
-            <i class="fa-solid fa-search text-xs"></i>
-          </span>
-          <input
-            input
-            type="text"
-            id="commSearchInput"
-            oninput="renderCommissionTable()"
-            placeholder="Search feedback ID, vendor ID..."
-            class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition"
-          >
-        </div>
-        <select id="commTypeFilter" onchange="renderCommissionTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
-          <option value="ALL">All Commission Types</option>
-          <option value="REVIEWER">Reviewer Commission</option>
-          <option value="BUYER_INVITER">Buyer Inviter Commission</option>
-          <option value="SELLER_INVITER">Seller Inviter Commission</option>
-        </select>
-      </div>
-      <div id="tabActionToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-        <!-- Dynamic action buttons -->
-      </div>
-    </div>
-
-    <!-- Commissions Data Table -->
-    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div
-        div
-        class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center"
-      >
-        <span class="col-span-1 flex items-center space-x-2">
-          <input
-            input
-            type="checkbox"
-            id="selectAllComms"
-            onclick="toggleSelectAllComms(this)"
-            class="rounded border-borderSlate bg-darkBg text-blue-600"
-          >
-          <span>Select</span>
-        </span>
-        <span class="col-span-3">Feedback ID</span>
-        <span class="col-span-3">Vendor / Role</span>
-        <span class="col-span-2">Amount</span>
-        <span class="col-span-3 text-right">Status & Action</span>
-      </div>
-      <div id="commissionsTableBody" class="divide-y divide-borderSlate">
-        <!-- Populated dynamically -->
-      </div>
+    <div>
+      <h3 id="statCollectedCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400 mt-1">Successfully transferred and logged into received history</p>
     </div>
   </div>
 
-  <!-- ================= SECTION C: REFERRAL TRACKING & LINK GENERATION ================= -->
-  <div id="referralsSection" class="space-y-6 hidden">
-    <div class="space-y-1">
-      <h2 class="text-lg font-bold text-white tracking-tight">Shopper Referral Hub & Link Generator</h2>
-      <p class="text-xs text-slate-400">Invite other shoppers and merchants to Echo Hub using your unique referral links and earn bonus commissions.</p>
+  <!-- Card 3: Total Lifetime Earnings -->
+  <div class="bg-cardBg border border-blue-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+    <div class="absolute -right-4 -bottom-4 opacity-10 text-blue-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+      <i class="fa-solid fa-award"></i>
     </div>
-    <!-- Prominent Referral Code Banner -->
-    <div
-      div
-      class="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl"
-    >
-      <div class="flex items-center space-x-4">
-        <div
-          div
-          class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 rounded-xl flex items-center justify-center text-amber-400 text-xl font-bold"
-        >
-          <i class="fa-solid fa-ticket"></i>
-        </div>
-        <div>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Your Unique Inviter Referral Code</span>
-          <h3 id="shopperRefCodeDisplay" class="text-2xl font-extrabold text-white font-mono tracking-wide">REF-LOADING</h3>
-          <p class="text-[11px] text-slate-400">Give this code to friends to enter manually on registration.</p>
-        </div>
-      </div>
-      <button
-        button
-        onclick="copyShopperRefCode()"
-        class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2 whitespace-nowrap"
-      >
-        <i class="fa-solid fa-copy"></i>
-        <span>Copy Code</span>
-      </button>
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center space-x-1.5">
+        <i class="fa-solid fa-chart-pie text-blue-400"></i>
+        <span>Total Lifetime Earnings</span>
+      </span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">Grand Total</span>
     </div>
-    <!-- Link Generation Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Buyer Referral Link Box -->
-      <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
-        <div class="flex items-center space-x-3">
-          <div
-            div
-            class="w-10 h-10 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl flex items-center justify-center font-bold"
-          >
-            <i class="fa-solid fa-user-plus"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-white text-sm">Buyer Invitation Link</h3>
-            <p class="text-[11px] text-slate-400">Invite new shoppers & reviewers to Echo Hub.</p>
-          </div>
-        </div>
-        <div class="flex items-center space-x-2">
-          <input
-            input
-            type="text"
-            id="buyerRefLinkInput"
-            readonly
-            class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none"
-            value="Loading..."
-          >
-          <button
-            button
-            onclick="copyToClipboard('buyerRefLinkInput')"
-            class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap"
-          >
-            <i class="fa-solid fa-copy mr-1"></i> Copy
-          </button>
-          <button
-            button
-            onclick="shareWhatsApp('buyer')"
-            class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap flex items-center space-x-1"
-          >
-            <i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
-          </button>
-        </div>
-      </div>
-      <!-- Seller Referral Link Box -->
-      <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
-        <div class="flex items-center space-x-3">
-          <div
-            div
-            class="w-10 h-10 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl flex items-center justify-center font-bold"
-          >
-            <i class="fa-solid fa-store"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-white text-sm">Seller Invitation Link</h3>
-            <p class="text-[11px] text-slate-400">Invite merchants & sellers to list products.</p>
-          </div>
-        </div>
-        <div class="flex items-center space-x-2">
-          <input
-            input
-            type="text"
-            id="vendorRefLinkInput"
-            readonly
-            class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none"
-            value="Loading..."
-          >
-          <button
-            button
-            onclick="copyToClipboard('vendorRefLinkInput')"
-            class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap"
-          >
-            <i class="fa-solid fa-copy mr-1"></i> Copy
-          </button>
-          <button
-            button
-            onclick="shareWhatsApp('seller')"
-            class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap flex items-center space-x-1"
-          >
-            <i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
-          </button>
-        </div>
-      </div>
-    </div>
-    <!-- Referral Stats Summary -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-        <span class="text-xs text-slate-400 font-medium">Total Referral Clicks</span>
-        <h3 id="statRefClicks" class="text-2xl font-bold text-white">0</h3>
-        <p class="text-[10px] text-slate-500">Tracked visits via your unique ref ID.</p>
-      </div>
-      <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-        <span class="text-xs text-slate-400 font-medium">Successful Signups</span>
-        <h3 id="statRefSignups" class="text-2xl font-bold text-blue-400">0</h3>
-        <p class="text-[10px] text-slate-500">Accounts registered through your links.</p>
-      </div>
-      <div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
-        <span class="text-xs text-slate-400 font-medium">Referral Bonus Earned</span>
-        <h3 id="statRefEarnings" class="text-2xl font-bold text-emerald-400">$0.00</h3>
-        <p class="text-[10px] text-slate-500">Bonus commissions accumulated.</p>
-      </div>
-    </div>
-    <!-- Referral History Table -->
-    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div
-        div
-        class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center"
-      >
-        <span class="col-span-4">Referred User ID</span>
-        <span class="col-span-3">Account Type</span>
-        <span class="col-span-2">Bonus Amount</span>
-        <span class="col-span-3 text-right">Status</span>
-      </div>
-      <div id="referralTableBody" class="divide-y divide-borderSlate">
-        <div class="p-8 text-center text-xs text-slate-400 col-span-full">
-          <p>No referral signups recorded yet. Share your link to start earning!</p>
-        </div>
-      </div>
+    <div>
+      <h3 id="statTotalCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400 mt-1">Combined review payouts and referral bonus earnings</p>
     </div>
   </div>
+</div>
 
-  <!-- ================= PRODUCT DETAILS MODAL ================= -->
-  <div id="productDetailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-    <div
-      div
-      class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-4"
-    >
-      <div class="flex items-center justify-between border-b border-borderSlate pb-3">
-        <h3 class="font-bold text-white text-base flex items-center space-x-2">
-          <i class="fa-solid fa-circle-info text-blue-500"></i>
-          <span>Product Details & Campaign Rules</span>
-        </h3>
-        <button onclick="closeProductDetailsModal()" class="text-slate-400 hover:text-white transition">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-      <div id="productDetailsModalContent">
-        <!-- Dynamic Content -->
-      </div>
+<!-- Commissions Sub-Tabs Navigation -->
+<div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
+  <button onclick="switchCommissionTab('incoming')" id="tabIncoming" class="px-4 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-2">
+    <span>📥 Incoming Offers</span>
+    <span id="badgeShopperIncoming" class="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/30 text-blue-200 border border-blue-400/30 font-mono">(0) $0.00</span>
+  </button>
+  <button onclick="switchCommissionTab('mainAccount')" id="tabMainAccount" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
+    <span>🏦 Main Account</span>
+    <span id="badgeShopperMainAccount" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
+  </button>
+  <button onclick="switchCommissionTab('outgoing')" id="tabOutgoing" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
+    <span>📤 Outgoing Requests</span>
+    <span id="badgeShopperOutgoing" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
+  </button>
+  <button onclick="switchCommissionTab('workingQueue')" id="tabWorkingQueue" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
+    <span>⚡ Working Queue</span>
+    <span id="badgeShopperWorkingQueue" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
+  </button>
+  <button onclick="switchCommissionTab('receivedHistory')" id="tabReceivedHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2">
+    <span>📜 Received History</span>
+    <span id="badgeShopperReceivedHistory" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">(0) $0.00</span>
+  </button>
+</div>
+<!-- Tab Content Filters & Action Toolbar -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
+<div class="flex items-center space-x-3 w-full sm:w-auto">
+<div class="relative w-full sm:w-72">
+<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+<input type="text" id="commSearchInput" oninput="renderCommissionTable()" placeholder="Search feedback ID, vendor ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+</div>
+<select id="commTypeFilter" onchange="renderCommissionTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-accentBlue transition">
+<option value="ALL">All Commission Types</option>
+<option value="REVIEWER">Reviewer Commission</option>
+<option value="BUYER_INVITER">Buyer Inviter Commission</option>
+<option value="SELLER_INVITER">Seller Inviter Commission</option>
+</select>
+</div>
+<div id="tabActionToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+<!-- Dynamic action buttons -->
+</div>
+</div>
+<!-- Commissions Data Table -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+<span class="col-span-1 flex items-center space-x-2"><input type="checkbox" id="selectAllComms" onclick="toggleSelectAllComms(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"><span>Select</span></span>
+<span class="col-span-3">Feedback ID</span>
+<span class="col-span-3">Vendor / Role</span>
+<span class="col-span-2">Amount</span>
+<span class="col-span-3 text-right">Status & Action</span>
+</div>
+<div id="commissionsTableBody" class="divide-y divide-borderSlate">
+<!-- Populated dynamically -->
+</div>
+</div>
+</div>
+<!-- ================= SECTION C: REFERRAL TRACKING & LINK GENERATION ================= -->
+<div id="referralsSection" class="space-y-6 hidden">
+<div class="space-y-1">
+<h2 class="text-lg font-bold text-white tracking-tight">Shopper Referral Hub & Link Generator</h2>
+<p class="text-xs text-slate-400">Invite other shoppers and merchants to Echo Hub using your unique referral links and earn bonus commissions.</p>
+</div>
+
+<!-- Prominent Referral Code Banner -->
+<div class="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+  <div class="flex items-center space-x-4">
+    <div class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 rounded-xl flex items-center justify-center text-amber-400 text-xl font-bold">
+      <i class="fa-solid fa-ticket"></i>
+    </div>
+    <div>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Your Unique Inviter Referral Code</span>
+      <h3 id="shopperRefCodeDisplay" class="text-2xl font-extrabold text-white font-mono tracking-wide">REF-LOADING</h3>
+      <p class="text-[11px] text-slate-400">Give this code to friends to enter manually on registration.</p>
     </div>
   </div>
+  <button onclick="copyShopperRefCode()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2 whitespace-nowrap">
+    <i class="fa-solid fa-copy"></i>
+    <span>Copy Code</span>
+  </button>
+</div>
 
-  <!-- ================= VENDOR STOREFRONT SHOWCASE MODAL ================= -->
-  <div
-    div
-    id="vendorStorefrontModal"
-    class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4"
-  >
-    <div
-      div
-      class="bg-cardBg border border-borderSlate rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-4"
-    >
-      <div class="flex items-center justify-between border-b border-borderSlate pb-3">
-        <h3 class="font-bold text-white text-base flex items-center space-x-2">
-          <i class="fa-solid fa-store text-amber-400"></i>
-          <span>Merchant Storefront Directory</span>
-        </h3>
-        <button onclick="closeVendorStorefrontModal()" class="text-slate-400 hover:text-white transition">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-      <div id="vendorStorefrontModalContent">
-        <!-- Dynamic Content -->
-      </div>
-    </div>
-  </div>
+<!-- Link Generation Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Buyer Referral Link Box -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl flex items-center justify-center font-bold">
+<i class="fa-solid fa-user-plus"></i>
+</div>
+<div>
+<h3 class="font-bold text-white text-sm">Buyer Invitation Link</h3>
+<p class="text-[11px] text-slate-400">Invite new shoppers & reviewers to Echo Hub.</p>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<input type="text" id="buyerRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
+<button onclick="copyToClipboard('buyerRefLinkInput')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+<i class="fa-solid fa-copy mr-1"></i> Copy
+</button>
+<button onclick="shareWhatsApp('buyer')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap flex items-center space-x-1">
+<i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
+</button>
+</div>
+</div>
+<!-- Seller Referral Link Box -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl flex items-center justify-center font-bold">
+<i class="fa-solid fa-store"></i>
+</div>
+<div>
+<h3 class="font-bold text-white text-sm">Seller Invitation Link</h3>
+<p class="text-[11px] text-slate-400">Invite merchants & sellers to list products.</p>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<input type="text" id="vendorRefLinkInput" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
+<button onclick="copyToClipboard('vendorRefLinkInput')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+<i class="fa-solid fa-copy mr-1"></i> Copy
+</button>
+<button onclick="shareWhatsApp('seller')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap flex items-center space-x-1">
+<i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Referral Stats Summary -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+<span class="text-xs text-slate-400 font-medium">Total Referral Clicks</span>
+<h3 id="statRefClicks" class="text-2xl font-bold text-white">0</h3>
+<p class="text-[10px] text-slate-500">Tracked visits via your unique ref ID.</p>
+</div>
+<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+<span class="text-xs text-slate-400 font-medium">Successful Signups</span>
+<h3 id="statRefSignups" class="text-2xl font-bold text-blue-400">0</h3>
+<p class="text-[10px] text-slate-500">Accounts registered through your links.</p>
+</div>
+<div class="bg-cardBg border border-borderSlate p-5 rounded-2xl space-y-1 shadow-lg">
+<span class="text-xs text-slate-400 font-medium">Referral Bonus Earned</span>
+<h3 id="statRefEarnings" class="text-2xl font-bold text-emerald-400">$0.00</h3>
+<p class="text-[10px] text-slate-500">Bonus commissions accumulated.</p>
+</div>
+</div>
+<!-- Referral History Table -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+<span class="col-span-4">Referred User ID</span>
+<span class="col-span-3">Account Type</span>
+<span class="col-span-2">Bonus Amount</span>
+<span class="col-span-3 text-right">Status</span>
+</div>
+<div id="referralTableBody" class="divide-y divide-borderSlate">
+<div class="p-8 text-center text-xs text-slate-400 col-span-full">
+<p>No referral signups recorded yet. Share your link to start earning!</p>
+</div>
+</div>
+</div>
+</div>
 
-</main>
-
-<!-- ================= MODALS ================= -->
-<!-- View Receipt Modal -->
-<div id="receiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
-    <div class="flex items-center justify-between border-b border-borderSlate pb-4">
-      <h3 class="text-lg font-bold text-white">Payment Receipt Proof</h3>
-      <button
-        button
-        onclick="document.getElementById('receiptModal').classList.add('hidden')"
-        class="text-slate-400 hover:text-white transition"
-      >
+<!-- ================= PRODUCT DETAILS MODAL ================= -->
+<div id="productDetailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <h3 class="font-bold text-white text-base flex items-center space-x-2">
+        <i class="fa-solid fa-circle-info text-blue-500"></i>
+        <span>Product Details & Campaign Rules</span>
+      </h3>
+      <button onclick="closeProductDetailsModal()" class="text-slate-400 hover:text-white transition">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
     </div>
-    <div id="receiptModalContent" class="space-y-4">
-      <!-- Populated dynamically -->
+    <div id="productDetailsModalContent">
+      <!-- Dynamic Content -->
     </div>
   </div>
 </div>
 
+<!-- ================= VENDOR STOREFRONT SHOWCASE MODAL ================= -->
+<div id="vendorStorefrontModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <h3 class="font-bold text-white text-base flex items-center space-x-2">
+        <i class="fa-solid fa-store text-amber-400"></i>
+        <span>Merchant Storefront Directory</span>
+      </h3>
+      <button onclick="closeVendorStorefrontModal()" class="text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <div id="vendorStorefrontModalContent">
+      <!-- Dynamic Content -->
+    </div>
+  </div>
+</div>
+
+</main>
+<!-- ================= MODALS ================= -->
+<!-- View Receipt Modal -->
+<div id="receiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+<div class="flex items-center justify-between border-b border-borderSlate pb-4">
+<h3 class="text-lg font-bold text-white">Payment Receipt Proof</h3>
+<button onclick="document.getElementById('receiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+</div>
+<div id="receiptModalContent" class="space-y-4">
+<!-- Populated dynamically -->
+</div>
+</div>
+</div>
 <!-- ================= WHATSAPP-STYLE TWO-PANEL MESSAGING HUB MODAL ================= -->
-<div
-  div
-  id="messagingHubModal"
-  class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6"
->
-  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full h-[85vh] flex overflow-hidden shadow-2xl">
-    <!-- Left Sidebar: Thread List -->
-    <div class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden">
-      <div class="p-3 border-b border-borderSlate flex items-center justify-between">
-        <h3 class="font-bold text-white text-sm flex items-center space-x-2">
-          <i class="fa-solid fa-comments text-blue-500"></i>
-          <span>Messaging Hub</span>
-        </h3>
-        <button onclick="toggleMessagingHub()" class="sm:hidden text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-      <!-- Sub-tab switcher: Active Chats vs Contact List -->
-      <div class="p-2 border-b border-borderSlate bg-darkBg/60">
-        <div class="flex bg-darkBg border border-borderSlate p-1 rounded-xl">
-          <button
-            button
-            type="button"
-            id="shopperSubTabChatsBtn"
-            onclick="switchShopperMessagingSubTab('chats')"
-            class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow"
-          >
-            <i class="fa-solid fa-comments mr-1"></i> Chats
-          </button>
-          <button
-            button
-            type="button"
-            id="shopperSubTabContactsBtn"
-            onclick="switchShopperMessagingSubTab('contacts')"
-            class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white"
-          >
-            <i class="fa-solid fa-address-book mr-1"></i> Contacts
-          </button>
-        </div>
-      </div>
-      <!-- Active Chats View -->
-      <div id="shopperChatsContainer" class="flex-1 flex flex-col overflow-hidden">
-        <div class="p-3 border-b border-borderSlate">
-          <input
-            input
-            type="text"
-            id="threadSearchInput"
-            oninput="filterThreads()"
-            placeholder="Search conversations..."
-            class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition"
-          >
-        </div>
-        <div id="threadsListContainer" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
-          <div class="p-6 text-center text-xs text-slate-500">Loading conversations...</div>
-        </div>
-      </div>
-      <!-- Vendor Contact List View -->
-      <div id="shopperContactsContainer" class="flex-1 flex flex-col overflow-hidden hidden">
-        <div class="p-3 border-b border-borderSlate">
-          <input
-            input
-            type="text"
-            id="shopperContactSearchInput"
-            oninput="renderShopperContactsList()"
-            placeholder="Search contacts by name, email..."
-            class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition"
-          >
-        </div>
-        <div id="contactsListContainer" class="flex-1 overflow-y-auto p-2 space-y-2">
-          <div class="p-6 text-center text-xs text-slate-500">Loading contacts...</div>
-        </div>
-      </div>
-    </div>
-    <!-- Right Panel: Active Chat Stream -->
-    <div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg relative overflow-hidden">
-      <div id="activeChatHeader" class="p-4 border-b border-borderSlate flex items-center justify-between bg-slate-900/30">
-        <div class="flex items-center space-x-3">
-          <div
-            div
-            class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs"
-          >
-            <i class="fa-solid fa-user"></i>
-          </div>
-          <div>
-            <h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
-            <span id="activeChatSubtitle" class="text-[10px] text-slate-400 flex items-center space-x-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-              <span id="activeChatRoleTag">Vendor / Shopper Chat</span>
-            </span>
-          </div>
-        </div>
-        <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-      <!-- Message Stream Area -->
-      <div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden">
-        <div class="m-auto text-center text-xs text-slate-500 space-y-1">
-          <i class="fa-regular fa-comments text-2xl text-slate-600"></i>
-          <p>Choose a thread from the left to start messaging.</p>
-        </div>
-      </div>
-      <!-- Interactive Attachment Options Drawer -->
-      <div
-        div
-        id="attachmentOptionsDrawer"
-        class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-72 space-y-2"
-      >
-        <div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
-          <span>Attach Options</span>
-          <button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-        <button
-          button
-          onclick="openReviewUrlInput()"
-          class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5"
-        >
-          <div
-            div
-            class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"
-            i
-            class="fa-solid fa-link"
-            i
-            div
-          >
-          <div>
-            <p class="font-semibold">Submit Review URL</p>
-            <p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
-          </div>
-        </button>
-        <button
-          button
-          onclick="triggerScreenshotUploader()"
-          class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5"
-        >
-          <div
-            div
-            class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"
-            i
-            class="fa-solid fa-camera"
-            i
-            div
-          >
-          <div>
-            <p class="font-semibold">Attach Screenshot Proof</p>
-            <p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
-          </div>
-        </button>
-        <input
-          input
-          type="file"
-          id="inlineChatFileInput"
-          accept="image/*"
-          class="hidden"
-          onchange="handleChatImageUpload(event)"
-        >
-      </div>
-      <!-- Inline Review URL Input Prompt Modal / Container -->
-      <div
-        div
-        id="reviewUrlInputBoxContainer"
-        class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center space-x-2"
-      >
-        <input
-          input
-          type="text"
-          id="reviewUrlField"
-          placeholder="Paste Amazon/Store review URL here..."
-          class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue"
-        >
-        <button
-          button
-          onclick="submitReviewUrlMessage()"
-          class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold"
-          Send
-          URL
-          button
-        >
-        <button
-          button
-          onclick="document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden')"
-          class="text-slate-400 hover:text-white px-2"
-          i
-          class="fa-solid fa-xmark"
-          i
-          button
-        >
-      </div>
-      <!-- Thumbnail Preview Container -->
-      <div
-        div
-        id="chatThumbnailPreviewContainer"
-        class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center justify-between"
-      >
-        <div class="flex items-center space-x-3">
-          <img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate">
-          <span class="text-xs text-slate-300 font-medium">Screenshot attached ready to send</span>
-        </div>
-        <button
-          button
-          onclick="clearChatThumbnail()"
-          class="text-rose-400 hover:text-rose-300 text-xs font-semibold"
-        >
-          <i class="fa-solid fa-trash mr-1"></i> Remove
-        </button>
-      </div>
-      <!-- Message Input Footer with Paperclip Attachment Button -->
-      <div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40 hidden">
-        <form onsubmit="handleSendMessage(event)" class="flex items-center space-x-2 relative">
-          <button
-            button
-            type="button"
-            onclick="toggleAttachmentDrawer()"
-            class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner"
-            title="Attach options"
-          >
-            <i class="fa-solid fa-paperclip text-blue-400"></i>
-          </button>
-          <input
-            input
-            type="text"
-            id="messageInputBox"
-            placeholder="Type your message or attach review proof..."
-            autocomplete="off"
-            class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition"
-          >
-          <button
-            button
-            type="submit"
-            class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1"
-          >
-            <span class="hidden sm:inline">Send</span>
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </form>
-      </div>
-    </div>
+<div id="messagingHubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6">
+<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full h-[85vh] flex overflow-hidden shadow-2xl">
+<!-- Left Sidebar: Thread List -->
+<div class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden">
+<div class="p-3 border-b border-borderSlate flex items-center justify-between">
+<h3 class="font-bold text-white text-sm flex items-center space-x-2">
+<i class="fa-solid fa-comments text-blue-500"></i>
+<span>Messaging Hub</span>
+</h3>
+<button onclick="toggleMessagingHub()" class="sm:hidden text-slate-400 hover:text-white">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+
+<!-- Sub-tab switcher: Active Chats vs Contact List -->
+<div class="p-2 border-b border-borderSlate bg-darkBg/60">
+  <div class="flex bg-darkBg border border-borderSlate p-1 rounded-xl">
+    <button type="button" id="shopperSubTabChatsBtn" onclick="switchShopperMessagingSubTab('chats')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow">
+      <i class="fa-solid fa-comments mr-1"></i> Chats
+    </button>
+    <button type="button" id="shopperSubTabContactsBtn" onclick="switchShopperMessagingSubTab('contacts')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white">
+      <i class="fa-solid fa-address-book mr-1"></i> Contacts
+    </button>
   </div>
 </div>
 
+<!-- Active Chats View -->
+<div id="shopperChatsContainer" class="flex-1 flex flex-col overflow-hidden">
+  <div class="p-3 border-b border-borderSlate">
+  <input type="text" id="threadSearchInput" oninput="filterThreads()" placeholder="Search conversations..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+  </div>
+  <div id="threadsListContainer" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
+  <div class="p-6 text-center text-xs text-slate-500">Loading conversations...</div>
+  </div>
+</div>
+
+<!-- Vendor Contact List View -->
+<div id="shopperContactsContainer" class="flex-1 flex flex-col overflow-hidden hidden">
+  <div class="p-3 border-b border-borderSlate">
+  <input type="text" id="shopperContactSearchInput" oninput="renderShopperContactsList()" placeholder="Search contacts by name, email..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+  </div>
+  <div id="contactsListContainer" class="flex-1 overflow-y-auto p-2 space-y-2">
+  <div class="p-6 text-center text-xs text-slate-500">Loading contacts...</div>
+  </div>
+</div>
+</div>
+<!-- Right Panel: Active Chat Stream -->
+<div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg relative overflow-hidden">
+<div id="activeChatHeader" class="p-4 border-b border-borderSlate flex items-center justify-between bg-slate-900/30">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs">
+<i class="fa-solid fa-user"></i>
+</div>
+<div>
+<!-- Displaying recipient name/status prominently in the chat header -->
+<h4 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h4>
+<span id="activeChatSubtitle" class="text-[10px] text-slate-400 flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+<span id="activeChatRoleTag">Vendor / Shopper Chat</span>
+</span>
+</div>
+</div>
+<button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
+<!-- Message Stream Area -->
+<div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden">
+<div class="m-auto text-center text-xs text-slate-500 space-y-1">
+<i class="fa-regular fa-comments text-2xl text-slate-600"></i>
+<p>Choose a thread from the left to start messaging.</p>
+</div>
+</div>
+<!-- Interactive Attachment Options Drawer (Initially Hidden) -->
+<div id="attachmentOptionsDrawer" class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-72 space-y-2">
+<div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
+<span>Attach Options</span>
+<button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+<div class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
+<div>
+<p class="font-semibold">Submit Review URL</p>
+<p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
+</div>
+</button>
+<button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+<div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
+<div>
+<p class="font-semibold">Attach Screenshot Proof</p>
+<p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
+</div>
+</button>
+<!-- Hidden file uploader container -->
+<input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
+</div>
+<!-- Inline Review URL Input Prompt Modal / Container -->
+<div id="reviewUrlInputBoxContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center space-x-2">
+<input type="text" id="reviewUrlField" placeholder="Paste Amazon/Store review URL here..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue">
+<button onclick="submitReviewUrlMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold">Send URL</button>
+<button onclick="document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<!-- Thumbnail Preview Container -->
+<div id="chatThumbnailPreviewContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate">
+<span class="text-xs text-slate-300 font-medium">Screenshot attached ready to send</span>
+</div>
+<button onclick="clearChatThumbnail()" class="text-rose-400 hover:text-rose-300 text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i> Remove</button>
+</div>
+<!-- Message Input Footer with Paperclip Attachment Button -->
+<div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40 hidden">
+<form onsubmit="handleSendMessage(event)" class="flex items-center space-x-2 relative">
+<!-- Paperclip Attachment Button -->
+<button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner" title="Attach options">
+<i class="fa-solid fa-paperclip text-blue-400"></i>
+</button>
+<input type="text" id="messageInputBox" placeholder="Type your message or attach review proof..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+<button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1">
+<span class="hidden sm:inline">Send</span>
+<i class="fa-solid fa-paper-plane"></i>
+</button>
+</form>
+</div>
+</div>
+</div>
+</div>
 <!-- Footer -->
 <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-  <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Referral Engine.</p>
+<p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Referral Engine.</p>
 </footer>
-
 <!-- Supabase Integration & Fault-Tolerant Workspace Script -->
 <script>
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 let currentUser = null;
 let currentProfile = null;
 let marketplaceProducts = [];
@@ -857,6 +534,7 @@ let pollingInterval = null;
 let messagingThreads = [];
 let readThreadIds = new Set();
 let lastReadTimeMap = {};
+let activeThreadId = null;
 
 function loadLocalReadState() {
   const userId = currentUser?.id || 'shopper';
@@ -880,24 +558,24 @@ function saveLocalReadState(recipientId) {
     localStorage.setItem('echohub_read_times_' + userId, JSON.stringify(lastReadTimeMap));
   } catch(e) {}
 }
-
 let activeRecipientId = null;
 let activeProductId = null;
 let messageSubscription = null;
 let attachedImageBase64 = null;
-let profilesCache = {};
+let profilesCache = {}; // Cache for user profiles (names & roles)
 
-/* Initialize workspace & header user metadata display */
+/* Initialize workspace & header user metadata display with robust real-time session checking */
 async function initShopperWorkspace() {
   try {
-    await loadAppBranding();
+    /* Step A: Check for active Supabase auth session */
     const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
     if (sessionError || !session) {
       window.location.href = 'login.html';
       return;
     }
     currentUser = session.user;
-    
+
+    /* Step B: Fetch profile and check account role */
     const { data: profile, error: profileError } = await _supabase
       .from('profiles')
       .select('role, verification_status, full_name, referral_code')
@@ -907,14 +585,17 @@ async function initShopperWorkspace() {
     if (profileError) {
       console.warn("Profile fetch warning during init:", profileError.message);
     }
-    
+
     const userRole = profile?.role ? profile.role.toLowerCase() : 'buyer';
+
+    /* Step C: Role Isolation Guard (Block Vendors/Sellers from Shopper Portal) */
     if (userRole === 'seller' || userRole === 'vendor') {
       alert("Access Denied: Vendor accounts are not permitted in the Shopper Portal.");
       window.location.href = 'seller.html';
       return;
     }
 
+    /* Step D: Initialize Authorized Shopper UI Header */
     const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
     const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
     if (document.getElementById('headerUserName')) {
@@ -924,18 +605,18 @@ async function initShopperWorkspace() {
       document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
     }
 
+    /* Step E: Setup Referral Links */
     const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
     const refCode = profile?.referral_code || currentUser.id;
     if (document.getElementById('buyerRefLinkInput')) {
-      if (document.getElementById('shopperRefCodeDisplay')) {
-        document.getElementById('shopperRefCodeDisplay').textContent = profile?.referral_code || currentUser.id;
-      }
-      document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${refCode}`;
+      if (document.getElementById('shopperRefCodeDisplay')) document.getElementById('shopperRefCodeDisplay').textContent = profile.referral_code || currentUser.id;
+        document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${refCode}`;
     }
     if (document.getElementById('vendorRefLinkInput')) {
       document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${refCode}`;
     }
 
+    /* Step F: Load Shopper Workspace Data */
     await fetchAndUpdateProfileState();
     await preloadProfiles();
     await loadMarketplaceProducts();
@@ -943,8 +624,10 @@ async function initShopperWorkspace() {
     await loadShopperReferralData();
     await loadMessagingThreads();
 
+    /* Step G: Start Live Polling Loop (10-second sync) */
     if (pollingInterval) clearInterval(pollingInterval);
     pollingInterval = setInterval(pollShopperData, 10000);
+
   } catch (err) {
     console.error("Shopper workspace initialization error:", err.message);
     window.location.href = 'login.html';
@@ -960,22 +643,15 @@ async function fetchAndUpdateProfileState() {
       .select('role, verification_status, full_name, referral_code')
       .eq('id', currentUser.id)
       .maybeSingle();
-
     if (error) throw error;
     if (profile) {
       if (profile.role) userRole = profile.role;
       if (profile.verification_status) verificationStatus = profile.verification_status;
       if (profile.referral_code) {
         const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-        if (document.getElementById('shopperRefCodeDisplay')) {
-          document.getElementById('shopperRefCodeDisplay').textContent = profile.referral_code || currentUser.id;
-        }
-        if (document.getElementById('buyerRefLinkInput')) {
-          document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${profile.referral_code}`;
-        }
-        if (document.getElementById('vendorRefLinkInput')) {
-          document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${profile.referral_code}`;
-        }
+        if (document.getElementById('shopperRefCodeDisplay')) document.getElementById('shopperRefCodeDisplay').textContent = profile.referral_code || currentUser.id;
+        document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${profile.referral_code}`;
+        document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${profile.referral_code}`;
       }
     }
   } catch (err) {
@@ -987,13 +663,12 @@ async function fetchAndUpdateProfileState() {
 
 async function preloadProfiles() {
   try {
-    const { data, error } = await _supabase.from('profiles').select('id, full_name, email, role, paypal_email');
+    const { data, error } = await _supabase.from('profiles').select('id, full_name, email, role');
     if (!error && data) {
       data.forEach(p => {
         profilesCache[p.id] = {
           full_name: p.full_name || p.email || `Merchant #${p.id.substring(0,6)}`,
           email: p.email || '',
-          paypal_email: p.paypal_email || '',
           role: p.role || 'user'
         };
       });
@@ -1036,15 +711,17 @@ function switchShopperTab(tab) {
   const marketBtn = document.getElementById('navMarketplaceBtn');
   const commBtn = document.getElementById('navCommissionsBtn');
   const refBtn = document.getElementById('navReferralsBtn');
-
+  
+  /* Hide all sections */
   marketSec.classList.add('hidden');
   commSec.classList.add('hidden');
   refSec.classList.add('hidden');
-
+  
+  /* Reset buttons */
   marketBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
   commBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
   refBtn.className = 'bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2';
-
+  
   if (tab === 'marketplace') {
     marketSec.classList.remove('hidden');
     marketBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
@@ -1056,6 +733,7 @@ function switchShopperTab(tab) {
     refBtn.className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
   }
 }
+
 
 function copyShopperRefCode() {
   const code = document.getElementById('shopperRefCodeDisplay').textContent;
@@ -1069,8 +747,7 @@ function shareWhatsApp(targetRole) {
   const code = document.getElementById('shopperRefCodeDisplay').textContent;
   const linkInputId = targetRole === 'buyer' ? 'buyerRefLinkInput' : 'vendorRefLinkInput';
   const url = document.getElementById(linkInputId).value;
-  const msg = encodeURIComponent(`Join me on Echo Hub! Use my Referral Code: ${code}
-Register here: ${url}`);
+  const msg = encodeURIComponent(`Join me on Echo Hub! Use my Referral Code: ${code}\nRegister here: ${url}`);
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
@@ -1096,6 +773,7 @@ async function loadShopperReferralData(isPolling = false) {
     document.getElementById('statRefClicks').textContent = refs.length * 3 + 10;
     document.getElementById('statRefSignups').textContent = refs.length;
     document.getElementById('statRefEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
+    
     const tableBody = document.getElementById('referralTableBody');
     if (refs.length === 0) {
       tableBody.innerHTML = `
@@ -1108,28 +786,9 @@ async function loadShopperReferralData(isPolling = false) {
     tableBody.innerHTML = refs.map(r => `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
         <div class="col-span-4 font-mono text-slate-400 truncate">${r.feedback_id || 'Ref User'}</div>
-        <div
-          div
-          class="col-span-3"
-          span
-          class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]"
-          r
-          role
-          span
-          div
-        >
+        <div class="col-span-3"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px]">${r.role_type}</span></div>
         <div class="col-span-2 font-bold text-emerald-400">$${Number(r.amount || 0).toFixed(2)}</div>
-        <div
-          div
-          class="col-span-3 text-right"
-          span
-          class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]"
-          r
-          status
-          ACTIVE
-          span
-          div
-        >
+        <div class="col-span-3 text-right"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-[10px]">${r.status || 'ACTIVE'}</span></div>
       </div>
     `).join('');
   } catch (err) {
@@ -1137,7 +796,7 @@ async function loadShopperReferralData(isPolling = false) {
   }
 }
 
-/* Marketplace Catalog & Inquiry */
+/* ================= MARKETPLACE CATALOG & INQUIRY ================= */
 async function loadMarketplaceProducts(isPolling = false) {
   const grid = document.getElementById('marketplaceGrid');
   try {
@@ -1149,7 +808,6 @@ async function loadMarketplaceProducts(isPolling = false) {
       .select('*')
       .eq('status', 'ACTIVE')
       .order('created_at', { ascending: false });
-
     if (error) throw error;
     marketplaceProducts = data || [];
     filterMarketplaceProducts();
@@ -1171,11 +829,10 @@ function filterMarketplaceProducts() {
     const vendorId = item.seller_id || item.vendor_id;
     const vendorProfile = profilesCache[vendorId];
     const vendorName = vendorProfile ? (vendorProfile.full_name || vendorProfile.email || '') : '';
-    return (item.title || '').toLowerCase().includes(search) ||
+    return (item.title || '').toLowerCase().includes(search) || 
            (item.description || '').toLowerCase().includes(search) ||
            vendorName.toLowerCase().includes(search);
   });
-
   if (filtered.length === 0) {
     grid.innerHTML = `
       <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
@@ -1184,64 +841,58 @@ function filterMarketplaceProducts() {
     `;
     return;
   }
-
   const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
   grid.innerHTML = filtered.map(item => {
     const vendorId = item.seller_id || item.vendor_id;
     const vendorProfile = profilesCache[vendorId];
     const vendorName = vendorProfile ? (vendorProfile.full_name || vendorProfile.email || 'Verified Merchant') : 'Verified Merchant';
+    
     const retailPrice = Number(item.price || 0).toFixed(2);
     const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
+
     return `
-      <div
-        div
-        class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-accentBlue/50 transition duration-200"
-      >
+      <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-accentBlue/50 transition duration-200">
         <div>
-          <div
-            div
-            class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 relative overflow-hidden"
-          >
-            <img src="${item.image_url || item.image || 'https://via.placeholder.com/300'}" alt="${item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300">
-            <div
-              div
-              class="absolute top-3 left-3 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 flex items-center space-x-1 shadow-lg"
-            >
+          <!-- Product Image & Floating Badges -->
+          <div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 relative overflow-hidden">
+            <img src="${item.image_url || 'https://via.placeholder.com/300'}" alt="${item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300">
+            
+            <!-- Review Commission Badge (Top Left) -->
+            <div class="absolute top-3 left-3 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 flex items-center space-x-1 shadow-lg">
               <i class="fa-solid fa-gift text-emerald-400"></i>
               <span>🎁 $${rewardAmount} Commission</span>
             </div>
-            <div
-              div
-              class="absolute top-3 right-3 bg-darkBg/80 backdrop-blur-md border border-borderSlate px-2.5 py-1 rounded-full text-xs font-bold text-slate-200 shadow-lg"
-            >
+
+            <!-- Retail Price Badge (Top Right) -->
+            <div class="absolute top-3 right-3 bg-darkBg/80 backdrop-blur-md border border-borderSlate px-2.5 py-1 rounded-full text-xs font-bold text-slate-200 shadow-lg">
               Retail: $${retailPrice}
             </div>
           </div>
+
+          <!-- Product Details Body -->
           <div class="p-5 space-y-3">
+            <!-- Merchant Line -->
             <div class="flex items-center justify-between text-xs text-slate-400 border-b border-borderSlate/60 pb-2">
               <span class="flex items-center space-x-1.5 truncate text-slate-300 font-medium">
                 <i class="fa-solid fa-store text-amber-400"></i>
                 <span class="truncate">Sold by: <strong class="text-white">${vendorName}</strong></span>
               </span>
-              <button
-                button
-                onclick="openVendorStorefrontModal('${vendorId}')"
-                class="text-[10px] bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full font-semibold shrink-0 transition flex items-center space-x-1"
-              >
+              <button onclick="openVendorStorefrontModal('${vendorId}')" class="text-[10px] bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full font-semibold shrink-0 transition flex items-center space-x-1">
                 <i class="fa-solid fa-shop text-[9px]"></i>
                 <span>Store</span>
               </button>
             </div>
+
+            <!-- Title & Description -->
             <div>
               <h3 class="font-bold text-white text-base line-clamp-1">${item.title}</h3>
               <p class="text-xs text-slate-400 line-clamp-2 mt-1">${item.description || 'No description provided.'}</p>
             </div>
+
+            <!-- Commission & Price Summary Box -->
             <div class="bg-darkBg/70 border border-borderSlate rounded-xl p-3 flex items-center justify-between text-xs">
               <div class="flex items-center space-x-2">
-                <div
-                  div
-                  class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm"
-                >
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">
                   <i class="fa-solid fa-sack-dollar"></i>
                 </div>
                 <div>
@@ -1254,24 +905,17 @@ function filterMarketplaceProducts() {
                 <p class="text-xs font-semibold text-slate-300">$${retailPrice}</p>
               </div>
             </div>
+
           </div>
         </div>
+
+        <!-- Action Buttons -->
         <div class="p-5 pt-0 flex gap-2">
-          <button
-            button
-            onclick="openProductDetailsModal('${item.id}')"
-            class="flex-1 bg-darkBg hover:bg-slate-800 text-slate-300 border border-borderSlate text-xs font-semibold py-3 rounded-xl transition flex items-center justify-center space-x-1.5"
-          >
+          <button onclick="openProductDetailsModal('${item.id}')" class="flex-1 bg-darkBg hover:bg-slate-800 text-slate-300 border border-borderSlate text-xs font-semibold py-3 rounded-xl transition flex items-center justify-center space-x-1.5">
             <i class="fa-solid fa-eye text-blue-400"></i>
             <span>View Details</span>
           </button>
-          <button
-            button
-            onclick="handleInquireClick('${item.id}', '${vendorId}')"
-            isLocked
-            disabled
-            class="flex-1 bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-1.5"
-          >
+          <button onclick="handleInquireClick('${item.id}','${vendorId}')" ${isLocked ? 'disabled' : ''} class="flex-1 bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-1.5">
             <i class="fa-solid fa-comments"></i>
             <span>${isLocked ? 'Locked' : 'Inquire'}</span>
           </button>
@@ -1299,8 +943,7 @@ async function handleInquireClick(productId, vendorId) {
       .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${vendorId}),and(sender_id.eq.${vendorId},receiver_id.eq.${currentUser.id})`)
       .eq('product_id', productId)
       .limit(1);
-
-    let threadId = null;
+    let threadId = '';
     if (existing && existing.length > 0) {
       threadId = existing[0].id;
     } else {
@@ -1308,11 +951,11 @@ async function handleInquireClick(productId, vendorId) {
         .from('messages')
         .insert([{
           sender_id: currentUser.id,
-          receiver_id: vendorId,
           buyer_id: currentUser.id,
+          receiver_id: vendorId,
           vendor_id: vendorId,
           product_id: productId,
-          content: `Hi! I am interested in reviewing "${prodTitle}" (Retail: $${prodPrice}, Commission: $${prodReward}).`,
+          text: `Hello! I would like to inquire about reviewing "${prodTitle}" (Retail: $${prodPrice} | Review Commission: $${prodReward} Commission).`,
           image_url: prodImg
         }])
         .select()
@@ -1328,7 +971,7 @@ async function handleInquireClick(productId, vendorId) {
   }
 }
 
-/* Commissions Dashboard (Shopper) */
+/* ================= COMMISSIONS DASHBOARD (SHOPPER) ================= */
 async function loadCommissionsData(isPolling = false) {
   try {
     const { data, error } = await _supabase
@@ -1366,6 +1009,7 @@ function updateCommissionStats() {
   let pendingSum = 0;
   let collectedSum = 0;
   let availableSum = 0;
+
   let incomingCount = 0, incomingAmt = 0;
   let mainCount = 0, mainAmt = 0;
   let outgoingCount = 0, outgoingAmt = 0;
@@ -1376,32 +1020,43 @@ function updateCommissionStats() {
     const statusVal = (c.status || '').toUpperCase();
     const qType = (c.queue_type || '').toUpperCase();
     const amt = Number(c.amount || 0);
+
     const isPaid = statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY';
+    const isDeclined = statusVal === 'DECLINED';
 
     if (isPaid) {
       collectedSum += amt;
+    } else if (!isDeclined) {
+      pendingSum += amt;
+    }
+
+    if (!isPaid && !isDeclined && (statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'ACTIVE' || qType === 'MAIN_ACCOUNT')) {
+      availableSum += amt;
+    }
+
+    /* Sub-Tab Breakdown */
+    if (statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'OFFERED_AWAITING_ACCEPTANCE' || qType === 'INCOMING_REQUESTS') {
+      incomingCount++;
+      incomingAmt += amt;
+    } else if ((qType === 'MAIN_ACCOUNT' || qType === 'MAIN_QUEUE' || statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || !c.queue_type) &&
+               qType !== 'WORKING_QUEUE' && qType !== 'OUTGOING_REQUESTS' && qType !== 'INCOMING_REQUESTS' && qType !== 'HISTORY' && qType !== 'PAYMENT_HISTORY' &&
+               statusVal !== 'APPROVED_IN_WORKING' && statusVal !== 'COMPLETED_PAID' && statusVal !== 'PAID' && statusVal !== 'REQUESTED_BY_RECIPIENT' && statusVal !== 'OFFERED_BY_VENDOR' && statusVal !== 'DECLINED') {
+      mainCount++;
+      mainAmt += amt;
+    } else if (statusVal === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+      outgoingCount++;
+      outgoingAmt += amt;
+    } else if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING') {
+      workingCount++;
+      workingAmt += amt;
+    } else if (qType === 'HISTORY' || qType === 'PAYMENT_HISTORY' || statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || statusVal === 'DECLINED') {
       historyCount++;
       historyAmt += amt;
-    } else {
-      pendingSum += amt;
-      if (statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'OFFERED_AWAITING_ACCEPTANCE' || qType === 'INCOMING_REQUESTS') {
-        incomingCount++;
-        incomingAmt += amt;
-      } else if (statusVal === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
-        outgoingCount++;
-        outgoingAmt += amt;
-      } else if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING') {
-        workingCount++;
-        workingAmt += amt;
-      } else {
-        mainCount++;
-        mainAmt += amt;
-        availableSum += amt;
-      }
     }
   });
 
   const totalSum = pendingSum + collectedSum;
+
   const setEl = (id, val) => {
     const el = document.getElementById(id);
     if (el) el.textContent = val;
@@ -1411,6 +1066,7 @@ function updateCommissionStats() {
   setEl('statCollectedCommissions', `$${collectedSum.toFixed(2)}`);
   setEl('statTotalCommissions', `$${totalSum.toFixed(2)}`);
   setEl('badgeShopperAvailable', `$${availableSum.toFixed(2)} Liquid`);
+
   setEl('badgeShopperIncoming', `(${incomingCount}) $${incomingAmt.toFixed(2)}`);
   setEl('badgeShopperMainAccount', `(${mainCount}) $${mainAmt.toFixed(2)}`);
   setEl('badgeShopperOutgoing', `(${outgoingCount}) $${outgoingAmt.toFixed(2)}`);
@@ -1423,22 +1079,19 @@ function renderCommissionTable() {
   const toolbar = document.getElementById('tabActionToolbar');
   const search = document.getElementById('commSearchInput').value.toLowerCase();
   const typeFilter = document.getElementById('commTypeFilter').value;
-
+  
   const filtered = commissionsList.filter(c => {
+    const matchesSearch = (c.feedback_id || '').toLowerCase().includes(search) ||
+                          ((c.seller_id || c.vendor_id) || '').toLowerCase().includes(search) ||
+                          (c.id || '').toLowerCase().includes(search);
+    const matchesType = typeFilter === 'ALL' || c.role_type === typeFilter;
+    let matchesTab = false;
     const statusVal = (c.status || '').toUpperCase();
     const queueType = (c.queue_type || '').toUpperCase();
-    const roleType = (c.role_type || '').toUpperCase();
-
-    const matchesSearch = (String(c.feedback_id || '')).toLowerCase().includes(search) ||
-                          (String(c.id || '')).toLowerCase().includes(search) ||
-                          (String(c.seller_id || c.vendor_id || '')).toLowerCase().includes(search);
-
-    const matchesType = typeFilter === 'ALL' || roleType === typeFilter;
-
-    let matchesTab = false;
     if (activeCommTab === 'mainAccount') {
-      matchesTab = (queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE') &&
-                   queueType !== 'WORKING_QUEUE' && queueType !== 'OUTGOING_REQUESTS' && queueType !== 'INCOMING_REQUESTS' && queueType !== 'HISTORY';
+      matchesTab = (queueType === 'MAIN_ACCOUNT' || queueType === 'MAIN_QUEUE' || statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE' || !c.queue_type) &&
+                   queueType !== 'WORKING_QUEUE' && queueType !== 'OUTGOING_REQUESTS' && queueType !== 'INCOMING_REQUESTS' && queueType !== 'HISTORY' && queueType !== 'PAYMENT_HISTORY' &&
+                   statusVal !== 'APPROVED_IN_WORKING' && statusVal !== 'COMPLETED_PAID' && statusVal !== 'PAID' && statusVal !== 'REQUESTED_BY_RECIPIENT' && statusVal !== 'OFFERED_BY_VENDOR';
     } else if (activeCommTab === 'incoming') {
       matchesTab = statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'OFFERED_AWAITING_ACCEPTANCE' || queueType === 'INCOMING_REQUESTS';
     } else if (activeCommTab === 'outgoing') {
@@ -1448,26 +1101,19 @@ function renderCommissionTable() {
     } else if (activeCommTab === 'receivedHistory') {
       matchesTab = queueType === 'HISTORY' || queueType === 'PAYMENT_HISTORY' || statusVal === 'COMPLETED_PAID' || statusVal === 'PAID';
     }
+    
     return matchesSearch && matchesType && matchesTab;
   });
 
   if (activeCommTab === 'incoming') {
     toolbar.innerHTML = `
-      <button
-        button
-        onclick="batchUpdateShopperStatus('APPROVED_IN_WORKING')"
-        class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md"
-      >
+      <button onclick="batchUpdateShopperStatus('APPROVED_IN_WORKING')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
         <i class="fa-solid fa-check mr-1.5"></i> Approve Selected to Working Queue
       </button>
     `;
   } else if (activeCommTab === 'mainAccount') {
     toolbar.innerHTML = `
-      <button
-        button
-        onclick="batchUpdateShopperStatus('REQUESTED_BY_RECIPIENT')"
-        class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md"
-      >
+      <button onclick="batchUpdateShopperStatus('REQUESTED_BY_RECIPIENT')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
         <i class="fa-solid fa-paper-plane mr-1.5"></i> Send Request to Vendor
       </button>
     `;
@@ -1488,38 +1134,23 @@ function renderCommissionTable() {
   tableBody.innerHTML = filtered.map(c => `
     <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
       <div class="col-span-1 flex items-center space-x-2">
-        <input
-          input
-          type="checkbox"
-          value="${c.id}"
-          selectedCommIds
-          has
-          c
-          id
-          checked
-          onchange="toggleSelectComm('${c.id}')"
-          class="rounded border-borderSlate bg-darkBg text-blue-600"
-        >
+        <input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
       </div>
       <div class="col-span-3 space-y-0.5">
-        <span class="font-bold text-white">FB ID: ${c.feedback_id || 'N/A'}</span>
-        <p class="text-[10px] text-slate-500 font-mono">ID: ${String(c.id).substring(0,8)}...</p>
+        <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
+        <p class="text-[10px] text-slate-500 font-mono">ID: ${c.id.substring(0,8)}...</p>
       </div>
       <div class="col-span-3 space-y-0.5">
         <p class="font-semibold text-slate-200 truncate">Vendor ID</p>
         <p class="text-[10px] text-slate-400 font-mono truncate">${c.seller_id || c.vendor_id || 'N/A'}</p>
       </div>
       <div class="col-span-2 space-y-0.5">
-        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type || 'REVIEWER'}</span>
+        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.role_type}</span>
         <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
       </div>
       <div class="col-span-3 flex items-center justify-end space-x-2">
         ${activeCommTab === 'receivedHistory' ? `
-          <button
-            button
-            onclick="viewReceipt('${c.id}')"
-            class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-3 py-1.5 rounded-xl transition"
-          >
+          <button onclick="viewReceipt('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-3 py-1.5 rounded-xl transition">
             <i class="fa-solid fa-receipt mr-1 text-purple-400"></i> View Receipt
           </button>
         ` : `
@@ -1556,22 +1187,16 @@ async function batchUpdateShopperStatus(newStatusTag) {
     return;
   }
   try {
-    const ids = Array.from(selectedCommIds);
-    let targetQueue = 'WORKING_QUEUE';
-    if (newStatusTag === 'REQUESTED_BY_RECIPIENT') targetQueue = 'OUTGOING_REQUESTS';
-
-    const { error } = await _supabase
-      .from('commissions')
-      .update({
-        status: newStatusTag,
-        queue_type: targetQueue
-      })
-      .in('id', ids);
-
-    if (error) throw error;
+    for (const id of selectedCommIds) {
+      const { error } = await _supabase
+        .from('commissions')
+        .update({ queue_type: newStatusTag === 'REQUESTED_BY_RECIPIENT' ? 'OUTGOING_REQUESTS' : 'WORKING_QUEUE', status: newStatusTag })
+        .eq('id', id);
+      if (error) throw error;
+    }
     selectedCommIds.clear();
     await loadCommissionsData();
-    alert(`Selected records successfully updated to ${newStatusTag}!`);
+    alert('Commission request successfully updated.');
   } catch (err) {
     alert('Action failed: ' + err.message);
   }
@@ -1593,18 +1218,18 @@ function viewReceipt(id) {
       </div>
       <div class="flex justify-between border-b border-borderSlate pb-2">
         <span class="text-slate-400">PayPal Transaction ID:</span>
-        <span class="font-mono text-blue-400">${record.paypal_tx_id || record.paypaltxid || 'N/A'}</span>
+        <span class="font-mono text-blue-400">${record.paypal_tx_id || 'N/A'}</span>
       </div>
       <div class="space-y-1 pt-2">
-        <span class="text-slate-400">Vendor Payment Receipt Proof:</span>
-        <img src="${record.receipt_base64 || record.receipt_url || 'https://via.placeholder.com/300'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
+        <span class="text-slate-400">Vendor Payment Receipt Proof (Base64):</span>
+        <img src="${record.receipt_url || 'https://via.placeholder.com/300'}" class="w-full h-48 object-cover rounded-xl border border-borderSlate">
       </div>
     </div>
   `;
   document.getElementById('receiptModal').classList.remove('hidden');
 }
 
-/* Messaging Hub Logic */
+/* ================= WHATSAPP-STYLE MESSAGING HUB LOGIC & PAPERCLIP ATTACHMENTS ================= */
 function toggleMessagingHub() {
   const modal = document.getElementById('messagingHubModal');
   modal.classList.toggle('hidden');
@@ -1647,7 +1272,9 @@ function clearChatThumbnail() {
   document.getElementById('inlineChatFileInput').value = '';
 }
 
+
 let currentShopperMessagingSubTab = 'chats';
+
 function switchShopperMessagingSubTab(tab) {
   currentShopperMessagingSubTab = tab;
   const chatsBtn = document.getElementById('shopperSubTabChatsBtn');
@@ -1695,6 +1322,8 @@ function renderShopperContactsList() {
   const adminProf = getAdminProfile();
   const adminContact = {
     partnerId: adminProf.id,
+    threadId: 'admin_thread',
+    productId: null,
     name: adminProf.full_name || 'System Administrator',
     email: adminProf.email || 'admin@echohub.com',
     paypal: 'Official Platform Support Channel',
@@ -1703,34 +1332,40 @@ function renderShopperContactsList() {
     isAdmin: true
   };
 
-  const sellerContacts = messagingThreads.map(t => {
-    const counterpartId = t.sender_id === currentUser.id ? t.receiver_id : t.sender_id;
-    const prof = profilesCache[counterpartId] || {};
-    const vendorName = prof.full_name || `Vendor (${String(counterpartId).substring(0, 6)})`;
+  const vendorContacts = messagingThreads.map(t => {
+    const partnerId = t.vendorId || t.partnerId || t.receiver_id;
+    const prof = profilesCache[partnerId] || {};
+    const vendorName = prof.full_name || t.vendorName || `Vendor (${String(partnerId).substring(0, 6)})`;
     const vendorEmail = prof.email || 'N/A';
-    const hasReviewSubmitted = (commissionsList || []).some(c =>
-      (c.vendor_id === counterpartId || c.seller_id === counterpartId) &&
+
+    const hasReviewSubmitted = (shopperCommissions || []).some(c => 
+      (c.vendor_id === partnerId || c.seller_id === partnerId) && 
       (c.recipient_id === currentUser?.id)
     );
+
     let displayPaypal = 'Hidden (Pending review submission)';
     if (hasReviewSubmitted) {
       displayPaypal = prof.paypal_email || 'Not specified in profile';
     }
+
     return {
-      partnerId: counterpartId,
+      partnerId: partnerId,
+      threadId: t.id,
+      productId: t.productId,
       name: vendorName,
       email: vendorEmail,
       paypal: displayPaypal,
       role: 'SELLER',
-      lastMessage: t.text || t.content || 'Active product inquiry thread.',
-      isAdmin: false,
-      productId: t.product_id
+      lastMessage: t.lastMessage || 'No recent messages',
+      updatedAt: t.updatedAt,
+      isAdmin: false
     };
-  });
+  }).filter(c => c.partnerId !== adminContact.partnerId);
 
-  let allContacts = [adminContact, ...sellerContacts];
+  let allContacts = [adminContact, ...vendorContacts];
+
   if (searchVal) {
-    allContacts = allContacts.filter(c =>
+    allContacts = allContacts.filter(c => 
       c.name.toLowerCase().includes(searchVal) ||
       c.email.toLowerCase().includes(searchVal) ||
       c.paypal.toLowerCase().includes(searchVal) ||
@@ -1746,8 +1381,8 @@ function renderShopperContactsList() {
 
   container.innerHTML = allContacts.map(c => {
     const isAdm = c.isAdmin || c.role === 'ADMIN';
-    const badgeBg = isAdm
-      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+    const badgeBg = isAdm 
+      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
       : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
     const avatarBg = isAdm
       ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
@@ -1774,17 +1409,10 @@ function renderShopperContactsList() {
           <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} uppercase shrink-0">${isAdm ? 'SYSTEM ADMIN' : 'SELLER'}</span>
         </div>
         <div class="text-[10px] text-slate-400 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
-          <div class="flex justify-between">
-            <span class="text-slate-500">${isAdm ? 'Channel:' : 'PayPal:'}</span>
-            <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span>
-          </div>
+          <div class="flex justify-between"><span class="text-slate-500">${isAdm ? 'Channel:' : 'PayPal:'}</span> <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
           <div class="truncate"><span class="text-slate-500">Note:</span> ${c.lastMessage}</div>
         </div>
-        <button
-          button
-          onclick="openThread('${c.partnerId}', '${c.partnerId}', '${c.productId || ''}'); switchShopperMessagingSubTab('chats');"
-          class="w-full ${isAdm ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40' : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30'} py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1"
-        >
+        <button onclick="openThread('${c.threadId}', '${c.partnerId}', '${c.productId || ''}'); switchShopperMessagingSubTab('chats');" class="w-full ${isAdm ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40' : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30'} py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
           <i class="fa-solid ${isAdm ? 'fa-headset' : 'fa-comment-dots'} text-[10px]"></i>
           <span>${isAdm ? 'Contact Admin' : 'Chat Now'}</span>
         </button>
@@ -1802,9 +1430,23 @@ async function loadMessagingThreads(isPolling = false) {
       .select('*')
       .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
-
     if (error) throw error;
     messagingThreads = data || [];
+
+    /* Preserve read state for active/opened threads and persisted timestamps */
+    messagingThreads.forEach(m => {
+      const counterpartId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
+      if (counterpartId) {
+        const lastReadTime = lastReadTimeMap[counterpartId] || 0;
+        const msgTime = new Date(m.created_at).getTime();
+        if (m.is_read || readThreadIds.has(counterpartId) || counterpartId === activeRecipientId || (lastReadTime > 0 && msgTime <= lastReadTime)) {
+          if (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id) {
+            m.is_read = true;
+          }
+        }
+      }
+    });
+
     renderThreadsList();
     updateUnreadBadge();
   } catch (err) {
@@ -1833,6 +1475,7 @@ function renderThreadsList() {
   const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
   let uniqueThreads = Array.from(threadMap.values());
+
   if (searchVal) {
     uniqueThreads = uniqueThreads.filter(t => {
       const profile = profilesCache[t.counterpartId] || { full_name: '' };
@@ -1851,8 +1494,10 @@ function renderThreadsList() {
     const latest = t.latestMsg;
     const isSelected = activeRecipientId === counterpartId;
     const profile = profilesCache[counterpartId] || { full_name: `User #${counterpartId.substring(0, 6)}`, role: 'user' };
+    
+    /* Calculate incoming unread count for this thread */
     const unreadCount = t.messages.filter(m => (m.receiver_id === currentUser.id || m.sender_id !== currentUser.id) && !m.is_read).length;
-
+    
     const statusVal = (latest.status_badge || latest.status || '').toUpperCase();
     let threadBadge = '';
     if (statusVal.includes('APPROV') || statusVal.includes('VERIFIED') || statusVal.includes('COMPLETE')) {
@@ -1864,21 +1509,15 @@ function renderThreadsList() {
     }
 
     const lastMsgText = latest.text || latest.content || latest.message_text || latest.message || 'Attachment';
+
     return `
-      <div
-        div
-        onclick="openThread('${latest.id}', '${counterpartId}', '${latest.product_id}')"
-        class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}"
-      >
-        <div
-          div
-          class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0"
-        >
+      <div onclick="openThread('${latest.id}','${counterpartId}', '${latest.product_id}')" class="p-3.5 cursor-pointer hover:bg-slate-800/60 transition flex items-center space-x-3 ${isSelected ? 'bg-slate-800 border-l-4 border-blue-500' : ''}">
+        <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
           <i class="fa-solid fa-user"></i>
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex justify-between items-center mb-0.5">
-            <h4 class="font-bold text-white text-xs truncate flex items-center">${profile.full_name} ${threadBadge}</h4>
+            <h4 class="font-bold text-white text-xs truncate flex items-center">${profile.full_name}${threadBadge}</h4>
             <div class="flex items-center space-x-1.5 shrink-0">
               ${unreadCount > 0 ? `<span class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">${unreadCount}</span>` : ''}
               <span class="text-[9px] text-slate-500">${new Date(latest.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -1896,6 +1535,7 @@ function filterThreads() {
 }
 
 async function openThread(threadId, recipientId, productId) {
+  activeThreadId = threadId;
   activeRecipientId = recipientId;
   activeProductId = productId;
   if (recipientId) saveLocalReadState(recipientId);
@@ -1905,7 +1545,8 @@ async function openThread(threadId, recipientId, productId) {
   document.getElementById('messageInputArea').classList.remove('hidden');
   document.getElementById('activeChatTitle').textContent = profile.full_name;
   document.getElementById('activeChatRoleTag').textContent = `${profile.role.toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
-
+  
+  /* Clear local unread status for messages from this recipient */
   const unreadMsgIds = [];
   messagingThreads.forEach(m => {
     const counterpartId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
@@ -1916,9 +1557,9 @@ async function openThread(threadId, recipientId, productId) {
       }
     }
   });
-
   updateUnreadBadge();
   renderThreadsList();
+  
   await loadMessageStream(recipientId, productId);
   setupRealtimeMessageSubscription(recipientId, productId);
 
@@ -1932,6 +1573,7 @@ async function openThread(threadId, recipientId, productId) {
 }
 
 function renderMessageStatusBadge(m) {
+  /* Only render status badges for feedback/review submissions */
   if (!m.review_url && !m.feedback_id) return '';
   const badgeVal = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase();
   if (!badgeVal) return '';
@@ -1947,7 +1589,15 @@ function renderMessageStatusBadge(m) {
   } else if (badgeVal.includes('REJECT') || badgeVal.includes('DECLIN')) {
     badgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
     iconClass = 'fa-solid fa-circle-xmark text-rose-400';
-    label = 'Declined / Action Required';
+    label = 'Rejected';
+  } else if (badgeVal.includes('AWAIT') || badgeVal.includes('PEND')) {
+    badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+    iconClass = 'fa-solid fa-hourglass-half text-amber-400';
+    label = 'Awaiting Seller Approval';
+  } else {
+    badgeColor = 'bg-blue-500/20 text-blue-300 border-blue-500/40';
+    iconClass = 'fa-solid fa-tag text-blue-400';
+    label = m.status_badge || m.status;
   }
 
   const feedbackBadge = m.feedback_id ? `
@@ -1974,7 +1624,6 @@ async function loadMessageStream(recipientId, productId) {
       .select('*')
       .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${currentUser.id}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${recipientId}),and(vendor_id.eq.${recipientId},buyer_id.eq.${currentUser.id})`)
       .order('created_at', { ascending: true });
-
     if (error) throw error;
     const messages = data || [];
     if (messages.length === 0) {
@@ -1982,6 +1631,7 @@ async function loadMessageStream(recipientId, productId) {
       return;
     }
 
+    /* Product Snapshot Header Card */
     let productHeaderCard = '';
     const targetProdId = productId || messages.find(m => m.product_id)?.product_id;
     if (targetProdId) {
@@ -2034,10 +1684,7 @@ async function loadMessageStream(recipientId, productId) {
 
       return `
         <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
-          <div
-            div
-            class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}"
-          >
+          <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs space-y-2 break-words ${isMe ? 'bg-accentBlue text-white rounded-br-none shadow-md' : 'bg-cardBg border border-borderSlate text-slate-200 rounded-bl-none'}">
             ${innerHtml}
           </div>
           <span class="text-[9px] text-slate-500 px-1">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -2075,24 +1722,37 @@ async function handleSendMessage(event) {
   event.preventDefault();
   const input = document.getElementById('messageInputBox');
   const text = input.value.trim();
-  if (!text && !attachedImageBase64) return;
+  if ((!text && !attachedImageBase64) || !activeRecipientId) return;
+  
+  input.value = '';
+  const imageUrlToSend = attachedImageBase64;
+  clearChatThumbnail();
+  await sendChatMessage(text || 'Attached Screenshot Proof', imageUrlToSend, null);
+}
 
+async function sendChatMessage(text, imageUrl, reviewUrl) {
   try {
     const payload = {
       sender_id: currentUser.id,
-      receiver_id: activeRecipientId,
       buyer_id: currentUser.id,
+      receiver_id: activeRecipientId,
       vendor_id: activeRecipientId,
       product_id: (activeProductId !== 'null' && activeProductId) ? activeProductId : null,
-      content: text,
-      image_url: attachedImageBase64
+      text: text || '',
+      status_badge: 'AWAITING_ATTENTION',
+      channel_type: (activeRecipientId && (activeRecipientId === getAdminProfile().id || activeRecipientId === 'admin_system_support')) ? 'ADMIN_DIRECT' : 'MARKETPLACE'
     };
-
-    const { error } = await _supabase.from('messages').insert([payload]);
+    if (imageUrl) {
+      payload.image_url = imageUrl;
+    }
+    if (reviewUrl) {
+      payload.review_url = reviewUrl;
+      payload.feedback_id = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    }
+    const { error } = await _supabase
+      .from('messages')
+      .insert([payload]);
     if (error) throw error;
-
-    input.value = '';
-    clearChatThumbnail();
     await loadMessageStream(activeRecipientId, activeProductId);
     await loadMessagingThreads(true);
   } catch (err) {
@@ -2100,40 +1760,67 @@ async function handleSendMessage(event) {
   }
 }
 
+/* FIXED & ENHANCED REVIEW URL SUBMISSION METHOD */
 window.submitReviewUrlMessage = async function(productId, receiverId) {
-  const buyerId = currentUser?.id;
+  const buyerId = currentUser?.id || window.currentUser?.id;
+  
+  /* Look for the review URL input in the messaging hub, modal, or chat input */
   const reviewField = document.getElementById('reviewUrlField');
-  const reviewUrl = reviewField ? reviewField.value.trim() : '';
-
+  const modalInput = document.getElementById('review-url-input');
+  const chatInput = document.getElementById('chat-input');
+  
+  const reviewUrl = (reviewField && reviewField.value.trim()) ? reviewField.value.trim() :
+                   ((modalInput && modalInput.value.trim()) ? modalInput.value.trim() :
+                   ((chatInput && chatInput.value.trim()) ? chatInput.value.trim() : ''));
+  
+  console.log("DEBUG - Found input value:", reviewUrl);
+  
   if (!reviewUrl || !reviewUrl.toLowerCase().includes('amazon.com')) {
-    alert('Validation Failed. Please provide a valid Amazon review URL.');
+    alert('Validation Failed. Input value detected was: "' + reviewUrl + '"');
     return;
   }
-
+  
   const targetRecipientId = receiverId || activeRecipientId;
   const targetProductId = (productId !== 'null' && productId) ? productId : (activeProductId !== 'null' ? activeProductId : null);
-
+  
+  if (!targetRecipientId) {
+    alert("Please select or open a conversation before submitting a review link.");
+    return;
+  }
+  
+  const payload = {
+    sender_id: buyerId,
+    buyer_id: buyerId,
+    receiver_id: targetRecipientId,
+    vendor_id: targetRecipientId,
+    product_id: targetProductId,
+    text: 'Submitted Amazon Review Link: ' + reviewUrl,
+    status_badge: 'AWAITING_ATTENTION',
+      channel_type: (activeRecipientId && (activeRecipientId === getAdminProfile().id || activeRecipientId === 'admin_system_support')) ? 'ADMIN_DIRECT' : 'MARKETPLACE',
+    review_url: reviewUrl,
+    feedback_id: 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+  };
+  
   try {
-    const feedbackId = 'FB-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    const payload = {
-      sender_id: buyerId,
-      receiver_id: targetRecipientId,
-      buyer_id: buyerId,
-      vendor_id: targetRecipientId,
-      product_id: targetProductId,
-      content: `Submitted live review link: ${reviewUrl}`,
-      review_url: reviewUrl,
-      feedback_id: feedbackId,
-      status_badge: 'AWAITING_ATTENTION'
-    };
-
-    const { error } = await _supabase.from('messages').insert([payload]);
+    const { data, error } = await _supabase
+      .from('messages')
+      .insert([payload])
+      .select();
     if (error) throw error;
-
+    
+    console.log('Review URL message sent successfully:', data);
+    alert('Review link submitted successfully!');
+    
+    /* Clear the input fields */
     if (reviewField) reviewField.value = '';
+    if (modalInput) modalInput.value = '';
+    if (chatInput) chatInput.value = '';
+    
+    /* Hide the review input drawer if open */
     const promptContainer = document.getElementById('reviewUrlInputBoxContainer');
     if (promptContainer) promptContainer.classList.add('hidden');
-
+    
+    /* Refresh active stream and thread list */
     if (targetRecipientId) {
       await loadMessageStream(targetRecipientId, targetProductId);
       await loadMessagingThreads(true);
@@ -2161,11 +1848,15 @@ async function handleLogout() {
   window.location.href = 'login.html';
 }
 
+/* Initialize shopper workspace on load */
+initShopperWorkspace();
+
 /* Global System Branding Loader */
 async function loadAppBranding() {
   try {
     const cachedLogo = localStorage.getItem('app_logo_base64');
     if (cachedLogo) applyLogoToElements(cachedLogo);
+
     if (typeof _supabase !== 'undefined') {
       const { data, error } = await _supabase
         .from('system_settings')
@@ -2192,8 +1883,223 @@ function applyLogoToElements(logoBase64) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initShopperWorkspace();
+  loadAppBranding();
 });
+
+
+/* ================= PRODUCT DETAILS & VENDOR STOREFRONT MODALS ================= */
+function openProductDetailsModal(productId) {
+  const item = marketplaceProducts.find(p => p.id === productId);
+  if (!item) return;
+
+  const vendorId = item.seller_id || item.vendor_id;
+  const vendorProfile = profilesCache[vendorId];
+  const vendorName = vendorProfile ? (vendorProfile.full_name || vendorProfile.email || 'Verified Merchant') : 'Verified Merchant';
+
+  const retailPrice = Number(item.price || 0).toFixed(2);
+  const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
+  const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
+
+  const modal = document.getElementById('productDetailsModal');
+  const body = document.getElementById('productDetailsModalContent');
+  if (!modal || !body) return;
+
+  const shareUrl = `${window.location.origin}${window.location.pathname}?prod=${item.id}${currentProfile?.referral_code ? '&ref=' + currentProfile.referral_code : ''}`;
+  const whatsappText = encodeURIComponent(`Check out this review opportunity for "${item.title}" on Echo Hub! Earn $${rewardAmount} Commission: ${shareUrl}`);
+
+  body.innerHTML = `
+    <div class="space-y-4">
+      <div class="relative w-full h-64 bg-slate-950/80 rounded-2xl border border-borderSlate overflow-hidden flex items-center justify-center p-4">
+        <img src="${item.image_url || 'https://via.placeholder.com/400'}" alt="${item.title}" class="max-h-full max-w-full object-contain">
+        <span class="absolute top-3 left-3 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-3 py-1 rounded-full text-xs font-bold text-emerald-400">
+          🎁 $${rewardAmount} Commission
+        </span>
+        <span class="absolute top-3 right-3 bg-darkBg/80 backdrop-blur-md border border-borderSlate px-3 py-1 rounded-full text-xs font-bold text-slate-200">
+          Retail: $${retailPrice}
+        </span>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-xl font-bold text-white tracking-tight">${item.title}</h2>
+          <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2.5 py-1 rounded-full font-semibold">Verified Listing</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-darkBg p-3 rounded-xl border border-borderSlate text-xs">
+          <div class="flex items-center space-x-2 truncate">
+            <i class="fa-solid fa-store text-amber-400 text-sm"></i>
+            <span class="text-slate-300">Sold by: <strong class="text-white">${vendorName}</strong></span>
+          </div>
+          <button onclick="closeProductDetailsModal(); openVendorStorefrontModal('${vendorId}')" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 flex items-center space-x-1.5">
+            <i class="fa-solid fa-shop text-[10px]"></i>
+            <span>Visit Vendor Store</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 bg-darkBg border border-borderSlate p-4 rounded-xl text-xs">
+        <div class="space-y-1 border-r border-borderSlate/60 pr-2">
+          <p class="text-slate-400 font-medium">Review Commission</p>
+          <p class="text-base font-bold text-emerald-400">$${rewardAmount} Commission</p>
+          <p class="text-[10px] text-slate-500">Earned upon verified review</p>
+        </div>
+        <div class="space-y-1 pl-2">
+          <p class="text-slate-400 font-medium">Retail Value</p>
+          <p class="text-base font-bold text-slate-200">$${retailPrice}</p>
+          <p class="text-[10px] text-slate-500">Retail marketplace price</p>
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Product Description & Campaign Guidelines</h4>
+        <p class="text-xs text-slate-300 leading-relaxed bg-darkBg/60 p-3.5 rounded-xl border border-borderSlate/60 max-h-36 overflow-y-auto">${item.description || 'No specific campaign guidelines provided.'}</p>
+      </div>
+
+      <div class="bg-darkBg p-3.5 rounded-xl border border-borderSlate space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-200 flex items-center space-x-1.5">
+            <i class="fa-solid fa-share-nodes text-blue-400"></i>
+            <span>Share Listing & Earn Referral Bonus</span>
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" id="shareProductUrlInput" value="${shareUrl}" readonly class="flex-1 bg-cardBg border border-borderSlate rounded-lg px-3 py-1.5 text-xs text-slate-300 font-mono truncate outline-none">
+          <button onclick="copyProductShareLink('${shareUrl}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 flex items-center space-x-1">
+            <i class="fa-solid fa-copy"></i>
+            <span>Copy</span>
+          </button>
+          <a href="https://api.whatsapp.com/send?text=${whatsappText}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 flex items-center space-x-1">
+            <i class="fa-brands fa-whatsapp"></i>
+            <span>WhatsApp</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button onclick="closeProductDetailsModal(); handleInquireClick('${item.id}', '${vendorId}');" ${isLocked ? 'disabled' : ''} class="flex-1 bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-comments"></i>
+          <span>${isLocked ? 'Locked (Pending Verification)' : 'Inquire & Claim Review'}</span>
+        </button>
+        <button onclick="closeProductDetailsModal()" class="px-5 bg-darkBg hover:bg-slate-800 text-slate-300 border border-borderSlate text-xs font-semibold py-3 rounded-xl transition">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+}
+
+function closeProductDetailsModal() {
+  document.getElementById('productDetailsModal')?.classList.add('hidden');
+}
+
+function copyProductShareLink(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    alert("Listing link copied to clipboard! Share it with friends to earn referral rewards.");
+  }).catch(() => {
+    const input = document.getElementById('shareProductUrlInput');
+    if (input) { input.select(); document.execCommand('copy'); alert("Link copied!"); }
+  });
+}
+
+function openVendorStorefrontModal(vendorId) {
+  const vendorProfile = profilesCache[vendorId] || {};
+  const vendorName = vendorProfile.full_name || vendorProfile.email || 'Verified Merchant';
+  
+  const vendorProducts = marketplaceProducts.filter(p => (p.seller_id === vendorId || p.vendor_id === vendorId));
+
+  const modal = document.getElementById('vendorStorefrontModal');
+  const body = document.getElementById('vendorStorefrontModalContent');
+  if (!modal || !body) return;
+
+  const logoHtml = `<div class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden shrink-0">eh</div>`;
+
+  body.innerHTML = `
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-borderSlate pb-4">
+      <div class="flex items-center space-x-3">
+        ${logoHtml}
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-lg font-bold text-white tracking-tight">${vendorName}</h2>
+            <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-bold uppercase">Verified Merchant</span>
+          </div>
+          <p class="text-xs text-slate-400">${vendorProducts.length} Active Review Listing${vendorProducts.length === 1 ? '' : 's'}</p>
+        </div>
+      </div>
+      <button onclick="closeVendorStorefrontModal(); handleInquireClick('${vendorProducts[0]?.id || ''}', '${vendorId}');" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-2 shadow-md shrink-0">
+        <i class="fa-solid fa-comments"></i>
+        <span>Message Vendor</span>
+      </button>
+    </div>
+
+    <div class="space-y-4 pt-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Merchant Showcase Directory</h3>
+        <input type="text" id="storefrontSearchInput" oninput="filterVendorStorefrontGrid('${vendorId}')" placeholder="Search store items..." class="bg-darkBg border border-borderSlate rounded-xl px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-accentBlue w-48">
+      </div>
+
+      <div id="vendorStorefrontGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-1">
+        ${renderVendorStorefrontCards(vendorProducts)}
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+}
+
+function renderVendorStorefrontCards(products) {
+  if (products.length === 0) {
+    return `<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-darkBg rounded-2xl border border-borderSlate"><p>No active product listings found for this merchant.</p></div>`;
+  }
+  const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
+  return products.map(item => {
+    const retailPrice = Number(item.price || 0).toFixed(2);
+    const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
+    return `
+      <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 hover:border-accentBlue/50 transition flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="w-full h-36 bg-slate-950/80 rounded-xl overflow-hidden flex items-center justify-center p-2 relative">
+            <img src="${item.image_url || 'https://via.placeholder.com/300'}" alt="${item.title}" class="max-h-full max-w-full object-contain">
+            <span class="absolute top-2 left-2 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-400">
+              🎁 $${rewardAmount} Commission
+            </span>
+          </div>
+          <h4 class="font-bold text-white text-sm line-clamp-1">${item.title}</h4>
+          <p class="text-[11px] text-slate-400 line-clamp-2">${item.description || ''}</p>
+        </div>
+        <div class="pt-2 border-t border-borderSlate/60 flex items-center justify-between gap-2">
+          <div>
+            <p class="text-[9px] text-slate-500">Retail Value</p>
+            <p class="text-xs font-bold text-slate-200">$${retailPrice}</p>
+          </div>
+          <div class="flex gap-1.5">
+            <button onclick="openProductDetailsModal('${item.id}')" class="bg-darkBg hover:bg-slate-800 text-slate-300 border border-borderSlate text-xs font-medium px-2.5 py-1.5 rounded-lg transition">
+              Details
+            </button>
+            <button onclick="closeVendorStorefrontModal(); handleInquireClick('${item.id}', '${item.seller_id || item.vendor_id}');" ${isLocked ? 'disabled' : ''} class="bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+              Inquire
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterVendorStorefrontGrid(vendorId) {
+  const search = (document.getElementById('storefrontSearchInput')?.value || '').toLowerCase();
+  const grid = document.getElementById('vendorStorefrontGrid');
+  if (!grid) return;
+  const vendorProducts = marketplaceProducts.filter(p => (p.seller_id === vendorId || p.vendor_id === vendorId));
+  const filtered = vendorProducts.filter(p => (p.title || '').toLowerCase().includes(search) || (p.description || '').toLowerCase().includes(search));
+  grid.innerHTML = renderVendorStorefrontCards(filtered);
+}
+
+function closeVendorStorefrontModal() {
+  document.getElementById('vendorStorefrontModal')?.classList.add('hidden');
+}
+
 </script>
 </body>
 </html>
