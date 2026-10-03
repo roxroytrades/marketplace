@@ -1595,11 +1595,40 @@ function renderActiveChat() {
     container.innerHTML = `<div class="m-auto text-center text-xs text-slate-500"><i class="fa-solid fa-headset text-2xl text-amber-400 mb-2 block"></i>Direct channel ready. Type a message below to contact ${prof.full_name || 'Admin'}!</div>`;
     return;
   }
-  if (!thread) return;
   document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,6)}...)`;
   const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
 
-  container.innerHTML = sorted.map(m => {
+  /* Product Snapshot Header Card */
+  let productHeaderCard = '';
+  const msgWithProd = sorted.find(m => m.product_id);
+  if (msgWithProd && msgWithProd.product_id) {
+    const prodId = msgWithProd.product_id;
+    const prod = (vendorProducts || []).find(p => p.id === prodId);
+    const pTitle = prod ? prod.title : 'Marketplace Review Listing';
+    const pPrice = prod ? Number(prod.price || 0).toFixed(2) : 'N/A';
+    const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
+    const pImg = prod ? (prod.image_url || 'https://via.placeholder.com/150') : (msgWithProd.image_url || 'https://via.placeholder.com/150');
+    const pUrl = prod ? (prod.product_url || '') : '';
+
+    productHeaderCard = `
+      <div class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-4 shadow-lg flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center space-x-3 truncate">
+          <img src="${pImg}" alt="Product" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shrink-0">
+          <div class="truncate">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.2 rounded-full font-bold uppercase">Inquired Item</span>
+              <span class="text-[10px] text-slate-400 font-mono">ID: ${String(prodId).substring(0,8)}</span>
+            </div>
+            <h4 class="text-xs font-bold text-white truncate mt-0.5">${pTitle}</h4>
+            <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">$${pPrice}</strong> | Review Commission: <strong class="text-emerald-400">$${pComm} Commission</strong></p>
+          </div>
+        </div>
+        ${pUrl ? `<a href="${pUrl}" target="_blank" class="shrink-0 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center space-x-1"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i><span>View Listing</span></a>` : ''}
+      </div>
+    `;
+  }
+
+  const messagesHtml = sorted.map(m => {
     const isMe = m.sender_id === currentUser.id;
     const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
     const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
@@ -1677,6 +1706,8 @@ function renderActiveChat() {
       </div>
     `;
   }).join('');
+
+  container.innerHTML = productHeaderCard + messagesHtml;
   container.scrollTop = container.scrollHeight;
 }
 
