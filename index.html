@@ -936,7 +936,7 @@ async function handleInquireClick(productId, vendorId) {
     const prodTitle = prod ? prod.title : 'Marketplace Item';
     const prodPrice = prod ? Number(prod.price || 0).toFixed(2) : '0.00';
     const prodReward = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
-    const prodImg = prod ? (prod.image_url || '') : '';
+    const prodImg = prod ? (prod.image_url || prod.image || 'https://via.placeholder.com/300') : 'https://via.placeholder.com/300';
 
     const { data: existing } = await _supabase
       .from('messages')
@@ -1691,6 +1691,20 @@ function renderMessageStatusBadge(m) {
   `;
 }
 
+async 
+function extractProductIdFromText(text) {
+  if (!text) return null;
+  const m1 = text.match(/[?&]prod=([a-zA-Z0-9_-]+)/i);
+  if (m1 && m1[1]) return m1[1];
+  const m2 = text.match(/PROD-([a-zA-Z0-9_-]+)/i);
+  if (m2 && m2[1]) return m2[1];
+  return null;
+}
+
+window.openProductFromChat = function(productId) {
+  if (productId) openProductDetailsModal(productId);
+};
+
 async function loadMessageStream(recipientId, productId) {
   const container = document.getElementById('messageStreamContainer');
   try {
@@ -1740,9 +1754,45 @@ async function loadMessageStream(recipientId, productId) {
       const reviewUrl = m.review_url || (m.link && m.link.includes('http') ? m.link : null);
       const statusBadge = renderMessageStatusBadge(m);
 
+      const msgProdId = m.product_id || extractProductIdFromText(text);
+      let productCardHtml = '';
+      if (msgProdId) {
+        let prod = marketplaceProducts.find(p => p.id === msgProdId || String(p.id).toLowerCase().includes(String(msgProdId).toLowerCase()));
+        if (prod) {
+          const pPrice = Number(prod.price || 0).toFixed(2);
+          const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
+          const pImg = prod.image_url || prod.image || 'https://via.placeholder.com/150';
+          const cardBg = isMe 
+            ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50' 
+            : 'bg-white border-slate-300 text-slate-900 hover:border-blue-600 shadow-md';
+          const btnColor = isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold';
+
+          productCardHtml = `
+            <div onclick="openProductFromChat('${prod.id}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
+              <img src="${pImg}" onerror="this.src='https://via.placeholder.com/150'" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
+              <div class="truncate flex-1">
+                <div class="flex items-center space-x-1">
+                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
+                  <span class="text-[9px] font-mono ${isMe ? 'text-slate-300' : 'text-slate-600'}">ID: ${String(prod.id).substring(0,8)}</span>
+                </div>
+                <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-900'} truncate mt-0.5 group-hover:text-blue-600 transition">${prod.title}</h5>
+                <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: <strong>$${pPrice}</strong> | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
+              </div>
+              <div class="shrink-0 text-xs ${btnColor} font-bold flex items-center space-x-1 group-hover:underline">
+                <span>View</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+              </div>
+            </div>
+          `;
+        }
+      }
+
       let innerHtml = '';
-      if (imgUrl) {
-        innerHtml += `<img src="${imgUrl}" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">`;
+      if (productCardHtml) {
+        innerHtml += productCardHtml;
+      }
+      if (imgUrl && !productCardHtml) {
+        innerHtml += `<img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150'" class="w-full h-36 object-cover rounded-lg border border-white/20 mb-2">`;
       }
       if (text) {
         innerHtml += `<p class="leading-relaxed">${text}</p>`;
@@ -1843,12 +1893,17 @@ async function sendChatMessage(text, imageUrl, reviewUrl) {
     const adminProf = getAdminProfile();
     const isSendingToAdmin = (targetReceiverId === adminProf.id);
 
+    let targetProdId = (activeProductId !== 'null' && activeProductId) ? activeProductId : null;
+    if (!targetProdId && text) {
+      targetProdId = extractProductIdFromText(text);
+    }
+
     const payload = {
       sender_id: currentUser.id,
       buyer_id: currentUser.id,
       receiver_id: targetReceiverId,
       vendor_id: targetReceiverId,
-      product_id: (activeProductId !== 'null' && activeProductId) ? activeProductId : null,
+      product_id: targetProdId,
       text: text || '',
       status_badge: 'AWAITING_ATTENTION',
       channel_type: isSendingToAdmin ? 'ADMIN_DIRECT' : 'MARKETPLACE'
@@ -2227,3 +2282,4 @@ function closeVendorStorefrontModal() {
 </script>
 </body>
 </html>
+
