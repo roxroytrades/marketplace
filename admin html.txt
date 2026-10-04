@@ -1,0 +1,3109 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echo Hub - System Administration & Oversight</title>
+
+  <!-- Tailwind CSS CDN with Dark Mode Enabled -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          darkBg: '#0F172A',
+          cardBg: '#1E293B',
+          accentBlue: '#2563EB',
+          accentHover: '#1D4ED8',
+          borderSlate: '#334155'
+        }
+      }
+    }
+  }
+  </script>
+
+  <!-- FontAwesome for System Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts: Inter / Space Grotesk -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, .font-heading {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  </style>
+</head>
+
+<body class="
+  bg-darkBg
+  text-slate-100
+  min-h-screen
+  flex
+  flex-col
+  justify-between
+">
+
+<!-- WhatsApp-Style Sidebar Context Menu for Admin Portal -->
+<div id="threadContextMenu" class="hidden fixed bg-slate-900 border border-borderSlate rounded-2xl shadow-2xl py-2 z-50 text-xs text-slate-200 w-56 backdrop-blur-md bg-opacity-95">
+  <button onclick="handlePinAction()" class="w-full px-4 py-2 text-left hover:bg-slate-800/80 flex items-center space-x-2.5 transition">
+    <i class="fa-solid fa-thumbtack text-purple-400 w-4"></i><span id="contextPinLabel">Pin Conversation</span>
+  </button>
+  <button onclick="handleUnreadAction()" class="w-full px-4 py-2 text-left hover:bg-slate-800/80 flex items-center space-x-2.5 transition">
+    <i class="fa-solid fa-envelope-open text-amber-400 w-4"></i><span>Mark as Read / Unread</span>
+  </button>
+  <div class="border-t border-borderSlate/60 my-1"></div>
+  <button onclick="handleHideAction()" class="w-full px-4 py-2 text-left hover:bg-slate-800/80 flex items-center space-x-2.5 transition">
+    <i class="fa-solid fa-eye-slash text-slate-400 w-4"></i><span>Hide Tile (Local)</span>
+  </button>
+  <div class="border-t border-borderSlate/60 my-1"></div>
+  <div class="px-3 py-1 text-[10px] font-bold text-amber-400 uppercase tracking-wider">Admin Overrides</div>
+  <button onclick="handleAdminRestoreAction()" class="w-full px-4 py-2 text-left hover:bg-emerald-500/10 text-emerald-400 hover:bg-slate-800/80 flex items-center space-x-2.5 transition">
+    <i class="fa-solid fa-rotate-left text-emerald-400 w-4"></i><span>Restore Soft-Deleted Thread</span>
+  </button>
+  <button onclick="handleAdminUnblockAction()" class="w-full px-4 py-2 text-left hover:bg-amber-500/10 text-amber-400 hover:bg-slate-800/80 flex items-center space-x-2.5 transition">
+    <i class="fa-solid fa-user-check text-amber-400 w-4"></i><span>Override & Unblock Contact</span>
+  </button>
+</div>
+
+<!-- Top Navigation Bar -->
+<header class="
+  bg-cardBg
+  border-b
+  border-borderSlate
+  px-6
+  py-4
+  flex
+  items-center
+  justify-between
+">
+  <div class="flex items-center space-x-3">
+    <!-- Dynamic Header Logo Element -->
+    <div
+      id="headerLogoContainer"
+      class="
+        w-10
+        h-10
+        bg-purple-600
+        rounded-xl
+        flex
+        items-center
+        justify-center
+        text-white
+        shadow-lg
+        shadow-purple-500/20
+        font-heading
+        font-bold
+        text-lg
+        overflow-hidden
+        relative
+      "
+    >
+      <span id="headerLogoText">eh</span>
+      <img
+        id="headerLogoImg"
+        src=""
+        alt="Echo Hub Logo"
+        class="
+          w-full
+          h-full
+          object-cover
+          hidden
+          absolute
+          inset-0
+        "
+      >
+    </div>
+
+    <span class="
+      font-heading
+      text-xl
+      font-bold
+      tracking-wide
+      text-white
+    ">
+      echo<span class="text-purple-400">hub</span>
+      <span class="
+        text-xs
+        bg-purple-500/10
+        text-purple-400
+        border
+        border-purple-500/20
+        px-2
+        py-0.5
+        rounded-full
+        ml-2
+      ">Master Admin Workspace</span>
+    </span>
+  </div>
+
+  <div class="flex items-center space-x-4">
+    <!-- Logged-in User Badge -->
+    <div class="
+      hidden
+      sm:flex
+      items-center
+      space-x-2.5
+      bg-darkBg
+      border
+      border-borderSlate
+      px-3.5
+      py-1.5
+      rounded-xl
+      shadow-inner
+    ">
+      <div class="
+        w-6
+        h-6
+        bg-purple-600/30
+        text-purple-400
+        border
+        border-purple-500/20
+        rounded-lg
+        flex
+        items-center
+        justify-center
+        text-xs
+        font-bold
+      ">
+        <i class="fa-solid fa-user-shield text-[10px]"></i>
+      </div>
+      <span id="headerUserName" class="text-xs font-semibold text-slate-200">System Admin</span>
+    </div>
+
+    <!-- Quick Navigation Link -->
+    <a
+      href="index.html"
+      class="
+        bg-darkBg
+        hover:bg-slate-800
+        border
+        border-borderSlate
+        text-slate-300
+        hover:text-white
+        text-xs
+        px-3
+        py-2
+        rounded-xl
+        transition
+      "
+    >Marketplace View</a>
+
+    <!-- Sign Out Button -->
+    <button
+      onclick="handleLogout()"
+      class="
+        bg-rose-500/10
+        hover:bg-rose-500/20
+        text-rose-400
+        border
+        border-rose-500/20
+        text-xs
+        px-3
+        py-2
+        rounded-xl
+        transition
+        flex
+        items-center
+        space-x-1.5
+        cursor-pointer
+      "
+    >
+      <i class="fa-solid fa-right-from-bracket"></i>
+      <span>Sign Out</span>
+    </button>
+  </div>
+</header>
+
+<!-- Main Workspace Container -->
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+  <!-- Welcome Banner & Section Switcher Tabs -->
+  <div class="
+    bg-cardBg
+    border
+    border-borderSlate
+    rounded-2xl
+    p-6
+    md:p-8
+    flex
+    flex-col
+    md:flex-row
+    justify-between
+    items-start
+    md:items-center
+    space-y-4
+    md:space-y-0
+    shadow-xl
+  ">
+    <div class="space-y-1">
+      <span class="text-xs text-purple-400 font-semibold uppercase tracking-wider">Master Administrative Oversight</span>
+      <h1 class="text-2xl font-bold text-white">System Operations Command Center</h1>
+      <p class="text-xs text-slate-400">
+        Verify shopper IDs, moderate merchandise, oversee full commission pipelines, and conduct direct user outreach.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        onclick="switchAdminTab('accounts')"
+        id="tabAccountsBtn"
+        class="
+          bg-purple-600
+          text-white
+          text-xs
+          font-semibold
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          flex
+          items-center
+          space-x-2
+          shadow-lg
+          shadow-purple-500/20
+        "
+      >
+        <i class="fa-solid fa-users-gear"></i>
+        <span>Accounts & KYC</span>
+      </button>
+
+      <button
+        onclick="switchAdminTab('products')"
+        id="tabProductsBtn"
+        class="
+          bg-darkBg
+          hover:bg-slate-800
+          border
+          border-borderSlate
+          text-slate-300
+          text-xs
+          font-semibold
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          flex
+          items-center
+          space-x-2
+        "
+      >
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <span>Catalog</span>
+      </button>
+
+      <button
+        onclick="switchAdminTab('commissions')"
+        id="tabCommissionsBtn"
+        class="
+          bg-darkBg
+          hover:bg-slate-800
+          border
+          border-borderSlate
+          text-slate-300
+          text-xs
+          font-semibold
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          flex
+          items-center
+          space-x-2
+        "
+      >
+        <i class="fa-solid fa-vault"></i>
+        <span>Commissions Ledger</span>
+      </button>
+
+      <button
+        onclick="switchAdminTab('messages')"
+        id="tabMessagesBtn"
+        class="
+          bg-darkBg
+          hover:bg-slate-800
+          border
+          border-borderSlate
+          text-slate-300
+          text-xs
+          font-semibold
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          flex
+          items-center
+          space-x-2
+          relative
+        "
+      >
+        <i class="fa-solid fa-comments"></i>
+        <span>System Messaging</span>
+        <span id="unreadMessagesBadge" class="hidden bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full ml-1">0</span>
+      </button>
+
+      <button
+        onclick="switchAdminTab('referrals')"
+        id="tabReferralsBtn"
+        class="
+          bg-darkBg
+          hover:bg-slate-800
+          border
+          border-borderSlate
+          text-slate-300
+          text-xs
+          font-semibold
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          flex
+          items-center
+          space-x-2
+        "
+      >
+        <i class="fa-solid fa-users-rectangle"></i>
+        <span>Referrals</span>
+      </button>
+
+      <button
+        onclick="switchAdminTab('settings')"
+        id="tabSettingsBtn"
+        class="
+          bg-darkBg
+          hover:bg-slate-800
+          border
+          border-borderSlate
+          text-slate-300
+          text-xs
+          font-semibold
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          flex
+          items-center
+          space-x-2
+        "
+      >
+        <i class="fa-solid fa-sliders"></i>
+        <span>Branding & Settings</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Admin System KPI Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      p-5
+      rounded-2xl
+      shadow-xl
+      flex
+      items-center
+      justify-between
+    ">
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Accounts</p>
+        <h3 id="statTotalAccounts" class="text-2xl font-black text-white tracking-tight">0</h3>
+      </div>
+      <div class="
+        w-10
+        h-10
+        rounded-xl
+        bg-blue-600/10
+        text-blue-400
+        border
+        border-blue-500/20
+        flex
+        items-center
+        justify-center
+        text-lg
+      ">
+        <i class="fa-solid fa-users"></i>
+      </div>
+    </div>
+
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      p-5
+      rounded-2xl
+      shadow-xl
+      flex
+      items-center
+      justify-between
+    ">
+      <div>
+        <p class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Pending KYC IDs</p>
+        <h3 id="statPendingIds" class="text-2xl font-black text-white tracking-tight">0</h3>
+      </div>
+      <div class="
+        w-10
+        h-10
+        rounded-xl
+        bg-amber-500/10
+        text-amber-400
+        border
+        border-amber-500/20
+        flex
+        items-center
+        justify-center
+        text-lg
+      ">
+        <i class="fa-solid fa-id-card"></i>
+      </div>
+    </div>
+
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      p-5
+      rounded-2xl
+      shadow-xl
+      flex
+      items-center
+      justify-between
+    ">
+      <div>
+        <p class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Active Catalog</p>
+        <h3 id="statActiveProducts" class="text-2xl font-black text-white tracking-tight">0</h3>
+      </div>
+      <div class="
+        w-10
+        h-10
+        rounded-xl
+        bg-emerald-500/10
+        text-emerald-400
+        border
+        border-emerald-500/20
+        flex
+        items-center
+        justify-center
+        text-lg
+      ">
+        <i class="fa-solid fa-boxes-stacked"></i>
+      </div>
+    </div>
+
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      p-5
+      rounded-2xl
+      shadow-xl
+      flex
+      items-center
+      justify-between
+    ">
+      <div>
+        <p class="text-[11px] font-bold text-purple-400 uppercase tracking-wider">Total Volume</p>
+        <h3 id="statTotalVolume" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      </div>
+      <div class="
+        w-10
+        h-10
+        rounded-xl
+        bg-purple-500/10
+        text-purple-400
+        border
+        border-purple-500/20
+        flex
+        items-center
+        justify-center
+        text-lg
+      ">
+        <i class="fa-solid fa-vault"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 1: ACCOUNTS & KYC VERIFICATION ================= -->
+  <div id="accountsSection" class="space-y-6">
+    <div class="
+      flex
+      flex-col
+      sm:flex-row
+      justify-between
+      items-start
+      sm:items-center
+      gap-4
+    ">
+      <div>
+        <h2 class="text-lg font-bold text-white tracking-tight">Platform Registered Users & Verification</h2>
+        <p class="text-xs text-slate-400">Review National ID uploads, approve shopper accounts, and manage system roles.</p>
+      </div>
+
+      <div class="
+        flex
+        items-center
+        space-x-3
+        w-full
+        sm:w-auto
+      ">
+        <input
+          type="text"
+          id="accountsSearchInput"
+          oninput="renderAccountsTable()"
+          placeholder="Search name, email..."
+          class="
+            bg-cardBg
+            border
+            border-borderSlate
+            rounded-xl
+            px-3.5
+            py-2
+            text-xs
+            text-slate-200
+            outline-none
+            focus:border-purple-500
+            w-full
+            sm:w-64
+            transition
+          "
+        >
+        <select
+          id="accountsFilterStatus"
+          onchange="renderAccountsTable()"
+          class="
+            bg-cardBg
+            border
+            border-borderSlate
+            rounded-xl
+            px-3
+            py-2
+            text-xs
+            text-slate-300
+            outline-none
+            focus:border-purple-500
+            transition
+          "
+        >
+          <option value="ALL">All KYC Statuses</option>
+          <option value="PENDING_VERIFICATION">Pending Verification</option>
+          <option value="VERIFIED">Verified</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Accounts Table -->
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      rounded-2xl
+      overflow-hidden
+      shadow-xl
+    ">
+      <div class="
+        p-4
+        border-b
+        border-borderSlate
+        bg-slate-900/40
+        grid
+        grid-cols-12
+        gap-3
+        text-xs
+        text-slate-400
+        font-semibold
+        items-center
+      ">
+        <span class="col-span-3">User & Email</span>
+        <span class="col-span-2">System Role</span>
+        <span class="col-span-3">KYC Status</span>
+        <span class="col-span-2">National ID Proof</span>
+        <span class="col-span-2 text-right">Action</span>
+      </div>
+      <div id="accountsTableBody" class="
+        divide-y
+        divide-borderSlate
+      ">
+        <div class="p-8 text-center text-xs text-slate-400">
+          <i class="
+            fa-solid
+            fa-spinner
+            fa-spin
+            text-lg
+            mb-2
+          "></i>
+          <p>Loading registered user profiles...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 2: PRODUCT CATALOG MODERATION ================= -->
+  <div id="productsSection" class="space-y-6 hidden">
+    <div class="
+      flex
+      flex-col
+      sm:flex-row
+      justify-between
+      items-start
+      sm:items-center
+      gap-4
+    ">
+      <div>
+        <h2 class="text-lg font-bold text-white tracking-tight">Marketplace Product Inventory Audit</h2>
+        <p class="text-xs text-slate-400">Inspect vendor offerings, verify review reward amounts, and toggle active status.</p>
+      </div>
+
+      <div class="relative w-full sm:w-72">
+        <span class="
+          absolute
+          inset-y-0
+          left-0
+          pl-3.5
+          flex
+          items-center
+          text-slate-500
+        "><i class="fa-solid fa-search text-xs"></i></span>
+        <input
+          type="text"
+          id="productsSearchInput"
+          oninput="renderProductsTable()"
+          placeholder="Search listing title..."
+          class="
+            w-full
+            bg-cardBg
+            border
+            border-borderSlate
+            rounded-xl
+            pl-10
+            pr-4
+            py-2
+            text-xs
+            text-slate-200
+            outline-none
+            focus:border-purple-500
+            transition
+          "
+        >
+      </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      rounded-2xl
+      overflow-hidden
+      shadow-xl
+    ">
+      <div class="
+        p-4
+        border-b
+        border-borderSlate
+        bg-slate-900/40
+        grid
+        grid-cols-12
+        gap-3
+        text-xs
+        text-slate-400
+        font-semibold
+        items-center
+      ">
+        <span class="col-span-4">Product Title & Price</span>
+        <span class="col-span-3">Vendor ID</span>
+        <span class="col-span-2">Listing Status</span>
+        <span class="col-span-3 text-right">Action</span>
+      </div>
+      <div id="productsTableBody" class="
+        divide-y
+        divide-borderSlate
+      ">
+        <div class="p-8 text-center text-xs text-slate-400">
+          <i class="
+            fa-solid
+            fa-spinner
+            fa-spin
+            text-lg
+            mb-2
+          "></i>
+          <p>Loading global product inventory...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 3: MASTER COMMISSIONS LEDGER ================= -->
+  <div id="commissionsSection" class="space-y-6 hidden">
+    <div class="space-y-1">
+      <h2 class="text-lg font-bold text-white tracking-tight">Master Financial Ledger & System Volume Audit</h2>
+      <p class="text-xs text-slate-400">Track multi-tier referral splits, reviewer payouts, and global marketplace cash flow.</p>
+    </div>
+
+    <!-- Global Financial Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="
+        bg-cardBg
+        border
+        border-borderSlate
+        p-4
+        rounded-2xl
+        space-y-1
+        shadow-lg
+      ">
+        <span class="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Marketplace Unsettled</span>
+        <h3 id="sumMarketplacePending" class="text-xl font-bold text-white">$0.00</h3>
+      </div>
+      <div class="
+        bg-cardBg
+        border
+        border-borderSlate
+        p-4
+        rounded-2xl
+        space-y-1
+        shadow-lg
+      ">
+        <span class="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Marketplace Settled</span>
+        <h3 id="sumMarketplaceCollected" class="text-xl font-bold text-emerald-400">$0.00</h3>
+      </div>
+      <div class="
+        bg-cardBg
+        border
+        border-borderSlate
+        p-4
+        rounded-2xl
+        space-y-1
+        shadow-lg
+      ">
+        <span class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Admin Platform Share (Unpaid)</span>
+        <h3 id="sumAdminPending" class="text-xl font-bold text-purple-300">$0.00</h3>
+      </div>
+      <div class="
+        bg-cardBg
+        border
+        border-borderSlate
+        p-4
+        rounded-2xl
+        space-y-1
+        shadow-lg
+      ">
+        <span class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Admin Platform Share (Paid)</span>
+        <h3 id="sumAdminCollected" class="text-xl font-bold text-purple-400">$0.00</h3>
+      </div>
+    </div>
+
+    <!-- Master Ledger Sub-Tabs Navigation -->
+    <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
+      <button
+        onclick="switchMasterCommSubTab('incoming')"
+        id="subMasterIncoming"
+        class="
+          px-3.5
+          py-2
+          rounded-xl
+          text-xs
+          font-semibold
+          bg-purple-600
+          text-white
+          shadow-md
+          transition
+        "
+      >📥 Incoming Payout Requests</button>
+      <button
+        onclick="switchMasterCommSubTab('outgoing')"
+        id="subMasterOutgoing"
+        class="
+          px-3.5
+          py-2
+          rounded-xl
+          text-xs
+          font-semibold
+          bg-cardBg
+          border
+          border-borderSlate
+          text-slate-300
+          hover:bg-slate-800
+          transition
+        "
+      >📤 Outgoing Vendor Offers</button>
+      <button
+        onclick="switchMasterCommSubTab('working')"
+        id="subMasterWorking"
+        class="
+          px-3.5
+          py-2
+          rounded-xl
+          text-xs
+          font-semibold
+          bg-cardBg
+          border
+          border-borderSlate
+          text-slate-300
+          hover:bg-slate-800
+          transition
+        "
+      >⚡ Active Working Queue</button>
+      <button
+        onclick="switchMasterCommSubTab('history')"
+        id="subMasterHistory"
+        class="
+          px-3.5
+          py-2
+          rounded-xl
+          text-xs
+          font-semibold
+          bg-cardBg
+          border
+          border-borderSlate
+          text-slate-300
+          hover:bg-slate-800
+          transition
+        "
+      >📜 Master Payment History</button>
+    </div>
+
+    <!-- Action Toolbar & Search -->
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      rounded-2xl
+      p-4
+      flex
+      flex-col
+      sm:flex-row
+      gap-4
+      items-center
+      justify-between
+      shadow-md
+    ">
+      <div class="
+        relative
+        w-full
+        sm:w-72
+      ">
+        <span class="
+          absolute
+          inset-y-0
+          left-0
+          pl-3.5
+          flex
+          items-center
+          text-slate-500
+        "><i class="fa-solid fa-search text-xs"></i></span>
+        <input
+          type="text"
+          id="masterCommSearch"
+          oninput="renderMasterCommissions()"
+          placeholder="Search Feedback ID, Comm ID..."
+          class="
+            w-full
+            bg-darkBg
+            border
+            border-borderSlate
+            rounded-xl
+            pl-10
+            pr-4
+            py-2
+            text-xs
+            text-slate-200
+            outline-none
+            focus:border-purple-500
+            transition
+          "
+        >
+      </div>
+
+      <div id="masterCommToolbar" class="
+        flex
+        items-center
+        space-x-2
+        w-full
+        sm:w-auto
+        justify-end
+      ">
+        <!-- Dynamic Action Buttons -->
+      </div>
+    </div>
+
+    <!-- Master Ledger Table -->
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      rounded-2xl
+      overflow-hidden
+      shadow-xl
+    ">
+      <div class="
+        p-4
+        border-b
+        border-borderSlate
+        bg-slate-900/40
+        grid
+        grid-cols-12
+        gap-3
+        text-xs
+        text-slate-400
+        font-semibold
+        items-center
+      ">
+        <span class="col-span-1"><input type="checkbox" id="selectAllMasterComms" onclick="toggleSelectAllMaster(this)" class="rounded border-borderSlate bg-darkBg text-purple-600"></span>
+        <span class="col-span-3">Feedback ID & Comm ID</span>
+        <span class="col-span-3">Role & Recipient ID</span>
+        <span class="col-span-2">Disbursement Amount</span>
+        <span class="col-span-3 text-right">Status & Operational Action</span>
+      </div>
+      <div id="masterCommsTableBody" class="
+        divide-y
+        divide-borderSlate
+      ">
+        <div class="p-8 text-center text-xs text-slate-400">
+          <i class="
+            fa-solid
+            fa-spinner
+            fa-spin
+            text-lg
+            mb-2
+          "></i>
+          <p>Loading master commission entries...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 4: SYSTEM MESSAGING & DIRECT OUTREACH ================= -->
+  <div id="messagesSection" class="space-y-6 hidden">
+    <div class="
+      flex
+      items-center
+      justify-between
+    ">
+      <div>
+        <h2 class="text-lg font-bold text-white tracking-tight">System Message Streams & Unrestricted Audit Trail</h2>
+        <p class="text-xs text-slate-400">Inspect full global transcripts (including soft-deleted messages) and manage user communications.</p>
+      </div>
+      <button
+        onclick="openNewOutreachModal()"
+        class="
+          bg-purple-600
+          hover:bg-purple-700
+          text-white
+          text-xs
+          font-semibold
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          shadow-lg
+          shadow-purple-500/20
+          flex
+          items-center
+          space-x-2
+        "
+      >
+        <i class="fa-solid fa-plus"></i>
+        <span>+ Start Direct Outreach</span>
+      </button>
+    </div>
+
+    <!-- Messaging Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Panel: Threads Directory -->
+      <div class="
+        bg-cardBg
+        border
+        border-borderSlate
+        rounded-2xl
+        p-4
+        space-y-3
+        h-[520px]
+        flex
+        flex-col
+      ">
+        <input
+          type="text"
+          id="adminThreadSearch"
+          oninput="renderAdminThreadsList()"
+          placeholder="Filter threads by Feedback ID, user..."
+          class="
+            bg-darkBg
+            border
+            border-borderSlate
+            rounded-xl
+            px-3.5
+            py-2
+            text-xs
+            text-slate-200
+            outline-none
+            focus:border-purple-500
+            w-full
+            transition
+          "
+        >
+        <div id="adminThreadsList" class="
+          space-y-2
+          flex-1
+          overflow-y-auto
+          pr-1
+        ">
+          <div class="
+            text-center
+            py-10
+            text-xs
+            text-slate-500
+          ">Loading global message streams...</div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Active Chat Window -->
+      <div class="
+        lg:col-span-2
+        bg-cardBg
+        border
+        border-borderSlate
+        rounded-2xl
+        p-6
+        flex
+        flex-col
+        justify-between
+        h-[520px]
+      ">
+        <div id="adminChatHeader" class="
+          border-b
+          border-borderSlate
+          pb-3
+          flex
+          items-center
+          justify-between
+        ">
+          <div>
+            <h3 id="adminActiveChatTitle" class="
+              text-sm
+              font-bold
+              text-white
+            ">Select a thread or compose outreach</h3>
+            <p id="adminActiveChatSub" class="
+              text-[10px]
+              text-slate-400
+            ">Global Unrestricted Audit Trail & Operational Overrides</p>
+          </div>
+        </div>
+        <div id="adminChatContainer" class="
+          flex-1
+          overflow-y-auto
+          py-4
+          space-y-3
+          pr-2
+        ">
+          <div class="
+            text-center
+            py-20
+            text-xs
+            text-slate-500
+          ">
+            <i class="
+              fa-solid
+              fa-comments
+              text-3xl
+              mb-2
+              text-purple-400
+            "></i>
+            <p>Select a thread on the left to inspect or send direct messages.</p>
+          </div>
+        </div>
+        <form id="adminChatForm" onsubmit="handleAdminSendMessage(event)" class="
+          pt-3
+          border-t
+          border-borderSlate
+          flex
+          gap-2
+          items-center
+        ">
+          <input
+            type="text"
+            id="adminChatMsgInput"
+            placeholder="Type administrative response or notification..."
+            class="
+              flex-1
+              bg-darkBg
+              border
+              border-borderSlate
+              rounded-xl
+              px-4
+              py-2.5
+              text-xs
+              text-slate-200
+              outline-none
+              focus:border-purple-500
+              transition
+            "
+            disabled
+          >
+          <button
+            type="submit"
+            id="adminChatSendBtn"
+            class="
+              bg-purple-600
+              hover:bg-purple-700
+              text-white
+              text-xs
+              font-semibold
+              px-5
+              py-2.5
+              rounded-xl
+              transition
+              shadow-md
+            "
+            disabled
+          >Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 5: REFERRAL HUB OVERSIGHT ================= -->
+  <div id="referralsSection" class="space-y-6 hidden">
+    <div class="space-y-1">
+      <h2 class="
+        text-lg
+        font-bold
+        text-white
+        tracking-tight
+      ">
+        Platform Referral Oversight & Master Management
+      </h2>
+      <p class="text-xs text-slate-400">
+        Monitor system-wide referral performance, track global affiliate links, and audit commission bonuses.
+      </p>
+    </div>
+
+    <!-- Referral Audit Table -->
+    <div class="
+      bg-cardBg
+      border
+      border-borderSlate
+      rounded-2xl
+      overflow-hidden
+      shadow-xl
+    ">
+      <div class="
+        p-4
+        border-b
+        border-borderSlate
+        bg-slate-900/40
+        grid
+        grid-cols-12
+        gap-3
+        text-xs
+        text-slate-400
+        font-semibold
+        items-center
+      ">
+        <span class="col-span-3">User & Referral Code</span>
+        <span class="col-span-3">Inviter Code (invited_by_code)</span>
+        <span class="col-span-2">Role</span>
+        <span class="col-span-2">Status</span>
+        <span class="col-span-2 text-right">Action</span>
+      </div>
+      <div id="referralsTableBody" class="
+        divide-y
+        divide-borderSlate
+      ">
+        <div class="p-8 text-center text-xs text-slate-400">
+          <i class="
+            fa-solid
+            fa-spinner
+            fa-spin
+            text-lg
+            mb-2
+          "></i>
+          <p>Loading referral network tree...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 6: SYSTEM SETTINGS & BRANDING ================= -->
+  <div id="settingsSection" class="space-y-6 hidden">
+    <div class="space-y-1">
+      <h2 class="
+        text-lg
+        font-bold
+        text-white
+        tracking-tight
+      ">
+        System Settings & Platform Branding
+      </h2>
+      <p class="text-xs text-slate-400">
+        Customize application brand icon, manage global configurations, and dispatch platform announcements.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Brand Logo Manager Card -->
+      <div class="
+        bg-cardBg
+        border
+        border-borderSlate
+        rounded-2xl
+        p-6
+        space-y-4
+        shadow-xl
+      ">
+        <div class="
+          flex
+          items-center
+          space-x-3
+          border-b
+          border-borderSlate
+          pb-3
+        ">
+          <div class="
+            w-10
+            h-10
+            bg-purple-600/20
+            text-purple-400
+            border
+            border-purple-500/30
+            rounded-xl
+            flex
+            items-center
+            justify-center
+            font-bold
+          ">
+            <i class="fa-solid fa-icons"></i>
+          </div>
+          <div>
+            <h3 class="
+              font-bold
+              text-white
+              text-sm
+            ">Platform Brand Icon</h3>
+            <p class="
+              text-[11px]
+              text-slate-400
+            ">Upload 40x40px square brand icon (Auto-compressed Base64)</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center space-x-4">
+            <div id="settingsBrandPreviewBox" class="
+              w-12
+              h-12
+              bg-darkBg
+              border
+              border-borderSlate
+              rounded-xl
+              flex
+              items-center
+              justify-center
+              overflow-hidden
+              relative
+            ">
+              <span id="settingsLogoText" class="
+                text-xs
+                font-bold
+                text-slate-400
+              ">eh</span>
+              <img id="settingsLogoImg" src="" alt="Brand Logo Preview" class="
+                w-full
+                h-full
+                object-cover
+                hidden
+                absolute
+                inset-0
+              ">
+            </div>
+            <div class="flex-1 space-y-1">
+              <input
+                type="file"
+                id="brandLogoFileInput"
+                accept="image/*"
+                onchange="handleBrandLogoSelect(event)"
+                class="
+                  w-full
+                  bg-darkBg
+                  border
+                  border-borderSlate
+                  rounded-xl
+                  px-3
+                  py-2
+                  text-xs
+                  text-slate-400
+                  file:mr-3
+                  file:py-1
+                  file:px-2.5
+                  file:rounded-lg
+                  file:border-0
+                  file:text-xs
+                  file:font-semibold
+                  file:bg-purple-600
+                  file:text-white
+                "
+              >
+              <p class="
+                text-[10px]
+                text-slate-500
+              ">Supports PNG, JPG, WEBP. Synchronizes across all portals instantly.</p>
+            </div>
+          </div>
+
+          <button
+            onclick="saveBrandSettings()"
+            class="
+              w-full
+              bg-purple-600
+              hover:bg-purple-700
+              text-white
+              text-xs
+              font-semibold
+              py-3
+              rounded-xl
+              transition
+              shadow-lg
+              shadow-purple-500/20
+              flex
+              items-center
+              justify-center
+              space-x-2
+            "
+          >
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Save & Apply Brand Icon</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Global System Announcements Dispatcher -->
+      <div class="
+        bg-cardBg
+        border
+        border-borderSlate
+        rounded-2xl
+        p-6
+        space-y-4
+        shadow-xl
+      ">
+        <div class="
+          flex
+          items-center
+          space-x-3
+          border-b
+          border-borderSlate
+          pb-3
+        ">
+          <div class="
+            w-10
+            h-10
+            bg-blue-600/20
+            text-blue-400
+            border
+            border-blue-500/30
+            rounded-xl
+            flex
+            items-center
+            justify-center
+            font-bold
+          ">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+          <div>
+            <h3 class="
+              font-bold
+              text-white
+              text-sm
+            ">Global System Broadcast</h3>
+            <p class="
+              text-[11px]
+              text-slate-400
+            ">Send announcements to all platform users (`notifications` table)</p>
+          </div>
+        </div>
+
+        <form onsubmit="handleSettingsBroadcastSubmit(event)" class="space-y-3">
+          <div class="space-y-1">
+            <label class="
+              text-xs
+              font-medium
+              text-slate-300
+            ">Broadcast Title</label>
+            <input
+              type="text"
+              id="settingsBroadcastTitle"
+              required
+              placeholder="e.g., Scheduled Maintenance Notice"
+              class="
+                w-full
+                bg-darkBg
+                border
+                border-borderSlate
+                rounded-xl
+                px-3.5
+                py-2.5
+                text-xs
+                text-slate-200
+                outline-none
+                focus:border-purple-500
+                transition
+              "
+            >
+          </div>
+
+          <div class="space-y-1">
+            <label class="
+              text-xs
+              font-medium
+              text-slate-300
+            ">Announcement Body</label>
+            <textarea
+              id="settingsBroadcastBody"
+              required
+              rows="3"
+              placeholder="Enter message text to broadcast platform-wide..."
+              class="
+                w-full
+                bg-darkBg
+                border
+                border-borderSlate
+                rounded-xl
+                p-3
+                text-xs
+                text-slate-200
+                outline-none
+                focus:border-purple-500
+                transition
+              "
+            ></textarea>
+          </div>
+
+          <button
+            type="submit"
+            class="
+              w-full
+              bg-blue-600
+              hover:bg-blue-700
+              text-white
+              text-xs
+              font-semibold
+              py-3
+              rounded-xl
+              transition
+              shadow-lg
+              shadow-blue-500/20
+              flex
+              items-center
+              justify-center
+              space-x-2
+            "
+          >
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Dispatch Global Broadcast</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ================= MODALS ================= -->
+
+<!-- 1. National ID Inspection Modal -->
+<div id="idViewerModal" class="
+  fixed
+  inset-0
+  bg-black/70
+  backdrop-blur-sm
+  z-50
+  hidden
+  flex
+  items-center
+  justify-center
+  p-4
+">
+  <div class="
+    bg-cardBg
+    border
+    border-borderSlate
+    rounded-3xl
+    max-w-lg
+    w-full
+    p-6
+    space-y-4
+    shadow-2xl
+  ">
+    <div class="
+      flex
+      items-center
+      justify-between
+      border-b
+      border-borderSlate
+      pb-3
+    ">
+      <h3 id="idModalTitle" class="
+        text-sm
+        font-bold
+        text-white
+      ">National ID Verification Proof</h3>
+      <button onclick="closeModal('idViewerModal')" class="
+        text-slate-400
+        hover:text-white
+        transition
+      ">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <div class="
+      bg-darkBg
+      border
+      border-borderSlate
+      rounded-xl
+      p-2
+      text-center
+      max-h-80
+      overflow-y-auto
+    ">
+      <img id="modalIdImg" src="" alt="National ID Proof" class="
+        mx-auto
+        rounded
+        object-contain
+        max-h-72
+      ">
+    </div>
+    <div class="flex justify-end">
+      <button onclick="closeModal('idViewerModal')" class="
+        bg-darkBg
+        hover:bg-slate-800
+        border
+        border-borderSlate
+        text-slate-300
+        text-xs
+        px-4
+        py-2
+        rounded-xl
+        transition
+      ">
+        Close Viewer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Master Receipt Inspection Modal -->
+<div id="masterReceiptModal" class="
+  fixed
+  inset-0
+  bg-black/70
+  backdrop-blur-sm
+  z-50
+  hidden
+  flex
+  items-center
+  justify-center
+  p-4
+">
+  <div class="
+    bg-cardBg
+    border
+    border-borderSlate
+    rounded-3xl
+    max-w-lg
+    w-full
+    p-6
+    space-y-4
+    shadow-2xl
+  ">
+    <div class="
+      flex
+      items-center
+      justify-between
+      border-b
+      border-borderSlate
+      pb-3
+    ">
+      <h3 class="
+        text-sm
+        font-bold
+        text-white
+      ">Master Receipt Audit Proof</h3>
+      <button onclick="closeModal('masterReceiptModal')" class="
+        text-slate-400
+        hover:text-white
+        transition
+      ">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-xs">
+      <div class="
+        bg-darkBg
+        p-3
+        rounded-xl
+        border
+        border-borderSlate
+        space-y-1
+      ">
+        <span class="text-slate-500">PayPal Transaction ID</span>
+        <p id="masterReceiptTxId" class="
+          font-mono
+          font-bold
+          text-white
+        ">-</p>
+      </div>
+      <div class="
+        bg-darkBg
+        p-3
+        rounded-xl
+        border
+        border-borderSlate
+        space-y-1
+      ">
+        <span class="text-slate-500">Commission ID</span>
+        <p id="masterReceiptCommId" class="
+          font-mono
+          text-emerald-400
+          font-bold
+        ">-</p>
+      </div>
+    </div>
+    <div class="
+      bg-darkBg
+      border
+      border-borderSlate
+      rounded-xl
+      p-2
+      text-center
+      max-h-72
+      overflow-y-auto
+    ">
+      <img id="masterReceiptImg" src="" alt="Payment Receipt" class="
+        mx-auto
+        rounded
+        object-contain
+        max-h-64
+      ">
+    </div>
+    <button onclick="closeModal('masterReceiptModal')" class="
+      w-full
+      bg-darkBg
+      hover:bg-slate-800
+      border
+      border-borderSlate
+      text-white
+      text-xs
+      font-semibold
+      py-2.5
+      rounded-xl
+      transition
+    ">
+      Close
+    </button>
+  </div>
+</div>
+
+<!-- 3. Direct Outreach Modal -->
+<div id="outreachModal" class="
+  fixed
+  inset-0
+  bg-black/70
+  backdrop-blur-sm
+  z-50
+  hidden
+  flex
+  items-center
+  justify-center
+  p-4
+">
+  <div class="
+    bg-cardBg
+    border
+    border-borderSlate
+    rounded-3xl
+    max-w-md
+    w-full
+    p-6
+    space-y-4
+    shadow-2xl
+  ">
+    <div class="
+      flex
+      items-center
+      justify-between
+      border-b
+      border-borderSlate
+      pb-3
+    ">
+      <h3 class="
+        text-sm
+        font-bold
+        text-white
+      ">Start Direct Administrative Outreach</h3>
+      <button onclick="closeModal('outreachModal')" class="
+        text-slate-400
+        hover:text-white
+        transition
+      ">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <form onsubmit="handleOutreachSubmit(event)" class="space-y-4">
+      <div class="space-y-1.5">
+        <label class="
+          text-xs
+          font-medium
+          text-slate-300
+        ">Target User</label>
+        <select id="outreachUserSelect" required class="
+          w-full
+          bg-darkBg
+          border
+          border-borderSlate
+          rounded-xl
+          px-3
+          py-2.5
+          text-xs
+          text-slate-200
+          outline-none
+          focus:border-purple-500
+          transition
+        ">
+          <option value="">Select a registered user...</option>
+        </select>
+      </div>
+      <div class="space-y-1.5">
+        <label class="
+          text-xs
+          font-medium
+          text-slate-300
+        ">Initial Message / Notice</label>
+        <textarea id="outreachMsgText" required rows="3" placeholder="Enter administrative inquiry or compliance notice..." class="
+          w-full
+          bg-darkBg
+          border
+          border-borderSlate
+          rounded-xl
+          p-3
+          text-xs
+          text-slate-200
+          outline-none
+          focus:border-purple-500
+          transition
+        "></textarea>
+      </div>
+      <button type="submit" class="
+        w-full
+        bg-purple-600
+        hover:bg-purple-700
+        text-white
+        text-xs
+        font-semibold
+        py-3
+        rounded-xl
+        transition
+        shadow-lg
+        shadow-purple-500/20
+      ">
+        Initiate Thread
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- 4. Reassign Inviter Code Modal -->
+<div id="reassignInviterModal" class="
+  fixed
+  inset-0
+  bg-black/70
+  backdrop-blur-sm
+  z-50
+  hidden
+  flex
+  items-center
+  justify-center
+  p-4
+">
+  <div class="
+    bg-cardBg
+    border
+    border-borderSlate
+    rounded-3xl
+    max-w-md
+    w-full
+    p-6
+    space-y-4
+    shadow-2xl
+  ">
+    <div class="
+      flex
+      items-center
+      justify-between
+      border-b
+      border-borderSlate
+      pb-3
+    ">
+      <h3 class="
+        text-sm
+        font-bold
+        text-white
+      ">Reassign Account Inviter Code</h3>
+      <button onclick="closeModal('reassignInviterModal')" class="
+        text-slate-400
+        hover:text-white
+        transition
+      ">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <form onsubmit="handleReassignInviterSubmit(event)" class="space-y-4">
+      <input type="hidden" id="reassignTargetUserId">
+      <div class="space-y-1.5">
+        <label class="
+          text-xs
+          font-medium
+          text-slate-300
+        ">Target User</label>
+        <input type="text" id="reassignUserName" readonly class="
+          w-full
+          bg-darkBg
+          border
+          border-borderSlate
+          rounded-xl
+          px-3
+          py-2
+          text-xs
+          text-slate-400
+          outline-none
+        ">
+      </div>
+      <div class="space-y-1.5">
+        <label class="
+          text-xs
+          font-medium
+          text-slate-300
+        ">New Inviter Code (invited_by_code)</label>
+        <input type="text" id="reassignNewCode" required placeholder="e.g., vendor_12345678 or REF-XXXX" class="
+          w-full
+          bg-darkBg
+          border
+          border-borderSlate
+          rounded-xl
+          px-3
+          py-2
+          text-xs
+          text-slate-200
+          outline-none
+          focus:border-purple-500
+          transition
+        ">
+      </div>
+      <button type="submit" class="
+        w-full
+        bg-purple-600
+        hover:bg-purple-700
+        text-white
+        text-xs
+        font-semibold
+        py-3
+        rounded-xl
+        transition
+        shadow-lg
+        shadow-purple-500/20
+      ">
+        Confirm Code Reassignment
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- 5. System Broadcast Modal -->
+<div id="broadcastModal" class="
+  fixed
+  inset-0
+  bg-black/70
+  backdrop-blur-sm
+  z-50
+  hidden
+  flex
+  items-center
+  justify-center
+  p-4
+">
+  <div class="
+    bg-cardBg
+    border
+    border-borderSlate
+    rounded-3xl
+    max-w-md
+    w-full
+    p-6
+    space-y-4
+    shadow-2xl
+  ">
+    <div class="
+      flex
+      items-center
+      justify-between
+      border-b
+      border-borderSlate
+      pb-3
+    ">
+      <h3 class="
+        text-sm
+        font-bold
+        text-white
+        flex
+        items-center
+        space-x-2
+      ">
+        <i class="fa-solid fa-bullhorn text-purple-400"></i>
+        <span>Dispatch System Broadcast</span>
+      </h3>
+      <button onclick="closeModal('broadcastModal')" class="
+        text-slate-400
+        hover:text-white
+        transition
+      ">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <form onsubmit="handleModalBroadcastSubmit(event)" class="space-y-4">
+      <div class="space-y-1.5">
+        <label class="
+          text-xs
+          font-medium
+          text-slate-300
+        ">Notice Title</label>
+        <input
+          type="text"
+          id="modalBroadcastTitle"
+          required
+          placeholder="e.g., System Update or Holiday Announcement"
+          class="
+            w-full
+            bg-darkBg
+            border
+            border-borderSlate
+            rounded-xl
+            px-3.5
+            py-2.5
+            text-xs
+            text-slate-200
+            outline-none
+            focus:border-purple-500
+            transition
+          "
+        >
+      </div>
+      <div class="space-y-1.5">
+        <label class="
+          text-xs
+          font-medium
+          text-slate-300
+        ">Notice Content</label>
+        <textarea
+          id="modalBroadcastBody"
+          required
+          rows="3"
+          placeholder="Enter the broadcast text to be saved to notifications schema..."
+          class="
+            w-full
+            bg-darkBg
+            border
+            border-borderSlate
+            rounded-xl
+            p-3
+            text-xs
+            text-slate-200
+            outline-none
+            focus:border-purple-500
+            transition
+          "
+        ></textarea>
+      </div>
+      <button type="submit" class="
+        w-full
+        bg-purple-600
+        hover:bg-purple-700
+        text-white
+        text-xs
+        font-semibold
+        py-3
+        rounded-xl
+        transition
+        shadow-lg
+        shadow-purple-500/20
+      ">
+        Send Announcement
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="
+  fixed
+  bottom-6
+  right-6
+  z-50
+  flex
+  flex-col
+  space-y-2
+"></div>
+
+<!-- Footer -->
+<footer class="
+  border-t
+  border-borderSlate
+  bg-cardBg
+  py-6
+  text-center
+  text-xs
+  text-slate-500
+">
+  <p>&copy; 2026 Echo Hub Marketplace. Administrator Oversight & Control Panel.</p>
+</footer>
+
+<!-- Main Admin Script -->
+<script>
+const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let adminAccounts = [];
+let adminProducts = [];
+let adminCommissions = [];
+let adminThreads = [];
+let activeAdminThreadId = null;
+let activeAdminTab = 'accounts';
+let activeMasterSubTab = 'incoming';
+let selectedMasterCommIds = new Set();
+let isPollingActive = false;
+let pollingTimer = null;
+let pendingBrandLogoBase64 = null;
+
+// ================= INITIALIZATION & AUTHENTICATION =================
+
+async function loadAppBranding() {
+  try {
+    const cachedLogo = localStorage.getItem('app_logo_base64');
+    if (cachedLogo) {
+      applyAdminLogo(cachedLogo);
+    }
+
+    if (typeof _supabase !== 'undefined') {
+      const { data, error } = await _supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'app_logo_base64')
+        .maybeSingle();
+
+      if (!error && data && data.value) {
+        localStorage.setItem('app_logo_base64', data.value);
+        applyAdminLogo(data.value);
+      }
+    }
+  } catch (err) {
+    console.log('App branding query info:', err.message || err);
+  }
+}
+
+function applyAdminLogo(base64Data) {
+  const imgEl = document.getElementById('headerLogoImg');
+  const txtEl = document.getElementById('headerLogoText');
+  if (imgEl && txtEl) {
+    imgEl.src = base64Data;
+    imgEl.classList.remove('hidden');
+    txtEl.classList.add('hidden');
+  }
+
+  const settingsImg = document.getElementById('settingsLogoImg');
+  const settingsTxt = document.getElementById('settingsLogoText');
+  if (settingsImg && settingsTxt) {
+    settingsImg.src = base64Data;
+    settingsImg.classList.remove('hidden');
+    settingsTxt.classList.add('hidden');
+  }
+}
+
+function handleBrandLogoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    pendingBrandLogoBase64 = e.target.result;
+    applyAdminLogo(pendingBrandLogoBase64);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveBrandSettings() {
+  if (!pendingBrandLogoBase64) {
+    const existing = localStorage.getItem('app_logo_base64');
+    if (!existing) {
+      showToast("Please choose a brand icon file first.");
+      return;
+    }
+    pendingBrandLogoBase64 = existing;
+  }
+
+  try {
+    const { error } = await _supabase
+      .from('system_settings')
+      .upsert([
+        {
+          key: 'app_logo_base64',
+          value: pendingBrandLogoBase64,
+          updated_at: new Date().toISOString()
+        }
+      ], { onConflict: 'key' });
+
+    if (error) throw error;
+
+    localStorage.setItem('app_logo_base64', pendingBrandLogoBase64);
+    applyAdminLogo(pendingBrandLogoBase64);
+    showToast("Brand logo icon saved and synchronized platform-wide!");
+  } catch (err) {
+    alert("Error saving branding settings: " + err.message);
+  }
+}
+
+async function initAdminWorkspace() {
+  await loadAppBranding();
+  try {
+    const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+    if (sessionErr || !session) {
+      window.location.href = 'login.html';
+      return;
+    }
+    currentUser = session.user;
+
+    // Check role in profiles
+    try {
+      const { data: prof } = await _supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+      if (prof && prof.full_name) {
+        document.getElementById('headerUserName').textContent = prof.full_name;
+      }
+    } catch (e) {
+      console.warn("Profile check bypassed:", e);
+    }
+
+    await loadAllAdminData();
+
+    if (pollingTimer) clearInterval(pollingTimer);
+    pollingTimer = setInterval(pollAdminData, 15000); // 15s concurrency guard
+  } catch (err) {
+    console.error("Admin init error:", err);
+  }
+}
+
+async function loadAllAdminData() {
+  await Promise.all([
+    loadAdminAccounts(),
+    loadAdminProducts(),
+    loadAdminCommissions(),
+    loadAdminThreads()
+  ]);
+  updateAdminMetrics();
+}
+
+async function pollAdminData() {
+  if (isPollingActive) return;
+  isPollingActive = true;
+  try {
+    await loadAllAdminData();
+  } catch (e) {
+    console.warn("Polling retry notice:", e);
+  } finally {
+    isPollingActive = false;
+  }
+}
+
+function updateAdminMetrics() {
+  document.getElementById('statTotalAccounts').textContent = adminAccounts.length;
+  const pendingIds = adminAccounts.filter(a => a.verification_status === 'PENDING_VERIFICATION').length;
+  document.getElementById('statPendingIds').textContent = pendingIds;
+
+  const activeProds = adminProducts.filter(p => p.status === 'ACTIVE').length;
+  document.getElementById('statActiveProducts').textContent = activeProds;
+
+  const totalVol = adminCommissions.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
+  document.getElementById('statTotalVolume').textContent = `$${totalVol.toFixed(2)}`;
+}
+
+// ================= NAVIGATION =================
+function switchAdminTab(tab) {
+  activeAdminTab = tab;
+  const sections = ['accountsSection', 'productsSection', 'commissionsSection', 'messagesSection', 'referralsSection', 'settingsSection'];
+  const buttons = ['tabAccountsBtn', 'tabProductsBtn', 'tabCommissionsBtn', 'tabMessagesBtn', 'tabReferralsBtn', 'tabSettingsBtn'];
+
+  sections.forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.classList.add('hidden');
+  });
+
+  buttons.forEach(b => {
+    const btn = document.getElementById(b);
+    if (btn) {
+      btn.className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-2';
+    }
+  });
+
+  if (tab === 'accounts') {
+    document.getElementById('accountsSection').classList.remove('hidden');
+    document.getElementById('tabAccountsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
+  } else if (tab === 'products') {
+    document.getElementById('productsSection').classList.remove('hidden');
+    document.getElementById('tabProductsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
+  } else if (tab === 'commissions') {
+    document.getElementById('commissionsSection').classList.remove('hidden');
+    document.getElementById('tabCommissionsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
+  } else if (tab === 'messages') {
+    document.getElementById('messagesSection').classList.remove('hidden');
+    document.getElementById('tabMessagesBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
+  } else if (tab === 'referrals') {
+    document.getElementById('referralsSection').classList.remove('hidden');
+    document.getElementById('tabReferralsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
+    renderReferralsTable();
+  } else if (tab === 'settings') {
+    document.getElementById('settingsSection').classList.remove('hidden');
+    document.getElementById('tabSettingsBtn').className = 'px-4 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-lg shadow-purple-500/20 transition flex items-center space-x-2';
+  }
+}
+
+// ================= TAB 1: ACCOUNTS & NATIONAL ID =================
+async function loadAdminAccounts() {
+  try {
+    const { data, error } = await _supabase
+      .from('profiles')
+      .select('id, full_name, email, role, verification_status, created_at, invited_by_code, referral_code')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    adminAccounts = data || [];
+    renderAccountsTable();
+  } catch (err) {
+    console.error("Error loading profiles:", err);
+  }
+}
+
+function renderAccountsTable() {
+  const tableBody = document.getElementById('accountsTableBody');
+  const search = (document.getElementById('accountsSearchInput')?.value || '').toLowerCase();
+  const filterStatus = document.getElementById('accountsFilterStatus')?.value || 'ALL';
+
+  const filtered = adminAccounts.filter(a => {
+    const matchSearch = (a.full_name || '').toLowerCase().includes(search) || (a.email || '').toLowerCase().includes(search);
+    const matchStatus = filterStatus === 'ALL' || a.verification_status === filterStatus;
+    return matchSearch && matchStatus;
+  });
+
+  if (filtered.length === 0) {
+    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No profile records found matching criteria.</div>`;
+    return;
+  }
+
+  tableBody.innerHTML = filtered.map(a => {
+    const status = a.verification_status || 'PENDING_VERIFICATION';
+    const badgeClass = status === 'VERIFIED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : (status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20');
+
+    return `
+      <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+        <div class="col-span-3 space-y-0.5">
+          <p class="font-bold text-white">${a.full_name || 'Unnamed User'}</p>
+          <p class="text-[10px] text-slate-400 font-mono">${a.email || a.id}</p>
+        </div>
+        <div class="col-span-2">
+          <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] uppercase font-semibold">${a.role || 'buyer'}</span>
+        </div>
+        <div class="col-span-3">
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border badgeClass">{status}</span>
+        </div>
+        <div class="col-span-2">
+          <button onclick="viewNationalIDModal('${a.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
+            <i class="fa-solid fa-id-card text-purple-400"></i>
+            <span>View ID</span>
+          </button>
+        </div>
+        <div class="col-span-2 flex items-center justify-end space-x-1.5">
+          <button onclick="updateUserVerification('${a.id}', 'VERIFIED')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Verify</button>
+          <button onclick="updateUserVerification('${a.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Reject</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function viewNationalIDModal(userId) {
+  try {
+    const { data, error } = await _supabase
+      .from('profiles')
+      .select('national_id_base64, full_name')
+      .eq('id', userId)
+      .single();
+
+    if (error || !data || !data.national_id_base64) {
+      showToast("No National ID document uploaded for this user.");
+      return;
+    }
+
+    document.getElementById('idModalTitle').textContent = `National ID Verification — ${data.full_name || 'User'}`;
+    document.getElementById('modalIdImg').src = data.national_id_base64;
+    document.getElementById('idViewerModal').classList.remove('hidden');
+  } catch (err) {
+    showToast("Error loading ID document: " + err.message);
+  }
+}
+
+async function updateUserVerification(userId, newStatus) {
+  try {
+    const { error } = await _supabase
+      .from('profiles')
+      .update({ verification_status: newStatus })
+      .eq('id', userId);
+
+    if (error) throw error;
+    showToast(`Verification status updated to ${newStatus}`);
+    await loadAdminAccounts();
+  } catch (err) {
+    alert("Failed to update status: " + err.message);
+  }
+}
+
+// ================= TAB 2: PRODUCT CATALOG =================
+async function loadAdminProducts() {
+  try {
+    const { data, error } = await _supabase
+      .from('products')
+      .select('id, title, price, status, vendor_id, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    adminProducts = data || [];
+    renderProductsTable();
+  } catch (err) {
+    console.error("Error loading products:", err);
+  }
+}
+
+function renderProductsTable() {
+  const tableBody = document.getElementById('productsTableBody');
+  const search = (document.getElementById('productsSearchInput')?.value || '').toLowerCase();
+
+  const filtered = adminProducts.filter(p => (p.title || '').toLowerCase().includes(search));
+
+  if (filtered.length === 0) {
+    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No products found matching search.</div>`;
+    return;
+  }
+
+  tableBody.innerHTML = filtered.map(p => `
+    <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+      <div class="col-span-4 space-y-0.5">
+        <p class="font-bold text-white">${p.title}</p>
+        <p class="text-xs text-emerald-400 font-semibold">$${Number(p.price || 0).toFixed(2)}</p>
+      </div>
+      <div class="col-span-3 font-mono text-[10px] text-slate-400">
+        ${p.vendor_id || 'N/A'}
+      </div>
+      <div class="col-span-2">
+        <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-semibold">${p.status || 'ACTIVE'}</span>
+      </div>
+      <div class="col-span-3 flex items-center justify-end space-x-2">
+        <button onclick="toggleProductStatus('p.id','{p.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
+          ${p.status === 'ACTIVE' ? 'Pause' : 'Activate'}
+        </button>
+        <button onclick="deleteProductAdmin('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] px-3 py-1.5 rounded-xl transition">
+          Delete
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function toggleProductStatus(prodId, newStatus) {
+  try {
+    const { error } = await _supabase.from('products').update({ status: newStatus }).eq('id', prodId);
+    if (error) throw error;
+    showToast(`Product status updated to ${newStatus}`);
+    await loadAdminProducts();
+  } catch (err) {
+    alert("Error updating product: " + err.message);
+  }
+}
+
+async function deleteProductAdmin(prodId) {
+  if (!confirm("Delete this marketplace product listing?")) return;
+  try {
+    const { error } = await _supabase.from('products').delete().eq('id', prodId);
+    if (error) throw error;
+    showToast("Product deleted.");
+    await loadAdminProducts();
+  } catch (err) {
+    alert("Error deleting product: " + err.message);
+  }
+}
+
+// ================= TAB 3: MASTER COMMISSIONS LEDGER =================
+async function loadAdminCommissions() {
+  try {
+    const { data, error } = await _supabase
+      .from('commissions')
+      .select('id, feedback_id, vendor_id, seller_id, recipient_id, role_type, amount, queue_type, status, paypal_tx_id, receipt_base64, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    adminCommissions = data || [];
+    calculateMasterSummary();
+    renderMasterCommissions();
+  } catch (err) {
+    console.error("Error loading commissions:", err);
+  }
+}
+
+function calculateMasterSummary() {
+  let marketplacePending = 0;
+  let marketplaceCollected = 0;
+  let adminPending = 0;
+  let adminCollected = 0;
+
+  adminCommissions.forEach(c => {
+    const amt = Number(c.amount) || 0;
+    const tag = c.queue_type || c.status || '';
+    const isCompleted = tag === 'COMPLETED_PAID' || tag === 'HISTORY' || tag === 'PAYMENT_HISTORY';
+    const isAdmin = (c.role_type || '').toUpperCase() === 'ADMIN';
+
+    if (isCompleted) {
+      marketplaceCollected += amt;
+      if (isAdmin) adminCollected += amt;
+    } else {
+      marketplacePending += amt;
+      if (isAdmin) adminPending += amt;
+    }
+  });
+
+  document.getElementById('sumMarketplacePending').textContent = `$${marketplacePending.toFixed(2)}`;
+  document.getElementById('sumMarketplaceCollected').textContent = `$${marketplaceCollected.toFixed(2)}`;
+  document.getElementById('sumAdminPending').textContent = `$${adminPending.toFixed(2)}`;
+  document.getElementById('sumAdminCollected').textContent = `$${adminCollected.toFixed(2)}`;
+}
+
+function switchMasterCommSubTab(subTab) {
+  activeMasterSubTab = subTab;
+  selectedMasterCommIds.clear();
+  document.getElementById('selectAllMasterComms').checked = false;
+
+  const tabs = ['incoming', 'outgoing', 'working', 'history'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('subMaster' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (t === subTab) {
+      btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-md transition';
+    } else {
+      btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition';
+    }
+  });
+  renderMasterCommissions();
+}
+
+function renderMasterCommissions() {
+  const tableBody = document.getElementById('masterCommsTableBody');
+  const toolbar = document.getElementById('masterCommToolbar');
+  const search = (document.getElementById('masterCommSearch')?.value || '').toLowerCase();
+
+  const filtered = adminCommissions.filter(c => {
+    const statusField = (c.queue_type || c.status || 'MAIN_ACCOUNT').toUpperCase();
+    const matchesSearch = String(c.id || '').toLowerCase().includes(search) || String(c.feedback_id || '').toLowerCase().includes(search);
+
+    let matchesTab = false;
+    if (activeMasterSubTab === 'incoming') matchesTab = statusField === 'REQUESTED_BY_RECIPIENT' || statusField === 'INCOMING_REQUESTS';
+    else if (activeMasterSubTab === 'outgoing') matchesTab = statusField === 'OFFERED_BY_SELLER' || statusField === 'OFFERED_BY_VENDOR' || statusField === 'OFFERED_AWAITING_ACCEPTANCE' || statusField === 'OUTGOING_REQUESTS';
+    else if (activeMasterSubTab === 'working') matchesTab = statusField === 'APPROVED_IN_WORKING' || statusField === 'WORKING_QUEUE';
+    else if (activeMasterSubTab === 'history') matchesTab = statusField === 'COMPLETED_PAID' || statusField === 'HISTORY' || statusField === 'PAYMENT_HISTORY';
+
+    return matchesSearch && matchesTab;
+  });
+
+  if (activeMasterSubTab === 'incoming') {
+    toolbar.innerHTML = `
+      <button onclick="batchAdminApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
+        <i class="fa-solid fa-check mr-1.5"></i> Batch Approve Selected
+      </button>
+    `;
+  } else {
+    toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Sub-Tab: ${activeMasterSubTab}</span>`;
+  }
+
+  if (filtered.length === 0) {
+    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No records found in this view.</div>`;
+    return;
+  }
+
+  tableBody.innerHTML = filtered.map(c => {
+    let actionHtml = '';
+    if (activeMasterSubTab === 'incoming') {
+      actionHtml = `
+        <button onclick="approveMasterComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
+        <button onclick="denyMasterComm('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Deny</button>
+      `;
+    } else if (activeMasterSubTab === 'history') {
+      actionHtml = `
+        <button onclick="inspectReceiptModal('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-xl transition">
+          <i class="fa-solid fa-eye mr-1"></i> Inspect Receipt
+        </button>
+      `;
+    } else {
+      actionHtml = `<span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px]">${c.queue_type || 'MAIN_ACCOUNT'}</span>`;
+    }
+
+    return `
+      <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+        <div class="col-span-1">
+          <input type="checkbox" value="${c.id}" selectedMasterCommIds.has(c.id)?'checked':''onchange="toggleSelectMasterComm('{c.id}')" class="rounded border-borderSlate bg-darkBg text-purple-600">
+        </div>
+        <div class="col-span-3 space-y-0.5">
+          <span class="font-bold text-white font-mono">${c.feedback_id || 'FB-N/A'}</span>
+          <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
+        </div>
+        <div class="col-span-3 space-y-0.5">
+          <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-semibold">${c.role_type || 'REVIEWER'}</span>
+          <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_id || 'Recipient'}</p>
+        </div>
+        <div class="col-span-2 font-bold text-emerald-400">
+          $${Number(c.amount || 0).toFixed(2)}
+        </div>
+        <div class="col-span-3 flex items-center justify-end space-x-2">
+          ${actionHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleSelectMasterComm(id) {
+  if (selectedMasterCommIds.has(id)) selectedMasterCommIds.delete(id);
+  else selectedMasterCommIds.add(id);
+}
+
+function toggleSelectAllMaster(master) {
+  const boxes = document.querySelectorAll('#masterCommsTableBody input[type="checkbox"]');
+  boxes.forEach(b => {
+    b.checked = master.checked;
+    if (master.checked) selectedMasterCommIds.add(b.value);
+    else selectedMasterCommIds.delete(b.value);
+  });
+}
+
+async function batchAdminApprove() {
+  if (selectedMasterCommIds.size === 0) {
+    alert("Please select at least one record.");
+    return;
+  }
+  try {
+    for (const id of selectedMasterCommIds) {
+      await _supabase.from('commissions').update({ queue_type: 'WORKING_QUEUE', status: 'APPROVED_IN_WORKING' }).eq('id', id);
+    }
+    selectedMasterCommIds.clear();
+    await loadAdminCommissions();
+    showToast("Selected claims approved into Working Queue.");
+  } catch (err) {
+    alert("Batch action failed: " + err.message);
+  }
+}
+
+async function approveMasterComm(id) {
+  try {
+    const { error } = await _supabase.from('commissions').update({ queue_type: 'WORKING_QUEUE', status: 'APPROVED_IN_WORKING' }).eq('id', id);
+    if (error) throw error;
+    await loadAdminCommissions();
+    showToast("Claim approved.");
+  } catch (err) {
+    alert("Approval failed: " + err.message);
+  }
+}
+
+async function denyMasterComm(id) {
+  if (!confirm("Revert this claim back to main queue?")) return;
+  try {
+    const { error } = await _supabase.from('commissions').update({ queue_type: 'MAIN_ACCOUNT', status: 'Approved' }).eq('id', id);
+    if (error) throw error;
+    await loadAdminCommissions();
+    showToast("Claim reversed.");
+  } catch (err) {
+    alert("Reversal failed: " + err.message);
+  }
+}
+
+async function inspectReceiptModal(commId) {
+  try {
+    const { data, error } = await _supabase
+      .from('commissions')
+      .select('receipt_base64, paypal_tx_id, id')
+      .eq('id', commId)
+      .single();
+
+    if (error || !data) {
+      showToast("Unable to load receipt details.");
+      return;
+    }
+
+    document.getElementById('masterReceiptTxId').textContent = data.paypal_tx_id || 'N/A';
+    document.getElementById('masterReceiptCommId').textContent = data.id.substring(0, 8);
+    document.getElementById('masterReceiptImg').src = data.receipt_base64 || 'https://via.placeholder.com/300?text=No+Receipt+Uploaded';
+    document.getElementById('masterReceiptModal').classList.remove('hidden');
+  } catch (err) {
+    showToast("Error reading receipt: " + err.message);
+  }
+}
+
+// ================= WHATSAPP-STYLE CONTEXT MENU & ADMIN OVERRIDES =================
+let contextTargetKey = null;
+
+function getThreadMetaStorageKey() {
+  let uId = currentUser?.id || 'admin';
+  return 'echo_thread_meta_' + uId;
+}
+function getThreadMeta() {
+  try { return JSON.parse(localStorage.getItem(getThreadMetaStorageKey()) || '{}'); } catch(e) { return {}; }
+}
+function saveThreadMeta(meta) {
+  try { localStorage.setItem(getThreadMetaStorageKey(), JSON.stringify(meta)); } catch(e) {}
+}
+
+function showThreadContextMenu(e, threadKey) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  contextTargetKey = threadKey;
+  const menu = document.getElementById('threadContextMenu');
+  if (!menu) return;
+
+  const meta = getThreadMeta();
+  const isPinned = (meta.pinned || []).includes(threadKey);
+  const pinLabel = document.getElementById('contextPinLabel');
+  if (pinLabel) pinLabel.textContent = isPinned ? 'Unpin Conversation' : 'Pin Conversation';
+
+  menu.style.top = `${e.clientY}px`;
+  menu.style.left = `${e.clientX}px`;
+  menu.classList.remove('hidden');
+}
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('threadContextMenu');
+  if (menu && !e.target.closest('#threadContextMenu')) menu.classList.add('hidden');
+});
+
+function handlePinAction() {
+  if (!contextTargetKey) return;
+  const meta = getThreadMeta();
+  if (!meta.pinned) meta.pinned = [];
+  const idx = meta.pinned.indexOf(contextTargetKey);
+  if (idx >= 0) meta.pinned.splice(idx, 1);
+  else meta.pinned.push(contextTargetKey);
+  saveThreadMeta(meta);
+  renderAdminThreadsList();
+}
+
+function handleUnreadAction() {
+  showToast("Thread marked as read / unread.");
+}
+
+function handleHideAction() {
+  if (!contextTargetKey) return;
+  const meta = getThreadMeta();
+  if (!meta.hidden) meta.hidden = {};
+  meta.hidden[contextTargetKey] = new Date().toISOString();
+  saveThreadMeta(meta);
+  renderAdminThreadsList();
+  showToast("Thread tile hidden locally.");
+}
+
+// ADMIN OVERRIDE: Restore Soft-Deleted Thread for User
+async function handleAdminRestoreAction() {
+  if (!contextTargetKey) return;
+  const thread = adminThreads.find(t => t.key === contextTargetKey);
+  if (!thread) {
+    showToast("Select a valid thread to restore.");
+    return;
+  }
+  const sampleMsg = thread.messages[0];
+  if (!sampleMsg) return;
+  
+  const targetUserId = sampleMsg.buyer_id || sampleMsg.sender_id;
+  const counterpartId = sampleMsg.vendor_id || sampleMsg.receiver_id;
+  const prodId = sampleMsg.product_id || null;
+
+  try {
+    const { data, error } = await _supabase.rpc('admin_restore_thread', {
+      p_user_id: targetUserId,
+      p_counterpart_id: counterpartId,
+      p_product_id: prodId
+    });
+    if (error) throw error;
+    showToast("⚡ Soft-deleted thread restored for user in database.");
+    await loadAdminThreads();
+  } catch (err) {
+    alert("Admin Restore RPC failed: " + err.message);
+  }
+}
+
+// ADMIN OVERRIDE: Unblock Contact Override
+async function handleAdminUnblockAction() {
+  if (!contextTargetKey) return;
+  const thread = adminThreads.find(t => t.key === contextTargetKey);
+  if (!thread) return;
+  const sampleMsg = thread.messages[0];
+  if (!sampleMsg) return;
+
+  const blockerId = sampleMsg.sender_id;
+  const targetId = sampleMsg.receiver_id || sampleMsg.vendor_id;
+
+  try {
+    const { data, error } = await _supabase.rpc('admin_unblock_user', {
+      p_blocker_id: blockerId,
+      p_target_id: targetId
+    });
+    if (error) throw error;
+    showToast("⚡ Contact unblocked administratively.");
+  } catch (err) {
+    alert("Admin Unblock RPC failed: " + err.message);
+  }
+}
+
+// ================= TAB 4: MESSAGING THREADS (UNRESTRICTED AUDIT TRAIL) =================
+async function loadAdminThreads() {
+  try {
+    // Unrestricted Audit Trail: Admins select all messages without filtering out soft-deleted items
+    const { data: msgs, error } = await _supabase
+      .from('messages')
+      .select('id, feedback_id, sender_id, receiver_id, buyer_id, vendor_id, message_text, text, content, link, status_badge, deleted_for_users, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const threadMap = {};
+    (msgs || []).forEach(m => {
+      const displayKey = m.feedback_id || m.sender_id || 'general';
+      if (!threadMap[displayKey]) {
+        threadMap[displayKey] = {
+          key: displayKey,
+          lastMsg: m.message_text || m.text || m.content || m.link || 'Conversation updated',
+          updatedAt: m.created_at,
+          messages: []
+        };
+      }
+      threadMap[displayKey].messages.push(m);
+    });
+
+    adminThreads = Object.values(threadMap);
+    renderAdminThreadsList();
+    if (activeAdminThreadId) renderAdminActiveChat();
+    updateAdminUnreadBadge();
+  } catch (err) {
+    console.error("Error loading global threads:", err);
+  }
+}
+
+function renderAdminThreadsList() {
+  const listEl = document.getElementById('adminThreadsList');
+  const search = (document.getElementById('adminThreadSearch')?.value || '').toLowerCase();
+
+  const filtered = adminThreads.filter(t => t.key.toLowerCase().includes(search) || t.lastMsg.toLowerCase().includes(search));
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No global message threads found.</p>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(t => {
+    const isSelected = activeAdminThreadId === t.key;
+    const timeStr = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    return `
+      <div onclick="selectAdminThread('t.key')"oncontextmenu="showThreadContextMenu(event,'{t.key}')" class="p-3 bg-darkBg border ${isSelected ? 'border-purple-500' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-purple-500 transition space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-200 truncate">Thread: ${t.key}</span>
+          <span class="text-[10px] text-slate-500">${timeStr}</span>
+        </div>
+        <p class="text-xs text-slate-400 truncate">${t.lastMsg}</p>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectAdminThread(key) {
+  activeAdminThreadId = key;
+  renderAdminThreadsList();
+  renderAdminActiveChat();
+  document.getElementById('adminChatMsgInput').disabled = false;
+  document.getElementById('adminChatSendBtn').disabled = false;
+}
+
+function renderAdminActiveChat() {
+  const thread = adminThreads.find(t => t.key === activeAdminThreadId);
+  const container = document.getElementById('adminChatContainer');
+  if (!thread) return;
+
+  document.getElementById('adminActiveChatTitle').textContent = `Auditing Channel — ${thread.key}`;
+  const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+
+  container.innerHTML = sorted.map(m => {
+    const text = m.message_text || m.text || m.content || m.link || '';
+    const isAdminSender = m.sender_id === currentUser.id;
+    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    const deletedFor = m.deleted_for_users || [];
+    const isSoftDeleted = deletedFor.length > 0;
+    const auditBadge = isSoftDeleted ? `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] mb-1 inline-block"><i class="fa-solid fa-eye-slash mr-1"></i>Soft-Deleted by User (${deletedFor.length})</span>` : '';
+
+    return `
+      <div class="flex flex-col ${isAdminSender ? 'items-end' : 'items-start'} my-2">
+        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isAdminSender ? 'bg-purple-600 text-white rounded-br-none shadow-md' : 'bg-darkBg border border-borderSlate text-slate-200 rounded-bl-none'}">
+          ${auditBadge}
+          <div class="font-bold text-[10px] mb-1 text-purple-300">Sender: ${m.sender_id ? m.sender_id.substring(0,8) : 'User'}</div>
+          <p>${text}</p>
+        </div>
+        <span class="text-[9px] text-slate-500 mt-1 px-1">${timeStr}</span>
+      </div>
+    `;
+  }).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+async function handleAdminSendMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById('adminChatMsgInput');
+  const msgText = input.value.trim();
+  if (!msgText || !activeAdminThreadId) return;
+
+  try {
+    const thread = adminThreads.find(t => t.key === activeAdminThreadId);
+    const sampleMsg = thread && thread.messages.length > 0 ? thread.messages[0] : null;
+    const receiverId = sampleMsg ? (sampleMsg.sender_id !== currentUser.id ? sampleMsg.sender_id : sampleMsg.receiver_id) : currentUser.id;
+
+    const { error } = await _supabase.from('messages').insert([{
+      sender_id: currentUser.id,
+      receiver_id: receiverId,
+      message_text: msgText,
+      feedback_id: activeAdminThreadId
+    }]);
+
+    if (error) throw error;
+    input.value = '';
+    await loadAdminThreads();
+    showToast("Administrative message dispatched.");
+  } catch (err) {
+    alert("Failed to send message: " + err.message);
+  }
+}
+
+async function openNewOutreachModal() {
+  const select = document.getElementById('outreachUserSelect');
+  select.innerHTML = '<option value="">Select a registered user...</option>';
+
+  adminAccounts.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = `a.fullname||'User'({a.email || a.id}) [${a.role}]`;
+    select.appendChild(opt);
+  });
+
+  document.getElementById('outreachModal').classList.remove('hidden');
+}
+
+async function handleOutreachSubmit(event) {
+  event.preventDefault();
+  const targetId = document.getElementById('outreachUserSelect').value;
+  const msgText = document.getElementById('outreachMsgText').value.trim();
+
+  if (!targetId || !msgText) return;
+
+  try {
+    const { error } = await _supabase.from('messages').insert([{
+      sender_id: currentUser.id,
+      receiver_id: targetId,
+      message_text: `[ADMIN NOTICE]: ${msgText}`
+    }]);
+
+    if (error) throw error;
+    closeModal('outreachModal');
+    document.getElementById('outreachMsgText').value = '';
+    await loadAdminThreads();
+    showToast("Direct outreach thread initiated!");
+  } catch (err) {
+    alert("Outreach failed: " + err.message);
+  }
+}
+
+// ================= TAB 5: REFERRAL HUB =================
+function renderReferralsTable() {
+  const tableBody = document.getElementById('referralsTableBody');
+
+  if (adminAccounts.length === 0) {
+    tableBody.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No referral accounts found.</div>`;
+    return;
+  }
+
+  tableBody.innerHTML = adminAccounts.map(a => `
+    <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
+      <div class="col-span-3 space-y-0.5">
+        <p class="font-bold text-white">${a.full_name || 'User'}</p>
+        <p class="text-[10px] text-purple-400 font-mono">Code: ${a.referral_code || 'N/A'}</p>
+      </div>
+      <div class="col-span-3 font-mono text-[11px] text-amber-400">
+        ${a.invited_by_code || 'None (Direct Sign-up)'}
+      </div>
+      <div class="col-span-2 uppercase font-semibold text-[10px] text-slate-400">
+        ${a.role || 'buyer'}
+      </div>
+      <div class="col-span-2">
+        <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px]">${a.verification_status || 'VERIFIED'}</span>
+      </div>
+      <div class="col-span-2 flex items-center justify-end">
+        <button onclick="openReassignModal('a.id','{a.full_name || 'User'}', '${a.invited_by_code || ''}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] px-3 py-1.5 rounded-xl transition">
+          Reassign Inviter
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openReassignModal(userId, userName, currentCode) {
+  document.getElementById('reassignTargetUserId').value = userId;
+  document.getElementById('reassignUserName').value = `userName({userId.substring(0,8)})`;
+  document.getElementById('reassignNewCode').value = currentCode;
+  document.getElementById('reassignInviterModal').classList.remove('hidden');
+}
+
+async function handleReassignInviterSubmit(event) {
+  event.preventDefault();
+  const userId = document.getElementById('reassignTargetUserId').value;
+  const newCode = document.getElementById('reassignNewCode').value.trim();
+
+  try {
+    const { error } = await _supabase
+      .from('profiles')
+      .update({ invited_by_code: newCode || null })
+      .eq('id', userId);
+
+    if (error) throw error;
+    closeModal('reassignInviterModal');
+    showToast("Inviter code reassigned successfully.");
+    await loadAdminAccounts();
+    renderReferralsTable();
+  } catch (err) {
+    alert("Reassignment failed: " + err.message);
+  }
+}
+
+// ================= SYSTEM BROADCAST ENGINE =================
+
+function openBroadcastModal() {
+  document.getElementById('modalBroadcastTitle').value = '';
+  document.getElementById('modalBroadcastBody').value = '';
+  document.getElementById('broadcastModal').classList.remove('hidden');
+}
+
+async function handleModalBroadcastSubmit(event) {
+  event.preventDefault();
+  const title = document.getElementById('modalBroadcastTitle').value.trim();
+  const body = document.getElementById('modalBroadcastBody').value.trim();
+  if (!title || !body) return;
+
+  await executeSystemBroadcast(title, body);
+  closeModal('broadcastModal');
+}
+
+async function handleSettingsBroadcastSubmit(event) {
+  event.preventDefault();
+  const title = document.getElementById('settingsBroadcastTitle').value.trim();
+  const body = document.getElementById('settingsBroadcastBody').value.trim();
+  if (!title || !body) return;
+
+  await executeSystemBroadcast(title, body);
+  document.getElementById('settingsBroadcastTitle').value = '';
+  document.getElementById('settingsBroadcastBody').value = '';
+}
+
+async function executeSystemBroadcast(title, body) {
+  try {
+    const { error } = await _supabase
+      .from('notifications')
+      .insert([
+        {
+          title: title,
+          message: body,
+          read: false
+        }
+      ]);
+
+    if (error) throw error;
+    showToast("System broadcast dispatched platform-wide!");
+  } catch (err) {
+    alert("Broadcast failed: " + err.message);
+  }
+}
+
+function updateAdminUnreadBadge() {
+  const badge = document.getElementById('unreadMessagesBadge');
+  if (!badge) return;
+  const totalUnread = (adminThreads || []).reduce(
+    (sum, t) => sum + (t.messages || []).filter(m => m.sender_id !== currentUser?.id && !m.is_read).length,
+    0
+  );
+  if (totalUnread > 0) {
+    badge.textContent = totalUnread;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+// ================= UTILITIES =================
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+}
+
+function showToast(message) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = 'bg-cardBg border-l-4 border-purple-500 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
+  toast.innerHTML = `<i class="fa-solid fa-circle-check text-purple-400"></i><span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('opacity-0');
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+async function handleLogout() {
+  try {
+    if (pollingTimer) clearInterval(pollingTimer);
+    await _supabase.auth.signOut();
+  } catch (err) {
+    console.error("Logout error:", err);
+  } finally {
+    window.location.href = 'login.html';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', initAdminWorkspace);
+</script>
+</body>
+</html>
+
+

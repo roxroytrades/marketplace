@@ -1055,6 +1055,38 @@ eh
     </div>
   </div>
 
+  <div id="adminReceiptModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-receipt text-amber-400"></i>
+          <span>Master Receipt Audit Proof</span>
+        </h3>
+        <button onclick="closeAdminReceiptModal()" class="text-slate-400 hover:text-white transition" aria-label="Close receipt viewer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1 min-w-0">
+          <span class="text-slate-500">PayPal Transaction ID</span>
+          <p id="adminReceiptTxId" class="font-mono font-bold text-white break-all">-</p>
+        </div>
+        <div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1 min-w-0">
+          <span class="text-slate-500">Commission ID</span>
+          <p id="adminReceiptCommId" class="font-mono text-emerald-400 font-bold break-all">-</p>
+        </div>
+      </div>
+      <div class="bg-darkBg border border-borderSlate rounded-xl p-3 min-h-48 max-h-[65vh] overflow-auto flex items-center justify-center">
+        <p id="adminReceiptLoading" class="text-xs text-slate-400">Loading receipt...</p>
+        <p id="adminReceiptEmptyState" class="hidden text-xs text-slate-400 text-center">No receipt image is attached to this commission.</p>
+        <img id="adminReceiptImage" src="" alt="Commission payment receipt" class="hidden mx-auto rounded object-contain max-h-[60vh] max-w-full">
+      </div>
+      <div class="flex justify-end">
+        <button onclick="closeAdminReceiptModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-white text-xs font-semibold px-4 py-2 rounded-xl transition">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Commission Details Modal -->
 <div id="commissionDetailsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
   <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
@@ -1968,6 +2000,7 @@ function renderAdminCommissionsTable(comms) {
 
     /* Universal Inspection & Contact Buttons */
     const inspectBtn = `<button onclick="viewCommissionDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
+    const receiptBtn = `<button onclick="inspectAdminReceipt('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-amber-400 text-[10px] font-medium px-2 py-1 rounded-lg transition" title="Inspect Receipt" aria-label="Inspect receipt"><i class="fa-solid fa-receipt"></i></button>`;
     const contactBtn = `<button onclick="openDirectOutreachForUser('${c.recipient_id || c.seller_id || c.vendor_id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-amber-400 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="Direct Contact"><i class="fa-solid fa-comment-dots"></i></button>`;
 
     return `
@@ -1989,6 +2022,7 @@ function renderAdminCommissionsTable(comms) {
         <td class="py-3 px-4">${statusBadge}</td>
         <td class="py-3 px-4 text-right flex items-center justify-end space-x-1">
           ${actionButtons}
+          ${receiptBtn}
           ${inspectBtn}
           ${contactBtn}
         </td>
@@ -2987,6 +3021,62 @@ function viewCommissionDetails(commId) {
 
 function closeCommissionDetailsModal() {
   document.getElementById('commissionDetailsModal').classList.add('hidden');
+}
+
+async function inspectAdminReceipt(commId) {
+  const modal = document.getElementById('adminReceiptModal');
+  const loading = document.getElementById('adminReceiptLoading');
+  const emptyState = document.getElementById('adminReceiptEmptyState');
+  const image = document.getElementById('adminReceiptImage');
+  const txId = document.getElementById('adminReceiptTxId');
+  const commissionId = document.getElementById('adminReceiptCommId');
+
+  loading.classList.remove('hidden');
+  emptyState.classList.add('hidden');
+  emptyState.textContent = 'No receipt image is attached to this commission.';
+  image.classList.add('hidden');
+  image.removeAttribute('src');
+  txId.textContent = '-';
+  commissionId.textContent = '-';
+  modal.classList.remove('hidden');
+
+  try {
+    const { data, error } = await _supabase
+      .from('commissions')
+      .select('receipt_base64, paypal_tx_id, id')
+      .eq('id', commId)
+      .single();
+
+    if (error) throw error;
+
+    txId.textContent = data.paypal_tx_id || 'N/A';
+    commissionId.textContent = data.id || commId;
+    loading.classList.add('hidden');
+
+    const cachedCommission = allCommissionsCache.find(record => String(record.id) === String(commId));
+    const receiptSource = data.receipt_base64 || cachedCommission?.receipt_url;
+    if (!receiptSource) {
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    image.onload = () => {
+      image.classList.remove('hidden');
+    };
+    image.onerror = () => {
+      image.classList.add('hidden');
+      emptyState.textContent = 'The attached receipt could not be displayed.';
+      emptyState.classList.remove('hidden');
+    };
+    image.src = receiptSource;
+  } catch (err) {
+    modal.classList.add('hidden');
+    showToast('Unable to load receipt: ' + err.message);
+  }
+}
+
+function closeAdminReceiptModal() {
+  document.getElementById('adminReceiptModal').classList.add('hidden');
 }
 
 function openDirectOutreachForUser(userId, userName, userRole, userEmail) {
