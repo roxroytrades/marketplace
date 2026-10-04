@@ -12,35 +12,12 @@
    ========================================================================== */
 
 function getProductImageUrl(item) {
-  if (!item || typeof item !== 'object') return 'https://via.placeholder.com/150';
-
-  const candidates = [
-    item.image_url,
-    item.image,
-    item.image_base64,
-    item.product_image_url,
-    item.product_image,
-    item.cover_image,
-    item.thumbnail,
-    item.photo_url,
-    item.photo,
-    item.img_url,
-    item.media_url,
-    item.picture_url,
-    item.picture,
-    item.file_url
-  ];
-
-  for (const value of candidates) {
-    if (typeof value !== 'string') continue;
-    const url = value.trim();
-    if (!url || url.includes('||') || url.includes('{')) continue;
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/') || url.startsWith('/')) {
-      return url;
-    }
+  if (!item) return '';
+  let url = item.image_url || item.image || item.img_url || item.image_base64 || item.photo_url || item.picture_url || item.file_url || item.attachment_url || item.proof_base64 || '';
+  if (typeof url !== 'string' || !url || url.includes('||') || url.includes('{')) {
+    return '';
   }
-
-  return 'https://via.placeholder.com/150';
+  return url.trim();
 }
 
 let contextMenuTargetId = null;
@@ -711,7 +688,7 @@ Complete & Archive to History
 <div class="space-y-1.5">
 <span class="text-xs text-slate-400">Attached Receipt Image Proof</span>
 <div class="bg-darkBg border border-borderSlate rounded-xl p-2 text-center max-h-64 overflow-y-auto">
-<img id="inspectModalImage" src="" alt="Receipt Proof" class="mx-auto rounded object-contain max-h-56">
+<img id="inspectModalImage" src="" alt="Receipt Proof" class="mx-auto rounded object-contain max-h-56" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-darkBg border border-borderSlate rounded-xl"><i class="fa-solid fa-receipt text-3xl text-emerald-400 mb-2"></i><span class="text-xs font-medium">Payment Receipt Image Unavailable</span></div>
 </div>
 </div>
 <button onclick="document.getElementById('inspectReceiptModal').classList.add('hidden')" class="w-full bg-darkBg hover:bg-slate-800 border border-borderSlate text-white text-xs font-semibold py-3 rounded-xl transition">
@@ -826,8 +803,39 @@ const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
-let vendorProducts = [];
+
+/* Global Chat Products Cache & Lookup Engine */
 let chatProducts = {};
+
+async function getSellerChatProduct(productId) {
+  if (!productId) return null;
+  let prod = (vendorProducts || []).find(p => p.id === productId || String(p.id).toLowerCase() === String(productId).toLowerCase());
+  if (prod) return prod;
+  if (chatProducts[productId]) return chatProducts[productId];
+  if (typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
+    prod = marketplaceProducts.find(p => p.id === productId || String(p.id).toLowerCase() === String(productId).toLowerCase());
+    if (prod) {
+      chatProducts[productId] = prod;
+      return prod;
+    }
+  }
+  try {
+    const { data, error } = await _supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .maybeSingle();
+    if (data && !error) {
+      chatProducts[productId] = data;
+      return data;
+    }
+  } catch (err) {
+    console.warn('getSellerChatProduct lookup error:', err);
+  }
+  return null;
+}
+
+let vendorProducts = [];
 let vendorCommissions = [];
 let profilesCache = {};
 let vendorProfilesCache = profilesCache;
@@ -835,13 +843,6 @@ let vendorThreads = [];
 let readVendorThreadIds = new Set();
 let lastReadVendorTimeMap = {};
 let activeThreadId = null;
-
-function getSellerChatProduct(productId) {
-  const id = String(productId);
-  return (vendorProducts || []).find(product => String(product.id) === id) ||
-    (typeof marketplaceProducts !== 'undefined' ? marketplaceProducts.find(product => String(product.id) === id) : null) ||
-    chatProducts[id] || null;
-}
 
 function loadLocalVendorReadState() {
   const userId = currentUser?.id || 'vendor';
@@ -1053,7 +1054,7 @@ async function loadVendorProducts(isPolling = false) {
         <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-accentBlue/40 transition">
           <div>
             <div class="relative w-full h-48 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-2 overflow-hidden">
-              <img src="${imgVal}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300">
+              <img src="${imgVal}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Image Available</span></div>
               <div class="absolute top-2 left-2 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-emerald-400">
                 $${commVal} Commission
               </div>
@@ -1123,7 +1124,7 @@ async function handleSaveProduct(event) {
   const status = document.getElementById('prodStatus').value;
   const amazonUrl = document.getElementById('prodAmazonUrl') ? document.getElementById('prodAmazonUrl').value.trim() : '';
   const fileInput = document.getElementById('prodImageFile');
-  let imageUrl = 'https://via.placeholder.com/300';
+  let imageUrl = '';
 
   if (id) {
     const existing = vendorProducts.find(p => p.id == id);
@@ -1201,13 +1202,13 @@ function checkReceiptDeadlinesAndLockout() {
   (vendorCommissions || []).forEach(c => {
     const statusUpper = (c.status || '').toUpperCase();
     const qTypeUpper = (c.queue_type || '').toUpperCase();
-    const isApprovedOrWorking = statusUpper === 'APPROVED' || statusUpper === 'APPROVED_IN_WORKING' || qTypeUpper === 'WORKING_QUEUE' || qTypeUpper === 'OUTGOING_REQUESTS';
-    const hasNoReceipt = !c.receipt_base64 && !c.receipt_url && !c.proof_base64;
+    const isApprovedOrWorking = statusUpper === 'APPROVED' || statusUpper === 'WORKING' || qTypeUpper === 'WORKING' || qTypeUpper === 'IN_WORKING' || qTypeUpper === 'WORKING_QUEUE' || qTypeUpper === 'OUTGOING_REQUESTS';
+    const hasNoReceipt = !c.receipt_base64;
 
     if (isApprovedOrWorking && hasNoReceipt) {
-      const approvedAtTime = new Date(c.approved_at || c.updated_at || c.created_at || now).getTime();
-      const deadline = approvedAtTime + TWENTY_FOUR_HOURS;
-      const remainingMs = deadline - now;
+      const approvedAtTime = new Date(c.created_at || now).getTime();
+      const elapsedMs = now - approvedAtTime;
+      const remainingMs = TWENTY_FOUR_HOURS - elapsedMs;
 
       if (c.recipient_id) overdueBuyerIds.add(c.recipient_id);
 
@@ -1226,7 +1227,7 @@ function checkReceiptDeadlinesAndLockout() {
   const iconBg = document.getElementById('receiptBannerIconBg');
   const icon = document.getElementById('receiptBannerIcon');
   const title = document.getElementById('receiptBannerTitle');
-  const text = document.getElementById('receiptBannerText');
+  const textEl = document.getElementById('receiptBannerText');
   const actionBtn = document.getElementById('receiptBannerActionBtn');
   const btnText = document.getElementById('receiptBannerBtnText');
 
@@ -1235,11 +1236,11 @@ function checkReceiptDeadlinesAndLockout() {
     activePendingReceiptComm = expiredComm;
     if (banner) {
       banner.classList.remove('hidden');
-      banner.className = 'rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6 bg-rose-500/20 border-rose-500/40 text-rose-200 animate-pulse';
-      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-rose-500/30 text-rose-300';
+      banner.className = 'rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6 bg-rose-950/80 border-rose-500/50 text-rose-200';
+      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-rose-500/20 text-rose-400 border border-rose-500/30';
       if (icon) icon.className = 'fa-solid fa-triangle-exclamation';
       if (title) title.textContent = '🚨 Account Restricted: 24-Hour Receipt Deadline Elapsed';
-      if (text) text.textContent = `24 hours elapsed for ${expiredComm.recipient_name || expiredComm.recipient_email || 'Reviewer'} ($${Number(expiredComm.amount||0).toFixed(2)} payout). Upload receipt proof now to restore full workspace features.`;
+      if (textEl) textEl.textContent = `24 hours elapsed for ${expiredComm.recipient_email || 'Reviewer'} ($${Number(expiredComm.amount||0).toFixed(2)} payout). Upload receipt proof now to restore full workspace features.`;
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white cursor-pointer';
       if (btnText) btnText.textContent = 'Upload Receipt Now';
     }
@@ -1250,11 +1251,11 @@ function checkReceiptDeadlinesAndLockout() {
     const mins = Math.floor((shortestRemainingMs % (1000 * 60 * 60)) / (1000 * 60));
     if (banner) {
       banner.classList.remove('hidden');
-      banner.className = 'rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6 bg-amber-500/15 border-amber-500/30 text-amber-200';
-      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-amber-500/25 text-amber-300';
+      banner.className = 'rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6 bg-amber-950/80 border-amber-500/50 text-amber-200';
+      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-amber-500/20 text-amber-400 border border-amber-500/30';
       if (icon) icon.className = 'fa-solid fa-clock';
       if (title) title.textContent = '⏱️ Action Required: Payment Receipt Pending';
-      if (text) text.textContent = `Pending receipt for ${activeWindowComm.recipient_name || activeWindowComm.recipient_email || 'Reviewer'} ($${Number(activeWindowComm.amount||0).toFixed(2)}). ${hours}h ${mins}m remaining before account lockout.`;
+      if (textEl) textEl.textContent = `Pending receipt for ${activeWindowComm.recipient_name || activeWindowComm.recipient_email || 'Reviewer'} ($${Number(activeWindowComm.amount||0).toFixed(2)} payout) • ${hours}h ${mins}m remaining before account restriction.`;
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer';
       if (btnText) btnText.textContent = 'Upload Receipt Now';
     }
@@ -1821,10 +1822,20 @@ function viewSellerCommDetails(commId) {
   document.getElementById('sellerCommDetailsModal').classList.remove('hidden');
 }
 
-function inspectReceipt(txId, amount, receiptUrl) {
-  document.getElementById('inspectModalTxId').textContent = txId;
-  document.getElementById('inspectModalAmount').textContent = `$${Number(amount).toFixed(2)}`;
-  document.getElementById('inspectModalImage').src = receiptUrl || 'https://via.placeholder.com/300?text=No+Receipt+Image';
+function inspectReceipt(txId, amount, receiptBase64) {
+  document.getElementById('inspectModalTxId').textContent = txId || 'N/A';
+  document.getElementById('inspectModalAmount').textContent = `$${Number(amount || 0).toFixed(2)}`;
+  const imgEl = document.getElementById('inspectModalImage');
+  if (imgEl) {
+    if (receiptBase64 && receiptBase64.trim()) {
+      imgEl.src = receiptBase64;
+      imgEl.classList.remove('hidden');
+      if (imgEl.nextElementSibling) imgEl.nextElementSibling.classList.add('hidden');
+    } else {
+      imgEl.classList.add('hidden');
+      if (imgEl.nextElementSibling) imgEl.nextElementSibling.classList.remove('hidden');
+    }
+  }
   document.getElementById('inspectReceiptModal').classList.remove('hidden');
 }
 
@@ -2017,20 +2028,6 @@ async function loadVendorThreads(isPolling = false) {
       .select('*')
       .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
-
-    const productIds = [...new Set((msgData || []).map(message => message.product_id).filter(Boolean).map(String))];
-    chatProducts = {};
-    if (productIds.length) {
-      const { data: products, error: productsError } = await _supabase
-        .from('products')
-        .select('*')
-        .in('id', productIds);
-      if (productsError) {
-        console.warn('Could not load products linked to seller messages:', productsError.message);
-      } else {
-        (products || []).forEach(product => { chatProducts[String(product.id)] = product; });
-      }
-    }
 
     let commData = [];
     try {
@@ -2243,7 +2240,10 @@ function extractProductIdFromText(text) {
 }
 
 window.openSellerProductDetailsModal = function(productId) {
-  const prod = getSellerChatProduct(productId);
+  let prod = (vendorProducts || []).find(p => p.id === productId);
+  if (!prod && typeof marketplaceProducts !== 'undefined') {
+    prod = marketplaceProducts.find(p => p.id === productId);
+  }
   if (!prod) return;
 
   const pTitle = prod.title || 'Marketplace Product';
@@ -2272,7 +2272,7 @@ window.openSellerProductDetailsModal = function(productId) {
       </div>
 
       <div class="flex gap-4 items-start">
-        <img src="${pImg}" onerror="this.src='https://via.placeholder.com/150'" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0">
+        <img src="${pImg}" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0">
         <div class="space-y-1.5 truncate flex-1">
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20 uppercase">${pStatus}</span>
           <h4 class="text-sm font-bold text-white truncate">${pTitle}</h4>
@@ -2318,17 +2318,20 @@ function renderActiveChat() {
   const msgWithProd = sorted.find(m => m.product_id);
   if (msgWithProd && msgWithProd.product_id) {
     const prodId = msgWithProd.product_id;
-    const prod = getSellerChatProduct(prodId);
+    let prod = (vendorProducts || []).find(p => p.id === prodId);
+    if (!prod && typeof marketplaceProducts !== 'undefined') {
+      prod = marketplaceProducts.find(p => p.id === prodId);
+    }
     const pTitle = prod ? prod.title : (msgWithProd.product_title || 'Marketplace Review Listing');
     const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (msgWithProd.product_price ? Number(msgWithProd.product_price).toFixed(2) : '29.99');
     const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
-    const pImg = getProductImageUrl(prod || msgWithProd || {});
+    const pImg = prod ? getProductImageUrl(prod) : getProductImageUrl(msgWithProd);
     const pUrl = prod ? (prod.amazon_url || prod.product_url || prod.amazon_link || '') : '';
 
     productHeaderCard = `
       <div class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-4 shadow-lg flex items-center justify-between gap-3 shrink-0">
         <div class="flex items-center space-x-3 truncate">
-          <img src="${pImg}" onerror="this.src='https://via.placeholder.com/150'" alt="Product" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shrink-0">
+          <img src="${pImg}" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');" alt="Product" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shrink-0">
           <div class="truncate">
             <div class="flex items-center space-x-1.5">
               <span class="text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.2 rounded-full font-bold uppercase">Inquired Item</span>
@@ -2417,7 +2420,10 @@ function renderActiveChat() {
       const msgProdId = m.product_id || extractProductIdFromText(text);
       let productCardHtml = '';
       if (msgProdId) {
-        const prod = getSellerChatProduct(msgProdId);
+        let prod = (vendorProducts || []).find(p => p.id === msgProdId);
+        if (!prod && typeof marketplaceProducts !== 'undefined') {
+          prod = marketplaceProducts.find(p => p.id === msgProdId || String(p.id).toLowerCase().includes(String(msgProdId).toLowerCase()));
+        }
         if (prod) {
           const pPrice = Number(prod.price || 0).toFixed(2);
           const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
@@ -2429,7 +2435,7 @@ function renderActiveChat() {
 
           productCardHtml = `
             <div onclick="openProductFromChat('${prod.id}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
-              <img src="${pImg}" onerror="this.src='https://via.placeholder.com/150'" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
+              <img src="${pImg}" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
               <div class="truncate flex-1">
                 <div class="flex items-center space-x-1">
                   <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
@@ -2762,4 +2768,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
