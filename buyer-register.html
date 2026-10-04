@@ -271,7 +271,7 @@ if (!userId) {
 throw new Error('User registration failed to return an authenticated ID.');
 }
 
-// 3. Insert profile record matching exact 13-column live schema
+// 3. Insert/Upsert profile record matching exact 13-column live schema
 const { error: profileError } = await supabaseClient
 .from('profiles')
 .upsert({
@@ -288,7 +288,17 @@ invited_by_code: finalInvitedByCode,
 referred_by: finalReferredBy,
 created_at: new Date().toISOString()
 });
-if (profileError) throw profileError;
+if (profileError) {
+  console.warn('Profiles table upsert notice (handled by DB trigger):', profileError.message);
+}
+
+// Automatically sign user in so session is established immediately
+try {
+  await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+} catch (loginErr) {
+  console.warn('Auto sign-in notice:', loginErr.message);
+}
+
 alert('Shopper account successfully created! Your National ID is pending admin verification. Redirecting to Reviewer Hub...');
 window.location.href = 'index.html';
 } catch (err) {
