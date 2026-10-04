@@ -2312,13 +2312,49 @@ function renderActiveChat(shouldScroll = false) {
   if (!container) return;
   const currentScrollTop = container.scrollTop;
 
+  const titleEl = document.getElementById('activeChatTitle');
+  const subEl = document.getElementById('activeChatSub');
+
+  if (!profilesCache[activeThreadId] && activeThreadId && activeThreadId.length > 20) {
+    _supabase.from('profiles').select('id, full_name, email, paypal_email, role').eq('id', activeThreadId).maybeSingle().then(({data}) => {
+      if (data) {
+        profilesCache[data.id] = data;
+        renderActiveChat();
+      }
+    });
+  }
+
+  const prof = profilesCache[activeThreadId] || (activeThreadId === 'admin_system_support' ? getAdminProfile() : {});
+  const partnerName = prof.full_name || prof.email || (activeThreadId === 'admin_system_support' ? 'System Administrator' : `Shopper Reviewer (${String(activeThreadId).substring(0, 6)})`);
+  const rawRole = (prof.role || (activeThreadId === 'admin_system_support' ? 'ADMIN' : 'SHOPPER')).toUpperCase();
+  const displayRole = rawRole === 'BUYER' ? 'SHOPPER' : rawRole;
+
+  let roleBadgeClass = 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+  if (rawRole.includes('ADMIN')) {
+    roleBadgeClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+  } else if (rawRole.includes('BUYER') || rawRole.includes('SHOPPER') || rawRole.includes('REVIEWER')) {
+    roleBadgeClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+  } else if (rawRole.includes('SELLER') || rawRole.includes('VENDOR')) {
+    roleBadgeClass = 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+  }
+
+  if (titleEl) {
+    titleEl.innerHTML = `
+      <div class="flex items-center space-x-2">
+        <span class="text-sm font-bold text-white">${partnerName}</span>
+        <span class="text-[9px] px-2.5 py-0.5 rounded-full border font-bold uppercase ${roleBadgeClass}">${displayRole}</span>
+      </div>
+    `;
+  }
+  if (subEl) {
+    const emailStr = prof.email ? ` • ${prof.email}` : '';
+    subEl.textContent = `ID: ${String(activeThreadId).substring(0, 8)}...${emailStr}`;
+  }
+
   if (!thread) {
-    const prof = profilesCache[activeThreadId] || getAdminProfile();
-    document.getElementById('activeChatTitle').textContent = `Direct Chat with ${prof.full_name || 'Admin'}`;
-    container.innerHTML = `<div class="m-auto text-center text-xs text-slate-500"><i class="fa-solid fa-headset text-2xl text-amber-400 mb-2 block"></i>Direct channel ready. Type a message below to contact ${prof.full_name || 'Admin'}!</div>`;
+    container.innerHTML = `<div class="m-auto text-center text-xs text-slate-500"><i class="fa-solid fa-headset text-2xl text-amber-400 mb-2 block"></i>Direct channel ready. Type a message below to contact ${partnerName}!</div>`;
     return;
   }
-  document.getElementById('activeChatTitle').textContent = `Chat & Review Stream (${String(activeThreadId).substring(0,6)}...)`;
   const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
 
   /* Product Snapshot Header Card */
