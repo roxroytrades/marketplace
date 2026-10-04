@@ -2201,7 +2201,7 @@ async function selectThread(partnerId) {
   }
   updateSellerUnreadBadge();
   renderThreadsList();
-  renderActiveChat();
+  renderActiveChat(true);
   document.getElementById('chatInputMsg').disabled = false;
   document.getElementById('chatSendBtn').disabled = false;
 
@@ -2239,10 +2239,17 @@ function extractProductIdFromText(text) {
   return null;
 }
 
-window.openSellerProductDetailsModal = function(productId) {
-  let prod = (vendorProducts || []).find(p => p.id === productId);
-  if (!prod && typeof marketplaceProducts !== 'undefined') {
-    prod = marketplaceProducts.find(p => p.id === productId);
+window.openSellerProductDetailsModal = async function(productId) {
+  if (!productId) return;
+  let prod = null;
+  if (typeof getSellerChatProduct === 'function') {
+    prod = await getSellerChatProduct(productId);
+  }
+  if (!prod) {
+    prod = (vendorProducts || []).find(p => String(p.id) === String(productId));
+  }
+  if (!prod && typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
+    prod = marketplaceProducts.find(p => String(p.id) === String(productId));
   }
   if (!prod) return;
 
@@ -2287,7 +2294,7 @@ window.openSellerProductDetailsModal = function(productId) {
       </div>
 
       <div class="flex justify-end space-x-2 pt-2 border-t border-borderSlate">
-        ${(vendorProducts || []).some(p => p.id === productId) ? `<button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden'); editProduct('${productId}');" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5"><i class="fa-solid fa-pen-to-square"></i><span>Edit Listing</span></button>` : ''}
+        ${(vendorProducts || []).some(p => String(p.id) === String(productId) || String(p.id) === String(prod.id)) ? `<button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden'); editProduct('${prod.id}');" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5"><i class="fa-solid fa-pen-to-square"></i><span>Edit Listing</span></button>` : ''}
         <button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">Close</button>
       </div>
     </div>
@@ -2295,14 +2302,15 @@ window.openSellerProductDetailsModal = function(productId) {
   modalEl.classList.remove('hidden');
 };
 
-window.openProductFromChat = function(productId) {
-  if (productId) openSellerProductDetailsModal(productId);
+window.openProductFromChat = async function(productId) {
+  if (productId) await openSellerProductDetailsModal(productId);
 };
 
-function renderActiveChat() {
+function renderActiveChat(shouldScroll = false) {
   let thread = vendorThreads.find(t => t.partnerId === activeThreadId);
   const container = document.getElementById('chatMessagesContainer');
   if (!container) return;
+  const currentScrollTop = container.scrollTop;
 
   if (!thread) {
     const prof = profilesCache[activeThreadId] || getAdminProfile();
@@ -2319,19 +2327,33 @@ function renderActiveChat() {
   if (msgWithProd && msgWithProd.product_id) {
     const prodId = msgWithProd.product_id;
     let prod = (vendorProducts || []).find(p => p.id === prodId);
-    if (!prod && typeof marketplaceProducts !== 'undefined') {
-      prod = marketplaceProducts.find(p => p.id === prodId);
+    if (!prod && typeof chatProducts !== 'undefined' && chatProducts[prodId]) {
+      prod = chatProducts[prodId];
     }
+    if (!prod && typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
+      prod = marketplaceProducts.find(p => p.id === prodId || String(p.id).toLowerCase() === String(prodId).toLowerCase());
+    }
+    if (!prod && typeof getSellerChatProduct === 'function') {
+      getSellerChatProduct(prodId).then(fetched => {
+        if (fetched) renderActiveChat();
+      });
+    }
+
     const pTitle = prod ? prod.title : (msgWithProd.product_title || 'Marketplace Review Listing');
     const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (msgWithProd.product_price ? Number(msgWithProd.product_price).toFixed(2) : '29.99');
     const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
-    const pImg = prod ? getProductImageUrl(prod) : getProductImageUrl(msgWithProd);
+    const pImg = prod ? getProductImageUrl(prod) : (getProductImageUrl(msgWithProd) || '');
     const pUrl = prod ? (prod.amazon_url || prod.product_url || prod.amazon_link || '') : '';
 
     productHeaderCard = `
-      <div class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-4 shadow-lg flex items-center justify-between gap-3 shrink-0">
+      <div onclick="openProductFromChat('${prodId}')" class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-4 shadow-lg flex items-center justify-between gap-3 shrink-0 cursor-pointer hover:border-blue-500/60 transition">
         <div class="flex items-center space-x-3 truncate">
-          <img src="${pImg}" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');" alt="Product" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shrink-0">
+          <div class="relative w-12 h-12 shrink-0">
+            <img src="${pImg}" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" alt="Product" class="w-12 h-12 object-cover rounded-xl border border-borderSlate">
+            <div class="hidden flex flex-col items-center justify-center w-12 h-12 bg-slate-800 rounded-xl border border-slate-700 text-slate-400">
+              <i class="fa-solid fa-box-open text-base"></i>
+            </div>
+          </div>
           <div class="truncate">
             <div class="flex items-center space-x-1.5">
               <span class="text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.2 rounded-full font-bold uppercase">Inquired Item</span>
@@ -2341,7 +2363,7 @@ function renderActiveChat() {
             <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">$${pPrice}</strong> | Review Commission: <strong class="text-emerald-400">$${pComm} Commission</strong></p>
           </div>
         </div>
-        <div class="flex items-center space-x-2 shrink-0">
+        <div class="flex items-center space-x-2 shrink-0" onclick="event.stopPropagation()">
           ${prod ? `<button onclick="editProduct('${prod.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-200 text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition flex items-center space-x-1"><i class="fa-solid fa-pen-to-square text-blue-400"></i><span>Edit</span></button>` : ''}
           ${pUrl ? `<a href="${pUrl}" target="_blank" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition flex items-center space-x-1" title="🔒 Strictly private to vendor - hidden from shoppers"><i class="fa-solid fa-lock text-[9px] text-amber-400"></i><i class="fa-brands fa-amazon text-[10px]"></i><span>Amazon Page (Private)</span></a>` : ''}
         </div>
@@ -2421,36 +2443,49 @@ function renderActiveChat() {
       let productCardHtml = '';
       if (msgProdId) {
         let prod = (vendorProducts || []).find(p => p.id === msgProdId);
-        if (!prod && typeof marketplaceProducts !== 'undefined') {
+        if (!prod && typeof chatProducts !== 'undefined' && chatProducts[msgProdId]) {
+          prod = chatProducts[msgProdId];
+        }
+        if (!prod && typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
           prod = marketplaceProducts.find(p => p.id === msgProdId || String(p.id).toLowerCase().includes(String(msgProdId).toLowerCase()));
         }
-        if (prod) {
-          const pPrice = Number(prod.price || 0).toFixed(2);
-          const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
-          const pImg = getProductImageUrl(prod);
-          const cardBg = isMe 
-            ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50' 
-            : 'bg-white border-slate-300 text-slate-900 hover:border-blue-600 shadow-md';
-          const btnColor = isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold';
+        if (!prod && typeof getSellerChatProduct === 'function') {
+          getSellerChatProduct(msgProdId).then(fetched => {
+            if (fetched) renderActiveChat();
+          });
+        }
 
-          productCardHtml = `
-            <div onclick="openProductFromChat('${prod.id}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
-              <img src="${pImg}" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
-              <div class="truncate flex-1">
-                <div class="flex items-center space-x-1">
-                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
-                  <span class="text-[9px] font-mono ${isMe ? 'text-slate-300' : 'text-slate-600'}">ID: ${String(prod.id).substring(0,8)}</span>
-                </div>
-                <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-900'} truncate mt-0.5 group-hover:text-blue-600 transition">${prod.title}</h5>
-                <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: <strong>$${pPrice}</strong> | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
-              </div>
-              <div class="shrink-0 text-xs ${btnColor} font-bold flex items-center space-x-1 group-hover:underline">
-                <span>View</span>
-                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+        const pTitle = prod ? prod.title : (m.product_title || 'Marketplace Item');
+        const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (m.product_price ? Number(m.product_price).toFixed(2) : '29.99');
+        const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : (m.commission_amount ? Number(m.commission_amount).toFixed(2) : '15.00');
+        const pImg = prod ? getProductImageUrl(prod) : (getProductImageUrl(m) || '');
+        const cardBg = isMe 
+          ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50' 
+          : 'bg-white border-slate-300 text-slate-900 hover:border-blue-600 shadow-md';
+        const btnColor = isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold';
+
+        productCardHtml = `
+          <div onclick="openProductFromChat('${msgProdId}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
+            <div class="relative w-12 h-12 shrink-0">
+              <img src="${pImg}" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 group-hover:scale-105 transition">
+              <div class="hidden flex flex-col items-center justify-center w-12 h-12 bg-slate-800 rounded-lg border border-slate-700 text-slate-400">
+                <i class="fa-solid fa-box-open text-base"></i>
               </div>
             </div>
-          `;
-        }
+            <div class="truncate flex-1">
+              <div class="flex items-center space-x-1">
+                <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
+                <span class="text-[9px] font-mono ${isMe ? 'text-slate-300' : 'text-slate-600'}">ID: ${String(msgProdId).substring(0,8)}</span>
+              </div>
+              <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-900'} truncate mt-0.5 group-hover:text-blue-600 transition">${pTitle}</h5>
+              <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: <strong>$${pPrice}</strong> | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
+            </div>
+            <div class="shrink-0 text-xs ${btnColor} font-bold flex items-center space-x-1 group-hover:underline">
+              <span>View</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </div>
+          </div>
+        `;
       }
 
       const textDisplay = text ? `<div>${text}</div>` : '';
@@ -2481,7 +2516,11 @@ function renderActiveChat() {
     `;
   }
   container.innerHTML = receiptThreadBanner + productHeaderCard + messagesHtml;
-  container.scrollTop = container.scrollHeight;
+  if (shouldScroll) {
+    container.scrollTop = container.scrollHeight;
+  } else {
+    container.scrollTop = currentScrollTop;
+  }
 }
 
 async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
@@ -2720,6 +2759,7 @@ async function handleSendMessage(event) {
     input.value = '';
     clearChatAttachment();
     await loadVendorThreads(true);
+    renderActiveChat(true);
   } catch (err) {
     alert('Error sending message: ' + err.message);
   }
