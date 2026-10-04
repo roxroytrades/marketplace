@@ -332,21 +332,18 @@ async function loadAppBranding() {
       applyAppLogo(cachedLogo);
     }
 
-    // 2. Fetch from Supabase system_settings with support for key=app_logo_base64
-    const client = window.supabaseClient || supabaseClient;
+    // 2. Fetch from Supabase system_settings matching exact live schema (key, value)
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     if (client) {
       const { data, error } = await client
         .from('system_settings')
-        .select('value, logo_url, logo_base64, logo, key, id')
-        .or('key.eq.app_logo_base64,key.eq.logo,id.eq.app_config,key.eq.app_config')
+        .select('value')
+        .eq('key', 'app_logo_base64')
         .maybeSingle();
 
-      if (!error && data) {
-        const logoSrc = data.value || data.logo_base64 || data.logo_url || data.logo;
-        if (logoSrc) {
-          localStorage.setItem('app_logo_base64', logoSrc);
-          applyAppLogo(logoSrc);
-        }
+      if (!error && data && data.value) {
+        localStorage.setItem('app_logo_base64', data.value);
+        applyAppLogo(data.value);
       }
     }
   } catch (err) {

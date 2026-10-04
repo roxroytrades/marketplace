@@ -41,7 +41,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
       <span id="headerLogoText">eh</span>
       <img id="headerLogoImg" src="" alt="Echo Hub Logo" class="w-full h-full object-cover hidden absolute inset-0">
     </div>
-<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal Invite</span></span>
+<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal</span></span>
 </div>
 <div class="flex items-center space-x-3">
 <a href="login.html" class="text-xs text-slate-400 hover:text-white transition flex items-center space-x-1">
@@ -54,8 +54,9 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <div class="max-w-xl w-full bg-cardBg border border-borderSlate rounded-3xl shadow-2xl p-8 md:p-10 space-y-6">
 <!-- Header Branding & Page Title Specification -->
 <div class="text-center space-y-2">
-<div class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-1 font-heading font-bold text-2xl">
-eh
+<div id="formLogoContainer" class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-1 font-heading font-bold text-2xl overflow-hidden relative mx-auto">
+<span id="formLogoText">eh</span>
+<img id="formLogoImg" src="" alt="Echo Hub Logo" class="w-full h-full object-cover hidden absolute inset-0">
 </div>
 <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Create Account</h1>
 <p class="text-xs text-slate-400">Set up your Echo Hub marketplace account to manage inventory and campaigns.</p>
@@ -64,15 +65,7 @@ eh
 <div id="formAlert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
 <!-- Detailed Vendor Registration Form -->
 <form id="sellerRegisterForm" class="space-y-4">
-<!-- Invitation Token Validation Field -->
-<div class="space-y-1">
-<label class="text-xs font-semibold text-slate-300">Invitation Token</label>
-<div class="relative">
-<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-key text-xs"></i></span>
-<input type="text" id="inviteToken" required placeholder="Enter your unique invite token" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition font-mono">
-</div>
-<p class="text-[10px] text-slate-500 pl-1">Required: Vendor registration is invitation-gated.</p>
-</div>
+
 <!-- First Name & Last Name (Side by side grid) -->
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <div class="space-y-1">
@@ -172,13 +165,10 @@ const alertBox = document.getElementById('formAlert');
 const submitBtn = document.getElementById('submitBtn');
 
 // Auto-populate invite token and referral code from URL query params if present (e.g., ?token=XYZ&ref=REF-123)
-window.addEventListener('DOMContentLoaded', loadAppBranding);
 window.addEventListener('DOMContentLoaded', () => {
+  loadAppBranding();
   const urlParams = new URLSearchParams(window.location.search);
-  const tokenParam = urlParams.get('token');
-  if (tokenParam) {
-    document.getElementById('inviteToken').value = tokenParam.trim();
-  }
+
   const refParam = urlParams.get('ref') || urlParams.get('ref_code') || urlParams.get('invited_by');
   if (refParam) {
     document.getElementById('referralCode').value = refParam.trim();
@@ -187,7 +177,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const inviteToken = document.getElementById('inviteToken').value.trim();
   const firstName = document.getElementById('firstName').value.trim();
   const lastName = document.getElementById('lastName').value.trim();
   const fullName = `${firstName} ${lastName}`;
@@ -207,33 +196,59 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Architectural Check: Invitation Token Validation
-  if (!inviteToken) {
-    alertBox.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
-    alertBox.textContent = 'An invitation token is required to register as a vendor.';
-    alertBox.classList.remove('hidden');
-    return;
-  }
-
   // UI Loading state
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Verifying token & creating vendor profile...';
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating vendor profile...';
   alertBox.classList.add('hidden');
 
   try {
-    // Verify invitation token against backend / database table check
-    const { data: tokenData, error: tokenError } = await _supabase
-      .from('vendor_invites')
-      .select('*')
-      .eq('token', inviteToken)
-      .eq('is_used', false)
-      .maybeSingle();
+    // Helper function to resolve referee/inviter profile UUID and referral_code strictly
+    async function resolveRefereeProfile(client, rawCode) {
+      if (!rawCode) return { refereeUuid: null, refereeCode: null };
+      let refereeUuid = null;
+      let refereeCode = null;
+      try {
+        const cleanCode = rawCode.replace(/^(vendor_|buyer_|seller_)/i, '').trim();
+        const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanCode);
 
-    if (tokenError || !tokenData) {
-      throw new Error('Invalid or already used invitation token.');
+        // 1. If rawCode is a full UUID, query by id
+        if (isUuid) {
+          const { data } = await client.from('profiles').select('id, referral_code').eq('id', cleanCode).maybeSingle();
+          if (data) return { refereeUuid: data.id, refereeCode: data.referral_code || null };
+        }
+
+        // 2. Query by referral_code exact match
+        const { data: byCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', rawCode).maybeSingle();
+        if (byCode) return { refereeUuid: byCode.id, refereeCode: byCode.referral_code || rawCode };
+
+        // 3. Query by referral_code with cleanCode
+        const { data: byCleanCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', cleanCode).maybeSingle();
+        if (byCleanCode) return { refereeUuid: byCleanCode.id, refereeCode: byCleanCode.referral_code || cleanCode };
+
+        // 4. Query by UUID prefix (e.g. 8-char substring from currentUser.id)
+        if (cleanCode.length >= 6 && cleanCode.length < 36) {
+          const { data: byPrefix } = await client.from('profiles').select('id, referral_code').ilike('id', cleanCode + '%').limit(1);
+          if (byPrefix && byPrefix.length > 0) {
+            return { refereeUuid: byPrefix[0].id, refereeCode: byPrefix[0].referral_code || null };
+          }
+        }
+
+        // 5. If it's a plain referral code string (not a UUID)
+        if (!isUuid && cleanCode.length < 32) {
+          refereeCode = rawCode;
+        }
+      } catch (err) {
+        console.warn('Referee resolution warning:', err);
+      }
+      return { refereeUuid, refereeCode };
     }
 
-    // Register vendor with Supabase Auth including correct invited_by_code mapping in metadata
+    // Resolve referee profile BEFORE auth.signUp so metadata receives both fields
+    const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, referralCode);
+    const finalInvitedByCode = refereeCode || null;
+    const finalReferredBy = refereeUuid || null;
+
+    // Register vendor with Supabase Auth including correct invited_by_code and referred_by in metadata
     const { data: authData, error: authError } = await _supabase.auth.signUp({
       email: email,
       password: password,
@@ -245,9 +260,9 @@ form.addEventListener('submit', async (e) => {
           vendor_type: vendorType,
           commission_amount: commissionAmount,
           business_description: businessDescription,
-          invited_by_code: referralCode || null,
+          invited_by_code: finalInvitedByCode,
+          referred_by: finalReferredBy,
           paypal_email: paypalEmail,
-          invite_token: inviteToken,
           role: 'seller'
         }
       }
@@ -260,7 +275,7 @@ form.addEventListener('submit', async (e) => {
       throw new Error('User registration failed to return an authenticated ID.');
     }
 
-    // Upsert directly into public.profiles to guarantee invited_by_code and role are stored in DB
+    // Upsert directly into public.profiles matching exact 13-column live schema
     const { error: profileError } = await _supabase
       .from('profiles')
       .upsert({
@@ -268,10 +283,8 @@ form.addEventListener('submit', async (e) => {
         full_name: fullName,
         email: email,
         paypal_email: paypalEmail,
-        business_description: businessDescription,
-        vendor_type: vendorType,
-        commission_amount: commissionAmount,
-        invited_by_code: referralCode || null,
+        invited_by_code: finalInvitedByCode,
+        referred_by: finalReferredBy,
         role: 'seller',
         verification_status: 'VERIFIED',
         created_at: new Date().toISOString()
@@ -280,12 +293,6 @@ form.addEventListener('submit', async (e) => {
     if (profileError) {
       console.warn('Profiles table upsert notice:', profileError.message);
     }
-
-    // Mark invitation token as used
-    await _supabase
-      .from('vendor_invites')
-      .update({ is_used: true, used_by: email })
-      .eq('token', inviteToken);
 
     // Automatically sign them in
     const { error: loginError } = await _supabase.auth.signInWithPassword({
@@ -317,36 +324,50 @@ form.addEventListener('submit', async (e) => {
 });
 
 // ================= SYSTEM BRANDING HYDRATION =================
+function applySellerLogo(logoSrc) {
+  if (!logoSrc) return;
+  const img = document.getElementById('headerLogoImg');
+  const text = document.getElementById('headerLogoText');
+  const container = document.getElementById('headerLogoContainer');
+  if (img) {
+    img.src = logoSrc;
+    img.classList.remove('hidden');
+  }
+  if (text) text.classList.add('hidden');
+  if (container) container.classList.add('p-0');
+
+  const formImg = document.getElementById('formLogoImg');
+  const formText = document.getElementById('formLogoText');
+  const formContainer = document.getElementById('formLogoContainer');
+  if (formImg) {
+    formImg.src = logoSrc;
+    formImg.classList.remove('hidden');
+  }
+  if (formText) formText.classList.add('hidden');
+  if (formContainer) formContainer.classList.add('p-0');
+}
+
 async function loadAppBranding() {
   try {
-    const { data, error } = await _supabase
-      .from('system_settings')
-      .select('logo_url, logo_base64, logo, value, key, id')
-      .or('id.eq.app_config,key.eq.app_config,key.eq.logo')
-      .maybeSingle();
-
-    if (error) {
-      console.warn("Branding query info:", error.message);
-      return;
+    const cachedLogo = localStorage.getItem('app_logo_base64');
+    if (cachedLogo) {
+      applySellerLogo(cachedLogo);
     }
 
-    const logoSrc = data ? (data.logo_url || data.logo_base64 || data.logo || data.value) : null;
-    if (logoSrc) {
-      const img = document.getElementById('headerLogoImg');
-      const text = document.getElementById('headerLogoText');
-      const container = document.getElementById('headerLogoContainer');
-      if (img) {
-        img.src = logoSrc;
-        img.classList.remove('hidden');
-      }
-      if (text) text.classList.add('hidden');
-      if (container) container.classList.add('p-0');
+    const { data, error } = await _supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'app_logo_base64')
+      .maybeSingle();
+
+    if (!error && data && data.value) {
+      localStorage.setItem('app_logo_base64', data.value);
+      applySellerLogo(data.value);
     }
   } catch (err) {
     console.warn("Branding load bypassed:", err);
   }
 }
-
 </script>
 </body>
 </html>
