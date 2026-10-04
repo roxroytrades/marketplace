@@ -1202,11 +1202,11 @@ function checkReceiptDeadlinesAndLockout() {
   (vendorCommissions || []).forEach(c => {
     const statusUpper = (c.status || '').toUpperCase();
     const qTypeUpper = (c.queue_type || '').toUpperCase();
-    const isApprovedOrWorking = statusUpper === 'APPROVED' || statusUpper === 'WORKING' || qTypeUpper === 'WORKING' || qTypeUpper === 'IN_WORKING' || qTypeUpper === 'WORKING_QUEUE' || qTypeUpper === 'OUTGOING_REQUESTS';
+    const isApprovedOrWorking = statusUpper === 'APPROVED_IN_WORKING' || statusUpper === 'WORKING' || qTypeUpper === 'WORKING' || qTypeUpper === 'IN_WORKING' || qTypeUpper === 'WORKING_QUEUE';
     const hasNoReceipt = !c.receipt_base64;
 
     if (isApprovedOrWorking && hasNoReceipt) {
-      const approvedAtTime = new Date(c.created_at || now).getTime();
+      const approvedAtTime = new Date(c.updated_at || c.created_at || now).getTime();
       const elapsedMs = now - approvedAtTime;
       const remainingMs = TWENTY_FOUR_HOURS - elapsedMs;
 
@@ -2690,34 +2690,32 @@ async function handleSendMessage(event) {
     let payload = {
       sender_id: currentUser.id,
       receiver_id: targetReceiverId,
-      seller_id: currentUser.id,
       vendor_id: currentUser.id,
       product_id: targetProdId,
       text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-      type: 'vendor_reply',
-      channel_type: isSendingToAdmin ? 'ADMIN_DIRECT' : 'MARKETPLACE'
+      status_badge: 'AWAITING_ATTENTION'
     };
     if (fileDataUrl) {
       payload.file_url = fileDataUrl;
       payload.file_name = fileName;
     }
-    let { error } = await _supabase
-      .from('messages')
-      .insert([payload]);
-    if (error && error.message && error.message.includes('channel_type')) {
-      console.warn('channel_type column missing in database schema, retrying without channel_type');
-      delete payload.channel_type;
-      const retryRes = await _supabase.from('messages').insert([payload]);
-      error = retryRes.error;
-    }
+
+    let { error } = await _supabase.from('messages').insert([payload]);
+
     if (error) {
-      delete payload.text;
-      payload.message = text || (fileName ? `[Attachment: ${fileName}]` : '');
+      console.warn('First insert attempt failed, trying fallback payload format:', error.message);
+      const fallbackPayload = {
+        sender_id: currentUser.id,
+        receiver_id: targetReceiverId,
+        vendor_id: currentUser.id,
+        product_id: targetProdId,
+        text: text || (fileName ? `[Attachment: ${fileName}]` : '')
+      };
       if (fileDataUrl) {
-        payload.attachment_url = fileDataUrl;
-        payload.attachment_name = fileName;
+        fallbackPayload.proof_base64 = fileDataUrl;
       }
-      await _supabase.from('messages').insert([payload]);
+      const retryRes = await _supabase.from('messages').insert([fallbackPayload]);
+      if (retryRes.error) throw retryRes.error;
     }
     input.value = '';
     clearChatAttachment();
