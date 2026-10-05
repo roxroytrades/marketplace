@@ -1109,14 +1109,14 @@ async function loadVendorProducts(isPolling = false) {
     let { data, error } = await _supabase
       .from('products')
       .select('*')
-      .or(`vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id},user_id.eq.${currentUser.id}`)
+      .eq('vendor_id', currentUser.id)
       .order('created_at', { ascending: false });
-    if (error) {
-      console.warn('Multi-column query fallback to vendor_id filter:', error.message);
+    if (error && (error.code === '42703' || (error.message && error.message.includes('vendor_id')))) {
+      console.warn('vendor_id column missing on products table, falling back to seller_id');
       const fallback = await _supabase
         .from('products')
         .select('*')
-        .eq('vendor_id', currentUser.id)
+        .eq('seller_id', currentUser.id)
         .order('created_at', { ascending: false });
       data = fallback.data;
       error = fallback.error;
