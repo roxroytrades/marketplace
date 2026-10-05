@@ -107,30 +107,44 @@ const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 
 // ================= SYSTEM BRANDING HYDRATION =================
+function applyAppLogo(logoSrc) {
+  if (!logoSrc) return;
+  const img = document.getElementById('headerLogoImg');
+  const text = document.getElementById('headerLogoText');
+  const container = document.getElementById('headerLogoContainer');
+  if (img) {
+    img.src = logoSrc;
+    img.classList.remove('hidden');
+  }
+  if (text) text.classList.add('hidden');
+  if (container) container.classList.add('p-0');
+
+  const elements = document.querySelectorAll('.app-header-logo, #appHeaderLogo');
+  elements.forEach(el => {
+    el.innerHTML = `<img src="${logoSrc}" alt="App Logo" class="w-full h-full object-cover rounded-xl shadow-md">`;
+  });
+}
+
 async function loadAppBranding() {
   try {
-    const { data, error } = await _supabase
-      .from('system_settings')
-      .select('logo_url, logo_base64, logo, value, key, id')
-      .or('id.eq.app_config,key.eq.app_config,key.eq.logo')
-      .maybeSingle();
-
-    if (error) {
-      console.warn("Branding query info:", error.message);
-      return;
+    // 1. Instant local hydration from localStorage
+    const cachedLogo = localStorage.getItem('app_logo_base64');
+    if (cachedLogo) {
+      applyAppLogo(cachedLogo);
     }
 
-    const logoSrc = data ? (data.logo_url || data.logo_base64 || data.logo || data.value) : null;
-    if (logoSrc) {
-      const img = document.getElementById('headerLogoImg');
-      const text = document.getElementById('headerLogoText');
-      const container = document.getElementById('headerLogoContainer');
-      if (img) {
-        img.src = logoSrc;
-        img.classList.remove('hidden');
+    // 2. Fetch from Supabase system_settings for key 'app_logo_base64'
+    if (typeof _supabase !== 'undefined') {
+      const { data, error } = await _supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'app_logo_base64')
+        .maybeSingle();
+
+      if (!error && data && data.value) {
+        localStorage.setItem('app_logo_base64', data.value);
+        applyAppLogo(data.value);
       }
-      if (text) text.classList.add('hidden');
-      if (container) container.classList.add('p-0');
     }
   } catch (err) {
     console.warn("Branding load bypassed:", err);
