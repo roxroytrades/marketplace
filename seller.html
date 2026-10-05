@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Echo Hub - Vendor Management Workspace</title>a
+<title>Echo Hub - Vendor Management Workspace</title>
 <!-- Tailwind CSS CDN with Dark Mode Enabled -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -148,6 +148,10 @@ function showThreadContextMenu(e, threadId) {
       <span>${isUnread ? 'Mark as Read' : 'Mark as Unread'}</span>
     </button>
     <div class="border-t border-slate-800 my-1"></div>
+    <button onclick="handleReportAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-amber-500/20 text-amber-400 transition flex items-center space-x-2 font-medium">
+      <i class="fa-solid fa-flag text-amber-400"></i>
+      <span>Report Shopper</span>
+    </button>
     <button onclick="handleHideAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition flex items-center space-x-2 font-medium">
       <i class="fa-solid fa-eye-slash"></i>
       <span>Hide Conversation Tile</span>
@@ -510,6 +514,10 @@ eh
 <h3 id="activeChatTitle" class="text-sm font-bold text-white">Select a conversation</h3>
 <p id="activeChatSub" class="text-[10px] text-slate-400">Reviewer or Support Agent</p>
 </div>
+<button onclick="handleReportAction(activeThreadId)" id="headerReportShopperBtn" class="hidden text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center space-x-1 shadow-sm" title="Report this shopper to Admin">
+<i class="fa-solid fa-flag text-[10px]"></i>
+<span>Report Shopper</span>
+</button>
 </div>
 <div id="chatMessagesContainer" class="flex-1 overflow-y-auto py-4 space-y-3 pr-2">
 <div class="text-center py-16 text-xs text-slate-500">
@@ -935,6 +943,14 @@ async function initSellerWorkspace() {
     }
 
     /* Step C: Enforce role isolation (Block Buyers from Vendor Portal) */
+    
+    if (profile && profile.verification_status && (profile.verification_status.toUpperCase() === 'BANNED' || profile.verification_status.toUpperCase() === 'REJECTED')) {
+      alert("Access Restricted: Your account has been banned by Platform Administration.");
+      await _supabase.auth.signOut();
+      window.location.href = 'login.html';
+      return;
+    }
+
     if (profile.role.toLowerCase() === 'buyer') {
       alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
       window.location.href = 'index.html';
@@ -982,6 +998,44 @@ async function pollVendorData() {
 }
 
 /* 2. Sign Out Handler */
+
+async function handleReportAction(targetUserId) {
+  hideThreadContextMenu();
+  const thread = vendorThreads.find(t => t.partnerId === (targetUserId || activeThreadId));
+  const resolvedTargetId = targetUserId || (thread ? thread.partnerId : activeThreadId);
+  if (!resolvedTargetId) {
+    alert("Please select a conversation before submitting a report.");
+    return;
+  }
+
+  const note = prompt("Please enter details / reason for reporting this shopper to Admin:", "Inappropriate behavior or suspicious activity");
+  if (!note || !note.trim()) return;
+
+  try {
+    const reportPayload = {
+      sender_id: currentUser.id,
+      receiver_id: resolvedTargetId,
+      vendor_id: currentUser.id,
+      buyer_id: resolvedTargetId,
+      text: `[USER_REPORT] Reported Shopper (${resolvedTargetId}). Reason: ${note.trim()}`,
+      status_badge: 'REPORTED',
+      channel_type: 'USER_REPORT'
+    };
+
+    let { error } = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
+    if (error && error.message && error.message.includes('channel_type')) {
+      delete reportPayload.channel_type;
+      const retryRes = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
+      error = retryRes.error;
+    }
+    if (error) throw error;
+
+    showToast("Report submitted to Admin for investigation.");
+  } catch (err) {
+    alert("Failed to submit report: " + err.message);
+  }
+}
+
 async function handleLogout() {
   try {
     if (pollingInterval) {
@@ -1311,7 +1365,7 @@ function checkReceiptDeadlinesAndLockout() {
 
 function openPendingReceiptModal() {
   if (activePendingReceiptComm && activePendingReceiptComm.id) {
-    openSettleModal(activePendingReceiptComm.id);
+    openSettlementModal(activePendingReceiptComm.id, activePendingReceiptComm.recipient_email || 'recipient@paypal.com');
   } else {
     switchVendorTab('commissions');
     switchCommSubTab('workingQueue');
@@ -2381,6 +2435,14 @@ function renderActiveChat(shouldScroll = false) {
     roleBadgeClass = 'bg-purple-500/20 text-purple-400 border-purple-500/30';
   }
 
+  const rShopperBtn = document.getElementById('headerReportShopperBtn');
+  if (rShopperBtn) {
+    if (activeThreadId && activeThreadId !== 'admin' && activeThreadId !== 'admin_system_support') {
+      rShopperBtn.classList.remove('hidden');
+    } else {
+      rShopperBtn.classList.add('hidden');
+    }
+  }
   if (titleEl) {
     titleEl.innerHTML = `
       <div class="flex items-center space-x-2">
