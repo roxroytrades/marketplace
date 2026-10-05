@@ -379,7 +379,436 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
   <!-- TAB 1: ACCOUNTS & ID VERIFICATION -->
   <section id="adminTab-users" class="admin-tab-content space-y-6">
 
-<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3.5 px-4 w-10 text-center">
+                <input type="checkbox" id="selectAllUsersCheckbox" onchange="toggleSelectAllUsers(this)" class="rounded border-borderSlate bg-darkBg text-amber-500 focus:ring-0 cursor-pointer">
+              </th>
+              <th class="py-3.5 px-4">User Details</th>
+              <th class="py-3.5 px-4">Role</th>
+              <th class="py-3.5 px-4">ID Verification</th>
+              <th class="py-3.5 px-4">Referral Code</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="divide-y divide-borderSlate/60 text-slate-300">
+            <tr>
+              <td colspan="5" class="py-8 text-center text-slate-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading user accounts...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: PRODUCT CATALOG MODERATION -->
+  <section id="adminTab-products" class="admin-tab-content space-y-6 hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Marketplace Product Catalog Moderation</h2>
+        <p class="text-xs text-slate-400 mt-1">Audit active vendor offerings, verify commission allocations, and moderate listings.</p>
+      </div>
+      <input type="text" id="productSearchInput" onkeyup="filterProductsTable()" placeholder="Search products or vendors..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+    </div>
+
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3.5 px-4">Product Info</th>
+              <th class="py-3.5 px-4">Vendor</th>
+              <th class="py-3.5 px-4">Price</th>
+              <th class="py-3.5 px-4">Commission (USD)</th>
+              <th class="py-3.5 px-4">Type</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody" class="divide-y divide-borderSlate/60 text-slate-300">
+            <tr>
+              <td colspan="6" class="py-8 text-center text-slate-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading catalog...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: MASTER COMMISSIONS LEDGER -->
+  <section id="adminTab-commissions" class="admin-tab-content space-y-6 hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Master Financial Ledger & Payout Queue</h2>
+        <p class="text-xs text-slate-400 mt-1">Monitor real-time balances, payout requests, working queues, and settlement receipts across all roles.</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button onclick="openManualAdjustmentModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
+          <i class="fa-solid fa-plus-circle"></i>
+          <span>+ Manual Adjustment</span>
+        </button>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button onclick="requestAllAvailableAdminPayouts()" class="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Request All Liquid Payouts</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 Non-Redundant Summary KPI Cards for Admin Financial Accounting -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Card 1: Uncollected Admin Revenue (Gold Theme) -->
+      <div class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 opacity-10 text-amber-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-hourglass-half text-amber-400"></i>
+            <span>Uncollected Admin Revenue</span>
+          </span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">Unpaid / Pending</span>
+        </div>
+        <div>
+          <div id="commStatAdminUncollected" class="text-2xl font-black text-white tracking-tight">$0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">Total Admin fees & referral shares across active/unsettled queues</p>
+        </div>
+        <div class="pt-1 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+          <span>Liquid Available:</span>
+          <span id="commStatAdminAvailableSub" class="font-bold text-amber-400">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Collected Admin Revenue (Emerald Theme) -->
+      <div class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 opacity-10 text-emerald-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+          <i class="fa-solid fa-sack-dollar"></i>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-sack-dollar text-emerald-400"></i>
+            <span>Collected Admin Revenue</span>
+          </span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">Settled & Cleared</span>
+        </div>
+        <div>
+          <div id="commStatAdminCollected" class="text-2xl font-black text-white tracking-tight">$0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">Total Admin earnings paid out and archived in history</p>
+        </div>
+        <div class="pt-2 flex items-center text-[10px] text-emerald-400 font-medium space-x-1">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>Archived & Fully Paid</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Total Admin Lifetime Earnings (Indigo Theme) -->
+      <div class="bg-cardBg border border-indigo-500/30 p-5 rounded-2xl shadow-xl flex flex-col justify-between space-y-3 relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 opacity-10 text-indigo-500 text-7xl pointer-events-none group-hover:scale-110 transition">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-crown text-indigo-400"></i>
+            <span>Total Admin Earnings</span>
+          </span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">Grand Total</span>
+        </div>
+        <div>
+          <div id="commStatAdminTotal" class="text-2xl font-black text-white tracking-tight">$0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">Cumulative platform revenue since launch (Uncollected + Collected)</p>
+        </div>
+        <div class="pt-2 flex items-center text-[10px] text-indigo-400 font-medium space-x-1">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Lifetime Platform Revenue</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-Tab Navigation Bar with Real-Time Queue Badges -->
+    <div class="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+      <div class="flex items-center space-x-2 bg-cardBg p-1.5 rounded-2xl border border-borderSlate min-w-max">
+        <button onclick="setAdminCommTabFilter('ALL')" id="adminCommTabBtn-ALL" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-bold transition bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-md flex items-center space-x-2">
+          <span>All Ledger Entries</span>
+          <span id="badge-comm-ALL" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/30 text-amber-200">0</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('INCOMING_REQUESTS')" id="adminCommTabBtn-INCOMING_REQUESTS" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-inbox text-blue-400"></i>
+          <span>Incoming Requests</span>
+          <span id="badge-comm-INCOMING_REQUESTS" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30">0 ($0.00)</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('MAIN_ACCOUNT')" id="adminCommTabBtn-MAIN_ACCOUNT" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-wallet text-amber-400"></i>
+          <span>Main Queue</span>
+          <span id="badge-comm-MAIN_ACCOUNT" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-400 border border-amber-500/30">0 ($0.00)</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('OUTGOING_REQUESTS')" id="adminCommTabBtn-OUTGOING_REQUESTS" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-paper-plane text-purple-400"></i>
+          <span>Outgoing Requests</span>
+          <span id="badge-comm-OUTGOING_REQUESTS" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-500/20 text-purple-400 border border-purple-500/30">0 ($0.00)</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('WORKING_QUEUE')" id="adminCommTabBtn-WORKING_QUEUE" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-arrows-rotate text-emerald-400"></i>
+          <span>Working Queue</span>
+          <span id="badge-comm-WORKING_QUEUE" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">0 ($0.00)</span>
+        </button>
+
+        <button onclick="setAdminCommTabFilter('HISTORY')" id="adminCommTabBtn-HISTORY" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+          <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+          <span>Payment History</span>
+          <span id="badge-comm-HISTORY" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-700/60 text-slate-300 border border-borderSlate">0 ($0.00)</span>
+        </button>
+      </div>
+
+      <select id="adminCommTabFilter" onchange="setAdminCommTabFilter(this.value)" class="hidden">
+        <option value="ALL">All Queues & Statuses</option>
+        <option value="INCOMING_REQUESTS">Incoming Requests</option>
+        <option value="MAIN_ACCOUNT">Main Queue / Unclaimed</option>
+        <option value="OUTGOING_REQUESTS">Outgoing Payout Requests</option>
+        <option value="WORKING_QUEUE">Approved In Working</option>
+        <option value="HISTORY">Completed & Paid History</option>
+      </select>
+    </div>
+
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3.5 px-4">Recipient Role</th>
+              <th class="py-3.5 px-4">Recipient ID / Email</th>
+              <th class="py-3.5 px-4">Vendor ID</th>
+              <th class="py-3.5 px-4">Amount</th>
+              <th class="py-3.5 px-4">Queue Placement</th>
+              <th class="py-3.5 px-4">Status</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminCommissionsTableBody" class="divide-y divide-borderSlate/60 text-slate-300">
+            <tr>
+              <td colspan="7" class="py-8 text-center text-slate-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading ledger records...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: SYSTEM MESSAGING & DIRECT OUTREACH HUB -->
+  <section id="adminTab-messaging" class="admin-tab-content space-y-6 hidden">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl shadow-xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">System-Wide Messaging & Direct Outreach</h2>
+        <p class="text-xs text-slate-400 mt-1">Audit communications, inspect review submissions, detect contact policy risks, and initiate direct outreach.</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button onclick="openSystemBroadcastModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span>📢 System Broadcast</span>
+        </button>
+        <button onclick="openDirectOutreachModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>+ Start Direct Outreach</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Messaging Workspace Grid (Left Thread List + Right Transcript Inspector) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px]">
+
+      <!-- LEFT PANE: 5-Tab Quick-Switch Thread Manager & Search -->
+      <div class="lg:col-span-5 bg-cardBg border border-borderSlate rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+        
+        <!-- Left Pane Filter Header & Search -->
+        <div class="p-4 border-b border-borderSlate space-y-3 bg-darkBg/60">
+          
+          <!-- Live Text Search Input -->
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+            <input type="text" id="leftPaneThreadSearch" onkeyup="filterLeftPaneThreads()" placeholder="Search threads by user, product, or text..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+          </div>
+
+          <!-- 5-Tab Quick-Switch View Tabs -->
+          <div class="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5 text-[10px]">
+            <button onclick="switchLeftPaneFilter('ALL')" id="leftTab-ALL" class="left-pane-filter-btn active px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
+              All
+            </button>
+            <button onclick="switchLeftPaneFilter('ADMIN_DIRECT')" id="leftTab-ADMIN_DIRECT" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
+              Admin Direct
+            </button>
+            <button onclick="switchLeftPaneFilter('MARKETPLACE')" id="leftTab-MARKETPLACE" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
+              Reviews
+            </button>
+            <button onclick="switchLeftPaneFilter('ACTION_REQUIRED')" id="leftTab-ACTION_REQUIRED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
+              Needs Attention
+            </button>
+            <button onclick="switchLeftPaneFilter('FLAGGED')" id="leftTab-FLAGGED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20">
+              🚨 Contact Risk
+            </button>
+            <button onclick="switchLeftPaneFilter('CONTACTS')" id="leftTab-CONTACTS" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
+              📇 User Directory
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrollable Left Thread Cards List -->
+        <div id="adminThreadsList" class="flex-1 overflow-y-auto divide-y divide-borderSlate/50">
+          <div class="p-8 text-center text-slate-500 text-xs">
+            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading communication threads...
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANE: Transcript Inspector & Inline Admin Reply -->
+      <div class="lg:col-span-7 bg-cardBg border border-borderSlate rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+        
+        <!-- Active Thread Header Bar -->
+        <div id="activeThreadHeader" class="p-4 border-b border-borderSlate bg-darkBg/60 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center justify-center text-amber-400 font-bold text-xs">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+            <div>
+              <h3 id="activeThreadTitle" class="text-xs font-bold text-white">Select a thread to view transcript</h3>
+              <p id="activeThreadSubtitle" class="text-[10px] text-slate-400">Choose a channel from the left pane to begin live auditing.</p>
+            </div>
+          </div>
+          <div id="activeThreadHeaderActions" class="flex items-center space-x-2"></div>
+        </div>
+
+        <!-- Chat Transcript Container -->
+        <div id="adminChatContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-darkBg/40">
+          <div class="h-full flex flex-col items-center justify-center text-slate-500 text-xs space-y-2">
+            <i class="fa-solid fa-comment-dots text-3xl opacity-30"></i>
+            <p>Select a thread from the left menu to inspect conversation transcript.</p>
+          </div>
+        </div>
+
+        <!-- Admin Direct Reply Bar -->
+        <form id="adminReplyForm" onsubmit="handleAdminSendMessage(event)" class="p-3 border-t border-borderSlate bg-darkBg flex items-center space-x-2">
+          <input type="text" id="adminMessageInput" placeholder="Type a direct administrator reply..." class="flex-1 bg-cardBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+          <button type="submit" id="adminSendBtn" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+            <span>Send</span>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TAB 5: REFERRAL NETWORK HUB -->
+  <section id="adminTab-referrals" class="admin-tab-content space-y-6 hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Referral Network Hub & Inviter Command Center</h2>
+        <p class="text-xs text-slate-400 mt-1">Audit multi-tier affiliate referral codes, share admin invitation links, and track network earnings.</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <select id="referralScopeFilter" onchange="filterReferralsTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+          <option value="ALL">All Network Referrals</option>
+          <option value="ADMIN_ONLY">Invited by Admin (REF-620383CE)</option>
+        </select>
+        <input type="text" id="referralSearchInput" onkeyup="filterReferralsTable()" placeholder="Search referral codes or user IDs..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+      </div>
+    </div>
+
+    <!-- Referral KPI Performance Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+        <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 font-bold text-sm">
+          <i class="fa-solid fa-coins"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Admin Inviter Revenue</p>
+          <p id="refStatTotalRevenue" class="text-lg font-extrabold text-emerald-400">$0.00</p>
+        </div>
+      </div>
+
+      <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+        <div class="w-10 h-10 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 font-bold text-sm">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Total Network Members</p>
+          <p id="refStatTotalMembers" class="text-lg font-extrabold text-white">0</p>
+        </div>
+      </div>
+
+      <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+        <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 font-bold text-sm">
+          <i class="fa-solid fa-bag-shopping"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Referred Shoppers</p>
+          <p id="refStatShoppers" class="text-lg font-extrabold text-emerald-400">0</p>
+        </div>
+      </div>
+
+      <div class="bg-cardBg border border-borderSlate p-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+        <div class="w-10 h-10 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 font-bold text-sm">
+          <i class="fa-solid fa-store"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Referred Vendors</p>
+          <p id="refStatVendors" class="text-lg font-extrabold text-indigo-400">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Direct Invitation Links -->
+    <div class="bg-cardBg border border-borderSlate p-6 rounded-2xl space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-link text-amber-400 text-sm"></i>
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider">Admin Invitation Generators</h3>
+        </div>
+        <div class="text-[11px] text-slate-400">
+          Admin Referral Code: <span id="adminRefCodeDisplay" class="font-mono text-amber-400 font-bold">ADMIN_PROMO_2026</span>
+          <button onclick="copyAdminRefCode()" class="ml-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded transition">
+            <i class="fa-solid fa-copy mr-1"></i>Copy Code
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="space-y-1.5">
+          <label class="font-semibold text-slate-300">Shopper Invite Link</label>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="adminShopperRefLink" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none">
+            <button onclick="copyRefLink('adminShopperRefLink')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-2 rounded-xl transition text-xs whitespace-nowrap">
+              <i class="fa-solid fa-copy mr-1"></i> Copy
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="font-semibold text-slate-300">Vendor Invite Link</label>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="adminVendorRefLink" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none">
+            <button onclick="copyRefLink('adminVendorRefLink')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-2 rounded-xl transition text-xs whitespace-nowrap">
+              <i class="fa-solid fa-copy mr-1"></i> Copy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
@@ -444,7 +873,7 @@ eh
 </footer>
 
 <!-- MODAL 1: NATIONAL ID BASE64 VERIFICATION INSPECTOR -->
-<div id="nationalIdModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+<div id="nationalIdModal" class="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
   <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
     <div class="flex items-center justify-between border-b border-borderSlate pb-3">
       <h3 class="text-sm font-bold text-white flex items-center space-x-2">
@@ -483,6 +912,7 @@ eh
           <i class="fa-solid fa-user-gear text-amber-500"></i>
           <span>Edit User Permissions & Profile</span>
         </h3>
+        <button type="button" onclick="const uid=document.getElementById('editUserId').value; if(uid){ closeEditUserModal(); inspectNationalId(uid); }" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center space-x-1"><i class="fa-solid fa-id-card"></i><span>Inspect National ID</span></button>
         <button onclick="closeEditUserModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
       </div>
       <input type="hidden" id="editUserId">
@@ -878,7 +1308,7 @@ async function initAdminDashboard() {
 
   /* 2. Load Core Admin Datasets */
   await loadUsersData();
-    await loadProductsData();
+  await loadProductsData();
   await loadCommissionsData();
   await loadMessagingData();
   await loadReferralsData();
@@ -896,7 +1326,7 @@ async function pollAdminData() {
     await loadCommissionsData(true);
     await loadMessagingData(true);
     await loadUsersData(true);
-        await loadProductsData(true);
+    await loadProductsData(true);
     await loadReferralsData(true);
   } catch (err) {
     console.warn("Admin polling background update:", err);
@@ -1003,8 +1433,6 @@ function updateUserBatchToolbar() {
     btn.classList.add('hidden');
   }
 }
-
-
 
 function renderUsersTable(users) {
   const tbody = document.getElementById('usersTableBody');
@@ -1266,6 +1694,8 @@ async function loadProductsData() {
 
 function renderProductsTable(products) {
   const tbody = document.getElementById('productsTableBody');
+  if (!tbody) return;
+  const tbody = document.getElementById('productsTableBody');
   if (!products || products.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No products found.</td></tr>`;
     return;
@@ -1291,7 +1721,7 @@ function renderProductsTable(products) {
 
     /* Product Image Thumbnail */
     const imageHtml = (p.image_url || p.image) ? `
-      <img src="${getProductImageUrl(p)}" onerror="this.onerror=null; this.src=''http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='14'>No Image Available</text></svg>'" alt="${p.title || 'Product'}" class="w-10 h-10 object-cover rounded-xl border border-borderSlate shadow-sm flex-shrink-0">
+      <img src="${getProductImageUrl(p)}" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="%231e293b"/></svg>' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='14'>No Image Available</text></svg>'" alt="${p.title || 'Product'}" class="w-10 h-10 object-cover rounded-xl border border-borderSlate shadow-sm flex-shrink-0">
     ` : `
       <div class="w-10 h-10 bg-darkBg border border-borderSlate rounded-xl flex items-center justify-center text-slate-500 font-bold text-xs flex-shrink-0">
         <i class="fa-solid fa-box"></i>
@@ -1521,6 +1951,8 @@ async function requestAllAvailableAdminPayouts() {
 }
 
 function renderAdminCommissionsTable(comms) {
+  const tbody = document.getElementById('adminCommissionsTableBody');
+  if (!tbody) return;
   const tbody = document.getElementById('adminCommissionsTableBody');
   if (!comms || comms.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No ledger entries found.</td></tr>`;
@@ -2109,7 +2541,7 @@ window.openAdminProductDetailsModal = function(productId) {
       </div>
 
       <div class="flex gap-4 items-start">
-        <img src="${pImg}" onerror="this.onerror=null; this.src=''http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='14'>No Image Available</text></svg>'" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0">
+        <img src="${pImg}" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="%231e293b"/></svg>' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='14'>No Image Available</text></svg>'" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0">
         <div class="space-y-1.5 truncate flex-1">
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase">${pStatus}</span>
           <h4 class="text-sm font-bold text-white truncate">${pTitle}</h4>
@@ -2199,7 +2631,7 @@ function renderActiveThreadTranscript() {
 
         productCardHtml = `
           <div onclick="openProductFromChat('${prod.id}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
-            <img src="${pImg}" onerror="this.onerror=null; this.src=''http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='14'>No Image Available</text></svg>'" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
+            <img src="${pImg}" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="%231e293b"/></svg>' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='14'>No Image Available</text></svg>'" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 shrink-0 group-hover:scale-105 transition">
             <div class="truncate flex-1">
               <div class="flex items-center space-x-1">
                 <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-slate-950/20 text-slate-950 border border-slate-950/30' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
@@ -2495,6 +2927,8 @@ function copyRefLink(inputId) {
 }
 
 function renderReferralsTable(users) {
+  const tbody = document.getElementById('referralsTableBody');
+  if (!tbody) return;
   const tbody = document.getElementById('referralsTableBody');
   if (!users || users.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No referral network records found.</td></tr>`;
@@ -3189,3 +3623,13 @@ function updateAdminUnreadBadge() {
 </script>
 </body>
 </html>
+
+function openNationalIdInNewTab() {
+  const imgEl = document.getElementById('idModalImage');
+  if (imgEl && imgEl.src) {
+    const w = window.open('');
+    if (w) {
+      w.document.write(`<html><head><title>National ID Document Inspection</title></head><body style="margin:0; background:#0f172a; display:flex; align-items:center; justify-content:center; min-height:100vh;"><img src="${imgEl.src}" style="max-width:100%; max-height:100vh; object-fit:contain;" /></body></html>`);
+    }
+  }
+}
