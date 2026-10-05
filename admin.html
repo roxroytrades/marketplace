@@ -1784,12 +1784,12 @@ async function inspectNationalId(userId) {
     try {
       const { data, error } = await _supabase
         .from('profiles')
-        .select('national_id_base64, id_document_url')
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
 
       if (!error && data) {
-        idDocImg = data.national_id_base64 || data.id_document_url || '';
+        idDocImg = data.national_id_base64 || data.id_document_url || data.id_url || data.id_card_url || data.id_proof || data.national_id_url || data.id_verification_url || data.id_doc_base64 || data.proof_base64 || '';
         user.national_id_base64 = idDocImg;
       }
     } catch (err) {
