@@ -303,6 +303,17 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 
 <!-- Header Bar -->
+
+<!-- Mobile Desktop Mode Guidance Banner (Mobile Only) -->
+<div id="mobileDesktopNotice" class="md:hidden bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-xs text-amber-300 flex items-center justify-between z-30 shadow-sm">
+  <div class="flex items-center space-x-2.5 pr-2">
+    <i class="fa-solid fa-desktop text-amber-400 text-sm flex-shrink-0"></i>
+    <span><strong>Desktop Mode Recommended:</strong> For the best viewing experience, please switch your mobile browser to <strong>Desktop Site</strong> mode.</span>
+  </div>
+  <button onclick="document.getElementById('mobileDesktopNotice').remove()" class="text-amber-400 hover:text-white transition p-1 flex-shrink-0" title="Dismiss message">
+    <i class="fa-solid fa-xmark text-sm"></i>
+  </button>
+</div>
 <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-lg">
   <div class="flex items-center space-x-3">
     <div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-slate-900 shadow-lg shadow-amber-500/20 font-heading font-bold text-lg overflow-hidden">
@@ -345,6 +356,18 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <!-- Primary Navigation Tabs -->
 <div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-6 py-2 sticky top-[73px] z-20">
   <div class="max-w-7xl mx-auto flex items-center space-x-2 overflow-x-auto no-scrollbar text-xs">
+    <!-- Mobile Responsive Tab Selector Dropdown -->
+    <div class="md:hidden w-full mb-1">
+      <select onchange="switchAdminTab(this.value)" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs font-bold text-amber-400 outline-none focus:border-amber-500">
+        <option value="users">👥 Accounts & ID Verification</option>
+        <option value="products">📦 Product Catalog</option>
+        <option value="commissions">🧾 Master Commissions Ledger</option>
+        <option value="messaging">💬 System Messaging & Outreach</option>
+        <option value="referrals">🌐 Referral Network Hub</option>
+        <option value="settings">⚙️ System Settings & Branding</option>
+      </select>
+    </div>
+
     <button onclick="switchAdminTab('users')" id="tabBtn-users" class="admin-tab-btn active px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30">
       <i class="fa-solid fa-users-gear text-xs"></i>
       <span>Accounts & ID Verification</span>
@@ -903,7 +926,7 @@ eh
 
 <!-- MODAL 1: NATIONAL ID BASE64 VERIFICATION INSPECTOR -->
 <div id="nationalIdModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+  <div class="bg-cardBg border border-borderSlate rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto mb-0 sm:my-auto mt-auto sm:mt-auto">
     <div class="flex items-center justify-between border-b border-borderSlate pb-3">
       <h3 class="text-sm font-bold text-white flex items-center space-x-2">
         <i class="fa-solid fa-id-card text-amber-400"></i>
@@ -935,7 +958,7 @@ eh
 
   <!-- EDIT USER ACCOUNT MODAL -->
   <div id="editUserModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-cardBg border border-borderSlate rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 relative">
+    <div class="bg-cardBg border border-borderSlate rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto relative mb-0 sm:my-auto mt-auto sm:mt-auto">
       <div class="flex items-center justify-between border-b border-borderSlate/60 pb-3">
         <h3 class="text-sm font-bold text-white flex items-center space-x-2">
           <i class="fa-solid fa-user-gear text-amber-500"></i>
@@ -1004,7 +1027,7 @@ eh
 
   <!-- MANUAL COMMISSION ADJUSTMENT MODAL -->
   <div id="manualAdjustmentModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-cardBg border border-borderSlate rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 relative">
+    <div class="bg-cardBg border border-borderSlate rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto relative mb-0 sm:my-auto mt-auto sm:mt-auto">
       <div class="flex items-center justify-between border-b border-borderSlate/60 pb-3">
         <h3 class="text-sm font-bold text-white flex items-center space-x-2">
           <i class="fa-solid fa-calculator text-amber-500"></i>
@@ -1063,7 +1086,7 @@ eh
 
   <!-- GLOBAL SYSTEM BROADCAST MODAL -->
   <div id="systemBroadcastModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-cardBg border border-borderSlate rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 relative">
+    <div class="bg-cardBg border border-borderSlate rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto relative mb-0 sm:my-auto mt-auto sm:mt-auto">
       <div class="flex items-center justify-between border-b border-borderSlate/60 pb-3">
         <h3 class="text-sm font-bold text-white flex items-center space-x-2">
           <i class="fa-solid fa-bullhorn text-blue-400"></i>
@@ -1160,7 +1183,7 @@ eh
 
 <!-- MODAL 2: TYPEAHEAD OMNIBOX DIRECT OUTREACH COMPOSER -->
 <div id="outreachModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
+  <div class="bg-cardBg border border-borderSlate rounded-t-3xl sm:rounded-3xl max-w-xl w-full p-5 sm:p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh] mb-0 sm:my-auto mt-auto sm:mt-auto">
     
     <div class="flex items-center justify-between border-b border-borderSlate pb-3">
       <div class="flex items-center space-x-2">
