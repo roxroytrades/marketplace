@@ -1259,17 +1259,12 @@ async function loadCommissionsData(isPolling = false) {
       .from('commissions')
       .select('*')
       .eq('recipient_id', currentUser.id);
-
     if (error) throw error;
-
     commissionsList = data || [];
     shopperCommissions = commissionsList;
   } catch (err) {
     console.log('Using local shopper commissions dataset fallback.');
-    commissionsList = [];
-    shopperCommissions = [];
   }
-
   updateCommissionStats();
   renderCommissionTable();
 }
@@ -2360,6 +2355,44 @@ function updateUnreadBadge() {
     badge.classList.remove('hidden');
   } else {
     badge.classList.add('hidden');
+  }
+}
+
+
+async function handleReportAction(targetUserId) {
+  hideThreadContextMenu();
+  const thread = messagingThreads.find(t => (t.sender_id === currentUser.id ? t.receiver_id : t.sender_id) === (targetUserId || activeRecipientId));
+  const resolvedTargetId = targetUserId || activeRecipientId;
+  if (!resolvedTargetId) {
+    alert("Please select a conversation before submitting a report.");
+    return;
+  }
+
+  const note = prompt("Please enter details / reason for reporting this vendor to Admin:", "Suspicious activity or unfulfilled offer");
+  if (!note || !note.trim()) return;
+
+  try {
+    const reportPayload = {
+      sender_id: currentUser.id,
+      receiver_id: resolvedTargetId,
+      buyer_id: currentUser.id,
+      vendor_id: resolvedTargetId,
+      text: `[USER_REPORT] Reported Vendor (${resolvedTargetId}). Reason: ${note.trim()}`,
+      status_badge: 'REPORTED',
+      channel_type: 'USER_REPORT'
+    };
+
+    let { error } = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
+    if (error && error.message && error.message.includes('channel_type')) {
+      delete reportPayload.channel_type;
+      const retryRes = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
+      error = retryRes.error;
+    }
+    if (error) throw error;
+
+    showToast("Report submitted to Admin for investigation.");
+  } catch (err) {
+    alert("Failed to submit report: " + err.message);
   }
 }
 
