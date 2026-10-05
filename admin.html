@@ -484,7 +484,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </div>
 
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div id="usersMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
+      <div id="productsMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
       <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
@@ -649,7 +649,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </div>
 
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div id="usersMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
+      <div id="commissionsMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
       <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
@@ -878,7 +878,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </div>
 
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div id="usersMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
+      <div id="referralsMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
       <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
@@ -1584,15 +1584,17 @@ function renderAccountsTable(users) {
 
 function renderUsersTable(users) {
   const tbody = document.getElementById('usersTableBody');
-  if (!tbody) return;
+  const cardsContainer = document.getElementById('usersMobileCards');
+
   if (!users || users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No matching user accounts found.</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No matching user accounts found.</td></tr>`;
+    if (cardsContainer) cardsContainer.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs bg-cardBg border border-borderSlate rounded-2xl">No matching user accounts found.</div>`;
     selectedUserIds.clear();
     updateUserBatchToolbar();
     return;
   }
 
-  tbody.innerHTML = users.map(u => {
+  const rowsHtml = users.map(u => {
     const roleUpper = (u.role || 'BUYER').toUpperCase();
     const statusUpper = (u.verification_status || 'UNVERIFIED').toUpperCase();
     const isBanned = statusUpper === 'BANNED';
@@ -1600,6 +1602,8 @@ function renderUsersTable(users) {
     const idDocImg = u.national_id_base64 || u.id_document_url || u.id_url || u.id_card_url || u.id_proof || u.national_id_url || u.id_verification_url || u.id_doc_base64 || u.proof_base64 || '';
     const hasIdDoc = Boolean(idDocImg && idDocImg.length > 20) || statusUpper.includes('PENDING') || statusUpper.includes('UNVERIFIED') || statusUpper.includes('REJECT');
     const isChecked = selectedUserIds.has(u.id) ? 'checked' : '';
+    const policyAgreed = u.commission_policy_agreed === true;
+    const policyBadgeHtml = getPolicyAgreementBadge(policyAgreed);
 
     return `
       <tr class="hover:bg-darkBg/40 transition">
@@ -1609,7 +1613,7 @@ function renderUsersTable(users) {
         <td class="py-3 px-4">
           <div class="font-bold text-white">${u.full_name || 'Unnamed Account'}</div>
           <div class="text-[11px] text-slate-400 font-mono truncate max-w-[180px]" title="${u.email || u.id}">${u.email || u.id}</div>
-          <div>${getPolicyAgreementBadge(u.commission_policy_agreed)}</div>
+          ${policyBadgeHtml}
         </td>
         <td class="py-3 px-4">
           ${getUserRoleBadge(u.role)}
@@ -1648,6 +1652,56 @@ function renderUsersTable(users) {
       </tr>
     `;
   }).join('');
+
+  if (tbody) tbody.innerHTML = rowsHtml;
+
+  if (cardsContainer) {
+    cardsContainer.innerHTML = users.map(u => {
+      const statusUpper = (u.verification_status || 'UNVERIFIED').toUpperCase();
+      const isBanned = statusUpper === 'BANNED';
+      const idDocImg = u.national_id_base64 || u.id_document_url || u.id_url || u.id_card_url || u.id_proof || u.national_id_url || u.id_verification_url || u.id_doc_base64 || u.proof_base64 || '';
+      const hasIdDoc = Boolean(idDocImg && idDocImg.length > 20) || statusUpper.includes('PENDING') || statusUpper.includes('UNVERIFIED') || statusUpper.includes('REJECT');
+      const policyAgreed = u.commission_policy_agreed === true;
+
+      return `
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 shadow-md">
+          <div class="flex items-center justify-between">
+            <div class="truncate pr-2">
+              <div class="font-bold text-white text-sm truncate">${u.full_name || 'Unnamed Account'}</div>
+              <div class="text-[11px] text-slate-400 font-mono truncate">${u.email || u.id}</div>
+            </div>
+            <div class="flex-shrink-0">${getUserRoleBadge(u.role)}</div>
+          </div>
+          <div class="flex items-center justify-between text-xs pt-2 border-t border-borderSlate/40">
+            <div>${getPolicyAgreementBadge(policyAgreed)}</div>
+            <div>${getUserStatusBadge(u.verification_status, u.id)}</div>
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-400 font-mono">
+            <span>Ref Code: ${u.referral_code || 'N/A'}</span>
+            ${hasIdDoc ? `
+              <button onclick="inspectNationalId('${u.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition">
+                <i class="fa-solid fa-id-card mr-1"></i> Inspect ID
+              </button>
+            ` : ''}
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-borderSlate/60">
+            <button onclick="openEditUserModal('${u.id}')" class="bg-blue-500/10 text-blue-400 border border-blue-500/30 py-2 rounded-xl text-xs font-semibold text-center hover:bg-blue-500/20 transition">
+              <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Profile
+            </button>
+            ${isBanned ? `
+              <button onclick="toggleUserStatus('${u.id}', 'UNVERIFIED')" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 py-2 rounded-xl text-xs font-semibold text-center hover:bg-emerald-500/20 transition">
+                <i class="fa-solid fa-lock-open mr-1"></i> Unban
+              </button>
+            ` : `
+              <button onclick="banUserAccount('${u.id}')" class="bg-rose-500/10 text-rose-400 border border-rose-500/30 py-2 rounded-xl text-xs font-semibold text-center hover:bg-rose-500/20 transition">
+                <i class="fa-solid fa-ban mr-1"></i> Ban
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 
   updateUserBatchToolbar();
 }
@@ -1855,13 +1909,15 @@ async function loadProductsData() {
 
 function renderProductsTable(products) {
   const tbody = document.getElementById('productsTableBody');
-  if (!tbody) return;
+  const cardsContainer = document.getElementById('productsMobileCards');
+
   if (!products || products.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No products found.</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No products found.</td></tr>`;
+    if (cardsContainer) cardsContainer.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs bg-cardBg border border-borderSlate rounded-2xl">No products found.</div>`;
     return;
   }
 
-  tbody.innerHTML = products.map(p => {
+  const rowsHtml = products.map(p => {
     /* Resolve Vendor Details flexibly across seller_id, vendor_id, user_id, created_by */
     const vId = p.seller_id || p.vendor_id || p.user_id || p.created_by;
     const vendor = vId ? (profilesCache[vId] || allUsersCache.find(u => u.id === vId)) : null;
@@ -1881,7 +1937,7 @@ function renderProductsTable(products) {
 
     /* Product Image Thumbnail */
     const imageHtml = (p.image_url || p.image) ? `
-      <img src="${getProductImageUrl(p)}" onerror="this.onerror=null; this.src=''http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='14'>No Image Available</text></svg>'" alt="${p.title || 'Product'}" class="w-10 h-10 object-cover rounded-xl border border-borderSlate shadow-sm flex-shrink-0">
+      <img src="${getProductImageUrl(p)}" onerror="this.onerror=null; this.src='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='14'>No Image Available</text></svg>'" alt="${p.title || 'Product'}" class="w-10 h-10 object-cover rounded-xl border border-borderSlate shadow-sm flex-shrink-0">
     ` : `
       <div class="w-10 h-10 bg-darkBg border border-borderSlate rounded-xl flex items-center justify-center text-slate-500 font-bold text-xs flex-shrink-0">
         <i class="fa-solid fa-box"></i>
@@ -1891,7 +1947,7 @@ function renderProductsTable(products) {
     return `
       <tr class="hover:bg-darkBg/40 transition">
         <td class="py-3 px-4">
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+          <div class="flex items-center space-x-3">
             ${imageHtml}
             <div>
               <div class="font-bold text-white line-clamp-1">${p.title}</div>
@@ -1922,6 +1978,59 @@ function renderProductsTable(products) {
       </tr>
     `;
   }).join('');
+
+  if (tbody) tbody.innerHTML = rowsHtml;
+
+  if (cardsContainer) {
+    cardsContainer.innerHTML = products.map(p => {
+      const vId = p.seller_id || p.vendor_id || p.user_id || p.created_by;
+      const vendor = vId ? (profilesCache[vId] || allUsersCache.find(u => u.id === vId)) : null;
+
+      let vendorName = vendor ? (vendor.full_name || vendor.email || 'Registered Vendor') : '';
+      if (!vendorName || vendorName === 'Unknown Vendor' || vendorName === 'User') {
+        vendorName = vId ? `Vendor (${vId.substring(0, 8)}...)` : 'Unknown Vendor';
+      }
+      const vendorEmail = vendor ? (vendor.email || '') : (p.vendor_email || p.seller_email || '');
+      const safeVendorName = vendorName.replace(/'/g, "\'");
+      const safeVendorEmail = vendorEmail.replace(/'/g, "\'");
+
+      const imageHtml = (p.image_url || p.image) ? `
+        <img src="${getProductImageUrl(p)}" alt="${p.title || 'Product'}" class="w-12 h-12 object-cover rounded-xl border border-borderSlate flex-shrink-0">
+      ` : `
+        <div class="w-12 h-12 bg-darkBg border border-borderSlate rounded-xl flex items-center justify-center text-slate-500 font-bold text-xs flex-shrink-0">
+          <i class="fa-solid fa-box text-base"></i>
+        </div>
+      `;
+
+      return `
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 shadow-md">
+          <div class="flex items-start space-x-3">
+            ${imageHtml}
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-white text-sm line-clamp-1">${p.title || 'Untitled Product'}</div>
+              <div class="text-[10px] text-slate-500 font-mono">${p.id || 'N/A'}</div>
+              <div class="text-xs text-slate-300 mt-0.5 truncate">Vendor: <strong>${vendorName}</strong></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-xs pt-2 border-t border-borderSlate/40">
+            <div><span class="text-slate-400">Price:</span> <strong class="text-white">$${Number(p.price || 0).toFixed(2)}</strong></div>
+            <div><span class="text-slate-400">Fee:</span> <strong class="text-emerald-400">$${Number(p.commission || 15).toFixed(2)}</strong></div>
+            <div><span class="px-2 py-0.5 bg-slate-800 border border-borderSlate rounded-full text-[10px] font-semibold text-slate-300">${p.vendor_type || 'UPFRONT'}</span></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-borderSlate/60">
+            ${vId ? `
+              <button onclick="openDirectOutreachForUser('${vId}', '${safeVendorName}', 'SELLER', '${safeVendorEmail}')" class="bg-amber-500/10 text-amber-400 border border-amber-500/30 py-2 rounded-xl text-xs font-semibold text-center hover:bg-amber-500/20 transition">
+                <i class="fa-solid fa-paper-plane mr-1"></i> Contact Vendor
+              </button>
+            ` : '<div></div>'}
+            <button onclick="deleteProductRecord('${p.id}')" class="bg-rose-500/10 text-rose-400 border border-rose-500/30 py-2 rounded-xl text-xs font-semibold text-center hover:bg-rose-500/20 transition">
+              <i class="fa-solid fa-trash mr-1"></i> Delete
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 }
 
 function filterProductsTable() {
@@ -2112,140 +2221,71 @@ async function requestAllAvailableAdminPayouts() {
 
 function renderAdminCommissionsTable(comms) {
   const tbody = document.getElementById('adminCommissionsTableBody');
-  if (!tbody) return;
+  const cardsContainer = document.getElementById('commissionsMobileCards');
+
   if (!comms || comms.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No ledger entries found.</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No ledger entries found.</td></tr>`;
+    if (cardsContainer) cardsContainer.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs bg-cardBg border border-borderSlate rounded-2xl">No ledger entries found.</div>`;
     return;
   }
 
-  tbody.innerHTML = comms.map(c => {
+  const rowsHtml = comms.map(c => {
     const qType = c.queue_type || 'MAIN_ACCOUNT';
     const statusVal = c.status || 'Approved';
 
     /* Lookup recipient profile */
-    const recipient = allUsersCache.find(u => u.id === c.recipient_id || (u.email && u.email === c.recipient_email));
-    const recipientName = recipient ? (recipient.full_name || recipient.email) : (c.recipient_email || 'System / Admin');
-    const recipientEmail = recipient ? recipient.email : (c.recipient_email || 'N/A');
-    const recipientPaypal = recipient ? (recipient.paypal_email || recipient.email || 'Not Configured') : (c.recipient_paypal || 'Not Configured');
-
-    /* Lookup vendor profile */
-    const vendor = allUsersCache.find(u => u.id === (c.seller_id || c.vendor_id));
-    const vendorName = vendor ? (vendor.full_name || vendor.email) : ((c.seller_id || c.vendor_id) || 'System');
-    const vendorEmail = vendor ? vendor.email : 'N/A';
-
-    /* Recipient Role Identification */
-    const rawRole = (c.role_type || c.recipient_role || '').trim().toUpperCase();
-    const roleType = (c.role_type || '').trim().toUpperCase();
-    const isAdminRole = ['ADMIN', 'ADMIN_SHARE', 'ADMIN_FEE', 'PLATFORM_FEE'].includes(roleType);
-    const hasValidRecipientMatch = Boolean(
-      currentUser && currentUser.id && 
-      ((c.recipient_id && c.recipient_id === currentUser.id) || 
-       (c.recipient_email && currentUser.email && c.recipient_email.toLowerCase() === currentUser.email.toLowerCase()))
-    );
-    const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(roleType) && hasValidRecipientMatch;
-    const isMyCommission = isAdminRole || isMyUserEarning;
-
-    /* Role Badge Logic - Directly maps database role_type without speculative fallback overrides */
-    let roleBadge = '';
-    if (rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || rawRole === 'SELLER_INVITE' || rawRole === 'SELLER_REFERRAL' || rawRole === 'VENDOR_REFERRAL') {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">SELLER INVITER</span>`;
-    } else if (rawRole === 'BUYER_INVITER' || rawRole === 'BUYER_INVITE' || rawRole === 'BUYER_REFERRAL') {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">BUYER INVITER</span>`;
-    } else if (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE' || rawRole === 'PLATFORM_FEE') {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-[9px]"></i>ADMIN SHARE</span>`;
-    } else if (rawRole === 'REVIEWER' || rawRole === 'BUYER' || rawRole === 'SHOPPER') {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">REVIEWER</span>`;
-    } else {
-      roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${rawRole || 'UNSPECIFIED'}</span>`;
-    }
-
-    /* Status Badge Styling */
-    let statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">${statusVal}</span>`;
-    const sUpper = (statusVal || '').toUpperCase();
-    if (sUpper === 'APPROVED' || sUpper === 'UNREQUESTED_BALANCE' || sUpper === 'ACTIVE' || qType === 'MAIN_ACCOUNT') {
-      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">APPROVED</span>`;
-    } else if (sUpper === 'REQUESTED_BY_RECIPIENT' || sUpper === 'REQUESTED' || qType === 'OUTGOING_REQUESTS') {
-      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">REQUESTED</span>`;
-    } else if (sUpper === 'APPROVED_IN_WORKING' || sUpper === 'IN_WORKING' || qType === 'WORKING_QUEUE') {
-      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">IN WORKING</span>`;
-    } else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') {
-      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">PAID</span>`;
-    } else if (sUpper === 'DENIED' || sUpper === 'DECLINED' || sUpper === 'REJECTED') {
-      statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">DENIED</span>`;
-    }
-
-    /* Action Buttons Logic: Admin's Own Commission vs Operator Mode */
-    let actionButtons = '';
-
-    if (isMyCommission) {
-      /* Admin is recipient -> Buyer-equivalent commission actions */
-      if (sUpper === 'APPROVED' || sUpper === 'UNREQUESTED_BALANCE' || qType === 'MAIN_ACCOUNT') {
-        actionButtons = `
-          <button onclick="requestAdminPayout('${c.id}')" class="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-md shadow-amber-500/20 flex items-center space-x-1 inline-flex">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>Request Payout</span>
-          </button>`;
-      } else if (sUpper === 'OFFERED_BY_VENDOR' || sUpper === 'OFFERED_AWAITING_ACCEPTANCE') {
-        actionButtons = `
-          <button onclick="acceptAdminOffer('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition inline-flex items-center space-x-1 mr-1">
-            <i class="fa-solid fa-check"></i><span>Accept</span>
-          </button>
-          <button onclick="declineAdminOffer('${c.id}')" class="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition inline-flex items-center space-x-1">
-            <i class="fa-solid fa-xmark"></i><span>Decline</span>
-          </button>`;
-      } else if (sUpper === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
-        actionButtons = `<span class="text-amber-400 font-bold text-[10px] flex items-center justify-end"><i class="fa-solid fa-clock mr-1"></i>Payout Requested</span>`;
-      } else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY') {
-        actionButtons = `<span class="text-emerald-400 font-bold text-[10px] flex items-center justify-end"><i class="fa-solid fa-circle-check mr-1"></i>Paid</span>`;
-      } else {
-        actionButtons = `<span class="text-slate-500 text-[10px]">${statusVal}</span>`;
-      }
-    } else {
-      /* Operator Actions for Other Users */
-      if (sUpper === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
-        actionButtons = `
-          <button onclick="approveAdminPayout('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-md shadow-emerald-500/20 inline-flex items-center space-x-1">
-            <i class="fa-solid fa-check-circle"></i>
-            <span>Approve Payout</span>
-          </button>`;
-      } else if (sUpper === 'APPROVED_IN_WORKING' || qType === 'WORKING_QUEUE') {
-        actionButtons = `<span class="text-blue-400 text-[10px] font-medium"><i class="fa-solid fa-spinner fa-spin mr-1"></i>In Working Queue</span>`;
-      } else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY') {
-        actionButtons = `<span class="text-emerald-400 text-[10px] font-bold flex items-center justify-end"><i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i>Settled</span>`;
-      } else {
-        actionButtons = `<span class="text-slate-500 text-[10px]">${statusVal}</span>`;
-      }
-    }
-
-    /* Universal Inspection & Contact Buttons */
-    const inspectBtn = `<button onclick="viewCommissionDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
-    const contactBtn = `<button onclick="openDirectOutreachForUser('${c.recipient_id || c.seller_id || c.vendor_id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-amber-400 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="Direct Contact"><i class="fa-solid fa-comment-dots"></i></button>`;
+    const recipient = c.user_id ? (profilesCache[c.user_id] || allUsersCache.find(u => u.id === c.user_id)) : null;
+    const recipName = recipient ? (recipient.full_name || recipient.email) : (c.user_email || 'System Account');
 
     return `
       <tr class="hover:bg-darkBg/40 transition">
-        <td class="py-3 px-4">${roleBadge}</td>
+        <td class="py-3 px-4 font-mono text-[10px] text-slate-400">${c.id ? c.id.substring(0, 8) + '...' : 'N/A'}</td>
+        <td class="py-3 px-4 font-bold text-white">$${Number(c.amount || 0).toFixed(2)}</td>
         <td class="py-3 px-4">
-          <div class="font-bold text-white text-xs">${recipientName}</div>
-          <div class="text-[10px] text-slate-400 font-mono flex items-center space-x-1 mt-0.5">
-            <i class="fa-brands fa-paypal text-blue-400 text-[9px]"></i>
-            <span>${recipientPaypal}</span>
-          </div>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${getCommissionStatusBadgeClass(statusVal)}">${statusVal}</span>
         </td>
-        <td class="py-3 px-4">
-          <div class="font-semibold text-slate-200 text-xs">${vendorName}</div>
-          <div class="text-[10px] text-slate-500 font-mono">${vendorEmail}</div>
-        </td>
-        <td class="py-3 px-4 font-bold text-emerald-400 text-xs">$${Number(c.amount || 0).toFixed(2)}</td>
-        <td class="py-3 px-4 text-slate-300 font-mono text-[10px]"><span class="bg-darkBg border border-borderSlate px-2 py-0.5 rounded-md">${qType}</span></td>
-        <td class="py-3 px-4">${statusBadge}</td>
-        <td class="py-3 px-4 text-right flex items-center justify-end space-x-1">
-          ${actionButtons}
-          ${inspectBtn}
-          ${contactBtn}
+        <td class="py-3 px-4 font-semibold text-slate-200">${recipName}</td>
+        <td class="py-3 px-4 text-slate-400 font-mono text-[11px]"><span class="bg-darkBg px-2 py-0.5 rounded border border-borderSlate">${qType}</span></td>
+        <td class="py-3 px-4 text-right">
+          <button onclick="inspectCommissionRecord('${c.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-semibold px-2.5 py-1 rounded-lg transition">
+            <i class="fa-solid fa-magnifying-glass mr-1"></i> Inspect
+          </button>
         </td>
       </tr>
     `;
   }).join('');
+
+  if (tbody) tbody.innerHTML = rowsHtml;
+
+  if (cardsContainer) {
+    cardsContainer.innerHTML = comms.map(c => {
+      const qType = c.queue_type || 'MAIN_ACCOUNT';
+      const statusVal = c.status || 'Approved';
+      const recipient = c.user_id ? (profilesCache[c.user_id] || allUsersCache.find(u => u.id === c.user_id)) : null;
+      const recipName = recipient ? (recipient.full_name || recipient.email) : (c.user_email || 'System Account');
+
+      return `
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 shadow-md">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-slate-400 font-mono">${c.id ? c.id.substring(0, 8) + '...' : 'N/A'}</div>
+              <div class="font-bold text-white text-sm">$${Number(c.amount || 0).toFixed(2)}</div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${getCommissionStatusBadgeClass(statusVal)}">${statusVal}</span>
+          </div>
+          <div class="text-xs text-slate-300 space-y-1 pt-2 border-t border-borderSlate/40">
+            <div><span class="text-slate-400">Recipient:</span> <strong>${recipName}</strong></div>
+            <div><span class="text-slate-400">Queue / Source:</span> <span class="font-mono text-[10px] bg-darkBg px-2 py-0.5 rounded border border-borderSlate">${qType}</span></div>
+          </div>
+          <div class="pt-2 border-t border-borderSlate/60 text-right">
+            <button onclick="inspectCommissionRecord('${c.id}')" class="w-full bg-amber-500/10 text-amber-400 border border-amber-500/30 py-2 rounded-xl text-xs font-semibold text-center hover:bg-amber-500/20 transition">
+              <i class="fa-solid fa-magnifying-glass mr-1"></i> Inspect Ledger Details
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 }
 function filterAdminCommissions() {
   const filterVal = document.getElementById('adminCommTabFilter').value;
@@ -3087,49 +3127,79 @@ function copyRefLink(inputId) {
 
 function renderReferralsTable(users) {
   const tbody = document.getElementById('referralsTableBody');
-  if (!tbody) return;
+  const cardsContainer = document.getElementById('referralsMobileCards');
+
   if (!users || users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No referral network records found.</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No referral network records found.</td></tr>`;
+    if (cardsContainer) cardsContainer.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs bg-cardBg border border-borderSlate rounded-2xl">No referral network records found.</div>`;
     return;
   }
 
-  tbody.innerHTML = users.map(u => {
+  const rowsHtml = users.map(u => {
     const roleUpper = (u.role || 'BUYER').toUpperCase();
     const roleBadge = roleUpper === 'SELLER' || roleUpper === 'VENDOR' ? 
-      `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">VENDOR</span>` :
-      `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">BUYER</span>`;
+      `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-md font-semibold text-[10px]">Vendor</span>` :
+      `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-md font-semibold text-[10px]">Buyer</span>`;
 
-    /* Calculate Inviter Earnings generated by this user */
-    let userEarnings = 0;
-    allCommissionsCache.forEach(c => {
-      if (c.recipient_id === u.id || (c.seller_id || c.vendor_id) === u.id) {
-        userEarnings += Number(c.amount || 0);
-      }
-    });
+    const inviterCode = u.invited_by_code || u.invited_by || 'N/A';
+    const inviter = inviterCode !== 'N/A' ? allUsersCache.find(x => x.referral_code === inviterCode) : null;
+    const inviterName = inviter ? (inviter.full_name || inviter.email) : 'Direct Account';
 
     return `
       <tr class="hover:bg-darkBg/40 transition">
         <td class="py-3 px-4">
-          <div class="font-bold text-white text-xs">${u.full_name || 'User'}</div>
-          <div class="text-[10px] text-slate-400 font-mono flex items-center space-x-1 mt-0.5">
-            <i class="fa-solid fa-envelope text-slate-500 text-[9px]"></i>
-            <span>${u.email || u.id}</span>
-          </div>
-          ${u.paypal_email ? `<div class="text-[9px] text-blue-400 font-mono mt-0.5"><i class="fa-brands fa-paypal mr-1"></i>${u.paypal_email}</div>` : ''}
+          <div class="font-bold text-white">${u.full_name || 'Unnamed Account'}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${u.email || u.id}</div>
         </td>
         <td class="py-3 px-4">${roleBadge}</td>
-        <td class="py-3 px-4 font-mono text-amber-400 font-bold text-xs">${u.referral_code || 'N/A'}</td>
-        <td class="py-3 px-4 font-mono text-slate-400 text-xs">${u.invited_by_code || 'Direct Sign-Up'}</td>
-        <td class="py-3 px-4 text-slate-400 text-[11px]">${new Date(u.created_at || Date.now()).toLocaleDateString()}</td>
-        <td class="py-3 px-4 font-bold text-emerald-400 text-xs">$${userEarnings.toFixed(2)}</td>
+        <td class="py-3 px-4 font-mono font-bold text-amber-400">${u.referral_code || 'N/A'}</td>
+        <td class="py-3 px-4 font-mono text-slate-300">
+          ${inviterCode !== 'N/A' ? `
+            <span class="px-2 py-0.5 bg-slate-800 border border-borderSlate rounded text-xs font-semibold text-amber-300">${inviterCode}</span>
+            <span class="block text-[10px] text-slate-400 mt-0.5">${inviterName}</span>
+          ` : `
+            <span class="text-slate-500 italic text-[11px]">Direct / Root</span>
+          `}
+        </td>
         <td class="py-3 px-4 text-right">
-          <button onclick="openDirectOutreachForUser('${u.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition">
-            <i class="fa-solid fa-comment-dots mr-1"></i> Message
+          <button onclick="openEditUserModal('${u.id}')" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-semibold px-2.5 py-1 rounded-lg transition">
+            <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Attribution
           </button>
         </td>
       </tr>
     `;
   }).join('');
+
+  if (tbody) tbody.innerHTML = rowsHtml;
+
+  if (cardsContainer) {
+    cardsContainer.innerHTML = users.map(u => {
+      const inviterCode = u.invited_by_code || u.invited_by || 'N/A';
+      const inviter = inviterCode !== 'N/A' ? allUsersCache.find(x => x.referral_code === inviterCode) : null;
+      const inviterName = inviter ? (inviter.full_name || inviter.email) : 'Direct Account';
+
+      return `
+        <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 shadow-md">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-bold text-white text-sm">${u.full_name || 'Unnamed Account'}</div>
+              <div class="text-[11px] text-slate-400 font-mono">${u.email || u.id}</div>
+            </div>
+            ${getUserRoleBadge(u.role)}
+          </div>
+          <div class="text-xs text-slate-300 space-y-1 pt-2 border-t border-borderSlate/40">
+            <div><span class="text-slate-400">Referral Code:</span> <strong class="font-mono text-amber-400">${u.referral_code || 'N/A'}</strong></div>
+            <div><span class="text-slate-400">Invited By:</span> <span class="font-mono text-[11px]">${inviterCode} (${inviterName})</span></div>
+          </div>
+          <div class="pt-2 border-t border-borderSlate/60">
+            <button onclick="openEditUserModal('${u.id}')" class="w-full bg-blue-500/10 text-blue-400 border border-blue-500/30 py-2 rounded-xl text-xs font-semibold text-center hover:bg-blue-500/20 transition">
+              <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Attribution / Profile
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 }
 
 function filterReferralsTable() {
