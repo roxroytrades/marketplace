@@ -105,7 +105,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
           <span>How Commission Distribution Works</span>
           <span id="eduBadge" class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full font-normal border border-blue-500/30">Educational Preview</span>
         </h3>
-        <p class="text-[11px] text-slate-400">Click to learn how review commissions are shared among participants.</p>
+        <p class="text-[11px] text-slate-400">Click to learn how review commissions & referral splits work.</p>
       </div>
     </div>
     <span id="eduToggleIcon" class="text-slate-400 text-xs px-2 py-1 bg-slate-800 rounded-lg border border-borderSlate flex items-center space-x-1 shrink-0 ml-2">
@@ -116,77 +116,106 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 
   <!-- Expandable Content Panel -->
   <div id="eduCardBody" class="hidden p-5 pt-0 border-t border-borderSlate/60 space-y-4">
-    <!-- Interactive Slider -->
-    <div class="space-y-2 pt-3">
-      <div class="flex justify-between items-center text-xs">
-        <span class="text-slate-300 font-medium">Sample Total Commission:</span>
-        <span id="calcTotalDisplay" class="font-bold text-blue-400 text-sm">$10.00</span>
+    
+    <!-- Rule of Thumb Banner -->
+    <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-[11px] text-blue-300 leading-relaxed flex items-start space-x-2">
+      <i class="fa-solid fa-circle-info text-blue-400 text-xs mt-0.5 shrink-0"></i>
+      <div>
+        <strong class="text-blue-200">Rule of Thumb:</strong> If no referral (inviter) exists, the referral commission goes 100% to the platform without being split. If referral(s) exist, the commission is split between the inviter(s) and the platform.
       </div>
-      <input type="range" id="calcSlider" min="5" max="50" value="10" step="1" oninput="updateCommissionCalc(this.value)" class="w-full accent-blue-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+    </div>
+
+    <!-- Interactive Controls: Commission Slider & Inviter Scenario Selector -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+      <!-- Review Commission Slider -->
+      <div class="space-y-1.5">
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-300 font-medium">Review Reward Rate:</span>
+          <span id="calcTotalDisplay" class="font-bold text-emerald-400 text-sm">$15.00</span>
+        </div>
+        <input type="range" id="calcSlider" min="5" max="50" value="15" step="1" oninput="updateCommissionCalc()" class="w-full accent-emerald-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+      </div>
+
+      <!-- Inviter Scenario Selector -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Referral Network Scenario:</label>
+        <select id="calcScenarioSelect" onchange="updateCommissionCalc()" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+          <option value="0">0 Inviters (No Referral Code Used)</option>
+          <option value="1_seller">1 Inviter (Seller Invited)</option>
+          <option value="1_buyer">1 Inviter (Buyer Invited)</option>
+          <option value="2" selected>2 Inviters (Both Seller & Buyer Invited)</option>
+        </select>
+      </div>
     </div>
 
     <!-- Distribution Breakdown Cards -->
     <div class="space-y-2 text-xs">
+      <!-- Card 1: Reviewer Payout -->
       <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
         <div class="space-y-0.5">
-          <p class="font-bold text-white"><i class="fa-solid fa-user-check text-emerald-400 mr-1.5"></i> 1. Reviewer Payout</p>
+          <p class="font-bold text-white"><i class="fa-solid fa-user-check text-emerald-400 mr-1.5"></i> 1. Reviewer Payout (100% Review Reward)</p>
           <p class="text-[11px] text-slate-400">Paid to the reviewer for submitting a valid review.</p>
         </div>
-        <span id="calcReviewerAmt" class="font-bold text-emerald-400 shrink-0">$5.00</span>
+        <span id="calcReviewerAmt" class="font-bold text-emerald-400 shrink-0">$15.00</span>
       </div>
 
+      <!-- Card 2: Buyer's Inviter Thank-You -->
       <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
         <div class="space-y-0.5">
           <p class="font-bold text-white"><i class="fa-solid fa-handshake text-purple-400 mr-1.5"></i> 2. Buyer's Inviter Thank-You</p>
           <p class="text-[11px] text-slate-400">Paid to the person who invited the buyer as a thank-you gesture.</p>
         </div>
-        <span id="calcBuyerInviterAmt" class="font-bold text-purple-400 shrink-0">$1.75</span>
+        <span id="calcBuyerInviterAmt" class="font-bold text-purple-400 shrink-0">$3.50</span>
       </div>
 
+      <!-- Card 3: Seller's Inviter Recognition -->
       <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
         <div class="space-y-0.5">
           <p class="font-bold text-white"><i class="fa-solid fa-bullhorn text-amber-400 mr-1.5"></i> 3. Seller's Inviter Recognition</p>
           <p class="text-[11px] text-slate-400">Paid to the person who invited you to the Echo Hub Marketplace as a thank-you gesture for introducing you to this wonderful opportunity.</p>
         </div>
-        <span id="calcSellerInviterAmt" class="font-bold text-amber-400 shrink-0">$1.75</span>
+        <span id="calcSellerInviterAmt" class="font-bold text-amber-400 shrink-0">$3.50</span>
       </div>
 
+      <!-- Card 4: Platform Infrastructure -->
       <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
         <div class="space-y-0.5">
           <p class="font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-1.5"></i> 4. Infrastructure & Upliftment</p>
           <p class="text-[11px] text-slate-400">Paid to admin for infrastructure maintenance and continuous support.</p>
         </div>
-        <span id="calcAdminAmt" class="font-bold text-blue-400 shrink-0">$1.50</span>
+        <span id="calcAdminAmt" class="font-bold text-blue-400 shrink-0">$3.00</span>
       </div>
     </div>
 
-    <!-- Agreement Buttons -->
-    <div class="pt-3 border-t border-borderSlate space-y-2.5 text-center">
-      <p class="text-[11px] text-slate-300">Do you understand and agree with how commissions are distributed?</p>
+    <!-- Agreement Recording Option Buttons -->
+    <div class="pt-2 border-t border-borderSlate/60 space-y-2.5 text-center">
+      <p class="text-[11px] text-slate-300">Do you understand how review rewards and referral commissions are distributed?</p>
       <div class="flex space-x-3 justify-center">
-        <button type="button" onclick="handleEduChoice(true)" id="btnEduAgree" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 shadow-md shadow-emerald-600/20">
+        <button type="button" onclick="handleEduChoice('AGREE')" id="btnEduAgree" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 shadow-md">
           <i class="fa-solid fa-circle-check"></i>
           <span>I Agree</span>
         </button>
-        <button type="button" onclick="handleEduChoice(false)" id="btnEduDisagree" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5">
+        <button type="button" onclick="handleEduChoice('DISAGREE')" id="btnEduDisagree" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5">
           <i class="fa-solid fa-circle-xmark"></i>
           <span>I Disagree</span>
         </button>
       </div>
-      <p id="eduFeedbackNote" class="text-[11px] text-slate-400 hidden"></p>
+      <p id="eduFeedbackNote" class="text-[11px] hidden font-medium"></p>
     </div>
+
   </div>
 </div>
 
 <!-- Commission Amount (USD) -->
-<div class="space-y-1">
-<label class="text-xs font-semibold text-slate-300">Commission Amount (USD)</label>
-<div class="relative">
-<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-dollar-sign text-xs"></i></span>
-<input type="number" id="commissionAmount" required min="5.00" step="0.01" value="15.00" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+<div class="space-y-1 pt-1">
+  <label class="text-xs font-semibold text-slate-300">Commission Amount (USD)</label>
+  <div class="relative">
+    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-dollar-sign text-xs"></i></span>
+    <input type="number" id="commissionAmount" required min="5.00" step="0.01" value="15.00" oninput="syncCommissionWithSlider(this.value)" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+  </div>
+  <p class="text-[10px] text-slate-500 pl-1">Enforced minimum of $5.00 USD per review.</p>
 </div>
-<p class="text-[10px] text-slate-500 pl-1">Enforced minimum of $5.00 USD per review.</p>
-</div>
+
 <!-- What will you be interested in offering? (Business & Product Description) -->
 <div class="space-y-1">
 <label class="text-xs font-semibold text-slate-300">What will you be interested in offering?</label>
@@ -270,13 +299,58 @@ function toggleCommissionEduCard() {
   }
 }
 
-function updateCommissionCalc(val) {
-  const total = parseFloat(val) || 10;
-  document.getElementById('calcTotalDisplay').textContent = `$${total.toFixed(2)}`;
-  document.getElementById('calcReviewerAmt').textContent = `$${(total * 0.50).toFixed(2)}`;
-  document.getElementById('calcBuyerInviterAmt').textContent = `$${(total * 0.175).toFixed(2)}`;
-  document.getElementById('calcSellerInviterAmt').textContent = `$${(total * 0.175).toFixed(2)}`;
-  document.getElementById('calcAdminAmt').textContent = `$${(total * 0.15).toFixed(2)}`;
+function syncCommissionWithSlider(val) {
+  const slider = document.getElementById('calcSlider');
+  if (slider && val) {
+    slider.value = Math.max(5, Math.min(50, parseFloat(val) || 15));
+  }
+  updateCommissionCalc();
+}
+
+function updateCommissionCalc() {
+  const slider = document.getElementById('calcSlider');
+  const scenarioSelect = document.getElementById('calcScenarioSelect');
+  if (!slider) return;
+
+  const reviewCommission = parseFloat(slider.value) || 15.00;
+  const scenario = scenarioSelect ? scenarioSelect.value : '2';
+  
+  // Reviewer Payout = 100% of Review Commission
+  document.getElementById('calcTotalDisplay').textContent = `$${reviewCommission.toFixed(2)}`;
+  document.getElementById('calcReviewerAmt').textContent = `$${reviewCommission.toFixed(2)}`;
+
+  // Standard Platform Fee Baseline (e.g. $10.00 standard or proportional)
+  const platformFee = 10.00;
+
+  let sellerInviterAmt = 0;
+  let buyerInviterAmt = 0;
+  let adminAmt = 0;
+
+  if (scenario === '0') {
+    // 0 Inviters: Referral fee goes 100% to platform without being split
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = 0.00;
+    adminAmt = platformFee; // 100%
+  } else if (scenario === '1_seller') {
+    // 1 Inviter (Seller Inviter): Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = platformFee * 0.70;
+    buyerInviterAmt = 0.00;
+    adminAmt = platformFee * 0.30;
+  } else if (scenario === '1_buyer') {
+    // 1 Inviter (Buyer Inviter): Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = platformFee * 0.70;
+    adminAmt = platformFee * 0.30;
+  } else {
+    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+    sellerInviterAmt = platformFee * 0.35;
+    buyerInviterAmt = platformFee * 0.35;
+    adminAmt = platformFee * 0.30;
+  }
+
+  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
 }
 
 function handleEduChoice(agreed) {
