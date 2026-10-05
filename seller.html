@@ -871,6 +871,38 @@ let selectedSellerCommIds = new Set();
 let pollingInterval = null;
 let chatAttachedFile = null;
 
+
+/* Payload Sanitizer Utility to prevent unmapped column schema & UUID errors */
+const ALLOWED_TABLE_COLUMNS = {
+  messages: ['id', 'created_at', 'sender_id', 'receiver_id', 'vendor_id', 'buyer_id', 'product_id', 'text', 'is_read', 'feedback_id', 'status', 'status_badge', 'type', 'amazon_review_url', 'review_url', 'commission_amount', 'link', 'content', 'file_url', 'attachment_url', 'proof_base64'],
+  commissions: ['id', 'created_at', 'updated_at', 'seller_id', 'vendor_id', 'recipient_id', 'product_id', 'amount', 'commission_amount', 'status', 'queue_type', 'role_type', 'proof_url', 'payout_proof_url', 'paypal_tx_id', 'receipt_base64'],
+  profiles: ['id', 'updated_at', 'full_name', 'email', 'paypal_email', 'role', 'verification_status', 'referral_code', 'invited_by_code', 'is_blocked']
+};
+
+function sanitizePayload(tableName, payload) {
+  if (!payload || typeof payload !== 'object') return payload;
+  const allowed = ALLOWED_TABLE_COLUMNS[tableName];
+  
+  const sanitizeItem = (obj) => {
+    const clean = {};
+    for (const key in obj) {
+      if (!allowed || allowed.includes(key)) {
+        let val = obj[key];
+        if (typeof val === 'string' && (val.trim() === '' || val === 'null' || val === 'undefined') && (key.endsWith('_id') || key === 'id')) {
+          val = null;
+        }
+        clean[key] = val;
+      }
+    }
+    return clean;
+  };
+
+  if (Array.isArray(payload)) {
+    return payload.map(sanitizeItem);
+  }
+  return sanitizeItem(payload);
+}
+
 /* Status Badge Sanitizer Helper */
 const sanitizeStatusBadge = (payload) => {
   if (payload.status_badge) {
@@ -1022,8 +1054,17 @@ async function loadVendorProducts(isPolling = false) {
     let { data, error } = await _supabase
       .from('products')
       .select('*')
-      .eq('seller_id', currentUser.id)
+      .or(`vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id},user_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
+    if (error) {
+      const retryRes = await _supabase
+        .from('products')
+        .select('*')
+        .or(`vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
+        .order('created_at', { ascending: false });
+      data = retryRes.data;
+      error = retryRes.error;
+    }
     if (error && (error.code === '42703' || (error.message && error.message.includes('seller_id')))) {
       console.warn('seller_id column missing on products table, falling back to vendor_id');
       const fallback = await _supabase
