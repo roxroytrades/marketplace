@@ -91,6 +91,93 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </label>
 </div>
 </div>
+
+<!-- Collapsible Educational Commission Calculator Component -->
+<div class="bg-darkBg/80 border border-borderSlate rounded-2xl overflow-hidden transition-all duration-300">
+  <!-- Collapsed Banner Toggle Bar -->
+  <button type="button" onclick="toggleCommissionEduCard()" class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-800/50 transition">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center font-bold shrink-0">
+        <i class="fa-solid fa-calculator text-sm"></i>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold text-white flex items-center space-x-2">
+          <span>How Commission Distribution Works</span>
+          <span id="eduBadge" class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full font-normal border border-blue-500/30">Educational Preview</span>
+        </h3>
+        <p class="text-[11px] text-slate-400">Click to learn how review commissions are shared among participants.</p>
+      </div>
+    </div>
+    <span id="eduToggleIcon" class="text-slate-400 text-xs px-2 py-1 bg-slate-800 rounded-lg border border-borderSlate flex items-center space-x-1 shrink-0 ml-2">
+      <span id="eduToggleLabel">Expand Breakdown</span>
+      <i id="eduArrowIcon" class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
+    </span>
+  </button>
+
+  <!-- Expandable Content Panel -->
+  <div id="eduCardBody" class="hidden p-5 pt-0 border-t border-borderSlate/60 space-y-4">
+    <!-- Interactive Slider -->
+    <div class="space-y-2 pt-3">
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-300 font-medium">Sample Total Commission:</span>
+        <span id="calcTotalDisplay" class="font-bold text-blue-400 text-sm">$10.00</span>
+      </div>
+      <input type="range" id="calcSlider" min="5" max="50" value="10" step="1" oninput="updateCommissionCalc(this.value)" class="w-full accent-blue-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+    </div>
+
+    <!-- Distribution Breakdown Cards -->
+    <div class="space-y-2 text-xs">
+      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+        <div class="space-y-0.5">
+          <p class="font-bold text-white"><i class="fa-solid fa-user-check text-emerald-400 mr-1.5"></i> 1. Reviewer Payout</p>
+          <p class="text-[11px] text-slate-400">Paid to the reviewer for submitting a valid review.</p>
+        </div>
+        <span id="calcReviewerAmt" class="font-bold text-emerald-400 shrink-0">$5.00</span>
+      </div>
+
+      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+        <div class="space-y-0.5">
+          <p class="font-bold text-white"><i class="fa-solid fa-handshake text-purple-400 mr-1.5"></i> 2. Buyer's Inviter Thank-You</p>
+          <p class="text-[11px] text-slate-400">Paid to the person who invited the buyer as a thank-you gesture.</p>
+        </div>
+        <span id="calcBuyerInviterAmt" class="font-bold text-purple-400 shrink-0">$1.75</span>
+      </div>
+
+      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+        <div class="space-y-0.5">
+          <p class="font-bold text-white"><i class="fa-solid fa-bullhorn text-amber-400 mr-1.5"></i> 3. Seller's Inviter Recognition</p>
+          <p class="text-[11px] text-slate-400">Paid to the person who invited you to the Echo Hub Marketplace as a thank-you gesture for introducing you to this wonderful opportunity.</p>
+        </div>
+        <span id="calcSellerInviterAmt" class="font-bold text-amber-400 shrink-0">$1.75</span>
+      </div>
+
+      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+        <div class="space-y-0.5">
+          <p class="font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-1.5"></i> 4. Infrastructure & Upliftment</p>
+          <p class="text-[11px] text-slate-400">Paid to admin for infrastructure maintenance and continuous support.</p>
+        </div>
+        <span id="calcAdminAmt" class="font-bold text-blue-400 shrink-0">$1.50</span>
+      </div>
+    </div>
+
+    <!-- Agreement Buttons -->
+    <div class="pt-3 border-t border-borderSlate space-y-2.5 text-center">
+      <p class="text-[11px] text-slate-300">Do you understand and agree with how commissions are distributed?</p>
+      <div class="flex space-x-3 justify-center">
+        <button type="button" onclick="handleEduChoice(true)" id="btnEduAgree" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 shadow-md shadow-emerald-600/20">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>I Agree</span>
+        </button>
+        <button type="button" onclick="handleEduChoice(false)" id="btnEduDisagree" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-circle-xmark"></i>
+          <span>I Disagree</span>
+        </button>
+      </div>
+      <p id="eduFeedbackNote" class="text-[11px] text-slate-400 hidden"></p>
+    </div>
+  </div>
+</div>
+
 <!-- Commission Amount (USD) -->
 <div class="space-y-1">
 <label class="text-xs font-semibold text-slate-300">Commission Amount (USD)</label>
@@ -163,6 +250,63 @@ const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const form = document.getElementById('sellerRegisterForm');
 const alertBox = document.getElementById('formAlert');
 const submitBtn = document.getElementById('submitBtn');
+
+let commissionPolicyAgreed = true; // Default agreement state
+
+function toggleCommissionEduCard() {
+  const body = document.getElementById('eduCardBody');
+  const label = document.getElementById('eduToggleLabel');
+  const arrow = document.getElementById('eduArrowIcon');
+  const isHidden = body.classList.contains('hidden');
+
+  if (isHidden) {
+    body.classList.remove('hidden');
+    label.textContent = 'Collapse Breakdown';
+    arrow.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+  } else {
+    body.classList.add('hidden');
+    label.textContent = 'Expand Breakdown';
+    arrow.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
+  }
+}
+
+function updateCommissionCalc(val) {
+  const total = parseFloat(val) || 10;
+  document.getElementById('calcTotalDisplay').textContent = `$${total.toFixed(2)}`;
+  document.getElementById('calcReviewerAmt').textContent = `$${(total * 0.50).toFixed(2)}`;
+  document.getElementById('calcBuyerInviterAmt').textContent = `$${(total * 0.175).toFixed(2)}`;
+  document.getElementById('calcSellerInviterAmt').textContent = `$${(total * 0.175).toFixed(2)}`;
+  document.getElementById('calcAdminAmt').textContent = `$${(total * 0.15).toFixed(2)}`;
+}
+
+function handleEduChoice(agreed) {
+  commissionPolicyAgreed = agreed;
+  const note = document.getElementById('eduFeedbackNote');
+  const btnAgree = document.getElementById('btnEduAgree');
+  const btnDisagree = document.getElementById('btnEduDisagree');
+  const badge = document.getElementById('eduBadge');
+
+  if (agreed) {
+    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 shadow-md shadow-emerald-600/20';
+    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5';
+    note.textContent = "Thank you for confirming! You can now complete registration below.";
+    note.className = "text-[11px] text-emerald-400 font-medium";
+    if (badge) {
+      badge.textContent = "Policy Confirmed (Agreed)";
+      badge.className = "bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-normal border border-emerald-500/30";
+    }
+  } else {
+    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5';
+    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5';
+    note.textContent = "Thank you for your response! You can still complete registration below.";
+    note.className = "text-[11px] text-slate-400 font-medium";
+    if (badge) {
+      badge.textContent = "Policy Confirmed (Disagreed)";
+      badge.className = "bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-normal border border-amber-500/30";
+    }
+  }
+  note.classList.remove('hidden');
+}
 
 // Auto-populate invite token and referral code from URL query params if present (e.g., ?token=XYZ&ref=REF-123)
 window.addEventListener('DOMContentLoaded', () => {
@@ -248,7 +392,7 @@ form.addEventListener('submit', async (e) => {
     const finalInvitedByCode = refereeCode || null;
     const finalReferredBy = refereeUuid || null;
 
-    // Register vendor with Supabase Auth including correct invited_by_code and referred_by in metadata
+    // Register vendor with Supabase Auth including correct invited_by_code, referred_by, and commission_policy_agreed in metadata
     const { data: authData, error: authError } = await _supabase.auth.signUp({
       email: email,
       password: password,
@@ -263,7 +407,8 @@ form.addEventListener('submit', async (e) => {
           invited_by_code: finalInvitedByCode,
           referred_by: finalReferredBy,
           paypal_email: paypalEmail,
-          role: 'seller'
+          role: 'seller',
+          commission_policy_agreed: commissionPolicyAgreed
         }
       }
     });
@@ -275,7 +420,7 @@ form.addEventListener('submit', async (e) => {
       throw new Error('User registration failed to return an authenticated ID.');
     }
 
-    // Upsert directly into public.profiles matching exact 13-column live schema
+    // Upsert directly into public.profiles including commission_policy_agreed
     const { error: profileError } = await _supabase
       .from('profiles')
       .upsert({
@@ -287,6 +432,7 @@ form.addEventListener('submit', async (e) => {
         referred_by: finalReferredBy,
         role: 'seller',
         verification_status: 'VERIFIED',
+        commission_policy_agreed: commissionPolicyAgreed,
         created_at: new Date().toISOString()
       });
 
