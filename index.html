@@ -1259,23 +1259,17 @@ async function loadCommissionsData(isPolling = false) {
       .from('commissions')
       .select('*')
       .eq('recipient_id', currentUser.id);
+
     if (error) throw error;
+
     commissionsList = data || [];
     shopperCommissions = commissionsList;
-
-    ;
-            const { data: newComm } = await _supabase.from('commissions').insert([sanitizePayload('commissions', backfillPayload)]).select().maybeSingle();
-            if (newComm) {
-              commissionsList.push(newComm);
-              existingFbIds.add(m.feedback_id);
-            }
-          }
-        }
-      }
-    }
   } catch (err) {
     console.log('Using local shopper commissions dataset fallback.');
+    commissionsList = [];
+    shopperCommissions = [];
   }
+
   updateCommissionStats();
   renderCommissionTable();
 }
