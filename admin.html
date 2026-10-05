@@ -315,7 +315,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
   </button>
 </div>
 <header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-lg">
-  <div class="flex items-center space-x-3">
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
     <div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-slate-900 shadow-lg shadow-amber-500/20 font-heading font-bold text-lg overflow-hidden">
       eh
     </div>
@@ -355,7 +355,21 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 
 <!-- Primary Navigation Tabs -->
 <div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-6 py-2 sticky top-[73px] z-20">
-  <div class="max-w-7xl mx-auto flex items-center space-x-2 overflow-x-auto no-scrollbar text-xs">
+  
+    <!-- Mobile Dropdown Tab Selector (< 768px) -->
+    <div class="md:hidden mb-2">
+      <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Jump to Workspace Section:</label>
+      <select id="mobileAdminTabSelect" onchange="switchAdminTab(this.value)" class="w-full bg-darkBg border border-amber-500/40 text-amber-300 font-semibold text-xs rounded-xl px-3 py-2 outline-none focus:border-amber-400">
+        <option value="users">👥 Accounts & ID Verification</option>
+        <option value="products">📦 Product Catalog</option>
+        <option value="commissions">🧾 Master Commissions Ledger</option>
+        <option value="messaging">💬 System Messaging & Outreach</option>
+        <option value="referrals">🌳 Referral Network Hub</option>
+        <option value="settings">⚙️ System Settings & Branding</option>
+      </select>
+    </div>
+
+<div class="max-w-7xl mx-auto flex items-center space-x-2 overflow-x-auto no-scrollbar text-xs">
     <!-- Mobile Responsive Tab Selector Dropdown -->
     <div class="md:hidden w-full mb-1">
       <select onchange="switchAdminTab(this.value)" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs font-bold text-amber-400 outline-none focus:border-amber-500">
@@ -407,7 +421,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         <h2 class="text-xl font-bold text-white tracking-tight">Platform Accounts & ID Verification</h2>
         <p class="text-xs text-slate-400 mt-1">Review buyer National ID verification cards, manage account access status, and audit user roles.</p>
       </div>
-      <div class="flex items-center space-x-3">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
         <button id="btnBatchEraseUsers" onclick="deleteSelectedUsers()" class="hidden bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center space-x-1.5 shadow-sm">
           <i class="fa-solid fa-trash"></i>
           <span id="btnBatchEraseUsersText">Erase Selected (0)</span>
@@ -432,7 +446,8 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 
     <!-- Users Table -->
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div class="overflow-x-auto">
+      <div id="usersMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -469,7 +484,8 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </div>
 
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div class="overflow-x-auto">
+      <div id="usersMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -500,13 +516,13 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         <h2 class="text-xl font-bold text-white tracking-tight">Master Financial Ledger & Payout Queue</h2>
         <p class="text-xs text-slate-400 mt-1">Monitor real-time balances, payout requests, working queues, and settlement receipts across all roles.</p>
       </div>
-      <div class="flex items-center space-x-3">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
         <button onclick="openManualAdjustmentModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
           <i class="fa-solid fa-plus-circle"></i>
           <span>+ Manual Adjustment</span>
         </button>
       </div>
-      <div class="flex items-center space-x-3">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
         <button onclick="requestAllAvailableAdminPayouts()" class="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
           <i class="fa-solid fa-paper-plane"></i>
           <span>Request All Liquid Payouts</span>
@@ -633,7 +649,8 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </div>
 
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div class="overflow-x-auto">
+      <div id="usersMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -667,7 +684,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         <h2 class="text-xl font-bold text-white tracking-tight">System-Wide Messaging & Direct Outreach</h2>
         <p class="text-xs text-slate-400 mt-1">Audit communications, inspect review submissions, detect contact policy risks, and initiate direct outreach.</p>
       </div>
-      <div class="flex items-center space-x-3">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
         <button onclick="openSystemBroadcastModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
           <i class="fa-solid fa-bullhorn"></i>
           <span>📢 System Broadcast</span>
@@ -730,7 +747,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         
         <!-- Active Thread Header Bar -->
         <div id="activeThreadHeader" class="p-4 border-b border-borderSlate bg-darkBg/60 flex items-center justify-between">
-          <div class="flex items-center space-x-3">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
             <div class="w-9 h-9 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center justify-center text-amber-400 font-bold text-xs">
               <i class="fa-solid fa-comments"></i>
             </div>
@@ -861,7 +878,8 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     </div>
 
     <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-      <div class="overflow-x-auto">
+      <div id="usersMobileCards" class="block md:hidden p-4 space-y-3.5 divide-y divide-borderSlate/60"></div>
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -1873,7 +1891,7 @@ function renderProductsTable(products) {
     return `
       <tr class="hover:bg-darkBg/40 transition">
         <td class="py-3 px-4">
-          <div class="flex items-center space-x-3">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
             ${imageHtml}
             <div>
               <div class="font-bold text-white line-clamp-1">${p.title}</div>
