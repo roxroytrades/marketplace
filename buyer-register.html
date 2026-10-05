@@ -5,7 +5,92 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Echo Hub - Shopper & Reviewer Registration</title>
 <!-- Tailwind CSS CDN with Dark Mode Enabled -->
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+let buyerEduPolicyAgreed = true;
+
+function toggleBuyerEduCard() {
+  const body = document.getElementById('buyerEduCardBody');
+  const label = document.getElementById('eduToggleLabel');
+  const icon = document.getElementById('eduArrowIcon');
+  if (body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    label.textContent = 'Collapse Breakdown';
+    icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+    updateBuyerCommissionCalc();
+  } else {
+    body.classList.add('hidden');
+    label.textContent = 'Expand Breakdown';
+    icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
+  }
+}
+
+function updateBuyerCommissionCalc() {
+  const slider = document.getElementById('calcSlider');
+  const scenarioSelect = document.getElementById('calcScenarioSelect');
+  if (!slider) return;
+
+  const offerVal = parseFloat(slider.value) || 15.00;
+  const scenario = scenarioSelect ? scenarioSelect.value : '2';
+
+  // Reviewer Direct Payout = 100% of offer
+  document.getElementById('calcTotalDisplay').textContent = `$${offerVal.toFixed(2)}`;
+  document.getElementById('calcReviewerAmt').textContent = `$${offerVal.toFixed(2)}`;
+
+  let sellerInviterAmt = 0;
+  let buyerInviterAmt = 0;
+  let adminAmt = 0;
+
+  if (scenario === '0') {
+    // 0 Inviters: Platform gets 100% of fee pool ($offerVal)
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = 0.00;
+    adminAmt = offerVal * 1.00;
+  } else if (scenario === '1_buyer') {
+    // 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = offerVal * 0.70;
+    adminAmt = offerVal * 0.30;
+  } else if (scenario === '1_seller') {
+    // 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = offerVal * 0.70;
+    buyerInviterAmt = 0.00;
+    adminAmt = offerVal * 0.30;
+  } else {
+    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+    sellerInviterAmt = offerVal * 0.35;
+    buyerInviterAmt = offerVal * 0.35;
+    adminAmt = offerVal * 0.30;
+  }
+
+  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
+
+  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+  document.getElementById('calcSplitsTotal').textContent = `$${splitsTotal.toFixed(2)} (1:1 Match)`;
+}
+
+function handleBuyerEduChoice(agreed) {
+  buyerEduPolicyAgreed = agreed;
+  const note = document.getElementById('buyerEduFeedbackNote');
+  const btnAgree = document.getElementById('btnBuyerEduAgree');
+  const btnDisagree = document.getElementById('btnBuyerEduDisagree');
+
+  if (agreed) {
+    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
+    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+    note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
+    note.className = "text-[11px] text-emerald-400 font-medium";
+  } else {
+    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
+    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+    note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
+    note.className = "text-[11px] text-slate-400 font-medium";
+  }
+  note.classList.remove('hidden');
+}
+
+</script>
 <script>
 tailwind.config = {
 darkMode: 'class',
@@ -21,13 +106,183 @@ borderSlate: '#334155'
 }
 }
 }
+
+let buyerEduPolicyAgreed = true;
+
+function toggleBuyerEduCard() {
+  const body = document.getElementById('buyerEduCardBody');
+  const label = document.getElementById('eduToggleLabel');
+  const icon = document.getElementById('eduArrowIcon');
+  if (body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    label.textContent = 'Collapse Breakdown';
+    icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+    updateBuyerCommissionCalc();
+  } else {
+    body.classList.add('hidden');
+    label.textContent = 'Expand Breakdown';
+    icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
+  }
+}
+
+function updateBuyerCommissionCalc() {
+  const slider = document.getElementById('calcSlider');
+  const scenarioSelect = document.getElementById('calcScenarioSelect');
+  if (!slider) return;
+
+  const offerVal = parseFloat(slider.value) || 15.00;
+  const scenario = scenarioSelect ? scenarioSelect.value : '2';
+
+  // Reviewer Direct Payout = 100% of offer
+  document.getElementById('calcTotalDisplay').textContent = `$${offerVal.toFixed(2)}`;
+  document.getElementById('calcReviewerAmt').textContent = `$${offerVal.toFixed(2)}`;
+
+  let sellerInviterAmt = 0;
+  let buyerInviterAmt = 0;
+  let adminAmt = 0;
+
+  if (scenario === '0') {
+    // 0 Inviters: Platform gets 100% of fee pool ($offerVal)
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = 0.00;
+    adminAmt = offerVal * 1.00;
+  } else if (scenario === '1_buyer') {
+    // 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = offerVal * 0.70;
+    adminAmt = offerVal * 0.30;
+  } else if (scenario === '1_seller') {
+    // 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = offerVal * 0.70;
+    buyerInviterAmt = 0.00;
+    adminAmt = offerVal * 0.30;
+  } else {
+    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+    sellerInviterAmt = offerVal * 0.35;
+    buyerInviterAmt = offerVal * 0.35;
+    adminAmt = offerVal * 0.30;
+  }
+
+  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
+
+  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+  document.getElementById('calcSplitsTotal').textContent = `$${splitsTotal.toFixed(2)} (1:1 Match)`;
+}
+
+function handleBuyerEduChoice(agreed) {
+  buyerEduPolicyAgreed = agreed;
+  const note = document.getElementById('buyerEduFeedbackNote');
+  const btnAgree = document.getElementById('btnBuyerEduAgree');
+  const btnDisagree = document.getElementById('btnBuyerEduDisagree');
+
+  if (agreed) {
+    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
+    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+    note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
+    note.className = "text-[11px] text-emerald-400 font-medium";
+  } else {
+    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
+    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+    note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
+    note.className = "text-[11px] text-slate-400 font-medium";
+  }
+  note.classList.remove('hidden');
+}
+
 </script>
 <!-- FontAwesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- Google Fonts: Inter / Space Grotesk -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <!-- Official Supabase JS Client Library -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+let buyerEduPolicyAgreed = true;
+
+function toggleBuyerEduCard() {
+  const body = document.getElementById('buyerEduCardBody');
+  const label = document.getElementById('eduToggleLabel');
+  const icon = document.getElementById('eduArrowIcon');
+  if (body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    label.textContent = 'Collapse Breakdown';
+    icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+    updateBuyerCommissionCalc();
+  } else {
+    body.classList.add('hidden');
+    label.textContent = 'Expand Breakdown';
+    icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
+  }
+}
+
+function updateBuyerCommissionCalc() {
+  const slider = document.getElementById('calcSlider');
+  const scenarioSelect = document.getElementById('calcScenarioSelect');
+  if (!slider) return;
+
+  const offerVal = parseFloat(slider.value) || 15.00;
+  const scenario = scenarioSelect ? scenarioSelect.value : '2';
+
+  // Reviewer Direct Payout = 100% of offer
+  document.getElementById('calcTotalDisplay').textContent = `$${offerVal.toFixed(2)}`;
+  document.getElementById('calcReviewerAmt').textContent = `$${offerVal.toFixed(2)}`;
+
+  let sellerInviterAmt = 0;
+  let buyerInviterAmt = 0;
+  let adminAmt = 0;
+
+  if (scenario === '0') {
+    // 0 Inviters: Platform gets 100% of fee pool ($offerVal)
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = 0.00;
+    adminAmt = offerVal * 1.00;
+  } else if (scenario === '1_buyer') {
+    // 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = offerVal * 0.70;
+    adminAmt = offerVal * 0.30;
+  } else if (scenario === '1_seller') {
+    // 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = offerVal * 0.70;
+    buyerInviterAmt = 0.00;
+    adminAmt = offerVal * 0.30;
+  } else {
+    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+    sellerInviterAmt = offerVal * 0.35;
+    buyerInviterAmt = offerVal * 0.35;
+    adminAmt = offerVal * 0.30;
+  }
+
+  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
+
+  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+  document.getElementById('calcSplitsTotal').textContent = `$${splitsTotal.toFixed(2)} (1:1 Match)`;
+}
+
+function handleBuyerEduChoice(agreed) {
+  buyerEduPolicyAgreed = agreed;
+  const note = document.getElementById('buyerEduFeedbackNote');
+  const btnAgree = document.getElementById('btnBuyerEduAgree');
+  const btnDisagree = document.getElementById('btnBuyerEduDisagree');
+
+  if (agreed) {
+    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
+    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+    note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
+    note.className = "text-[11px] text-emerald-400 font-medium";
+  } else {
+    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
+    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+    note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
+    note.className = "text-[11px] text-slate-400 font-medium";
+  }
+  note.classList.remove('hidden');
+}
+
+</script>
 <style>
 body { font-family: 'Inter', sans-serif; }
 h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
@@ -88,6 +343,122 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <label class="text-xs font-semibold text-slate-300">Categories of Interest <span class="text-rose-500">*</span></label>
 <input type="text" id="categories" required placeholder="Electronics, Home & Kitchen, Gadgets" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-rose-500 transition">
 </div>
+
+<!-- Collapsible Educational Reviewer Earnings & Referral Split Component -->
+<div class="bg-darkBg/80 border border-borderSlate rounded-2xl overflow-hidden transition-all duration-300 my-4">
+  <!-- Collapsed Banner Toggle Bar -->
+  <button type="button" onclick="toggleBuyerEduCard()" class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-800/50 transition">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 bg-rose-500/10 text-rose-400 rounded-lg flex items-center justify-center font-bold shrink-0">
+        <i class="fa-solid fa-calculator text-sm"></i>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold text-white flex items-center space-x-2">
+          <span>How Reviewer Earnings & Referral Splits Work</span>
+          <span id="eduBadge" class="bg-rose-500/20 text-rose-400 text-[10px] px-2 py-0.5 rounded-full font-normal border border-rose-500/30">Educational Preview</span>
+        </h3>
+        <p class="text-[11px] text-slate-400">Click to explore review rewards and passive referral bonuses.</p>
+      </div>
+    </div>
+    <span id="eduToggleIcon" class="text-slate-400 text-xs px-2 py-1 bg-slate-800 rounded-lg border border-borderSlate flex items-center space-x-1 shrink-0 ml-2">
+      <span id="eduToggleLabel">Expand Breakdown</span>
+      <i id="eduArrowIcon" class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
+    </span>
+  </button>
+
+  <!-- Expandable Content Panel -->
+  <div id="buyerEduCardBody" class="hidden p-5 pt-0 border-t border-borderSlate/60 space-y-4">
+    <!-- Rule of Thumb & 1:1 Match Banner -->
+    <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 space-y-1 mt-3">
+      <p class="text-[11px] font-semibold text-rose-300 flex items-center">
+        <i class="fa-solid fa-lightbulb text-amber-400 mr-1.5"></i>
+        <span>100% Payout Rule & 1:1 Fee Matching</span>
+      </p>
+      <p class="text-[10px] text-slate-300 leading-relaxed">
+        You always receive <strong>100% of the vendor's review commission</strong>. The total platform fee pool split across inviters and platform maintenance <strong>exactly equals 100% of your review payout</strong> (a 1:1 match). If no inviter exists, the referral share goes to platform maintenance without being split.
+      </p>
+    </div>
+
+    <!-- Interactive Slider & Scenario Dropdown -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+      <div class="space-y-1.5">
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-300 font-medium">Sample Review Offer:</span>
+          <span id="calcTotalDisplay" class="font-bold text-rose-400 text-sm">$15.00</span>
+        </div>
+        <input type="range" id="calcSlider" min="5" max="50" value="15" step="1" oninput="updateBuyerCommissionCalc()" class="w-full accent-rose-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="text-xs text-slate-300 font-medium block">Active Referral Scenario:</label>
+        <select id="calcScenarioSelect" onchange="updateBuyerCommissionCalc()" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-rose-500">
+          <option value="2" selected>2 Inviters (Both Seller & Buyer Invited)</option>
+          <option value="1_buyer">1 Inviter (You Were Invited by a Friend)</option>
+          <option value="1_seller">1 Inviter (Seller Was Invited)</option>
+          <option value="0">0 Inviters (No Referral Link Used)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Distribution Breakdown Cards from Buyer Perspective -->
+    <div class="space-y-2 text-xs">
+      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+        <div class="space-y-0.5">
+          <p class="font-bold text-white"><i class="fa-solid fa-wallet text-emerald-400 mr-1.5"></i> 1. Your Direct Review Payout</p>
+          <p class="text-[11px] text-slate-400">100% direct cash reward paid to your PayPal upon approved review.</p>
+        </div>
+        <span id="calcReviewerAmt" class="font-bold text-emerald-400 shrink-0 text-sm">$15.00</span>
+      </div>
+
+      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+        <div class="space-y-0.5">
+          <p class="font-bold text-white"><i class="fa-solid fa-users text-purple-400 mr-1.5"></i> 2. Buyer's Inviter Referral Bonus</p>
+          <p class="text-[11px] text-slate-400">Earned by the person who invited you (or earned by YOU when you invite friends!).</p>
+        </div>
+        <span id="calcBuyerInviterAmt" class="font-bold text-purple-400 shrink-0">$5.25</span>
+      </div>
+
+      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+        <div class="space-y-0.5">
+          <p class="font-bold text-white"><i class="fa-solid fa-store text-amber-400 mr-1.5"></i> 3. Seller's Inviter Recognition</p>
+          <p class="text-[11px] text-slate-400">Paid to the person who introduced the seller as a thank-you gesture for introducing this wonderful opportunity.</p>
+        </div>
+        <span id="calcSellerInviterAmt" class="font-bold text-amber-400 shrink-0">$5.25</span>
+      </div>
+
+      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+        <div class="space-y-0.5">
+          <p class="font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-1.5"></i> 4. Infrastructure & Upliftment</p>
+          <p class="text-[11px] text-slate-400">Paid to admin for continuous infrastructure maintenance and platform security.</p>
+        </div>
+        <span id="calcAdminAmt" class="font-bold text-blue-400 shrink-0">$4.50</span>
+      </div>
+    </div>
+
+    <!-- Dynamic 1:1 Match Summary Bar -->
+    <div class="bg-slate-800/80 p-3 rounded-xl border border-borderSlate flex justify-between items-center text-xs">
+      <span class="text-slate-300 font-semibold"><i class="fa-solid fa-scale-balanced text-rose-400 mr-1.5"></i> Total Network & Platform Fee Pool:</span>
+      <span id="calcSplitsTotal" class="font-bold text-rose-400 text-sm">$15.00 (1:1 Match)</span>
+    </div>
+
+    <!-- Agreement Recording Option Buttons -->
+    <div class="pt-2 border-t border-borderSlate/60 space-y-2 text-center">
+      <p class="text-[11px] text-slate-300">Do you understand how reviewer payouts and referral bonuses are distributed?</p>
+      <div class="flex space-x-3 justify-center">
+        <button type="button" onclick="handleBuyerEduChoice(true)" id="btnBuyerEduAgree" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>I Agree</span>
+        </button>
+        <button type="button" onclick="handleBuyerEduChoice(false)" id="btnBuyerEduDisagree" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
+          <i class="fa-solid fa-circle-xmark"></i>
+          <span>I Disagree</span>
+        </button>
+      </div>
+      <p id="buyerEduFeedbackNote" class="text-[11px] text-slate-400 hidden"></p>
+    </div>
+  </div>
+</div>
+
 <!-- Inviter Referral Code (Optional) -->
 <div class="space-y-1.5">
 <label class="text-xs font-semibold text-slate-300">Inviter Referral Code <span class="text-slate-500 font-normal">(Optional)</span></label>
@@ -261,7 +632,8 @@ data: {
 full_name: fullName,
 role: 'buyer',
 invited_by_code: finalInvitedByCode,
-referred_by: finalReferredBy
+referred_by: finalReferredBy,
+commission_policy_agreed: buyerEduPolicyAgreed
 }
 }
 });
@@ -286,6 +658,7 @@ role: 'buyer',
 verification_status: 'PENDING_VERIFICATION',
 invited_by_code: finalInvitedByCode,
 referred_by: finalReferredBy,
+commission_policy_agreed: buyerEduPolicyAgreed,
 created_at: new Date().toISOString()
 });
 if (profileError) {
@@ -360,6 +733,91 @@ async function loadAppBranding() {
     console.warn("Branding load bypassed:", err);
   }
 }
+
+let buyerEduPolicyAgreed = true;
+
+function toggleBuyerEduCard() {
+  const body = document.getElementById('buyerEduCardBody');
+  const label = document.getElementById('eduToggleLabel');
+  const icon = document.getElementById('eduArrowIcon');
+  if (body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    label.textContent = 'Collapse Breakdown';
+    icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+    updateBuyerCommissionCalc();
+  } else {
+    body.classList.add('hidden');
+    label.textContent = 'Expand Breakdown';
+    icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
+  }
+}
+
+function updateBuyerCommissionCalc() {
+  const slider = document.getElementById('calcSlider');
+  const scenarioSelect = document.getElementById('calcScenarioSelect');
+  if (!slider) return;
+
+  const offerVal = parseFloat(slider.value) || 15.00;
+  const scenario = scenarioSelect ? scenarioSelect.value : '2';
+
+  // Reviewer Direct Payout = 100% of offer
+  document.getElementById('calcTotalDisplay').textContent = `$${offerVal.toFixed(2)}`;
+  document.getElementById('calcReviewerAmt').textContent = `$${offerVal.toFixed(2)}`;
+
+  let sellerInviterAmt = 0;
+  let buyerInviterAmt = 0;
+  let adminAmt = 0;
+
+  if (scenario === '0') {
+    // 0 Inviters: Platform gets 100% of fee pool ($offerVal)
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = 0.00;
+    adminAmt = offerVal * 1.00;
+  } else if (scenario === '1_buyer') {
+    // 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = 0.00;
+    buyerInviterAmt = offerVal * 0.70;
+    adminAmt = offerVal * 0.30;
+  } else if (scenario === '1_seller') {
+    // 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
+    sellerInviterAmt = offerVal * 0.70;
+    buyerInviterAmt = 0.00;
+    adminAmt = offerVal * 0.30;
+  } else {
+    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+    sellerInviterAmt = offerVal * 0.35;
+    buyerInviterAmt = offerVal * 0.35;
+    adminAmt = offerVal * 0.30;
+  }
+
+  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
+  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
+
+  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+  document.getElementById('calcSplitsTotal').textContent = `$${splitsTotal.toFixed(2)} (1:1 Match)`;
+}
+
+function handleBuyerEduChoice(agreed) {
+  buyerEduPolicyAgreed = agreed;
+  const note = document.getElementById('buyerEduFeedbackNote');
+  const btnAgree = document.getElementById('btnBuyerEduAgree');
+  const btnDisagree = document.getElementById('btnBuyerEduDisagree');
+
+  if (agreed) {
+    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
+    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+    note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
+    note.className = "text-[11px] text-emerald-400 font-medium";
+  } else {
+    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
+    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+    note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
+    note.className = "text-[11px] text-slate-400 font-medium";
+  }
+  note.classList.remove('hidden');
+}
+
 </script>
 </body>
 </html>
