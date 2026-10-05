@@ -1050,20 +1050,22 @@ async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
 /* Product Catalog Management */
 async function loadVendorProducts(isPolling = false) {
   const grid = document.getElementById('vendorProductGrid');
+  if (!grid || !currentUser || !currentUser.id) return;
   try {
     let { data, error } = await _supabase
       .from('products')
       .select('*')
-      .or()
+      .or(`vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id},user_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
     if (error) {
-      const retryRes = await _supabase
+      console.warn('Multi-column query fallback to vendor_id filter:', error.message);
+      const fallback = await _supabase
         .from('products')
         .select('*')
-        .or()
+        .eq('vendor_id', currentUser.id)
         .order('created_at', { ascending: false });
-      data = retryRes.data;
-      error = retryRes.error;
+      data = fallback.data;
+      error = fallback.error;
     }
     if (error && (error.code === '42703' || (error.message && error.message.includes('seller_id')))) {
       console.warn('seller_id column missing on products table, falling back to vendor_id');
