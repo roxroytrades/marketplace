@@ -888,7 +888,7 @@ function sanitizePayload(tableName, payload) {
     for (const key in obj) {
       if (!allowed || allowed.includes(key)) {
         let val = obj[key];
-        if (typeof val === 'string' && (val.trim() === '' || val === 'null' || val === 'undefined') && (key.endsWith('_id') || key === 'id')) {
+        if (typeof val === 'string' && (val.trim() === '' || val === 'null' || val === 'undefined') && (key.endswith('_id') || key === 'id')) {
           val = null;
         }
         clean[key] = val;
@@ -1054,13 +1054,13 @@ async function loadVendorProducts(isPolling = false) {
     let { data, error } = await _supabase
       .from('products')
       .select('*')
-      .or(`vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id},user_id.eq.${currentUser.id}`)
+      .or()
       .order('created_at', { ascending: false });
     if (error) {
       const retryRes = await _supabase
         .from('products')
         .select('*')
-        .or(`vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
+        .or()
         .order('created_at', { ascending: false });
       data = retryRes.data;
       error = retryRes.error;
@@ -1326,6 +1326,17 @@ async function loadVendorCommissions(isPolling = false) {
       .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
     if (error) throw error;
     vendorCommissions = data || [];
+
+    ;
+              if (newComm) {
+                vendorCommissions.push(newComm);
+                existingFbIds.add(m.feedback_id);
+              }
+            }
+          }
+        }
+      }
+    }
 
     /* Fetch profiles for recipients */
     const recipientIds = [...new Set(vendorCommissions.map(c => c.recipient_id).filter(Boolean))];
@@ -2613,8 +2624,7 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
 
     const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
       p_message_id: String(messageId),
-      p_seller_id: currentUser.id,
-      vendor_id: currentUser.id,
+      p_vendor_id: currentUser.id,
       p_reviewer_id: reviewerId,
       p_commission_amount: Number(commissionAmount),
       p_platform_fee: 10.00,
@@ -2665,9 +2675,26 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
       }
       const { error: fallbackUpdateError } = await fallbackQuery;
       if (fallbackUpdateError) throw fallbackUpdateError;
-      updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
 
-      showToast("Review approved (Direct update mode).");
+      /* Direct Commission Generation Fallback */
+      try {
+        const commPayload = {
+          feedback_id: fallbackFeedbackId,
+          vendor_id: currentUser.id,
+          seller_id: currentUser.id,
+          recipient_id: reviewerId,
+          role_type: 'REVIEWER',
+          queue_type: 'MAIN_ACCOUNT',
+          amount: Number(commissionAmount) || 15.00,
+          status: 'Approved'
+        };
+        await _supabase.from('commissions').insert([sanitizePayload('commissions', commPayload)]);
+      } catch (commErr) {
+        console.warn('Fallback commission insert warning:', commErr);
+      }
+
+      updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
+      showToast("Review approved & commission generated!");
       await loadVendorCommissions();
       await loadVendorThreads(true);
     } catch (fallbackErr) {
