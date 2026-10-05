@@ -185,6 +185,21 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
         </div>
         <span id="calcAdminAmt" class="font-bold text-blue-400 shrink-0">$3.00</span>
       </div>
+
+      <!-- Equivalence Sum Bar -->
+      <div class="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl flex items-center justify-between text-xs">
+        <div class="space-y-0.5">
+          <p class="font-bold text-emerald-400 flex items-center space-x-1.5">
+            <i class="fa-solid fa-scale-balanced"></i>
+            <span>Total Network & Platform Fee Pool</span>
+          </p>
+          <p class="text-[10px] text-slate-300">Sum of splits 2 + 3 + 4 (100% Equals Reviewer Payout)</p>
+        </div>
+        <div class="text-right">
+          <span id="calcSplitsTotal" class="font-bold text-emerald-400 text-sm">$10.00</span>
+          <span class="block text-[9px] text-emerald-400/80 font-medium">(1:1 Match)</span>
+        </div>
+      </div>
     </div>
 
     <!-- Agreement Recording Option Buttons -->
@@ -319,9 +334,6 @@ function updateCommissionCalc() {
   document.getElementById('calcTotalDisplay').textContent = `$${reviewCommission.toFixed(2)}`;
   document.getElementById('calcReviewerAmt').textContent = `$${reviewCommission.toFixed(2)}`;
 
-  // Standard Platform Fee Baseline (e.g. $10.00 standard or proportional)
-  const platformFee = 10.00;
-
   let sellerInviterAmt = 0;
   let buyerInviterAmt = 0;
   let adminAmt = 0;
@@ -330,27 +342,33 @@ function updateCommissionCalc() {
     // 0 Inviters: Referral fee goes 100% to platform without being split
     sellerInviterAmt = 0.00;
     buyerInviterAmt = 0.00;
-    adminAmt = platformFee; // 100%
+    adminAmt = reviewCommission * 1.00;
   } else if (scenario === '1_seller') {
     // 1 Inviter (Seller Inviter): Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = platformFee * 0.70;
+    sellerInviterAmt = reviewCommission * 0.70;
     buyerInviterAmt = 0.00;
-    adminAmt = platformFee * 0.30;
+    adminAmt = reviewCommission * 0.30;
   } else if (scenario === '1_buyer') {
     // 1 Inviter (Buyer Inviter): Inviter gets 70%, Platform gets 30%
     sellerInviterAmt = 0.00;
-    buyerInviterAmt = platformFee * 0.70;
-    adminAmt = platformFee * 0.30;
+    buyerInviterAmt = reviewCommission * 0.70;
+    adminAmt = reviewCommission * 0.30;
   } else {
     // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
-    sellerInviterAmt = platformFee * 0.35;
-    buyerInviterAmt = platformFee * 0.35;
-    adminAmt = platformFee * 0.30;
+    sellerInviterAmt = reviewCommission * 0.35;
+    buyerInviterAmt = reviewCommission * 0.35;
+    adminAmt = reviewCommission * 0.30;
   }
 
   document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
   document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
   document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
+
+  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+  const splitsTotalEl = document.getElementById('calcSplitsTotal');
+  if (splitsTotalEl) {
+    splitsTotalEl.textContent = `$${splitsTotal.toFixed(2)}`;
+  }
 }
 
 function handleEduChoice(agreed) {
