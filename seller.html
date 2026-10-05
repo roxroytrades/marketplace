@@ -1323,11 +1323,30 @@ async function loadVendorCommissions(isPolling = false) {
     let { data, error } = await _supabase
       .from('commissions')
       .select('*')
-      .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
+      .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
     if (error) throw error;
     vendorCommissions = data || [];
 
-    ;
+    /* Self-Healing Auto-Backfill: Guarantee approved reviews have commission ledger entries */
+    if (typeof vendorThreads !== 'undefined' && vendorThreads.length > 0) {
+      const existingFbIds = new Set(vendorCommissions.map(c => c.feedback_id).filter(Boolean));
+      for (const t of vendorThreads) {
+        for (const m of (t.messages || [])) {
+          const badge = (m.status_badge || m.status || '').toUpperCase();
+          if (badge === 'APPROVED' && m.feedback_id && !existingFbIds.has(m.feedback_id)) {
+            const revId = (m.sender_id === currentUser.id) ? m.receiver_id : m.sender_id;
+            if (revId && revId !== currentUser.id) {
+              const backfillPayload = {
+                feedback_id: m.feedback_id,
+                vendor_id: currentUser.id,
+                seller_id: currentUser.id,
+                recipient_id: revId,
+                role_type: 'REVIEWER',
+                queue_type: 'MAIN_ACCOUNT',
+                amount: Number(m.commission_amount) || 15.00,
+                status: 'Approved'
+              };
+              const { data: newComm } = await _supabase.from('commissions').insert([sanitizePayload('commissions', backfillPayload)]).select().maybeSingle();
               if (newComm) {
                 vendorCommissions.push(newComm);
                 existingFbIds.add(m.feedback_id);
