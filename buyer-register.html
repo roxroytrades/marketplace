@@ -7,87 +7,77 @@
 <!-- Tailwind CSS CDN with Dark Mode Enabled -->
 <script src="https://cdn.tailwindcss.com">
 function toggleBuyerEduCard() {
-  const body = document.getElementById('buyerEduCardBody');
-  const label = document.getElementById('eduToggleLabel');
-  const icon = document.getElementById('eduArrowIcon');
-  if (body.classList.contains('hidden')) {
-    body.classList.remove('hidden');
-    label.textContent = 'Collapse Breakdown';
-    icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
-    updateBuyerCommissionCalc();
-  } else {
-    body.classList.add('hidden');
-    label.textContent = 'Expand Breakdown';
-    icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
-  }
+const body = document.getElementById('buyerEduCardBody');
+const label = document.getElementById('eduToggleLabel');
+const icon = document.getElementById('eduArrowIcon');
+if (body.classList.contains('hidden')) {
+body.classList.remove('hidden');
+label.textContent = 'Collapse Breakdown';
+icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+updateBuyerCommissionCalc();
+} else {
+body.classList.add('hidden');
+label.textContent = 'Expand Breakdown';
+icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
 }
-
+}
 function updateBuyerCommissionCalc() {
-  const slider = document.getElementById('calcSlider');
-  const scenarioSelect = document.getElementById('calcScenarioSelect');
-  if (!slider) return;
-
-  const offerVal = parseFloat(slider.value) || 15.00;
-  const scenario = scenarioSelect ? scenarioSelect.value : '2';
-
-  // Reviewer Direct Payout = 100% of offer
-  document.getElementById('calcTotalDisplay').textContent = `$${offerVal.toFixed(2)}`;
-  document.getElementById('calcReviewerAmt').textContent = `$${offerVal.toFixed(2)}`;
-
-  let sellerInviterAmt = 0;
-  let buyerInviterAmt = 0;
-  let adminAmt = 0;
-
-  if (scenario === '0') {
-    // 0 Inviters: Platform gets 100% of fee pool ($offerVal)
-    sellerInviterAmt = 0.00;
-    buyerInviterAmt = 0.00;
-    adminAmt = offerVal * 1.00;
-  } else if (scenario === '1_buyer') {
-    // 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = 0.00;
-    buyerInviterAmt = offerVal * 0.70;
-    adminAmt = offerVal * 0.30;
-  } else if (scenario === '1_seller') {
-    // 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = offerVal * 0.70;
-    buyerInviterAmt = 0.00;
-    adminAmt = offerVal * 0.30;
-  } else {
-    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
-    sellerInviterAmt = offerVal * 0.35;
-    buyerInviterAmt = offerVal * 0.35;
-    adminAmt = offerVal * 0.30;
-  }
-
-  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
-  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
-  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
-
-  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
-  document.getElementById('calcSplitsTotal').textContent = `$${splitsTotal.toFixed(2)} (1:1 Match)`;
+const slider = document.getElementById('calcSlider');
+const scenarioSelect = document.getElementById('calcScenarioSelect');
+if (!slider) return;
+const offerVal = parseFloat(slider.value) || 15.00;
+const scenario = scenarioSelect ? scenarioSelect.value : '2';
+// Reviewer Direct Payout = 100% of offer
+document.getElementById('calcTotalDisplay').textContent = '$' + offerVal.toFixed(2);
+document.getElementById('calcReviewerAmt').textContent = '$' + offerVal.toFixed(2);
+let sellerInviterAmt = 0;
+let buyerInviterAmt = 0;
+let adminAmt = 0;
+if (scenario === '0') {
+// 0 Inviters: Platform gets 100% of fee pool ($offerVal)
+sellerInviterAmt = 0.00;
+buyerInviterAmt = 0.00;
+adminAmt = offerVal * 1.00;
+} else if (scenario === '1_buyer') {
+// 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
+sellerInviterAmt = 0.00;
+buyerInviterAmt = offerVal * 0.70;
+adminAmt = offerVal * 0.30;
+} else if (scenario === '1_seller') {
+// 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
+sellerInviterAmt = offerVal * 0.70;
+buyerInviterAmt = 0.00;
+adminAmt = offerVal * 0.30;
+} else {
+// 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+sellerInviterAmt = offerVal * 0.35;
+buyerInviterAmt = offerVal * 0.35;
+adminAmt = offerVal * 0.30;
 }
-
+document.getElementById('calcSellerInviterAmt').textContent = '$' + sellerInviterAmt.toFixed(2);
+document.getElementById('calcBuyerInviterAmt').textContent = '$' + buyerInviterAmt.toFixed(2);
+document.getElementById('calcAdminAmt').textContent = '$' + adminAmt.toFixed(2);
+const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+document.getElementById('calcSplitsTotal').textContent = '$' + splitsTotal.toFixed(2) + ' (1:1 Match)';
+}
 function handleBuyerEduChoice(agreed) {
-  buyerEduPolicyAgreed = agreed;
-  const note = document.getElementById('buyerEduFeedbackNote');
-  const btnAgree = document.getElementById('btnBuyerEduAgree');
-  const btnDisagree = document.getElementById('btnBuyerEduDisagree');
-
-  if (agreed) {
-    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
-    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
-    note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
-    note.className = "text-[11px] text-emerald-400 font-medium";
-  } else {
-    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
-    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
-    note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
-    note.className = "text-[11px] text-slate-400 font-medium";
-  }
-  note.classList.remove('hidden');
+buyerEduPolicyAgreed = agreed;
+const note = document.getElementById('buyerEduFeedbackNote');
+const btnAgree = document.getElementById('btnBuyerEduAgree');
+const btnDisagree = document.getElementById('btnBuyerEduDisagree');
+if (agreed) {
+btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
+btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
+note.className = "text-[11px] text-emerald-400 font-medium";
+} else {
+btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
+btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
+note.className = "text-[11px] text-slate-400 font-medium";
 }
-
+note.classList.remove('hidden');
+}
 </script>
 <script>
 tailwind.config = {
@@ -104,91 +94,79 @@ borderSlate: '#334155'
 }
 }
 }
-
 let buyerEduPolicyAgreed = true;
-
 function toggleBuyerEduCard() {
-  const body = document.getElementById('buyerEduCardBody');
-  const label = document.getElementById('eduToggleLabel');
-  const icon = document.getElementById('eduArrowIcon');
-  if (body.classList.contains('hidden')) {
-    body.classList.remove('hidden');
-    label.textContent = 'Collapse Breakdown';
-    icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
-    updateBuyerCommissionCalc();
-  } else {
-    body.classList.add('hidden');
-    label.textContent = 'Expand Breakdown';
-    icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
-  }
+const body = document.getElementById('buyerEduCardBody');
+const label = document.getElementById('eduToggleLabel');
+const icon = document.getElementById('eduArrowIcon');
+if (body.classList.contains('hidden')) {
+body.classList.remove('hidden');
+label.textContent = 'Collapse Breakdown';
+icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+updateBuyerCommissionCalc();
+} else {
+body.classList.add('hidden');
+label.textContent = 'Expand Breakdown';
+icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
 }
-
+}
 function updateBuyerCommissionCalc() {
-  const slider = document.getElementById('calcSlider');
-  const scenarioSelect = document.getElementById('calcScenarioSelect');
-  if (!slider) return;
-
-  const offerVal = parseFloat(slider.value) || 15.00;
-  const scenario = scenarioSelect ? scenarioSelect.value : '2';
-
-  // Reviewer Direct Payout = 100% of offer
-  document.getElementById('calcTotalDisplay').textContent = `$${offerVal.toFixed(2)}`;
-  document.getElementById('calcReviewerAmt').textContent = `$${offerVal.toFixed(2)}`;
-
-  let sellerInviterAmt = 0;
-  let buyerInviterAmt = 0;
-  let adminAmt = 0;
-
-  if (scenario === '0') {
-    // 0 Inviters: Platform gets 100% of fee pool ($offerVal)
-    sellerInviterAmt = 0.00;
-    buyerInviterAmt = 0.00;
-    adminAmt = offerVal * 1.00;
-  } else if (scenario === '1_buyer') {
-    // 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = 0.00;
-    buyerInviterAmt = offerVal * 0.70;
-    adminAmt = offerVal * 0.30;
-  } else if (scenario === '1_seller') {
-    // 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = offerVal * 0.70;
-    buyerInviterAmt = 0.00;
-    adminAmt = offerVal * 0.30;
-  } else {
-    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
-    sellerInviterAmt = offerVal * 0.35;
-    buyerInviterAmt = offerVal * 0.35;
-    adminAmt = offerVal * 0.30;
-  }
-
-  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
-  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
-  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
-
-  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
-  document.getElementById('calcSplitsTotal').textContent = `$${splitsTotal.toFixed(2)} (1:1 Match)`;
+const slider = document.getElementById('calcSlider');
+const scenarioSelect = document.getElementById('calcScenarioSelect');
+if (!slider) return;
+const offerVal = parseFloat(slider.value) || 15.00;
+const scenario = scenarioSelect ? scenarioSelect.value : '2';
+// Reviewer Direct Payout = 100% of offer
+document.getElementById('calcTotalDisplay').textContent = '$' + offerVal.toFixed(2);
+document.getElementById('calcReviewerAmt').textContent = '$' + offerVal.toFixed(2);
+let sellerInviterAmt = 0;
+let buyerInviterAmt = 0;
+let adminAmt = 0;
+if (scenario === '0') {
+// 0 Inviters: Platform gets 100% of fee pool ($offerVal)
+sellerInviterAmt = 0.00;
+buyerInviterAmt = 0.00;
+adminAmt = offerVal * 1.00;
+} else if (scenario === '1_buyer') {
+// 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
+sellerInviterAmt = 0.00;
+buyerInviterAmt = offerVal * 0.70;
+adminAmt = offerVal * 0.30;
+} else if (scenario === '1_seller') {
+// 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
+sellerInviterAmt = offerVal * 0.70;
+buyerInviterAmt = 0.00;
+adminAmt = offerVal * 0.30;
+} else {
+// 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+sellerInviterAmt = offerVal * 0.35;
+buyerInviterAmt = offerVal * 0.35;
+adminAmt = offerVal * 0.30;
 }
-
+document.getElementById('calcSellerInviterAmt').textContent = '$' + sellerInviterAmt.toFixed(2);
+document.getElementById('calcBuyerInviterAmt').textContent = '$' + buyerInviterAmt.toFixed(2);
+document.getElementById('calcAdminAmt').textContent = '$' + adminAmt.toFixed(2);
+const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+document.getElementById('calcSplitsTotal').textContent = '$' + splitsTotal.toFixed(2) + ' (1:1 Match)';
+}
 function handleBuyerEduChoice(agreed) {
-  buyerEduPolicyAgreed = agreed;
-  const note = document.getElementById('buyerEduFeedbackNote');
-  const btnAgree = document.getElementById('btnBuyerEduAgree');
-  const btnDisagree = document.getElementById('btnBuyerEduDisagree');
-
-  if (agreed) {
-    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
-    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
-    note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
-    note.className = "text-[11px] text-emerald-400 font-medium";
-  } else {
-    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
-    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
-    note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
-    note.className = "text-[11px] text-slate-400 font-medium";
-  }
-  note.classList.remove('hidden');
+buyerEduPolicyAgreed = agreed;
+const note = document.getElementById('buyerEduFeedbackNote');
+const btnAgree = document.getElementById('btnBuyerEduAgree');
+const btnDisagree = document.getElementById('btnBuyerEduDisagree');
+if (agreed) {
+btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
+btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
+note.className = "text-[11px] text-emerald-400 font-medium";
+} else {
+btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
+btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
+note.className = "text-[11px] text-slate-400 font-medium";
 }
-
+note.classList.remove('hidden');
+}
 </script>
 <!-- FontAwesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -197,137 +175,119 @@ function handleBuyerEduChoice(agreed) {
 <!-- Official Supabase JS Client Library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 let buyerEduPolicyAgreed = true;
-
 function toggleBuyerEduCard() {
-  const body = document.getElementById('buyerEduCardBody');
-  const label = document.getElementById('eduToggleLabel');
-  const icon = document.getElementById('eduArrowIcon');
-  if (body.classList.contains('hidden')) {
-    body.classList.remove('hidden');
-    label.textContent = 'Collapse Breakdown';
-    icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
-    updateBuyerCommissionCalc();
-  } else {
-    body.classList.add('hidden');
-    label.textContent = 'Expand Breakdown';
-    icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
-  }
+const body = document.getElementById('buyerEduCardBody');
+const label = document.getElementById('eduToggleLabel');
+const icon = document.getElementById('eduArrowIcon');
+if (body.classList.contains('hidden')) {
+body.classList.remove('hidden');
+label.textContent = 'Collapse Breakdown';
+icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+updateBuyerCommissionCalc();
+} else {
+body.classList.add('hidden');
+label.textContent = 'Expand Breakdown';
+icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
 }
-
+}
 function updateBuyerCommissionCalc() {
-  const slider = document.getElementById('calcSlider');
-  const scenarioSelect = document.getElementById('calcScenarioSelect');
-  if (!slider) return;
-
-  const offerVal = parseFloat(slider.value) || 15.00;
-  const scenario = scenarioSelect ? scenarioSelect.value : '2';
-
-  // Reviewer Direct Payout = 100% of offer
-  document.getElementById('calcTotalDisplay').textContent = `$${offerVal.toFixed(2)}`;
-  document.getElementById('calcReviewerAmt').textContent = `$${offerVal.toFixed(2)}`;
-
-  let sellerInviterAmt = 0;
-  let buyerInviterAmt = 0;
-  let adminAmt = 0;
-
-  if (scenario === '0') {
-    // 0 Inviters: Platform gets 100% of fee pool ($offerVal)
-    sellerInviterAmt = 0.00;
-    buyerInviterAmt = 0.00;
-    adminAmt = offerVal * 1.00;
-  } else if (scenario === '1_buyer') {
-    // 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = 0.00;
-    buyerInviterAmt = offerVal * 0.70;
-    adminAmt = offerVal * 0.30;
-  } else if (scenario === '1_seller') {
-    // 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = offerVal * 0.70;
-    buyerInviterAmt = 0.00;
-    adminAmt = offerVal * 0.30;
-  } else {
-    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
-    sellerInviterAmt = offerVal * 0.35;
-    buyerInviterAmt = offerVal * 0.35;
-    adminAmt = offerVal * 0.30;
-  }
-
-  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
-  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
-  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
-
-  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
-  document.getElementById('calcSplitsTotal').textContent = `$${splitsTotal.toFixed(2)} (1:1 Match)`;
+const slider = document.getElementById('calcSlider');
+const scenarioSelect = document.getElementById('calcScenarioSelect');
+if (!slider) return;
+const offerVal = parseFloat(slider.value) || 15.00;
+const scenario = scenarioSelect ? scenarioSelect.value : '2';
+// Reviewer Direct Payout = 100% of offer
+document.getElementById('calcTotalDisplay').textContent = '$' + offerVal.toFixed(2);
+document.getElementById('calcReviewerAmt').textContent = '$' + offerVal.toFixed(2);
+let sellerInviterAmt = 0;
+let buyerInviterAmt = 0;
+let adminAmt = 0;
+if (scenario === '0') {
+// 0 Inviters: Platform gets 100% of fee pool ($offerVal)
+sellerInviterAmt = 0.00;
+buyerInviterAmt = 0.00;
+adminAmt = offerVal * 1.00;
+} else if (scenario === '1_buyer') {
+// 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
+sellerInviterAmt = 0.00;
+buyerInviterAmt = offerVal * 0.70;
+adminAmt = offerVal * 0.30;
+} else if (scenario === '1_seller') {
+// 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
+sellerInviterAmt = offerVal * 0.70;
+buyerInviterAmt = 0.00;
+adminAmt = offerVal * 0.30;
+} else {
+// 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+sellerInviterAmt = offerVal * 0.35;
+buyerInviterAmt = offerVal * 0.35;
+adminAmt = offerVal * 0.30;
 }
-
+document.getElementById('calcSellerInviterAmt').textContent = '$' + sellerInviterAmt.toFixed(2);
+document.getElementById('calcBuyerInviterAmt').textContent = '$' + buyerInviterAmt.toFixed(2);
+document.getElementById('calcAdminAmt').textContent = '$' + adminAmt.toFixed(2);
+const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+document.getElementById('calcSplitsTotal').textContent = '$' + splitsTotal.toFixed(2) + ' (1:1 Match)';
+}
 function handleBuyerEduChoice(agreed) {
-  buyerEduPolicyAgreed = agreed;
-  const note = document.getElementById('buyerEduFeedbackNote');
-  const btnAgree = document.getElementById('btnBuyerEduAgree');
-  const btnDisagree = document.getElementById('btnBuyerEduDisagree');
-
-  if (agreed) {
-    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
-    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
-    note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
-    note.className = "text-[11px] text-emerald-400 font-medium";
-  } else {
-    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
-    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
-    note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
-    note.className = "text-[11px] text-slate-400 font-medium";
-  }
-  note.classList.remove('hidden');
+buyerEduPolicyAgreed = agreed;
+const note = document.getElementById('buyerEduFeedbackNote');
+const btnAgree = document.getElementById('btnBuyerEduAgree');
+const btnDisagree = document.getElementById('btnBuyerEduDisagree');
+if (agreed) {
+btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
+btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
+note.className = "text-[11px] text-emerald-400 font-medium";
+} else {
+btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
+btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
+note.className = "text-[11px] text-slate-400 font-medium";
 }
-
+note.classList.remove('hidden');
+}
 </script>
 <style>
 body { font-family: 'Inter', sans-serif; }
 h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
-
 @media (max-width: 640px) {
-  .buyer-register-header {
-    flex-direction: column !important;
-    gap: 0.75rem !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  .buyer-register-header > div {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .buyer-register-panel {
-    padding: 1rem !important;
-    border-radius: 1.25rem !important;
-  }
-
-  #eduToggleIcon {
-    max-width: 100%;
-    white-space: normal !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-  }
-
-  #eduToggleLabel {
-    white-space: normal;
-    line-height: 1.2;
-    text-align: center;
-  }
-
-  .buyer-edu-header {
-    min-width: 0;
-    flex: 1;
-  }
-
-  .buyer-edu-header > div:last-child {
-    min-width: 0;
-  }
+.buyer-register-header {
+flex-direction: column !important;
+gap: 0.75rem !important;
+padding-left: 1rem !important;
+padding-right: 1rem !important;
+}
+.buyer-register-header > div {
+width: 100%;
+justify-content: center;
+text-align: center;
+}
+.buyer-register-panel {
+padding: 1rem !important;
+border-radius: 1.25rem !important;
+}
+#eduToggleIcon {
+max-width: 100%;
+white-space: normal !important;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+flex-wrap: wrap;
+gap: 0.25rem;
+}
+#eduToggleLabel {
+white-space: normal;
+line-height: 1.2;
+text-align: center;
+}
+.buyer-edu-header {
+min-width: 0;
+flex: 1;
+}
+.buyer-edu-header > div:last-child {
+min-width: 0;
+}
 }
 </style>
 </head>
@@ -336,9 +296,9 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <header class="buyer-register-header bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
 <div class="flex items-center space-x-3">
 <div id="headerLogoContainer" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden relative">
-      <span id="headerLogoText">eh</span>
-      <img id="headerLogoImg" src="" alt="Echo Hub Logo" class="w-full h-full object-cover hidden absolute inset-0">
-    </div>
+<span id="headerLogoText">eh</span>
+<img id="headerLogoImg" src="" alt="Echo Hub Logo" class="w-full h-full object-cover hidden absolute inset-0">
+</div>
 <span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Shopper Gateway</span></span>
 </div>
 <div class="flex items-center space-x-3">
@@ -350,8 +310,8 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <div class="buyer-register-panel bg-cardBg border border-borderSlate rounded-3xl p-8 shadow-2xl space-y-8">
 <div class="space-y-2 text-center">
 <div id="formLogoContainer" class="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-1 font-heading font-bold text-2xl overflow-hidden relative mx-auto">
-  <span id="formLogoText">eh</span>
-  <img id="formLogoImg" src="" alt="Echo Hub Logo" class="w-full h-full object-cover hidden absolute inset-0">
+<span id="formLogoText">eh</span>
+<img id="formLogoImg" src="" alt="Echo Hub Logo" class="w-full h-full object-cover hidden absolute inset-0">
 </div>
 <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider block">Public Registration Portal</span>
 <h1 class="text-3xl font-bold text-white tracking-tight">Create Reviewer Account</h1>
@@ -386,122 +346,119 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <label class="text-xs font-semibold text-slate-300">Categories of Interest <span class="text-blue-500">*</span></label>
 <input type="text" id="categories" required placeholder="Electronics, Home & Kitchen, Gadgets" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-blue-500 transition">
 </div>
-
 <!-- Collapsible Educational Reviewer Earnings & Referral Split Component -->
 <div class="bg-darkBg/80 border border-borderSlate rounded-2xl overflow-hidden transition-all duration-300 my-4">
-  <!-- Collapsed Banner Toggle Bar -->
-  <button type="button" onclick="toggleBuyerEduCard()" class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-800/50 transition">
-    <div class="buyer-edu-header flex items-center space-x-3 min-w-0">
-      <div class="w-8 h-8 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center font-bold shrink-0">
-        <i class="fa-solid fa-calculator text-sm"></i>
-      </div>
-      <div class="min-w-0">
-        <h3 class="text-xs font-bold text-white flex items-center space-x-2">
-          <span>How Reviewer Earnings & Referral Splits Work</span>
-          <span id="eduBadge" class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full font-normal border border-blue-500/30">Educational Preview</span>
-        </h3>
-        <p class="text-[11px] text-slate-400">Click to explore review rewards and passive referral bonuses.</p>
-      </div>
-    </div>
-    <span id="eduToggleIcon" class="text-slate-400 text-xs px-2 py-1 bg-slate-800 rounded-lg border border-borderSlate flex items-center space-x-1 shrink-0 ml-2 max-w-[40%]">
-      <span id="eduToggleLabel">Expand Breakdown</span>
-      <i id="eduArrowIcon" class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
-    </span>
-  </button>
-
-  <!-- Expandable Content Panel -->
-  <div id="buyerEduCardBody" class="hidden p-5 pt-0 border-t border-borderSlate/60 space-y-4">
-    <!-- Rule of Thumb & 1:1 Match Banner -->
-    <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 space-y-1 mt-3">
-      <p class="text-[11px] font-semibold text-blue-300 flex items-center">
-        <i class="fa-solid fa-lightbulb text-amber-400 mr-1.5"></i>
-        <span>100% Payout Rule & 1:1 Fee Matching</span>
-      </p>
-      <p class="text-[10px] text-slate-300 leading-relaxed">
-        You always receive <strong>100% of the vendor's review commission</strong>. The total platform fee pool split across inviters and platform maintenance <strong>exactly equals 100% of your review payout</strong> (a 1:1 match). If no inviter exists, the referral share goes to platform maintenance without being split.
-      </p>
-    </div>
-
-    <!-- Interactive Slider & Scenario Dropdown -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-      <div class="space-y-1.5">
-        <div class="flex justify-between items-center text-xs">
-          <span class="text-slate-300 font-medium">Sample Review Offer:</span>
-          <span id="calcTotalDisplay" class="font-bold text-blue-400 text-sm">$15.00</span>
-        </div>
-        <input type="range" id="calcSlider" min="5" max="50" value="15" step="1" oninput="updateBuyerCommissionCalc()" class="w-full accent-blue-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
-      </div>
-
-      <div class="space-y-1.5">
-        <label class="text-xs text-slate-300 font-medium block">Active Referral Scenario:</label>
-        <select id="calcScenarioSelect" onchange="updateBuyerCommissionCalc()" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-blue-500">
-          <option value="2" selected>2 Inviters (Both Seller & Buyer Invited)</option>
-          <option value="1_buyer">1 Inviter (You Were Invited by a Friend)</option>
-          <option value="1_seller">1 Inviter (Seller Was Invited)</option>
-          <option value="0">0 Inviters (No Referral Link Used)</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Distribution Breakdown Cards from Buyer Perspective -->
-    <div class="space-y-2 text-xs">
-      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
-        <div class="space-y-0.5">
-          <p class="font-bold text-white"><i class="fa-solid fa-wallet text-emerald-400 mr-1.5"></i> 1. Your Direct Review Payout</p>
-          <p class="text-[11px] text-slate-400">100% direct cash reward paid to your PayPal upon approved review.</p>
-        </div>
-        <span id="calcReviewerAmt" class="font-bold text-emerald-400 shrink-0 text-sm">$15.00</span>
-      </div>
-
-      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
-        <div class="space-y-0.5">
-          <p class="font-bold text-white"><i class="fa-solid fa-users text-purple-400 mr-1.5"></i> 2. Buyer's Inviter Referral Bonus</p>
-          <p class="text-[11px] text-slate-400">Earned by the person who invited you (or earned by YOU when you invite friends!).</p>
-        </div>
-        <span id="calcBuyerInviterAmt" class="font-bold text-purple-400 shrink-0">$5.25</span>
-      </div>
-
-      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
-        <div class="space-y-0.5">
-          <p class="font-bold text-white"><i class="fa-solid fa-store text-amber-400 mr-1.5"></i> 3. Seller's Inviter Recognition</p>
-          <p class="text-[11px] text-slate-400">Paid to the person who introduced the seller as a thank-you gesture for introducing this wonderful opportunity.</p>
-        </div>
-        <span id="calcSellerInviterAmt" class="font-bold text-amber-400 shrink-0">$5.25</span>
-      </div>
-
-      <div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
-        <div class="space-y-0.5">
-          <p class="font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-1.5"></i> 4. Infrastructure & Upliftment</p>
-          <p class="text-[11px] text-slate-400">Paid to admin for continuous infrastructure maintenance and platform security.</p>
-        </div>
-        <span id="calcAdminAmt" class="font-bold text-blue-400 shrink-0">$4.50</span>
-      </div>
-    </div>
-
-    <!-- Dynamic 1:1 Match Summary Bar -->
-    <div class="bg-slate-800/80 p-3 rounded-xl border border-borderSlate flex justify-between items-center text-xs">
-      <span class="text-slate-300 font-semibold"><i class="fa-solid fa-scale-balanced text-blue-400 mr-1.5"></i> Total Network & Platform Fee Pool:</span>
-      <span id="calcSplitsTotal" class="font-bold text-blue-400 text-sm">$15.00 (1:1 Match)</span>
-    </div>
-
-    <!-- Agreement Recording Option Buttons -->
-    <div class="pt-2 border-t border-borderSlate/60 space-y-2 text-center">
-      <p class="text-[11px] text-slate-300">Do you understand how reviewer payouts and referral bonuses are distributed?</p>
-      <div class="flex space-x-3 justify-center">
-        <button type="button" onclick="handleBuyerEduChoice(true)" id="btnBuyerEduAgree" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
-          <i class="fa-solid fa-circle-check"></i>
-          <span>I Agree</span>
-        </button>
-        <button type="button" onclick="handleBuyerEduChoice(false)" id="btnBuyerEduDisagree" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
-          <i class="fa-solid fa-circle-xmark"></i>
-          <span>I Disagree</span>
-        </button>
-      </div>
-      <p id="buyerEduFeedbackNote" class="text-[11px] text-slate-400 hidden"></p>
-    </div>
-  </div>
+<!-- Collapsed Banner Toggle Bar -->
+<button type="button" onclick="toggleBuyerEduCard()" class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-800/50 transition">
+<div class="buyer-edu-header flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 flex-1">
+<div class="flex items-start sm:items-center space-x-3 min-w-0 flex-1">
+<div class="w-8 h-8 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-0">
+<i class="fa-solid fa-calculator text-sm"></i>
 </div>
-
+<div class="min-w-0 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<h3 class="text-xs sm:text-sm font-bold text-white tracking-tight leading-snug">
+How Reviewer Earnings & Referral Splits Work
+</h3>
+<span id="eduBadge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 whitespace-nowrap">
+<i class="fa-solid fa-lightbulb mr-1 text-[9px]"></i> Educational Preview
+</span>
+</div>
+<p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+Interactive preview demonstrating review fee distribution and multi-tier inviter splits.
+</p>
+</div>
+</div>
+</div>
+<span id="eduToggleIcon" class="text-slate-400 text-xs px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-borderSlate flex items-center justify-center space-x-2 shrink-0 ml-2 w-full sm:w-auto mt-2 sm:mt-0 shadow-sm cursor-pointer">
+<span id="eduToggleLabel">Expand Breakdown</span>
+<i id="eduArrowIcon" class="fa-solid fa-chevron-down text-[10px] ml-1 transition-transform duration-200"></i>
+</span>
+</button>
+<!-- Expandable Content Panel -->
+<div id="buyerEduCardBody" class="hidden p-5 pt-0 border-t border-borderSlate/60 space-y-4">
+<!-- Rule of Thumb & 1:1 Match Banner -->
+<div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 space-y-1 mt-3">
+<p class="text-[11px] font-semibold text-blue-300 flex items-center">
+<i class="fa-solid fa-lightbulb text-amber-400 mr-1.5"></i>
+<span>100% Payout Rule & 1:1 Fee Matching</span>
+</p>
+<p class="text-[10px] text-slate-300 leading-relaxed">
+You always receive <strong>100% of the vendor's review commission</strong>. The total platform fee pool split across inviters and platform maintenance <strong>exactly equals 100% of your review payout</strong> (a 1:1 match). If no inviter exists, the referral share goes to platform maintenance without being split.
+</p>
+</div>
+<!-- Interactive Slider & Scenario Dropdown -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+<div class="space-y-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-300 font-medium">Sample Review Offer:</span>
+<span id="calcTotalDisplay" class="font-bold text-blue-400 text-sm">$15.00</span>
+</div>
+<input type="range" id="calcSlider" min="5" max="50" value="15" step="1" oninput="updateBuyerCommissionCalc()" class="w-full accent-blue-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+</div>
+<div class="space-y-1.5">
+<label class="text-xs text-slate-300 font-medium block">Active Referral Scenario:</label>
+<select id="calcScenarioSelect" onchange="updateBuyerCommissionCalc()" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-blue-500">
+<option value="2" selected>2 Inviters (Both Seller & Buyer Invited)</option>
+<option value="1_buyer">1 Inviter (You Were Invited by a Friend)</option>
+<option value="1_seller">1 Inviter (Seller Was Invited)</option>
+<option value="0">0 Inviters (No Referral Link Used)</option>
+</select>
+</div>
+</div>
+<!-- Distribution Breakdown Cards from Buyer Perspective -->
+<div class="space-y-2 text-xs">
+<div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+<div class="space-y-0.5">
+<p class="font-bold text-white"><i class="fa-solid fa-wallet text-emerald-400 mr-1.5"></i> 1. Your Direct Review Payout</p>
+<p class="text-[11px] text-slate-400">100% direct cash reward paid to your PayPal upon approved review.</p>
+</div>
+<span id="calcReviewerAmt" class="font-bold text-emerald-400 shrink-0 text-sm">$15.00</span>
+</div>
+<div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+<div class="space-y-0.5">
+<p class="font-bold text-white"><i class="fa-solid fa-users text-purple-400 mr-1.5"></i> 2. Buyer's Inviter Referral Bonus</p>
+<p class="text-[11px] text-slate-400">Earned by the person who invited you (or earned by YOU when you invite friends!).</p>
+</div>
+<span id="calcBuyerInviterAmt" class="font-bold text-purple-400 shrink-0">$5.25</span>
+</div>
+<div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+<div class="space-y-0.5">
+<p class="font-bold text-white"><i class="fa-solid fa-store text-amber-400 mr-1.5"></i> 3. Seller's Inviter Recognition</p>
+<p class="text-[11px] text-slate-400">Paid to the person who introduced the seller as a thank-you gesture for introducing this wonderful opportunity.</p>
+</div>
+<span id="calcSellerInviterAmt" class="font-bold text-amber-400 shrink-0">$5.25</span>
+</div>
+<div class="bg-cardBg p-3 rounded-xl border border-borderSlate/60 flex justify-between items-start space-x-3">
+<div class="space-y-0.5">
+<p class="font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-1.5"></i> 4. Infrastructure & Upliftment</p>
+<p class="text-[11px] text-slate-400">Paid to admin for continuous infrastructure maintenance and platform security.</p>
+</div>
+<span id="calcAdminAmt" class="font-bold text-blue-400 shrink-0">$4.50</span>
+</div>
+</div>
+<!-- Dynamic 1:1 Match Summary Bar -->
+<div class="bg-slate-800/80 p-3 rounded-xl border border-borderSlate flex justify-between items-center text-xs">
+<span class="text-slate-300 font-semibold"><i class="fa-solid fa-scale-balanced text-blue-400 mr-1.5"></i> Total Network & Platform Fee Pool:</span>
+<span id="calcSplitsTotal" class="font-bold text-blue-400 text-sm">$15.00 (1:1 Match)</span>
+</div>
+<!-- Agreement Recording Option Buttons -->
+<div class="pt-2 border-t border-borderSlate/60 space-y-2 text-center">
+<p class="text-[11px] text-slate-300">Do you understand how reviewer payouts and referral bonuses are distributed?</p>
+<div class="flex space-x-3 justify-center">
+<button type="button" onclick="handleBuyerEduChoice(true)" id="btnBuyerEduAgree" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
+<i class="fa-solid fa-circle-check"></i>
+<span>I Agree</span>
+</button>
+<button type="button" onclick="handleBuyerEduChoice(false)" id="btnBuyerEduDisagree" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
+<i class="fa-solid fa-circle-xmark"></i>
+<span>I Disagree</span>
+</button>
+</div>
+<p id="buyerEduFeedbackNote" class="text-[11px] text-slate-400 hidden"></p>
+</div>
+</div>
+</div>
 <!-- Inviter Referral Code (Optional) -->
 <div class="space-y-1.5">
 <label class="text-xs font-semibold text-slate-300">Inviter Referral Code <span class="text-slate-500 font-normal">(Optional)</span></label>
@@ -548,20 +505,17 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 let compressedIdBase64 = '';
-
 // Auto-populate referral code from URL query params if present (e.g. ?ref=REF-123)
 window.addEventListener('DOMContentLoaded', () => {
-  loadAppBranding();
-  const urlParams = new URLSearchParams(window.location.search);
-  const refParam = urlParams.get('ref') || urlParams.get('ref_code') || urlParams.get('invited_by');
-  if (refParam) {
-    const el = document.getElementById('referralCode');
-    if (el) el.value = refParam.trim();
-  }
+loadAppBranding();
+const urlParams = new URLSearchParams(window.location.search);
+const refParam = urlParams.get('ref') || urlParams.get('ref_code') || urlParams.get('invited_by');
+if (refParam) {
+const el = document.getElementById('referralCode');
+if (el) el.value = refParam.trim();
+}
 });
-
 // HTML5 Canvas Compression Strategy for National ID (Max 1200px)
 function processNationalIdFile(event) {
 const file = event.target.files[0];
@@ -574,18 +528,20 @@ const canvas = document.createElement('canvas');
 let width = img.width;
 let height = img.height;
 const maxDim = 1200;
-if (width > height && width > maxDim) {
+if (width > maxDim || height > maxDim) {
+if (width > height) {
 height = Math.round((height * maxDim) / width);
 width = maxDim;
-} else if (height > maxDim) {
+} else {
 width = Math.round((width * maxDim) / height);
 height = maxDim;
+}
 }
 canvas.width = width;
 canvas.height = height;
 const ctx = canvas.getContext('2d');
 ctx.drawImage(img, 0, 0, width, height);
-compressedIdBase64 = canvas.toDataURL('image/jpeg', 0.85);
+compressedIdBase64 = canvas.toDataURL('image/jpeg', 0.75);
 const previewContainer = document.getElementById('idPreviewContainer');
 const previewImg = document.getElementById('idPreviewImg');
 previewImg.src = compressedIdBase64;
@@ -595,7 +551,6 @@ img.src = e.target.result;
 };
 reader.readAsDataURL(file);
 }
-
 async function handleBuyerRegistration(event) {
 event.preventDefault();
 const submitBtn = document.getElementById('submitBtn');
@@ -605,67 +560,43 @@ return;
 }
 const firstName = document.getElementById('firstName').value.trim();
 const lastName = document.getElementById('lastName').value.trim();
-const fullName = `${firstName} ${lastName}`;
+const fullName = firstName + ' ' + lastName;
 const whatsapp = document.getElementById('whatsapp').value.trim();
 const paypalEmail = document.getElementById('paypalEmail').value.trim();
 const categories = document.getElementById('categories').value.trim();
 const email = document.getElementById('email').value.trim();
 const password = document.getElementById('password').value.trim();
-
 // Capture optional referral code from form input or URL query params
 const manualRefCode = document.getElementById('referralCode') ? document.getElementById('referralCode').value.trim() : '';
 const urlParams = new URLSearchParams(window.location.search);
 const invitedByCode = manualRefCode || urlParams.get('ref') || urlParams.get('ref_code') || urlParams.get('invited_by') || null;
-
 submitBtn.disabled = true;
 submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Creating Account...</span>`;
 try {
-    // Helper function to resolve referee/inviter profile UUID and referral_code strictly
-    async function resolveRefereeProfile(client, rawCode) {
-      if (!rawCode) return { refereeUuid: null, refereeCode: null };
-      let refereeUuid = null;
-      let refereeCode = null;
-      try {
-        const cleanCode = rawCode.replace(/^(vendor_|buyer_|seller_)/i, '').trim();
-        const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanCode);
-
-        // 1. If rawCode is a full UUID, query by id
-        if (isUuid) {
-          const { data } = await client.from('profiles').select('id, referral_code').eq('id', cleanCode).maybeSingle();
-          if (data) return { refereeUuid: data.id, refereeCode: data.referral_code || null };
-        }
-
-        // 2. Query by referral_code exact match
-        const { data: byCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', rawCode).maybeSingle();
-        if (byCode) return { refereeUuid: byCode.id, refereeCode: byCode.referral_code || rawCode };
-
-        // 3. Query by referral_code with cleanCode
-        const { data: byCleanCode } = await client.from('profiles').select('id, referral_code').eq('referral_code', cleanCode).maybeSingle();
-        if (byCleanCode) return { refereeUuid: byCleanCode.id, refereeCode: byCleanCode.referral_code || cleanCode };
-
-        // 4. Query by UUID prefix (e.g. 8-char substring from currentUser.id)
-        if (cleanCode.length >= 6 && cleanCode.length < 36) {
-          const { data: byPrefix } = await client.from('profiles').select('id, referral_code').ilike('id', cleanCode + '%').limit(1);
-          if (byPrefix && byPrefix.length > 0) {
-            return { refereeUuid: byPrefix[0].id, refereeCode: byPrefix[0].referral_code || null };
-          }
-        }
-
-        // 5. If it's a plain referral code string (not a UUID)
-        if (!isUuid && cleanCode.length < 32) {
-          refereeCode = rawCode;
-        }
-      } catch (err) {
-        console.warn('Referee resolution warning:', err);
-      }
-      return { refereeUuid, refereeCode };
-    }
-
-    // Resolve referee profile BEFORE auth.signUp so metadata receives both fields
-    const { refereeUuid, refereeCode } = await resolveRefereeProfile(supabaseClient, invitedByCode);
-    const finalInvitedByCode = refereeCode || null;
-    const finalReferredBy = refereeUuid || null;
-
+// Helper function to resolve referee/inviter profile UUID and referral_code strictly
+async function resolveRefereeProfile(client, rawCode) {
+if (!rawCode) return { refereeUuid: null, refereeCode: null };
+let refereeUuid = null;
+let refereeCode = null;
+try {
+const cleanCode = rawCode.replace(/^(vendor_|buyer_|seller_)/i, '').trim();
+const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanCode);
+if (isUuid) {
+const { data } = await client.from('profiles').select('id, referral_code').eq('id', cleanCode).maybeSingle();
+if (data) { refereeUuid = data.id; refereeCode = data.referral_code; }
+}
+if (!refereeUuid) {
+const { data: byCode } = await client.from('profiles').select('id, referral_code').ilike('referral_code', cleanCode).maybeSingle();
+if (byCode) { refereeUuid = byCode.id; refereeCode = byCode.referral_code; }
+}
+} catch (e) {
+console.warn('Profile resolution error:', e);
+}
+return { refereeUuid, refereeCode };
+}
+const { refereeUuid, refereeCode } = await resolveRefereeProfile(supabaseClient, invitedByCode);
+const finalInvitedByCode = refereeCode || null;
+const finalReferredBy = refereeUuid || null;
 // 2. Sign up user via Supabase Auth with metadata containing invited_by_code and referred_by
 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
 email: email,
@@ -685,7 +616,6 @@ const userId = authData.user ? authData.user.id : null;
 if (!userId) {
 throw new Error('User registration failed to return an authenticated ID.');
 }
-
 // 3. Insert/Upsert profile record matching exact 13-column live schema
 const { error: profileError } = await supabaseClient
 .from('profiles')
@@ -705,16 +635,14 @@ commission_policy_agreed: buyerEduPolicyAgreed,
 created_at: new Date().toISOString()
 });
 if (profileError) {
-  console.warn('Profiles table upsert notice (handled by DB trigger):', profileError.message);
+console.warn('Profiles table upsert notice (handled by DB trigger):', profileError.message);
 }
-
 // Automatically sign user in so session is established immediately
 try {
-  await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+await supabaseClient.auth.signInWithPassword({ email: email, password: password });
 } catch (loginErr) {
-  console.warn('Auto sign-in notice:', loginErr.message);
+console.warn('Auto sign-in notice:', loginErr.message);
 }
-
 alert('Shopper account successfully created! Your National ID is pending admin verification. Redirecting to Reviewer Hub...');
 window.location.href = 'index.html';
 } catch (err) {
@@ -723,143 +651,126 @@ submitBtn.disabled = false;
 submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i><span>Register Shopper Account</span>`;
 }
 }
-
 // ================= SYSTEM BRANDING HYDRATION =================
 function applyAppLogo(logoSrc) {
-  if (!logoSrc) return;
-  // Header Logo
-  const img = document.getElementById('headerLogoImg');
-  const text = document.getElementById('headerLogoText');
-  const container = document.getElementById('headerLogoContainer');
-  if (img) {
-    img.src = logoSrc;
-    img.classList.remove('hidden');
-  }
-  if (text) text.classList.add('hidden');
-  if (container) container.classList.add('p-0');
-
-  // Form Card Branding Icon
-  const formImg = document.getElementById('formLogoImg');
-  const formText = document.getElementById('formLogoText');
-  const formContainer = document.getElementById('formLogoContainer');
-  if (formImg) {
-    formImg.src = logoSrc;
-    formImg.classList.remove('hidden');
-  }
-  if (formText) formText.classList.add('hidden');
-  if (formContainer) formContainer.classList.add('p-0');
+if (!logoSrc) return;
+// Header Logo
+const img = document.getElementById('headerLogoImg');
+const text = document.getElementById('headerLogoText');
+const container = document.getElementById('headerLogoContainer');
+if (img) {
+img.src = logoSrc;
+img.classList.remove('hidden');
 }
-
+if (text) text.classList.add('hidden');
+if (container) container.classList.add('p-0');
+// Form Card Branding Icon
+const formImg = document.getElementById('formLogoImg');
+const formText = document.getElementById('formLogoText');
+const formContainer = document.getElementById('formLogoContainer');
+if (formImg) {
+formImg.src = logoSrc;
+formImg.classList.remove('hidden');
+}
+if (formText) formText.classList.add('hidden');
+if (formContainer) formContainer.classList.add('p-0');
+}
 async function loadAppBranding() {
-  try {
-    // 1. Instant hydration from localStorage
-    const cachedLogo = localStorage.getItem('app_logo_base64');
-    if (cachedLogo) {
-      applyAppLogo(cachedLogo);
-    }
-
-    // 2. Fetch from Supabase system_settings matching exact live schema (key, value)
-    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
-    if (client) {
-      const { data, error } = await client
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'app_logo_base64')
-        .maybeSingle();
-
-      if (!error && data && data.value) {
-        localStorage.setItem('app_logo_base64', data.value);
-        applyAppLogo(data.value);
-      }
-    }
-  } catch (err) {
-    console.warn("Branding load bypassed:", err);
-  }
+try {
+// 1. Instant hydration from localStorage
+const cachedLogo = localStorage.getItem('app_logo_base64');
+if (cachedLogo) {
+applyAppLogo(cachedLogo);
 }
-
+// 2. Fetch from Supabase system_settings matching exact live schema (key, value)
+const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+if (client) {
+const { data, error } = await client
+.from('system_settings')
+.select('value')
+.eq('key', 'app_logo_base64')
+.maybeSingle();
+if (!error && data && data.value) {
+localStorage.setItem('app_logo_base64', data.value);
+applyAppLogo(data.value);
+}
+}
+} catch (err) {
+console.warn("Branding load bypassed:", err);
+}
+}
 function toggleBuyerEduCard() {
-  const body = document.getElementById('buyerEduCardBody');
-  const label = document.getElementById('eduToggleLabel');
-  const icon = document.getElementById('eduArrowIcon');
-  if (body.classList.contains('hidden')) {
-    body.classList.remove('hidden');
-    label.textContent = 'Collapse Breakdown';
-    icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
-    updateBuyerCommissionCalc();
-  } else {
-    body.classList.add('hidden');
-    label.textContent = 'Expand Breakdown';
-    icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
-  }
+const body = document.getElementById('buyerEduCardBody');
+const label = document.getElementById('eduToggleLabel');
+const icon = document.getElementById('eduArrowIcon');
+if (body.classList.contains('hidden')) {
+body.classList.remove('hidden');
+label.textContent = 'Collapse Breakdown';
+icon.className = 'fa-solid fa-chevron-up text-[10px] ml-1';
+updateBuyerCommissionCalc();
+} else {
+body.classList.add('hidden');
+label.textContent = 'Expand Breakdown';
+icon.className = 'fa-solid fa-chevron-down text-[10px] ml-1';
 }
-
+}
 function updateBuyerCommissionCalc() {
-  const slider = document.getElementById('calcSlider');
-  const scenarioSelect = document.getElementById('calcScenarioSelect');
-  if (!slider) return;
-
-  const offerVal = parseFloat(slider.value) || 15.00;
-  const scenario = scenarioSelect ? scenarioSelect.value : '2';
-
-  // Reviewer Direct Payout = 100% of offer
-  document.getElementById('calcTotalDisplay').textContent = `$${offerVal.toFixed(2)}`;
-  document.getElementById('calcReviewerAmt').textContent = `$${offerVal.toFixed(2)}`;
-
-  let sellerInviterAmt = 0;
-  let buyerInviterAmt = 0;
-  let adminAmt = 0;
-
-  if (scenario === '0') {
-    // 0 Inviters: Platform gets 100% of fee pool ($offerVal)
-    sellerInviterAmt = 0.00;
-    buyerInviterAmt = 0.00;
-    adminAmt = offerVal * 1.00;
-  } else if (scenario === '1_buyer') {
-    // 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = 0.00;
-    buyerInviterAmt = offerVal * 0.70;
-    adminAmt = offerVal * 0.30;
-  } else if (scenario === '1_seller') {
-    // 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
-    sellerInviterAmt = offerVal * 0.70;
-    buyerInviterAmt = 0.00;
-    adminAmt = offerVal * 0.30;
-  } else {
-    // 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
-    sellerInviterAmt = offerVal * 0.35;
-    buyerInviterAmt = offerVal * 0.35;
-    adminAmt = offerVal * 0.30;
-  }
-
-  document.getElementById('calcSellerInviterAmt').textContent = `$${sellerInviterAmt.toFixed(2)}`;
-  document.getElementById('calcBuyerInviterAmt').textContent = `$${buyerInviterAmt.toFixed(2)}`;
-  document.getElementById('calcAdminAmt').textContent = `$${adminAmt.toFixed(2)}`;
-
-  const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
-  document.getElementById('calcSplitsTotal').textContent = `$${splitsTotal.toFixed(2)} (1:1 Match)`;
+const slider = document.getElementById('calcSlider');
+const scenarioSelect = document.getElementById('calcScenarioSelect');
+if (!slider) return;
+const offerVal = parseFloat(slider.value) || 15.00;
+const scenario = scenarioSelect ? scenarioSelect.value : '2';
+// Reviewer Direct Payout = 100% of offer
+document.getElementById('calcTotalDisplay').textContent = '$' + offerVal.toFixed(2);
+document.getElementById('calcReviewerAmt').textContent = '$' + offerVal.toFixed(2);
+let sellerInviterAmt = 0;
+let buyerInviterAmt = 0;
+let adminAmt = 0;
+if (scenario === '0') {
+// 0 Inviters: Platform gets 100% of fee pool ($offerVal)
+sellerInviterAmt = 0.00;
+buyerInviterAmt = 0.00;
+adminAmt = offerVal * 1.00;
+} else if (scenario === '1_buyer') {
+// 1 Inviter (Buyer Inviter): Buyer Inviter gets 70%, Platform gets 30%
+sellerInviterAmt = 0.00;
+buyerInviterAmt = offerVal * 0.70;
+adminAmt = offerVal * 0.30;
+} else if (scenario === '1_seller') {
+// 1 Inviter (Seller Inviter): Seller Inviter gets 70%, Platform gets 30%
+sellerInviterAmt = offerVal * 0.70;
+buyerInviterAmt = 0.00;
+adminAmt = offerVal * 0.30;
+} else {
+// 2 Inviters: Seller Inviter 35%, Buyer Inviter 35%, Platform 30%
+sellerInviterAmt = offerVal * 0.35;
+buyerInviterAmt = offerVal * 0.35;
+adminAmt = offerVal * 0.30;
 }
-
+document.getElementById('calcSellerInviterAmt').textContent = '$' + sellerInviterAmt.toFixed(2);
+document.getElementById('calcBuyerInviterAmt').textContent = '$' + buyerInviterAmt.toFixed(2);
+document.getElementById('calcAdminAmt').textContent = '$' + adminAmt.toFixed(2);
+const splitsTotal = sellerInviterAmt + buyerInviterAmt + adminAmt;
+document.getElementById('calcSplitsTotal').textContent = '$' + splitsTotal.toFixed(2) + ' (1:1 Match)';
+}
 function handleBuyerEduChoice(agreed) {
-  buyerEduPolicyAgreed = agreed;
-  const note = document.getElementById('buyerEduFeedbackNote');
-  const btnAgree = document.getElementById('btnBuyerEduAgree');
-  const btnDisagree = document.getElementById('btnBuyerEduDisagree');
-
-  if (agreed) {
-    btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
-    btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
-    note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
-    note.className = "text-[11px] text-emerald-400 font-medium";
-  } else {
-    btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
-    btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
-    note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
-    note.className = "text-[11px] text-slate-400 font-medium";
-  }
-  note.classList.remove('hidden');
+buyerEduPolicyAgreed = agreed;
+const note = document.getElementById('buyerEduFeedbackNote');
+const btnAgree = document.getElementById('btnBuyerEduAgree');
+const btnDisagree = document.getElementById('btnBuyerEduDisagree');
+if (agreed) {
+btnAgree.className = 'bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-emerald-400 flex items-center space-x-1.5 cursor-pointer';
+btnDisagree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+note.textContent = "Thank you for confirming! You can now complete your shopper registration below.";
+note.className = "text-[11px] text-emerald-400 font-medium";
+} else {
+btnDisagree.className = 'bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl ring-2 ring-slate-400 flex items-center space-x-1.5 cursor-pointer';
+btnAgree.className = 'bg-darkBg text-slate-500 text-xs px-4 py-2 rounded-xl border border-borderSlate opacity-50 flex items-center space-x-1.5 cursor-pointer';
+note.textContent = "Thank you for your response! You can still complete your shopper registration below.";
+note.className = "text-[11px] text-slate-400 font-medium";
 }
-
+note.classList.remove('hidden');
+}
 </script>
-
 </body>
 </html>
