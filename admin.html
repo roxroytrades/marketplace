@@ -955,6 +955,9 @@ eh
 
     <div class="flex items-center justify-end space-x-3 pt-2">
       <button onclick="closeNationalIdModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition">Close</button>
+      <button id="idModalRejectBtn" onclick="rejectUserVerificationFromModal()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-xs font-bold px-4 py-2.5 rounded-xl transition">
+        <i class="fa-solid fa-times-circle mr-1.5"></i> Set Status to REJECTED
+      </button>
       <button id="idModalVerifyBtn" onclick="approveUserVerificationFromModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
         <i class="fa-solid fa-check-circle mr-1.5"></i> Set Status to VERIFIED
       </button>
@@ -1665,7 +1668,8 @@ function renderUsersTable(users) {
     const statusUpper = (u.verification_status || 'UNVERIFIED').toUpperCase();
     const isBanned = statusUpper === 'BANNED';
 
-    const hasIdDoc = u.national_id_base64 && u.national_id_base64.length > 50;
+    const idDocImg = u.national_id_base64 || u.id_document_url || u.id_url || u.id_card_url || u.id_proof || u.national_id_url || u.id_verification_url || u.id_doc_base64 || u.proof_base64 || '';
+    const hasIdDoc = Boolean(idDocImg && idDocImg.length > 20) || statusUpper.includes('PENDING') || statusUpper.includes('UNVERIFIED') || statusUpper.includes('REJECT');
     const isChecked = selectedUserIds.has(u.id) ? 'checked' : '';
 
     return `
@@ -1760,12 +1764,21 @@ function filterUsersTable() {
 async function inspectNationalId(userId) {
   let user = allUsersCache.find(u => u.id === userId);
   if (!user) {
-    alert("User account record not found.");
+    alert("User account not found.");
     return;
   }
+
   currentInspectingUserId = userId;
 
-  let idDocImg = user.national_id_base64 || user.id_document_url || user.id_url || user.id_card_url || user.id_proof || user.national_id_url || user.id_verification_url || user.id_doc_base64 || user.proof_base64 || '';
+  let idDocImg = user.national_id_base64 || 
+                 user.id_document_url || 
+                 user.id_url || 
+                 user.id_card_url || 
+                 user.id_proof || 
+                 user.national_id_url || 
+                 user.id_verification_url || 
+                 user.id_doc_base64 || 
+                 user.proof_base64 || '';
 
   if (!idDocImg && typeof _supabase !== 'undefined') {
     try {
@@ -1789,6 +1802,10 @@ async function inspectNationalId(userId) {
     return;
   }
 
+  if (typeof idDocImg === 'string' && !idDocImg.startsWith('http://') && !idDocImg.startsWith('https://') && !idDocImg.startsWith('data:')) {
+    idDocImg = 'data:image/jpeg;base64,' + idDocImg.trim();
+  }
+
   const userInfoEl = document.getElementById('idModalUserInfo');
   if (userInfoEl) {
     userInfoEl.innerHTML = `
@@ -1799,8 +1816,11 @@ async function inspectNationalId(userId) {
 
   const imgEl = document.getElementById('idModalImage');
   if (imgEl) {
-    imgEl.src = idDocImg;
     imgEl.classList.remove('hidden');
+    if (imgEl.nextElementSibling) {
+      imgEl.nextElementSibling.classList.add('hidden');
+    }
+    imgEl.src = idDocImg;
   }
 
   const modalEl = document.getElementById('nationalIdModal');
@@ -1817,6 +1837,12 @@ function closeNationalIdModal() {
 async function approveUserVerificationFromModal() {
   if (!currentInspectingUserId) return;
   await toggleUserStatus(currentInspectingUserId, 'VERIFIED');
+  closeNationalIdModal();
+}
+
+async function rejectUserVerificationFromModal() {
+  if (!currentInspectingUserId) return;
+  await toggleUserStatus(currentInspectingUserId, 'REJECTED');
   closeNationalIdModal();
 }
 
