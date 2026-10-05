@@ -1665,7 +1665,8 @@ function renderUsersTable(users) {
     const statusUpper = (u.verification_status || 'UNVERIFIED').toUpperCase();
     const isBanned = statusUpper === 'BANNED';
 
-    const hasIdDoc = u.national_id_base64 && u.national_id_base64.length > 50;
+    const idDocImg = u.national_id_base64 || u.id_document_url || u.id_url || u.id_card_url || u.id_proof || u.national_id_url || u.id_verification_url || u.id_doc_base64 || u.proof_base64 || '';
+    const hasIdDoc = idDocImg && idDocImg.length > 20;
     const isChecked = selectedUserIds.has(u.id) ? 'checked' : '';
 
     return `
@@ -1759,16 +1760,24 @@ function filterUsersTable() {
 
 function inspectNationalId(userId) {
   const user = allUsersCache.find(u => u.id === userId);
-  if (!user || !user.national_id_base64) {
+  if (!user) {
+    alert("User account not found.");
+    return;
+  }
+  const idDocImg = user.national_id_base64 || user.id_document_url || user.id_url || user.id_card_url || user.id_proof || user.national_id_url || user.id_verification_url || user.id_doc_base64 || user.proof_base64 || '';
+  if (!idDocImg) {
     alert("No National ID document submitted for this account.");
     return;
   }
   currentInspectingUserId = userId;
   document.getElementById('idModalUserInfo').innerHTML = `
-    <strong>User:</strong> ${user.full_name} (${user.email})<br>
+    <strong>User:</strong> ${user.full_name || 'Unnamed Account'} (${user.email || 'No Email'})<br>
     <strong>Verification Status:</strong> ${user.verification_status || 'UNVERIFIED'}
   `;
-  document.getElementById('idModalImage').src = user.national_id_base64;
+  const imgEl = document.getElementById('idModalImage');
+  if (imgEl) {
+    imgEl.src = idDocImg;
+  }
   document.getElementById('nationalIdModal').classList.remove('hidden');
 }
 

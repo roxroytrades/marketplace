@@ -1012,12 +1012,15 @@ async function handleReportAction(targetUserId) {
   if (!note || !note.trim()) return;
 
   try {
+    const reportMsg = `[USER_REPORT] Reported Shopper (${resolvedTargetId}). Reason: ${note.trim()}`;
     const reportPayload = {
       sender_id: currentUser.id,
       receiver_id: resolvedTargetId,
       vendor_id: currentUser.id,
       buyer_id: resolvedTargetId,
-      text: `[USER_REPORT] Reported Shopper (${resolvedTargetId}). Reason: ${note.trim()}`,
+      text: reportMsg,
+      content: reportMsg,
+      message: reportMsg,
       status_badge: 'REPORTED',
       channel_type: 'USER_REPORT'
     };
