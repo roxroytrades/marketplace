@@ -169,10 +169,6 @@ function showThreadContextMenu(e, threadId) {
       <span>${isUnread ? 'Mark as Read' : 'Mark as Unread'}</span>
     </button>
     <div class="border-t border-slate-800 my-1"></div>
-    <button onclick="handleReportAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-amber-500/20 text-amber-400 transition flex items-center space-x-2 font-medium">
-      <i class="fa-solid fa-flag text-amber-400"></i>
-      <span>Report Vendor</span>
-    </button>
     <button onclick="handleHideAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition flex items-center space-x-2 font-medium">
       <i class="fa-solid fa-eye-slash"></i>
       <span>Hide Conversation Tile</span>
@@ -709,15 +705,9 @@ eh
 </span>
 </div>
 </div>
-<div class="flex items-center space-x-2">
-<button onclick="handleReportAction(activeRecipientId || activeThreadId)" id="headerReportVendorBtn" class="hidden text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center space-x-1 shadow-sm" title="Report this vendor to Admin">
-<i class="fa-solid fa-flag text-[10px]"></i>
-<span>Report Vendor</span>
-</button>
 <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
 <i class="fa-solid fa-xmark text-lg"></i>
 </button>
-</div>
 </div>
 <!-- Message Stream Area -->
 <div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden">
@@ -903,10 +893,10 @@ async function initShopperWorkspace() {
     const refCode = profile?.referral_code || currentUser.id;
     if (document.getElementById('buyerRefLinkInput')) {
       if (document.getElementById('shopperRefCodeDisplay')) document.getElementById('shopperRefCodeDisplay').textContent = profile.referral_code || currentUser.id;
-        document.getElementById('buyerRefLinkInput').value = `baseUrlbuyer-register.html?ref={refCode}`;
+        document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${refCode}`;
     }
     if (document.getElementById('vendorRefLinkInput')) {
-      document.getElementById('vendorRefLinkInput').value = `baseUrlseller-register.html?ref={refCode}`;
+      document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${refCode}`;
     }
 
     /* Step F: Load Shopper Workspace Data */
@@ -943,8 +933,8 @@ async function fetchAndUpdateProfileState() {
       if (profile.referral_code) {
         const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
         if (document.getElementById('shopperRefCodeDisplay')) document.getElementById('shopperRefCodeDisplay').textContent = profile.referral_code || currentUser.id;
-        document.getElementById('buyerRefLinkInput').value = `baseUrlbuyer-register.html?ref={profile.referral_code}`;
-        document.getElementById('vendorRefLinkInput').value = `baseUrlseller-register.html?ref={profile.referral_code}`;
+        document.getElementById('buyerRefLinkInput').value = `${baseUrl}buyer-register.html?ref=${profile.referral_code}`;
+        document.getElementById('vendorRefLinkInput').value = `${baseUrl}seller-register.html?ref=${profile.referral_code}`;
       }
     }
   } catch (err) {
@@ -1148,7 +1138,7 @@ function filterMarketplaceProducts() {
         <div>
           <!-- Product Image & Floating Badges -->
           <div class="w-full h-52 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-3 relative overflow-hidden">
-            <img src="getProductImageUrl(item)"alt="{item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Product Image Available</span></div>
+            <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Product Image Available</span></div>
             
             <!-- Review Commission Badge (Top Left) -->
             <div class="absolute top-3 left-3 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 flex items-center space-x-1 shadow-lg">
@@ -1208,7 +1198,7 @@ function filterMarketplaceProducts() {
             <i class="fa-solid fa-eye text-blue-400"></i>
             <span>View Details</span>
           </button>
-          <button onclick="handleInquireClick('item.id','{vendorId}')" ${isLocked ? 'disabled' : ''} class="flex-1 bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-1.5">
+          <button onclick="handleInquireClick('${item.id}','${vendorId}')" ${isLocked ? 'disabled' : ''} class="flex-1 bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-1.5">
             <i class="fa-solid fa-comments"></i>
             <span>${isLocked ? 'Locked' : 'Inquire'}</span>
           </button>
@@ -1233,7 +1223,7 @@ async function handleInquireClick(productId, vendorId) {
     const { data: existing } = await _supabase
       .from('messages')
       .select('id')
-      .or(`and(sender_id.eq.currentUser.id,receiverid.eq.{vendorId}),and(sender_id.eq.vendorId,receiverid.eq.{currentUser.id})`)
+      .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${vendorId}),and(sender_id.eq.${vendorId},receiver_id.eq.${currentUser.id})`)
       .eq('product_id', productId)
       .limit(1);
     let threadId = '';
@@ -1248,9 +1238,7 @@ async function handleInquireClick(productId, vendorId) {
           receiver_id: vendorId,
           vendor_id: vendorId,
           product_id: productId,
-          text: `Hello! I would like to inquire about reviewing "${prodTitle}" (Retail:
-prodPrice|ReviewCommission:
-{prodReward} Commission).` }])
+          text: `Hello! I would like to inquire about reviewing "${prodTitle}" (Retail: $${prodPrice} | Review Commission: $${prodReward} Commission).` }])
         .select()
         .single();
       if (error) throw error;
@@ -1271,12 +1259,17 @@ async function loadCommissionsData(isPolling = false) {
       .from('commissions')
       .select('*')
       .eq('recipient_id', currentUser.id);
+
     if (error) throw error;
+
     commissionsList = data || [];
     shopperCommissions = commissionsList;
   } catch (err) {
     console.log('Using local shopper commissions dataset fallback.');
+    commissionsList = [];
+    shopperCommissions = [];
   }
+
   updateCommissionStats();
   renderCommissionTable();
 }
@@ -1428,7 +1421,7 @@ function renderCommissionTable() {
   tableBody.innerHTML = filtered.map(c => `
     <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
       <div class="col-span-1 flex items-center space-x-2">
-        <input type="checkbox" value="${c.id}" selectedCommIds.has(c.id)?'checked':''onchange="toggleSelectComm('{c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
+        <input type="checkbox" value="${c.id}" ${selectedCommIds.has(c.id) ? 'checked' : ''} onchange="toggleSelectComm('${c.id}')" class="rounded border-borderSlate bg-darkBg text-blue-600">
       </div>
       <div class="col-span-3 space-y-0.5">
         <span class="font-bold text-white">FB ID: ${c.feedback_id}</span>
@@ -1766,13 +1759,13 @@ function renderShopperContactsList() {
               <p class="text-[10px] text-slate-400 truncate">${c.email}</p>
             </div>
           </div>
-          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border badgeBguppercaseshrink-0">{isAdm ? 'SYSTEM ADMIN' : 'SELLER'}</span>
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} uppercase shrink-0">${isAdm ? 'SYSTEM ADMIN' : 'SELLER'}</span>
         </div>
         <div class="text-[10px] text-slate-400 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
-          <div class="flex justify-between"><span class="text-slate-500">isAdm?'Channel:':'PayPal:'</span><spanclass="font-monotext-emerald-400font-semiboldtruncate">{c.paypal}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">${isAdm ? 'Channel:' : 'PayPal:'}</span> <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
           <div class="truncate"><span class="text-slate-500">Note:</span> ${c.lastMessage}</div>
         </div>
-        <button onclick="openThread('c.threadId','{c.partnerId}', '${c.productId || ''}'); switchShopperMessagingSubTab('chats');" class="w-full ${isAdm ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40' : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30'} py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
+        <button onclick="openThread('${c.threadId}', '${c.partnerId}', '${c.productId || ''}'); switchShopperMessagingSubTab('chats');" class="w-full ${isAdm ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40' : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30'} py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
           <i class="fa-solid ${isAdm ? 'fa-headset' : 'fa-comment-dots'} text-[10px]"></i>
           <span>${isAdm ? 'Contact Admin' : 'Chat Now'}</span>
         </button>
@@ -1788,7 +1781,7 @@ async function loadMessagingThreads(isPolling = false) {
     const { data, error } = await _supabase
       .from('messages')
       .select('*')
-      .or(`sender_id.eq.currentUser.id,receiverid.eq.{currentUser.id}`)
+      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
     if (error) throw error;
     messagingThreads = data || [];
@@ -1911,7 +1904,7 @@ function renderThreadsList() {
     const lastMsgText = latest.text || latest.content || latest.message_text || latest.message || 'Attachment';
 
     return `
-      <div onclick="openThread('latest.id','{counterpartId}', '${latest.product_id}')"
+      <div onclick="openThread('${latest.id}','${counterpartId}', '${latest.product_id}')"
            oncontextmenu="showThreadContextMenu(event, '${counterpartId}')"
            ontouchstart="handleTouchStart(event, '${counterpartId}')"
            ontouchmove="handleTouchMove(event)"
@@ -1961,14 +1954,6 @@ async function openThread(threadId, recipientId, productId) {
 
   const profile = profilesCache[resolvedRecipientId] || { full_name: `User #${String(resolvedRecipientId).substring(0, 8)}`, role: 'user' };
   document.getElementById('activeChatPanel').classList.remove('hidden');
-  const rBtn = document.getElementById('headerReportVendorBtn');
-  if (rBtn) {
-    if (resolvedRecipientId && resolvedRecipientId !== 'admin' && resolvedRecipientId !== 'admin_system_support') {
-      rBtn.classList.remove('hidden');
-    } else {
-      rBtn.classList.add('hidden');
-    }
-  }
   document.getElementById('messageInputArea').classList.remove('hidden');
   document.getElementById('activeChatTitle').textContent = profile.full_name;
   document.getElementById('activeChatRoleTag').textContent = `${(profile.role || 'user').toUpperCase()} • ${productId !== 'null' && productId ? 'Product Inquiry' : 'Direct Chat'}`;
@@ -2000,7 +1985,7 @@ async function openThread(threadId, recipientId, productId) {
     }
   } else if (canQueryDb) {
     try {
-      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.currentUser.id,senderid.eq.{resolvedRecipientId}),and(buyer_id.eq.currentUser.id,vendorid.eq.{resolvedRecipientId})`).eq('is_read', false);
+      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${resolvedRecipientId}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${resolvedRecipientId})`).eq('is_read', false);
     } catch (e) {}
   }
 }
@@ -2043,7 +2028,7 @@ function renderMessageStatusBadge(m) {
     <div class="flex flex-wrap items-center gap-1.5 pt-1.5 mt-1 border-t border-white/10">
       ${feedbackBadge}
       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}">
-        <i class="iconClassmr-1text-[10px]"></i>{label}
+        <i class="${iconClass} mr-1 text-[10px]"></i>${label}
       </span>
     </div>
   `;
@@ -2068,7 +2053,7 @@ async function loadMessageStream(recipientId, productId) {
     const { data, error } = await _supabase
       .from('messages')
       .select('*')
-      .or(`and(sender_id.eq.currentUser.id,receiverid.eq.{recipientId}),and(sender_id.eq.recipientId,receiverid.eq.{currentUser.id}),and(buyer_id.eq.currentUser.id,vendorid.eq.{recipientId}),and(vendor_id.eq.recipientId,buyerid.eq.{currentUser.id})`)
+      .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${currentUser.id}),and(buyer_id.eq.${currentUser.id},vendor_id.eq.${recipientId}),and(vendor_id.eq.${recipientId},buyer_id.eq.${currentUser.id})`)
       .order('created_at', { ascending: true });
     if (error) throw error;
     const messages = data || [];
@@ -2088,16 +2073,14 @@ async function loadMessageStream(recipientId, productId) {
         productHeaderCard = `
           <div class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-3 shadow-lg flex items-center justify-between gap-3 shrink-0">
             <div class="flex items-center space-x-3 truncate">
-              <img src="getProductImageUrl(prod)"alt="{prod.title || 'Product'}" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shrink-0" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden w-12 h-12 rounded-xl border border-borderSlate bg-slate-900 flex items-center justify-center text-slate-500 shrink-0"><i class="fa-solid fa-image text-slate-400"></i></div>
+              <img src="${getProductImageUrl(prod)}" alt="${prod.title || 'Product'}" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shrink-0" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden w-12 h-12 rounded-xl border border-borderSlate bg-slate-900 flex items-center justify-center text-slate-500 shrink-0"><i class="fa-solid fa-image text-slate-400"></i></div>
               <div class="truncate">
                 <div class="flex items-center space-x-1.5">
                   <span class="text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.2 rounded-full font-bold uppercase">Inquired Item</span>
                   <span class="text-[10px] text-slate-400 font-mono">ID: ${String(prod.id).substring(0,8)}</span>
                 </div>
                 <h4 class="text-xs font-bold text-white truncate mt-0.5">${prod.title}</h4>
-                <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">
-pPrice</strong>|ReviewCommission:<strongclass="text-emerald-400">
-{pReward} Commission</strong></p>
+                <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">$${pPrice}</strong> | Review Commission: <strong class="text-emerald-400">$${pReward} Commission</strong></p>
               </div>
             </div>
             ${prod.product_url ? `<a href="${prod.product_url}" target="_blank" class="shrink-0 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center space-x-1"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i><span>View Store Listing</span></a>` : ''}
@@ -2134,8 +2117,8 @@ pPrice</strong>|ReviewCommission:<strongclass="text-emerald-400">
                   <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
                   <span class="text-[9px] font-mono ${isMe ? 'text-slate-300' : 'text-slate-600'}">ID: ${String(prod.id).substring(0,8)}</span>
                 </div>
-                <h5 class="text-xs font-bold isMe?'text-white':'text-slate-900'truncatemt-0.5group-hover:text-blue-600transition">{prod.title}</h5>
-                <p class="text-[10px] isMe?'text-slate-300':'text-slate-700'">Retail:<strong>pPrice</strong>|<spanclass="{isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
+                <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-900'} truncate mt-0.5 group-hover:text-blue-600 transition">${prod.title}</h5>
+                <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: <strong>$${pPrice}</strong> | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
               </div>
               <div class="shrink-0 text-xs ${btnColor} font-bold flex items-center space-x-1 group-hover:underline">
                 <span>View</span>
@@ -2157,7 +2140,7 @@ pPrice</strong>|ReviewCommission:<strongclass="text-emerald-400">
         innerHtml += `<p class="leading-relaxed">${text}</p>`;
       }
       if (reviewUrl) {
-        innerHtml += `<a href="${reviewUrl}" target="_blank" class="block text-[11px] underline isMe?'text-blue-200hover:text-white':'text-blue-700hover:text-blue-900font-bold'break-all"><iclass="fa-solidfa-linkmr-1"></i>{reviewUrl}</a>`;
+        innerHtml += `<a href="${reviewUrl}" target="_blank" class="block text-[11px] underline ${isMe ? 'text-blue-200 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold'} break-all"><i class="fa-solid fa-link mr-1"></i>${reviewUrl}</a>`;
       }
       if (statusBadge) {
         innerHtml += statusBadge;
@@ -2380,47 +2363,6 @@ function updateUnreadBadge() {
   }
 }
 
-
-async function handleReportAction(targetUserId) {
-  hideThreadContextMenu();
-  const thread = messagingThreads.find(t => (t.sender_id === currentUser.id ? t.receiver_id : t.sender_id) === (targetUserId || activeRecipientId));
-  const resolvedTargetId = targetUserId || activeRecipientId;
-  if (!resolvedTargetId) {
-    alert("Please select a conversation before submitting a report.");
-    return;
-  }
-
-  const note = prompt("Please enter details / reason for reporting this vendor to Admin:", "Suspicious activity or unfulfilled offer");
-  if (!note || !note.trim()) return;
-
-  try {
-    const reportMsg = `[USER_REPORT] Reported Vendor (${resolvedTargetId}). Reason: ${note.trim()}`;
-    const reportPayload = {
-      sender_id: currentUser.id,
-      receiver_id: resolvedTargetId,
-      buyer_id: currentUser.id,
-      vendor_id: resolvedTargetId,
-      text: reportMsg,
-      content: reportMsg,
-      message: reportMsg,
-      status_badge: 'REPORTED',
-      channel_type: 'USER_REPORT'
-    };
-
-    let { error } = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
-    if (error && error.message && error.message.includes('channel_type')) {
-      delete reportPayload.channel_type;
-      const retryRes = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
-      error = retryRes.error;
-    }
-    if (error) throw error;
-
-    showToast("Report submitted to Admin for investigation.");
-  } catch (err) {
-    alert("Failed to submit report: " + err.message);
-  }
-}
-
 async function handleLogout() {
   if (pollingInterval) clearInterval(pollingInterval);
   await _supabase.auth.signOut();
@@ -2483,13 +2425,13 @@ function openProductDetailsModal(productId) {
   const body = document.getElementById('productDetailsModalContent');
   if (!modal || !body) return;
 
-  const shareUrl = `window.location.origin{window.location.pathname}?prod=item.id{currentProfile?.referral_code ? '&ref=' + currentProfile.referral_code : ''}`;
+  const shareUrl = `${window.location.origin}${window.location.pathname}?prod=${item.id}${currentProfile?.referral_code ? '&ref=' + currentProfile.referral_code : ''}`;
   const whatsappText = encodeURIComponent(`Check out this review opportunity for "${item.title}" on Echo Hub! Earn $${rewardAmount} Commission: ${shareUrl}`);
 
   body.innerHTML = `
     <div class="space-y-4">
       <div class="relative w-full h-64 bg-slate-950/80 rounded-2xl border border-borderSlate overflow-hidden flex items-center justify-center p-4">
-        <img src="getProductImageUrl(item)"alt="{item.title}" class="max-h-full max-w-full object-contain" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Product Image Available</span></div>
+        <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Product Image Available</span></div>
         <span class="absolute top-3 left-3 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-3 py-1 rounded-full text-xs font-bold text-emerald-400">
           🎁 $${rewardAmount} Commission
         </span>
@@ -2555,7 +2497,7 @@ function openProductDetailsModal(productId) {
       </div>
 
       <div class="flex items-center gap-3 pt-2">
-        <button onclick="closeProductDetailsModal(); handleInquireClick('item.id','{vendorId}');" ${isLocked ? 'disabled' : ''} class="flex-1 bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+        <button onclick="closeProductDetailsModal(); handleInquireClick('${item.id}', '${vendorId}');" ${isLocked ? 'disabled' : ''} class="flex-1 bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
           <i class="fa-solid fa-comments"></i>
           <span>${isLocked ? 'Locked (Pending Verification)' : 'Inquire & Claim Review'}</span>
         </button>
@@ -2603,10 +2545,10 @@ function openVendorStorefrontModal(vendorId) {
             <h2 class="text-lg font-bold text-white tracking-tight">${vendorName}</h2>
             <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-bold uppercase">Verified Merchant</span>
           </div>
-          <p class="text-xs text-slate-400">vendorProducts.lengthActiveReviewListing{vendorProducts.length === 1 ? '' : 's'}</p>
+          <p class="text-xs text-slate-400">${vendorProducts.length} Active Review Listing${vendorProducts.length === 1 ? '' : 's'}</p>
         </div>
       </div>
-      <button onclick="closeVendorStorefrontModal(); handleInquireClick('vendorProducts[0]?.id||''','{vendorId}');" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-2 shadow-md shrink-0">
+      <button onclick="closeVendorStorefrontModal(); handleInquireClick('${vendorProducts[0]?.id || ''}', '${vendorId}');" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-2 shadow-md shrink-0">
         <i class="fa-solid fa-comments"></i>
         <span>Message Vendor</span>
       </button>
@@ -2639,7 +2581,7 @@ function renderVendorStorefrontCards(products) {
       <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 hover:border-accentBlue/50 transition flex flex-col justify-between">
         <div class="space-y-2">
           <div class="w-full h-36 bg-slate-950/80 rounded-xl overflow-hidden flex items-center justify-center p-2 relative">
-            <img src="getProductImageUrl(item)"alt="{item.title}" class="max-h-full max-w-full object-contain" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Product Image Available</span></div>
+            <img src="${getProductImageUrl(item)}" alt="${item.title}" class="max-h-full max-w-full object-contain" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Product Image Available</span></div>
             <span class="absolute top-2 left-2 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-400">
               🎁 $${rewardAmount} Commission
             </span>
@@ -2656,7 +2598,7 @@ function renderVendorStorefrontCards(products) {
             <button onclick="openProductDetailsModal('${item.id}')" class="bg-darkBg hover:bg-slate-800 text-slate-300 border border-borderSlate text-xs font-medium px-2.5 py-1.5 rounded-lg transition">
               Details
             </button>
-            <button onclick="closeVendorStorefrontModal(); handleInquireClick('item.id','{item.seller_id || item.vendor_id}');" ${isLocked ? 'disabled' : ''} class="bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+            <button onclick="closeVendorStorefrontModal(); handleInquireClick('${item.id}', '${item.seller_id || item.vendor_id}');" ${isLocked ? 'disabled' : ''} class="bg-accentBlue hover:bg-accentHover disabled:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
               Inquire
             </button>
           </div>
@@ -2682,5 +2624,3 @@ function closeVendorStorefrontModal() {
 </script>
 </body>
 </html>
-
-
