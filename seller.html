@@ -888,7 +888,7 @@ function sanitizePayload(tableName, payload) {
     for (const key in obj) {
       if (!allowed || allowed.includes(key)) {
         let val = obj[key];
-        if (typeof val === 'string' && (val.trim() === '' || val === 'null' || val === 'undefined') && (key.endswith('_id') || key === 'id')) {
+        if (typeof val === 'string' && (val.trim() === '' || val === 'null' || val === 'undefined') && ((key.endsWith('_id') || key === 'id') || key === 'id')) {
           val = null;
         }
         clean[key] = val;
@@ -1323,7 +1323,7 @@ async function loadVendorCommissions(isPolling = false) {
     let { data, error } = await _supabase
       .from('commissions')
       .select('*')
-      .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
+      .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
     if (error) throw error;
     vendorCommissions = data || [];
 
