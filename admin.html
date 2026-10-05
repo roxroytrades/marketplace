@@ -919,20 +919,14 @@ eh
       </div>
     </div>
 
-    <div class="flex items-center justify-between pt-2 border-t border-borderSlate/60">
-      <button onclick="openNationalIdInNewTab()" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center space-x-1.5">
-        <i class="fa-solid fa-arrow-up-right-from-square"></i>
-        <span>Open Full View (New Tab)</span>
+    <div class="flex items-center justify-end space-x-3 pt-2">
+      <button onclick="closeNationalIdModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition">Close</button>
+      <button id="idModalRejectBtn" onclick="rejectUserVerificationFromModal()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-xs font-bold px-4 py-2.5 rounded-xl transition">
+        <i class="fa-solid fa-times-circle mr-1.5"></i> Set Status to REJECTED
       </button>
-      <div class="flex items-center space-x-2">
-        <button onclick="closeNationalIdModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">Close</button>
-        <button id="idModalRejectBtn" onclick="rejectUserVerificationFromModal()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-xs font-bold px-3 py-2 rounded-xl transition">
-          <i class="fa-solid fa-xmark-circle mr-1"></i> Reject
-        </button>
-        <button id="idModalVerifyBtn" onclick="approveUserVerificationFromModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-emerald-500/20">
-          <i class="fa-solid fa-check-circle mr-1.5"></i> Set Status to VERIFIED
-        </button>
-      </div>
+      <button id="idModalVerifyBtn" onclick="approveUserVerificationFromModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
+        <i class="fa-solid fa-check-circle mr-1.5"></i> Set Status to VERIFIED
+      </button>
     </div>
   </div>
 </div>
@@ -977,6 +971,13 @@ eh
               <option value="SUSPENDED">SUSPENDED</option>
             </select>
           </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Commission Policy Agreement Status</label>
+          <select id="editUserPolicyAgreed" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500">
+            <option value="true">✓ Policy Agreed (Emerald Badge)</option>
+            <option value="false">✕ Policy Disagreed (Rose Badge)</option>
+          </select>
         </div>
         <div>
           <label class="block text-slate-400 font-semibold mb-1">PayPal Email</label>
@@ -1409,11 +1410,16 @@ function switchAdminTab(tabKey) {
 /* ==========================================================================
    TAB 1: USERS & ID VERIFICATION ENGINE
    ========================================================================== */
+
+
+async function loadAdminAccounts() {
+  return await loadUsersData();
+}
 async function loadUsersData() {
   try {
     const { data, error } = await _supabase
       .from('profiles')
-      .select('*')
+      .select('*, commission_policy_agreed')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -1515,6 +1521,26 @@ async function dismissUserReport(reportMessageId) {
   }
 }
 
+
+function getPolicyAgreementBadge(agreed) {
+  const isAgreed = (agreed === true || agreed === 'true' || agreed === 1 || agreed === '1');
+  if (isAgreed) {
+    return `<div class="inline-flex items-center space-x-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md mt-1 shadow-sm" title="User agreed to platform commission policy during registration">
+      <i class="fa-solid fa-check text-[9px] mr-0.5"></i>
+      <span>✓ Policy Agreed</span>
+    </div>`;
+  } else {
+    return `<div class="inline-flex items-center space-x-1 text-[10px] font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded-md mt-1 shadow-sm" title="User disagreed or has not accepted platform commission policy">
+      <i class="fa-solid fa-xmark text-[9px] mr-0.5"></i>
+      <span>✕ Policy Disagreed</span>
+    </div>`;
+  }
+}
+
+function renderAccountsTable(users) {
+  return renderUsersTable(users);
+}
+
 function renderUsersTable(users) {
   const tbody = document.getElementById('usersTableBody');
   if (!tbody) return;
@@ -1542,6 +1568,7 @@ function renderUsersTable(users) {
         <td class="py-3 px-4">
           <div class="font-bold text-white">${u.full_name || 'Unnamed Account'}</div>
           <div class="text-[11px] text-slate-400 font-mono truncate max-w-[180px]" title="${u.email || u.id}">${u.email || u.id}</div>
+          <div>${getPolicyAgreementBadge(u.commission_policy_agreed)}</div>
         </td>
         <td class="py-3 px-4">
           ${getUserRoleBadge(u.role)}
@@ -3398,6 +3425,8 @@ function openEditUserModal(userId) {
   document.getElementById('editUserEmail').value = u.email || '';
   document.getElementById('editUserRole').value = (u.role || 'buyer').toLowerCase();
   document.getElementById('editUserVerificationStatus').value = (u.verification_status || 'UNVERIFIED').toUpperCase();
+  const policySel = document.getElementById('editUserPolicyAgreed');
+  if (policySel) policySel.value = (u.commission_policy_agreed === true || u.commission_policy_agreed === 'true' || u.commission_policy_agreed === 1) ? 'true' : 'false';
   document.getElementById('editUserPaypalEmail').value = u.paypal_email || '';
   document.getElementById('editUserInvitedByCode').value = u.invited_by_code || '';
   document.getElementById('editUserModal').classList.remove('hidden');
@@ -3419,6 +3448,7 @@ async function saveUserEdit() {
   if (!userId) return;
 
   try {
+    const policyAgreedVal = document.getElementById('editUserPolicyAgreed')?.value === 'true';
     const { error } = await _supabase
       .from('profiles')
       .update({
@@ -3426,6 +3456,7 @@ async function saveUserEdit() {
         email: email,
         role: role,
         verification_status: verificationStatus,
+        commission_policy_agreed: policyAgreedVal,
         paypal_email: paypalEmail,
         invited_by_code: invitedByCode
       })
