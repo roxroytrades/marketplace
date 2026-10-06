@@ -148,9 +148,14 @@ Interactive preview demonstrating 1:1 commission matching and network split rule
 
 <!-- Collapsible Content Drawer -->
 <div id="eduCardBody" class="hidden space-y-4 pt-1">
-<p class="text-xs text-slate-300 leading-relaxed">
-You pay <strong>zero listing fees or monthly subscriptions</strong>—you only pay when a reviewer submits verified feedback. Your configured seller's commission payout creates a <strong>1:1 match</strong> disbursed across the reviewer payout and the referral network pool.
+<div class="p-3.5 bg-blue-500/10 border border-blue-500/30 rounded-xl space-y-2 text-xs text-slate-200 leading-relaxed">
+<p>
+<i class="fa-solid fa-circle-info text-blue-400 mr-1.5"></i><strong>How Your Commission Payment Works:</strong> As a seller, you pay a commission directly to the reviewer who submitted verified feedback, plus a separate fee to the platform/admin for providing the tools, workspace, and infrastructure to facilitate your business.
 </p>
+<p>
+<strong>When Platform Fees Are Split:</strong> If someone introduced you to Echo Hub, or introduced the reviewer who brought you business, those inviter(s) receive an affiliate split out of the platform fee you pay—ensuring 100% of the reviewer's cash reward remains untouched!
+</p>
+</div>
 
 <!-- Interactive Calculator Controls -->
 <div class="p-3.5 bg-cardBg border border-borderSlate rounded-xl space-y-3">
@@ -225,16 +230,19 @@ You pay <strong>zero listing fees or monthly subscriptions</strong>—you only p
 
 <div id="sellerEduTermsDrawer" class="hidden mt-2.5 p-3.5 bg-darkBg border border-borderSlate/80 rounded-xl space-y-2 text-[11px] text-slate-300 leading-relaxed">
 <div>
-<strong class="text-amber-300">Seller Inviter:</strong> The affiliate or merchant who onboarded you (the seller) to Echo Hub. They earn an affiliate split bonus when your products receive verified reviews.
+<strong class="text-emerald-300">Reviewer Commission:</strong> Direct payment you make to the reviewer who submitted verified feedback.
 </div>
 <div>
-<strong class="text-purple-300">Buyer Inviter:</strong> The shopper or affiliate who invited the reviewer to Echo Hub.
+<strong class="text-blue-300">Platform & Facility Fee:</strong> Separate commission paid to Echo Hub for granting the tools and infrastructure to facilitate your business.
 </div>
 <div>
-<strong class="text-emerald-300">Commission Payout:</strong> The full reimbursement and reward disbursed directly to the reviewer for submitting verified feedback.
+<strong class="text-amber-300">Seller Inviter:</strong> The affiliate or merchant who introduced you to the platform. They receive an affiliate split out of the platform fee you pay.
 </div>
 <div>
-<strong class="text-blue-300">Referral Split Bonus:</strong> An extra affiliate reward funded from platform fees—100% of the Reviewer Payout remains untouched!
+<strong class="text-purple-300">Buyer Inviter:</strong> The affiliate or shopper who introduced the reviewer. They receive an affiliate split out of the platform fee you pay.
+</div>
+<div>
+<strong class="text-sky-300">Referral Split Bonus:</strong> An affiliate reward funded directly out of the platform fee paid by you—100% of the Reviewer Payout remains untouched!
 </div>
 </div>
 </div>
@@ -496,7 +504,6 @@ const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, refe
 const finalInvitedByCode = refereeCode || null;
 const finalReferredBy = refereeUuid || null;
 
-// 1. Create Auth User with explicit 'role' and 'user_role' metadata
 const { data: authData, error: authError } = await _supabase.auth.signUp({
 email: email,
 password: password,
@@ -512,26 +519,16 @@ invited_by_code: finalInvitedByCode,
 referred_by: finalReferredBy,
 paypal_email: paypalEmail,
 role: 'seller',
-user_role: 'seller',
 commission_policy_agreed: commissionPolicyAgreed
 }
 }
 });
 if (authError) throw authError;
-
-// 2. Immediately sign in to establish an authenticated session for RLS
-const { data: loginData, error: loginError } = await _supabase.auth.signInWithPassword({
-email: email,
-password: password
-});
-if (loginError) throw loginError;
-
-const userId = loginData.user ? loginData.user.id : (authData.user ? authData.user.id : null);
+const userId = authData.user ? authData.user.id : null;
 if (!userId) {
 throw new Error('User registration failed to return an authenticated ID.');
 }
 
-// 3. Upsert into public.profiles with active authenticated session
 const { error: profileError } = await _supabase
 .from('profiles')
 .upsert({
@@ -543,23 +540,18 @@ invited_by_code: finalInvitedByCode,
 referred_by: finalReferredBy,
 role: 'seller',
 verification_status: 'VERIFIED',
-commission_amount: commissionAmount,
 commission_policy_agreed: commissionPolicyAgreed,
 created_at: new Date().toISOString()
 });
-
 if (profileError) {
 console.warn('Profiles table upsert notice:', profileError.message);
-// Fallback explicit update on profiles
-await _supabase
-.from('profiles')
-.update({
-role: 'seller',
-verification_status: 'VERIFIED',
-commission_amount: commissionAmount
-})
-.eq('id', userId);
 }
+
+const { error: loginError } = await _supabase.auth.signInWithPassword({
+email: email,
+password: password
+});
+if (loginError) throw loginError;
 
 alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
 alertBox.textContent = 'Vendor profile created successfully! Unlocking workspace...';
