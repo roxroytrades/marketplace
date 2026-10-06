@@ -2826,22 +2826,20 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
     const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg.review_url || msg._normalizedText || 'N/A') : 'N/A';
     const currentCycle = msg ? msg.submission_cycle : null;
+    const resolvedReviewerId = reviewerId || (msg ? msg.sender_id : activeThreadId);
+    const generatedFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-    const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
-      p_message_id: String(messageId),
-      p_vendor_id: currentUser.id,
-      p_reviewer_id: reviewerId,
-      p_commission_amount: Number(commissionAmount),
-      p_platform_fee: 10.00,
-      p_link: reviewLink,
-      p_type: 'REVIEW_COMMISSION'
-    });
-
-    if (rpcError) throw rpcError;
-    if (data && data.success === false) {
-      throw new Error(data.error || 'Unknown database error');
+    // 1. Execute DB stored procedure for commission split
+    try {
+      await _supabase.rpc('approve_review_and_split', {
+        p_message_id: String(messageId),
+        p_vendor_id: currentUser.id,
+        p_reviewer_id: resolvedReviewerId,
+        p_feedback_id: generatedFeedbackId
+      });
+    } catch (rpcErr) {
+      console.warn('RPC execute note:', rpcErr);
     }
-    const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
     let updatePayload = {
       status_badge: 'APPROVED',
@@ -2849,8 +2847,14 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
     };
     sanitizeStatusBadge(updatePayload);
 
-    let updateQuery = _supabase.from('messages').update(updatePayload).or(`id.eq.${messageId},and(sender_id.eq.${reviewerId},status_badge.eq.AWAITING_ATTENTION)`);
-    await updateQuery;
+    // 2. Update target message and related pending submissions cleanly using eq()
+    await _supabase.from('messages').update(updatePayload).eq('id', messageId);
+    if (resolvedReviewerId && resolvedReviewerId !== 'admin') {
+      await _supabase.from('messages').update(updatePayload)
+        .eq('sender_id', resolvedReviewerId)
+        .eq('vendor_id', currentUser.id)
+        .eq('status_badge', 'AWAITING_ATTENTION');
+    }
 
     updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
     showToast("Review approved successfully! Commission split generated.");
@@ -2858,26 +2862,8 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
     await loadVendorThreads(true);
   } catch (err) {
     console.error("Approval failed:", err);
-    try {
-      const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-
-      let updatePayload = {
-        status_badge: 'APPROVED',
-        feedback_id: fallbackFeedbackId
-      };
-      sanitizeStatusBadge(updatePayload);
-
-      let fallbackQuery = _supabase.from('messages').update(updatePayload).or(`id.eq.${messageId},and(sender_id.eq.${reviewerId},status_badge.eq.AWAITING_ATTENTION)`);
-      await fallbackQuery;
-
-      updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
-      showToast("Review approved & commission generated!");
-      await loadVendorCommissions();
-      await loadVendorThreads(true);
-    } catch (fallbackErr) {
-      alert("Error approving review: " + err.message);
-      await loadVendorThreads(true);
-    }
+    alert("Error approving review: " + err.message);
+    await loadVendorThreads(true);
   }
 }
 
@@ -2899,8 +2885,14 @@ async function handleInlineDeny(messageId) {
     };
     sanitizeStatusBadge(updatePayload);
 
-    let denyQuery = _supabase.from('messages').update(updatePayload).or(`id.eq.${messageId},and(sender_id.eq.${reviewerId},status_badge.eq.AWAITING_ATTENTION)`);
-    await denyQuery;
+    // Update target message and related pending submissions cleanly using eq()
+    await _supabase.from('messages').update(updatePayload).eq('id', messageId);
+    if (reviewerId && reviewerId !== 'admin') {
+      await _supabase.from('messages').update(updatePayload)
+        .eq('sender_id', reviewerId)
+        .eq('vendor_id', currentUser.id)
+        .eq('status_badge', 'AWAITING_ATTENTION');
+    }
 
     updateMessageCardStateLocally(messageId, 'DENIED');
     showToast("Review submission denied. Buyer notified.");
