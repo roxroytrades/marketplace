@@ -2140,7 +2140,7 @@ function openSlaReviewThread(partnerId) {
   }
 }
 
-function selectThread(partnerId) {
+async function selectThread(partnerId) {
   activeThreadId = partnerId;
   if (partnerId) { saveLocalVendorReadState(partnerId); clearManualUnreadThread(partnerId); }
   const unreadMsgIds = [];
