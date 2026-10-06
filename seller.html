@@ -2473,7 +2473,9 @@ async function selectThread(partnerId) {
 }
 
 function hasAmazonUrl(text) {
-  return text && (text.includes('amazon.com') || text.includes('amzn.to') || text.includes('http'));
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  return lower.includes('amazon.com') || lower.includes('amzn.to');
 }
 
 function hasImageAttachment(msg) {
@@ -2679,9 +2681,13 @@ function renderActiveChat(shouldScroll = false) {
     
     const rawBadge = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase().trim();
     const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
-    const reviewUrl = m.amazon_review_url || m.link || m.review_url || (text.includes('amazon.com') || text.includes('amzn.to') ? (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '') : '');
-    const hasValidProof = Boolean(reviewUrl) || hasAmazonUrl(text) || hasImageAttachment(m) || Boolean(m.proof_base64) || Boolean(m.file_url);
-    const showAsReviewCard = isExplicitReviewType || hasValidProof || Boolean(m.feedback_id);
+    const reviewUrl = m.amazon_review_url || m.review_url || (hasAmazonUrl(text) ? (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '') : '');
+    
+    // Strict proof validation: must have an explicit Amazon URL OR proof_base64 OR explicit review submission type
+    const hasAmazonLink = Boolean(reviewUrl) || hasAmazonUrl(text);
+    const hasScreenshotProof = Boolean(m.proof_base64) || (isExplicitReviewType && Boolean(m.file_url || m.image_url || m.attachment_url));
+    const isReviewSubmission = isExplicitReviewType || hasAmazonLink || hasScreenshotProof;
+    const showAsReviewCard = isReviewSubmission || (Boolean(m.feedback_id) && m.feedback_id !== 'Pending Approval');
     
     const feedbackId = m.feedback_id || 'Pending Approval';
     const amazonUrl = reviewUrl || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
