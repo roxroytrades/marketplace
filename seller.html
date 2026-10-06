@@ -1163,7 +1163,7 @@ function checkReviewSLADeadlinesAndLockout() {
       const isFromShopper = m.sender_id !== currentUser.id;
       const statusBadge = (m.status_badge || m.status || 'AWAITING_ATTENTION').toUpperCase();
       const isPending = statusBadge === 'AWAITING_ATTENTION' || statusBadge === 'PENDING';
-      const hasReviewProof = hasAmazonUrl(m.text || m.review_url || m.link || m.amazon_review_url || '') || m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
+      const hasReviewProof = hasAmazonUrl(m.text || m.review_url || m.link || m.amazon_review_url || '') || (m.type === 'review_submission' && hasAmazonUrl(m.text || m.link || ''));
 
       if (isFromShopper && isPending && hasReviewProof) {
         const createdAtTime = new Date(m.created_at || now).getTime();
@@ -1173,13 +1173,13 @@ function checkReviewSLADeadlinesAndLockout() {
         if (remainingMs <= 0) {
           if (!expiredReviewMsg) {
             const partnerProf = (typeof profilesCache !== 'undefined' && profilesCache[t.partnerId]) || {};
-            expiredReviewMsg = { ...m, partnerName: partnerProf.full_name || partnerProf.email || 'Shopper' };
+            expiredReviewMsg = { ...m, partnerId: t.partnerId, partnerName: partnerProf.full_name || partnerProf.email || 'Shopper' };
           }
         } else {
           if (remainingMs < shortestRemainingMs) {
             shortestRemainingMs = remainingMs;
             const partnerProf = (typeof profilesCache !== 'undefined' && profilesCache[t.partnerId]) || {};
-            activeReviewComm = { ...m, partnerName: partnerProf.full_name || partnerProf.email || 'Shopper', remainingMs };
+            activeReviewComm = { ...m, partnerId: t.partnerId, partnerName: partnerProf.full_name || partnerProf.email || 'Shopper', remainingMs };
           }
         }
       }
@@ -1202,7 +1202,8 @@ function checkReviewSLADeadlinesAndLockout() {
       if (title) title.textContent = '🚨 Account Restricted: 48-Hour Review Verification Overdue';
       if (textEl) textEl.textContent = `A review submission from ${expiredReviewMsg.partnerName} is overdue (>48 hours awaiting action). Please approve or deny this review in the Messaging Hub to restore full workspace access.`;
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white cursor-pointer';
-      if (btnText) btnText.textContent = 'Open Messaging Hub';
+      if (btnText) btnText.textContent = 'Open Review Thread';
+      if (actionBtn) actionBtn.setAttribute('onclick', `openSlaReviewThread('${expiredReviewMsg.partnerId}')`);
     }
   } else if (activeReviewComm) {
     isReviewLockoutActive = false;
@@ -1215,7 +1216,8 @@ function checkReviewSLADeadlinesAndLockout() {
       if (title) title.textContent = `⚡ Review Verification SLA: ${hours}h ${mins}m Remaining`;
       if (textEl) textEl.textContent = `Review submission from ${activeReviewComm.partnerName} awaiting approval or denial. Please verify in the Messaging Hub before the 48-hour SLA expires.`;
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer';
-      if (btnText) btnText.textContent = 'Open Messaging Hub';
+      if (btnText) btnText.textContent = 'Open Review Thread';
+      if (actionBtn) actionBtn.setAttribute('onclick', `openSlaReviewThread('${activeReviewComm.partnerId}')`);
     }
   } else {
     isReviewLockoutActive = false;
@@ -2130,7 +2132,15 @@ function renderThreadsList() {
     `;
   }).join('');
 }
-async function selectThread(partnerId) {
+async 
+function openSlaReviewThread(partnerId) {
+  switchVendorTab('messages');
+  if (partnerId && typeof selectThread === 'function') {
+    selectThread(partnerId);
+  }
+}
+
+function selectThread(partnerId) {
   activeThreadId = partnerId;
   if (partnerId) { saveLocalVendorReadState(partnerId); clearManualUnreadThread(partnerId); }
   const unreadMsgIds = [];
@@ -2507,30 +2517,26 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
       feedback_id: generatedFeedbackId
     };
     sanitizeStatusBadge(updatePayload);
+    // Update target message and resolve all pending review messages in thread
     await _supabase
       .from('messages')
       .update(updatePayload)
       .eq('id', messageId);
+
+    // Locally resolve all pending review messages in active thread
     if (thread && thread.messages) {
-      thread.messages.forEach(tm => {
-        const stUpper = (tm.status_badge || tm.status || 'AWAITING_ATTENTION').toUpperCase();
-        if (stUpper === 'AWAITING_ATTENTION' || stUpper === 'PENDING') {
-          tm.status_badge = 'APPROVED';
-          tm.status = 'APPROVED';
-          tm.feedback_id = generatedFeedbackId;
+      thread.messages.forEach(m => {
+        if (m.sender_id !== currentUser.id) {
+          m.status_badge = 'APPROVED';
+          m.feedback_id = generatedFeedbackId;
         }
       });
     }
-    try {
-      if (reviewerId && currentUser && currentUser.id) {
-        await _supabase
-          .from('messages')
-          .update({ status_badge: 'APPROVED', status: 'APPROVED', feedback_id: generatedFeedbackId })
-          .eq('sender_id', reviewerId)
-          .eq('receiver_id', currentUser.id)
-          .or('status_badge.eq.AWAITING_ATTENTION,status_badge.eq.PENDING');
-      }
-    } catch (cleanErr) {}
+    if (msg) {
+      msg.status_badge = 'APPROVED';
+      msg.status = 'APPROVED';
+      msg.feedback_id = generatedFeedbackId;
+    }
     checkReviewSLADeadlinesAndLockout();
     showToast("Review approved and commission split generated!");
     await loadVendorCommissions();
@@ -2585,25 +2591,10 @@ async function handleInlineDeny(messageId) {
     if (error) throw error;
     const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    if (thread && thread.messages) {
-      thread.messages.forEach(tm => {
-        const stUpper = (tm.status_badge || tm.status || 'AWAITING_ATTENTION').toUpperCase();
-        if (stUpper === 'AWAITING_ATTENTION' || stUpper === 'PENDING') {
-          tm.status_badge = 'DENIED';
-          tm.status = 'DENIED';
-        }
-      });
+    if (msg) {
+      msg.status_badge = 'DENIED';
+      msg.status = 'DENIED';
     }
-    try {
-      if (activeThreadId && currentUser && currentUser.id) {
-        await _supabase
-          .from('messages')
-          .update({ status_badge: 'DENIED', status: 'DENIED' })
-          .eq('sender_id', activeThreadId)
-          .eq('receiver_id', currentUser.id)
-          .or('status_badge.eq.AWAITING_ATTENTION,status_badge.eq.PENDING');
-      }
-    } catch (cleanErr) {}
     checkReviewSLADeadlinesAndLockout();
     showToast("Submission marked as DENIED.");
     await loadVendorCommissions();
