@@ -8,8 +8,9 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 /* ==========================================================================
-WHATSAPP-STYLE SIDEBAR CONTEXT MENU ENGINE (PIN, UNREAD, HIDE & UNDO)
-========================================================================== */
+   WHATSAPP-STYLE SIDEBAR CONTEXT MENU ENGINE (PIN, UNREAD, HIDE & UNDO)
+   ========================================================================== */
+
 function getProductImageUrl(item) {
   if (!item) return '';
   let url = item.image_url || item.image || item.img_url || item.image_base64 || item.photo_url || item.picture_url || item.file_url || item.attachment_url || item.proof_base64 || '';
@@ -18,30 +19,57 @@ function getProductImageUrl(item) {
   }
   return url.trim();
 }
+
 let contextMenuTargetId = null;
 let touchTimer = null;
 let touchStartPos = { x: 0, y: 0 };
 let undoToastTimeout = null;
+
 function getThreadMetaStorageKey() {
-  let uId = 'vendor';
+  let uId = 'guest';
   if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
     uId = currentUser.id;
+  } else if (typeof currentAdminUser !== 'undefined' && currentAdminUser && currentAdminUser.id) {
+    uId = currentAdminUser.id;
   }
-  return 'echohub_seller_thread_meta_' + uId;
+  return 'echo_thread_meta_' + uId;
 }
+
 function getThreadMeta() {
   try {
-    return JSON.parse(localStorage.getItem(getThreadMetaStorageKey()) || '{"pinned":[],"manualUnread":{},"hidden":{}}');
+    return JSON.parse(localStorage.getItem(getThreadMetaStorageKey()) || '{}');
   } catch(e) {
-    return {"pinned":[],"manualUnread":{},"hidden":{}};
+    return {};
   }
 }
+
 function saveThreadMeta(meta) {
   try {
     localStorage.setItem(getThreadMetaStorageKey(), JSON.stringify(meta));
   } catch(e) {}
 }
-function handlePinAction(threadId) {
+
+function hideThreadTile(threadId) {
+  const meta = getThreadMeta();
+  if (!meta.hidden) meta.hidden = {};
+  meta.hidden[threadId] = new Date().toISOString();
+  saveThreadMeta(meta);
+  
+  showUndoToast(threadId);
+  refreshThreadsUI();
+}
+
+function undoHideThreadTile(threadId) {
+  const meta = getThreadMeta();
+  if (meta.hidden && meta.hidden[threadId]) {
+    delete meta.hidden[threadId];
+    saveThreadMeta(meta);
+  }
+  hideUndoToast();
+  refreshThreadsUI();
+}
+
+function togglePinThread(threadId) {
   const meta = getThreadMeta();
   if (!meta.pinned) meta.pinned = [];
   const idx = meta.pinned.indexOf(threadId);
@@ -56,21 +84,8 @@ function handlePinAction(threadId) {
   }
   saveThreadMeta(meta);
   refreshThreadsUI();
-  hideThreadContextMenu();
 }
-function handleUnreadAction(threadId) {
-  toggleMarkUnreadThread(threadId);
-  hideThreadContextMenu();
-}
-function handleHideAction(threadId) {
-  const meta = getThreadMeta();
-  if (!meta.hidden) meta.hidden = {};
-  meta.hidden[threadId] = Date.now();
-  saveThreadMeta(meta);
-  refreshThreadsUI();
-  hideThreadContextMenu();
-  showUndoToast(threadId);
-}
+
 function toggleMarkUnreadThread(threadId) {
   const meta = getThreadMeta();
   if (!meta.manualUnread) meta.manualUnread = {};
@@ -82,6 +97,7 @@ function toggleMarkUnreadThread(threadId) {
   saveThreadMeta(meta);
   refreshThreadsUI();
 }
+
 function clearManualUnreadThread(threadId) {
   const meta = getThreadMeta();
   if (meta.manualUnread && meta.manualUnread[threadId]) {
@@ -89,9 +105,27 @@ function clearManualUnreadThread(threadId) {
     saveThreadMeta(meta);
   }
 }
+
+function handlePinAction(threadId) {
+  togglePinThread(threadId);
+  hideThreadContextMenu();
+}
+
+function handleUnreadAction(threadId) {
+  toggleMarkUnreadThread(threadId);
+  hideThreadContextMenu();
+}
+
+function handleHideAction(threadId) {
+  hideThreadTile(threadId);
+  hideThreadContextMenu();
+}
+
 function showThreadContextMenu(e, threadId) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
+  if (e && e.stopPropagation) e.stopPropagation();
   contextMenuTargetId = threadId;
+
   let menu = document.getElementById('threadContextMenu');
   if (!menu) {
     menu = document.createElement('div');
@@ -99,9 +133,11 @@ function showThreadContextMenu(e, threadId) {
     menu.className = 'fixed z-50 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-md p-1.5 w-52 text-xs space-y-1 text-slate-200 transition-opacity duration-150';
     document.body.appendChild(menu);
   }
+
   const meta = getThreadMeta();
   const isPinned = (meta.pinned || []).includes(threadId);
   const isUnread = meta.manualUnread && meta.manualUnread[threadId];
+
   menu.innerHTML = `
     <button onclick="handlePinAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-blue-600/20 hover:text-blue-400 transition flex items-center space-x-2 font-medium">
       <i class="fa-solid fa-thumbtack ${isPinned ? 'text-amber-400 rotate-45' : 'text-slate-400'}"></i>
@@ -111,28 +147,35 @@ function showThreadContextMenu(e, threadId) {
       <i class="fa-solid ${isUnread ? 'fa-envelope-open text-emerald-400' : 'fa-envelope text-blue-400'}"></i>
       <span>${isUnread ? 'Mark as Read' : 'Mark as Unread'}</span>
     </button>
-    <div class="border-t border-slate-800 my-1"></div>
+
     <button onclick="handleHideAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition flex items-center space-x-2 font-medium">
       <i class="fa-solid fa-eye-slash"></i>
       <span>Hide Conversation Tile</span>
     </button>
   `;
+
   const clickX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 100);
   const clickY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 100);
+
   const menuWidth = 210;
   const menuHeight = 140;
+
   let posX = clickX;
   let posY = clickY;
+
   if (posX + menuWidth > window.innerWidth) posX = window.innerWidth - menuWidth - 10;
   if (posY + menuHeight > window.innerHeight) posY = window.innerHeight - menuHeight - 10;
+
   menu.style.left = posX + 'px';
   menu.style.top = posY + 'px';
   menu.style.display = 'block';
 }
+
 function hideThreadContextMenu() {
   const menu = document.getElementById('threadContextMenu');
   if (menu) menu.style.display = 'none';
 }
+
 function showUndoToast(threadId) {
   let toast = document.getElementById('undoHideToast');
   if (!toast) {
@@ -141,39 +184,42 @@ function showUndoToast(threadId) {
     toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900/95 border border-slate-700/80 text-white px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md text-xs flex items-center space-x-3';
     document.body.appendChild(toast);
   }
+
   toast.innerHTML = `
-    <span>Conversation tile hidden from list.</span>
-    <button onclick="undoHideThread('${threadId}')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1 rounded-xl text-[11px] transition shadow">
+    <div class="flex items-center space-x-2">
+      <i class="fa-solid fa-eye-slash text-amber-400"></i>
+      <span>Conversation tile hidden from sidebar.</span>
+    </div>
+    <button onclick="undoHideThreadTile('${threadId}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-xl text-xs font-bold transition shadow-md">
       Undo
     </button>
   `;
+
   toast.style.display = 'flex';
   if (undoToastTimeout) clearTimeout(undoToastTimeout);
   undoToastTimeout = setTimeout(() => {
-    toast.style.display = 'none';
+    hideUndoToast();
   }, 5000);
 }
-function undoHideThread(threadId) {
-  const meta = getThreadMeta();
-  if (meta.hidden && meta.hidden[threadId]) {
-    delete meta.hidden[threadId];
-    saveThreadMeta(meta);
-    refreshThreadsUI();
-  }
+
+function hideUndoToast() {
   const toast = document.getElementById('undoHideToast');
   if (toast) toast.style.display = 'none';
 }
+
 function handleTouchStart(e, threadId) {
+  if (!e.touches || !e.touches[0]) return;
   touchStartPos = {
     x: e.touches[0].clientX,
     y: e.touches[0].clientY
   };
   touchTimer = setTimeout(() => {
-    showThreadContextMenu(e, threadId);
-  }, 600);
+    showThreadContextMenu(e.touches[0], threadId);
+  }, 500);
 }
+
 function handleTouchMove(e) {
-  if (!touchTimer) return;
+  if (!touchTimer || !e.touches || !e.touches[0]) return;
   const moveX = e.touches[0].clientX;
   const moveY = e.touches[0].clientY;
   if (Math.abs(moveX - touchStartPos.x) > 10 || Math.abs(moveY - touchStartPos.y) > 10) {
@@ -181,33 +227,36 @@ function handleTouchMove(e) {
     touchTimer = null;
   }
 }
+
 function handleTouchEnd() {
   if (touchTimer) {
     clearTimeout(touchTimer);
     touchTimer = null;
   }
 }
+
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#threadContextMenu')) hideThreadContextMenu();
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') hideThreadContextMenu();
 });
+
 </script>
 <script>
 tailwind.config = {
-  darkMode: 'class',
-  theme: {
-    extend: {
-      colors: {
-        darkBg: '#0F172A',
-        cardBg: '#1E293B',
-        accentBlue: '#2563EB',
-        accentHover: '#1D4ED8',
-        borderSlate: '#334155'
-      }
-    }
-  }
+darkMode: 'class',
+theme: {
+extend: {
+colors: {
+darkBg: '#0F172A',
+cardBg: '#1E293B',
+accentBlue: '#2563EB',
+accentHover: '#1D4ED8',
+borderSlate: '#334155'
+}
+}
+}
 }
 </script>
 <!-- FontAwesome for Icons -->
@@ -219,40 +268,52 @@ tailwind.config = {
 <style>
 body { font-family: 'Inter', sans-serif; }
 h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 <!-- Top Navigation Bar -->
-<header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
-<div class="flex items-center space-x-3">
-<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden">
+
+<!-- 48-Hour Seller Review Approval Countdown & Feature Lockout Banner -->
+<div id="sellerReviewCountdownBanner" class="hidden bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 border-b border-amber-500/50 px-4 py-3 text-amber-200 text-xs shadow-xl transition-all duration-300 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="flex items-center space-x-3 min-w-0 flex-1">
+      <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 animate-pulse">
+        <i class="fa-solid fa-clock text-base"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="font-bold text-white text-xs sm:text-sm flex flex-wrap items-center gap-2">
+          <span>Action Required: Review Submitted by <span id="reviewLockShopperName" class="text-amber-300 font-semibold underline">Shopper</span></span>
+          <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-md text-[10px] font-mono uppercase tracking-wider">48h Window</span>
+        </div>
+        <div class="text-slate-300 text-[11px] mt-0.5 leading-relaxed">
+          Time Remaining: <span id="reviewLockTimerDisplay" class="font-mono font-bold text-amber-400">48:00:00</span>
+          <span class="block sm:inline sm:ml-2 text-rose-400 font-semibold">(Other features locked until resolved)</span>
+        </div>
+      </div>
+    </div>
+    <button onclick="goToPendingReviewThread()" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-md shrink-0 cursor-pointer">
+      <i class="fa-solid fa-comments"></i>
+      <span>Resolve Review Now</span>
+    </button>
+  </div>
+</div>
+
+<header class="bg-cardBg border-b border-borderSlate px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div class="flex items-center space-x-3 min-w-0">
+<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden shrink-0">
 eh
 </div>
-<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal</span></span>
+<span class="font-heading text-lg sm:text-xl font-bold tracking-wide text-white min-w-0">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-1 sm:ml-2">Vendor Portal</span></span>
 </div>
-<div class="flex items-center space-x-4">
+<div class="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto shrink-0">
 <!-- Logged-in User Badge -->
-<div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
+<div class="flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
 <div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
 <i class="fa-solid fa-store text-[10px]"></i>
 </div>
 <span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
 </div>
-<!-- Portals Dropdown -->
-<div class="relative group">
-<button class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-xs text-slate-300 px-3 py-2 rounded-xl transition flex items-center space-x-2">
-<i class="fa-solid fa-link text-slate-400"></i>
-<span>Quick Navigation</span>
-<i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
-</button>
-<div class="absolute right-0 mt-2 w-48 bg-cardBg border border-borderSlate rounded-xl shadow-2xl py-2 hidden group-hover:block z-50">
-<a href="index.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Shopper Marketplace</a>
-<a href="admin.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Admin Panel</a>
-<a href="login.html" class="block px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition">Sign In Portal</a>
-</div>
-</div>
+
 <!-- Logout Button -->
 <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
 <i class="fa-solid fa-right-from-bracket"></i>
@@ -262,22 +323,24 @@ eh
 </header>
 <!-- Main Workspace Container -->
 <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+
 <!-- Receipt Upload 24-Hour Countdown & Lockout Banner -->
 <div id="receiptCountdownBanner" class="hidden rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6">
-<div class="flex items-center space-x-3">
-<div id="receiptBannerIconBg" class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
-<i id="receiptBannerIcon" class="fa-solid fa-clock text-lg"></i>
+  <div class="flex items-center space-x-3.5">
+    <div id="receiptBannerIconBg" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0">
+      <i id="receiptBannerIcon" class="fa-solid fa-clock"></i>
+    </div>
+    <div>
+      <h4 id="receiptBannerTitle" class="font-bold text-sm text-white">Action Required: Payment Receipt Pending</h4>
+      <p id="receiptBannerText" class="text-xs mt-0.5 text-slate-300">Upload payment receipt screenshot for approved review payout.</p>
+    </div>
+  </div>
+  <button id="receiptBannerActionBtn" onclick="openPendingReceiptModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5">
+    <i class="fa-solid fa-file-arrow-up"></i>
+    <span id="receiptBannerBtnText">Upload Receipt Now</span>
+  </button>
 </div>
-<div class="space-y-0.5">
-<h4 id="receiptBannerTitle" class="font-bold text-sm">Action Required: Receipt Upload Deadline</h4>
-<p id="receiptBannerText" class="text-xs opacity-90"></p>
-</div>
-</div>
-<button id="receiptBannerActionBtn" onclick="openPendingReceiptModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5">
-<i class="fa-solid fa-file-arrow-up"></i>
-<span id="receiptBannerBtnText">Upload Receipt Now</span>
-</button>
-</div>
+
 <!-- Welcome Banner & Section Switcher Tabs -->
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
 <div class="space-y-1">
@@ -333,71 +396,74 @@ eh
 </div>
 <!-- Vendor Financial KPI Header Cards -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-<!-- Unsettled Commissions Card -->
-<div class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-amber-500/60 transition">
-<div class="space-y-1 z-10">
-<p class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1">
-<i class="fa-solid fa-clock mr-1"></i>
-<span>Unsettled Commissions</span>
-</p>
-<h3 id="statUnsettledCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-<p class="text-[10px] text-slate-400">Active reviews awaiting approval/settlement</p>
+  <!-- Unsettled Commissions Card -->
+  <div class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-amber-500/60 transition">
+    <div class="space-y-1 z-10">
+      <p class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1">
+        <i class="fa-solid fa-clock mr-1"></i>
+        <span>Unsettled Commissions</span>
+      </p>
+      <h3 id="statUnsettledCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400">Active reviews awaiting approval/settlement</p>
+    </div>
+    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl group-hover:scale-110 transition shrink-0">
+      <i class="fa-solid fa-hourglass-half"></i>
+    </div>
+  </div>
+
+  <!-- Settled Review Disbursements Card -->
+  <div class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-emerald-500/60 transition">
+    <div class="space-y-1 z-10">
+      <p class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
+        <i class="fa-solid fa-circle-check mr-1"></i>
+        <span>Settled Disbursements</span>
+      </p>
+      <h3 id="statSettledDisbursements" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400">Total historical payouts completed & archived</p>
+    </div>
+    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl group-hover:scale-110 transition shrink-0">
+      <i class="fa-solid fa-wallet"></i>
+    </div>
+  </div>
+
+  <!-- Total Lifetime Review Spend Card -->
+  <div class="bg-cardBg border border-purple-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-purple-500/60 transition">
+    <div class="space-y-1 z-10">
+      <p class="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center space-x-1">
+        <i class="fa-solid fa-chart-line mr-1"></i>
+        <span>Total Lifetime Review Spend</span>
+      </p>
+      <h3 id="statTotalVendorSpend" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+      <p class="text-[10px] text-slate-400">Grand total review campaign expenditure</p>
+    </div>
+    <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl group-hover:scale-110 transition shrink-0">
+      <i class="fa-solid fa-vault"></i>
+    </div>
+  </div>
 </div>
-<div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl group-hover:scale-110 transition shrink-0">
-<i class="fa-solid fa-hourglass-half"></i>
-</div>
-</div>
-<!-- Settled Disbursements Card -->
-<div class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-emerald-500/60 transition">
-<div class="space-y-1 z-10">
-<p class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
-<i class="fa-solid fa-circle-check mr-1"></i>
-<span>Settled Disbursements</span>
-</p>
-<h3 id="statSettledDisbursements" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-<p class="text-[10px] text-slate-400">Total historical payouts completed & archived</p>
-</div>
-<div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl group-hover:scale-110 transition shrink-0">
-<i class="fa-solid fa-wallet"></i>
-</div>
-</div>
-<!-- Total Lifetime Review Spend Card -->
-<div class="bg-cardBg border border-purple-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-purple-500/60 transition">
-<div class="space-y-1 z-10">
-<p class="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center space-x-1">
-<i class="fa-solid fa-chart-line mr-1"></i>
-<span>Total Lifetime Review Spend</span>
-</p>
-<h3 id="statTotalVendorSpend" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-<p class="text-[10px] text-slate-400">Grand total review campaign expenditure</p>
-</div>
-<div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl group-hover:scale-110 transition shrink-0">
-<i class="fa-solid fa-vault"></i>
-</div>
-</div>
-</div>
+
 <!-- Commissions 5-Tab Pipeline Navigation -->
 <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-<button onclick="switchCommSubTab('incoming')" id="subTabIncoming" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-1.5">
-<span>Incoming Requests</span>
-<span id="badgeIncomingComm" class="bg-blue-500/30 text-blue-200 border border-blue-400/30 text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-</button>
-<button onclick="switchCommSubTab('mainQueue')" id="subTabMainQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
-<span>Main Queue</span>
-<span id="badgeMainQueueComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-</button>
-<button onclick="switchCommSubTab('outgoing')" id="subTabOutgoing" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
-<span>Outgoing Requests</span>
-<span id="badgeOutgoingComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-</button>
-<button onclick="switchCommSubTab('workingQueue')" id="subTabWorkingQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
-<span>Working Queue</span>
-<span id="badgeWorkingQueueComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-</button>
-<button onclick="switchCommSubTab('history')" id="subTabHistory" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
-<span>Payment History</span>
-<span id="badgeHistoryComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-</button>
+  <button onclick="switchCommSubTab('incoming')" id="subTabIncoming" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-1.5">
+    <span>Incoming Requests</span>
+    <span id="badgeIncomingComm" class="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+  </button>
+  <button onclick="switchCommSubTab('mainQueue')" id="subTabMainQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
+    <span>Main Queue</span>
+    <span id="badgeMainQueueComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+  </button>
+  <button onclick="switchCommSubTab('outgoing')" id="subTabOutgoing" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
+    <span>Outgoing Requests</span>
+    <span id="badgeOutgoingComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+  </button>
+  <button onclick="switchCommSubTab('workingQueue')" id="subTabWorkingQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
+    <span>Working Queue</span>
+    <span id="badgeWorkingQueueComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+  </button>
+  <button onclick="switchCommSubTab('history')" id="subTabHistory" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
+    <span>Payment History</span>
+    <span id="badgeHistoryComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+  </button>
 </div>
 <!-- Action Toolbar -->
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
@@ -430,33 +496,38 @@ eh
 <div class="flex items-center justify-between">
 <div>
 <h2 class="text-lg font-bold text-white tracking-tight">Buyer & Reviewer Messaging Threads</h2>
-<p class="text-xs text-slate-400">Direct WhatsApp-style chat stream for reviewing live proof attachments and buyer inquiries.</p>
+<p class="text-xs text-slate-400">Coordinate campaign details, review submissions, and answer queries in real time.</p>
 </div>
+<span class="text-xs text-slate-400 bg-cardBg border border-borderSlate px-3 py-1.5 rounded-xl">Inbox Active</span>
 </div>
+<!-- Messaging Grid Layout -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<!-- Left Sidebar: Conversations & Contacts Switcher -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col h-[500px]">
-<div class="flex bg-darkBg border border-borderSlate p-1 rounded-xl mb-3">
-<button type="button" id="subTabThreadsBtn" onclick="switchMessagingSubTab('threads')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow">
-<i class="fa-solid fa-comments mr-1"></i> Chats
-</button>
-<button type="button" id="subTabContactsBtn" onclick="switchMessagingSubTab('contacts')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white">
-<i class="fa-solid fa-address-book mr-1"></i> Contact List
-</button>
-</div>
-<!-- Active Conversations View -->
-<div id="messagingThreadsContainer" class="flex-1 overflow-y-auto space-y-2 pr-1">
-<div id="messagingThreadsList" class="space-y-2">
-<!-- Dynamic Threads -->
-</div>
-</div>
-<!-- Contact Directory View -->
-<div id="messagingContactsContainer" class="flex-1 overflow-y-auto space-y-2 hidden pr-1">
-<input type="text" id="sellerContactSearchInput" oninput="renderSellerContactsList()" placeholder="Search contacts by name, email..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition mb-2">
-<div id="messagingContactsList" class="space-y-2">
-<!-- Dynamic Contacts -->
-</div>
-</div>
+<!-- Thread & Contact List Sidebar -->
+<div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 h-[500px] flex flex-col overflow-hidden">
+  <!-- Sub-tab switcher: Active Chats vs Contact List -->
+  <div class="flex bg-darkBg border border-borderSlate p-1 rounded-xl shrink-0">
+    <button type="button" id="subTabThreadsBtn" onclick="switchMessagingSubTab('threads')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow">
+      <i class="fa-solid fa-comments mr-1"></i> Active Chats
+    </button>
+    <button type="button" id="subTabContactsBtn" onclick="switchMessagingSubTab('contacts')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white">
+      <i class="fa-solid fa-address-book mr-1"></i> Contact List
+    </button>
+  </div>
+
+  <!-- Active Conversations View -->
+  <div id="messagingThreadsContainer" class="flex-1 overflow-y-auto space-y-2 pr-1">
+    <div id="messagingThreadsList" class="space-y-2">
+      <!-- Dynamic Threads -->
+    </div>
+  </div>
+
+  <!-- Contact Directory View -->
+  <div id="messagingContactsContainer" class="flex-1 overflow-y-auto space-y-2 hidden pr-1">
+    <input type="text" id="sellerContactSearchInput" oninput="renderSellerContactsList()" placeholder="Search contacts by name, email..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition mb-2">
+    <div id="messagingContactsList" class="space-y-2">
+      <!-- Dynamic Contacts -->
+    </div>
+  </div>
 </div>
 <!-- Active Chat Panel -->
 <div class="lg:col-span-2 bg-cardBg border border-borderSlate rounded-2xl p-6 flex flex-col justify-between h-[500px]">
@@ -465,15 +536,16 @@ eh
 <h3 id="activeChatTitle" class="text-sm font-bold text-white">Select a conversation</h3>
 <p id="activeChatSub" class="text-[10px] text-slate-400">Reviewer or Support Agent</p>
 </div>
+
 </div>
-<div id="chatMessagesContainer" class="flex-1 overflow-y-auto py-4 space-y-3 pr-1">
-<div class="m-auto text-center text-xs text-slate-500">
-<i class="fa-solid fa-comments text-3xl mb-2 text-slate-600 block"></i>
-<span>Select a buyer or reviewer thread to open the chat stream.</span>
+<div id="chatMessagesContainer" class="flex-1 overflow-y-auto py-4 space-y-3 pr-2">
+<div class="text-center py-16 text-xs text-slate-500">
+<i class="fa-solid fa-comments text-2xl mb-2"></i>
+<p>Choose a thread on the left to start messaging.</p>
 </div>
 </div>
-<!-- File Attachment Preview Pill -->
-<div id="chatAttachmentPreview" class="hidden px-3 py-1.5 bg-slate-900 border border-borderSlate rounded-xl flex items-center justify-between text-xs text-slate-300 mb-2">
+<!-- Attached File Preview Container -->
+<div id="chatAttachmentPreview" class="hidden px-4 py-2 bg-darkBg border-t border-borderSlate flex items-center justify-between text-xs text-slate-300">
 <div class="flex items-center space-x-2 truncate">
 <i class="fa-solid fa-paperclip text-blue-400"></i>
 <span id="chatAttachmentName" class="truncate"></span>
@@ -498,22 +570,23 @@ eh
 <h2 class="text-lg font-bold text-white tracking-tight">Vendor Referral & Affiliate Program</h2>
 <p class="text-xs text-slate-400">Invite new vendors and reviewers to earn recurring platform commission rewards.</p>
 </div>
+
 <!-- Prominent Referral Code Banner -->
 <div class="bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-transparent border border-purple-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-<div class="flex items-center space-x-4">
-<div class="w-12 h-12 bg-purple-500/20 border border-purple-500/40 rounded-xl flex items-center justify-center text-purple-400 text-xl font-bold">
-<i class="fa-solid fa-ticket"></i>
-</div>
-<div>
-<span class="text-[10px] font-bold uppercase tracking-wider text-purple-400">Your Unique Inviter Referral Code</span>
-<h3 id="vendorRefCodeDisplay" class="text-2xl font-extrabold text-white font-mono tracking-wide">REF-LOADING</h3>
-<p class="text-[11px] text-slate-400">Give this code to merchants or shoppers to enter on sign-up.</p>
-</div>
-</div>
-<button onclick="copyVendorRefCode()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-purple-500/20 flex items-center space-x-2 whitespace-nowrap">
-<i class="fa-solid fa-copy"></i>
-<span>Copy Code</span>
-</button>
+  <div class="flex items-center space-x-4">
+    <div class="w-12 h-12 bg-purple-500/20 border border-purple-500/40 rounded-xl flex items-center justify-center text-purple-400 text-xl font-bold">
+      <i class="fa-solid fa-ticket"></i>
+    </div>
+    <div>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-purple-400">Your Unique Inviter Referral Code</span>
+      <h3 id="vendorRefCodeDisplay" class="text-2xl font-extrabold text-white font-mono tracking-wide">REF-LOADING</h3>
+      <p class="text-[11px] text-slate-400">Give this code to merchants or shoppers to enter on sign-up.</p>
+    </div>
+  </div>
+  <button onclick="copyVendorRefCode()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-purple-500/20 flex items-center space-x-2 whitespace-nowrap">
+    <i class="fa-solid fa-copy"></i>
+    <span>Copy Code</span>
+  </button>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
@@ -651,90 +724,100 @@ Close Inspector
 </div>
 </div>
 </div>
+
 <!-- Seller Commission Details Modal -->
 <div id="sellerCommDetailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
-<div class="flex items-center justify-between border-b border-borderSlate pb-3">
-<div class="flex items-center space-x-2">
-<div class="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 font-bold text-xs">
-<i class="fa-solid fa-file-invoice-dollar"></i>
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400 font-bold text-xs">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Commission Transaction Ledger Details</h3>
+          <p class="text-[10px] text-slate-400">Complete transaction metadata, recipient details, and audit proof</p>
+        </div>
+      </div>
+      <button onclick="closeSellerCommDetailsModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
+    </div>
+
+    <div id="sellerCommDetailsContent" class="space-y-4 text-xs">
+      <!-- Dynamic Details Filled via JS -->
+    </div>
+
+    <div class="flex justify-end space-x-2 border-t border-borderSlate pt-3">
+      <button onclick="closeSellerCommDetailsModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Close</button>
+    </div>
+  </div>
 </div>
-<div>
-<h3 class="text-sm font-bold text-white">Commission Transaction Ledger Details</h3>
-<p class="text-[10px] text-slate-400">Complete transaction metadata, recipient details, and audit proof</p>
-</div>
-</div>
-<button onclick="closeSellerCommDetailsModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
-</div>
-<div id="sellerCommDetailsContent" class="space-y-4 text-xs">
-<!-- Dynamic Details Filled via JS -->
-</div>
-<div class="flex justify-end space-x-2 border-t border-borderSlate pt-3">
-<button onclick="closeSellerCommDetailsModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Close</button>
-</div>
-</div>
-</div>
+
 <!-- Proactive Top-Down Offer Modal (Main Queue) -->
 <div id="topDownOfferModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-4">
-<div class="flex items-center space-x-2">
-<div class="w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-blue-400 font-bold text-xs">
-<i class="fa-solid fa-paper-plane"></i>
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-blue-400 font-bold text-xs">
+          <i class="fa-solid fa-paper-plane"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Proactive Commission Offer</h3>
+          <p class="text-[10px] text-slate-400">Initiate top-down payout offer to recipient(s)</p>
+        </div>
+      </div>
+      <button onclick="document.getElementById('topDownOfferModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+
+    <form onsubmit="handleTopDownOfferSubmit(event)" class="space-y-4">
+      <!-- Batch Mode Summary View (When rows are checked) -->
+      <div id="batchOfferFields" class="hidden space-y-3">
+        <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-layer-group text-blue-400 text-sm"></i>
+            <span class="text-xs font-semibold text-blue-300">Batch Offer Mode</span>
+          </div>
+          <span id="batchOfferCountBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">0 Selected</span>
+        </div>
+
+        <div class="bg-darkBg border border-borderSlate rounded-2xl p-3 space-y-2 max-h-48 overflow-y-auto" id="batchOfferListContainer">
+          <!-- Selected rows summarized dynamically -->
+        </div>
+
+        <div class="p-3 bg-darkBg border border-borderSlate rounded-2xl flex items-center justify-between text-xs">
+          <span class="text-slate-400 font-medium">Total Offer Amount:</span>
+          <span id="batchOfferTotalAmount" class="font-bold text-emerald-400 text-sm">$0.00 USD</span>
+        </div>
+      </div>
+
+      <!-- Manual Entry Mode View (When no rows are checked) -->
+      <div id="manualOfferFields" class="space-y-3">
+        <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-300">
+          <i class="fa-solid fa-info-circle mr-1"></i> No records selected. Enter details manually to generate a new custom top-down offer.
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Recipient Email or User ID</label>
+          <input type="text" id="offerRecipientId" placeholder="recipient@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Recipient Role</label>
+          <select id="offerRecipientRole" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+            <option value="REVIEWER">REVIEWER</option>
+            <option value="BUYER_INVITER">BUYER_INVITER</option>
+            <option value="SELLER_INVITER">SELLER_INVITER</option>
+          </select>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Commission Amount ($ USD)</label>
+          <input type="number" step="0.01" id="offerAmount" placeholder="20.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        </div>
+      </div>
+
+      <button type="submit" id="topDownOfferSubmitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
+        Send Offer to Outgoing Requests
+      </button>
+    </form>
+  </div>
 </div>
-<div>
-<h3 class="text-lg font-bold text-white">Proactive Commission Offer</h3>
-<p class="text-[10px] text-slate-400">Initiate top-down payout offer to recipient(s)</p>
-</div>
-</div>
-<button onclick="document.getElementById('topDownOfferModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-</div>
-<form onsubmit="handleTopDownOfferSubmit(event)" class="space-y-4">
-<!-- Batch Mode Summary View (When rows are checked) -->
-<div id="batchOfferFields" class="hidden space-y-3">
-<div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between">
-<div class="flex items-center space-x-2">
-<i class="fa-solid fa-layer-group text-blue-400 text-sm"></i>
-<span class="text-xs font-semibold text-blue-300">Batch Offer Mode</span>
-</div>
-<span id="batchOfferCountBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">0 Selected</span>
-</div>
-<div class="bg-darkBg border border-borderSlate rounded-2xl p-3 space-y-2 max-h-48 overflow-y-auto" id="batchOfferListContainer">
-<!-- Selected rows summarized dynamically -->
-</div>
-<div class="p-3 bg-darkBg border border-borderSlate rounded-2xl flex items-center justify-between text-xs">
-<span class="text-slate-400 font-medium">Total Offer Amount:</span>
-<span id="batchOfferTotalAmount" class="font-bold text-emerald-400 text-sm">$0.00 USD</span>
-</div>
-</div>
-<!-- Manual Entry Mode View (When no rows are checked) -->
-<div id="manualOfferFields" class="space-y-3">
-<div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-300">
-<i class="fa-solid fa-info-circle mr-1"></i> No records selected. Enter details manually to generate a new custom top-down offer.
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Recipient Email or User ID</label>
-<input type="text" id="offerRecipientId" placeholder="recipient@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Recipient Role</label>
-<select id="offerRecipientRole" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-<option value="REVIEWER">REVIEWER</option>
-<option value="BUYER_INVITER">BUYER_INVITER</option>
-<option value="SELLER_INVITER">SELLER_INVITER</option>
-</select>
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Commission Amount ($ USD)</label>
-<input type="number" step="0.01" id="offerAmount" placeholder="20.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-</div>
-<button type="submit" id="topDownOfferSubmitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
-Send Offer to Outgoing Requests
-</button>
-</form>
-</div>
-</div>
+
 <!-- Toast Notification Container -->
 <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2"></div>
 <!-- Footer -->
@@ -746,48 +829,23 @@ Send Offer to Outgoing Requests
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/* ================= SCHEMA GUARD & RUNTIME SANITIZER UTILITIES ================= */
-const SCHEMA_COLUMNS = {
-  profiles: ['id', 'full_name', 'email', 'role', 'verification_status', 'whatsapp', 'paypal_email', 'referral_code', 'invited_by_code', 'categories', 'commission_amount', 'national_id_base64', 'commission_policy_agreed', 'created_at'],
-  products: ['id', 'seller_id', 'vendor_id', 'title', 'category', 'image', 'image_url', 'image_url_2', 'product_link', 'price', 'commission', 'commission_amount', 'status', 'is_active', 'description', 'amazon_url', 'product_url', 'amazon_link', 'created_at'],
-  messages: ['id', 'buyer_id', 'vendor_id', 'sender_id', 'receiver_id', 'product_id', 'text', 'message_text', 'content', 'body', 'review_url', 'link', 'image_url', 'file_url', 'attachment_url', 'proof_base64', 'status_badge', 'status', 'feedback_id', 'submission_cycle', 'is_read', 'channel_type', 'created_at'],
-  commissions: ['id', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'role_type', 'queue_type', 'amount', 'status', 'status_tag', 'paypal_tx_id', 'receipt_base64', 'receipt_url', 'created_at'],
-  system_settings: ['key', 'value', 'updated_at', 'created_at'],
-  notifications: ['id', 'user_id', 'title', 'message', 'is_read', 'created_at']
-};
-
-function sanitizeOrFilter(tableName, filterStr) {
-  if (!filterStr || !SCHEMA_COLUMNS[tableName]) return filterStr;
-  const allowed = SCHEMA_COLUMNS[tableName];
-  return filterStr.split(',').filter(clause => {
-    const rawCol = clause.split('.')[0].trim();
-    return allowed.includes(rawCol) || rawCol.startsWith('and') || rawCol.startsWith('or');
-  }).join(',');
-}
-
-function sanitizePayload(tableName, payload) {
-  if (!payload || typeof payload !== 'object' || !SCHEMA_COLUMNS[tableName]) return payload;
-  const allowed = SCHEMA_COLUMNS[tableName];
-  const sanitized = {};
-  for (const [key, val] of Object.entries(payload)) {
-    if (allowed.includes(key)) {
-      sanitized[key] = val;
-    } else {
-      console.warn(`[Schema Guard] Stripped unmapped key '${key}' from '${tableName}' payload`);
-    }
-  }
-  return sanitized;
-}
-
 let currentUser = null;
+
 /* Global Chat Products Cache & Lookup Engine */
 let chatProducts = {};
+
 async function getSellerChatProduct(productId) {
   if (!productId) return null;
   let prod = (vendorProducts || []).find(p => p.id === productId || String(p.id).toLowerCase() === String(productId).toLowerCase());
   if (prod) return prod;
   if (chatProducts[productId]) return chatProducts[productId];
+  if (typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
+    prod = marketplaceProducts.find(p => p.id === productId || String(p.id).toLowerCase() === String(productId).toLowerCase());
+    if (prod) {
+      chatProducts[productId] = prod;
+      return prod;
+    }
+  }
   try {
     const { data, error } = await _supabase
       .from('products')
@@ -803,6 +861,7 @@ async function getSellerChatProduct(productId) {
   }
   return null;
 }
+
 let vendorProducts = [];
 let vendorCommissions = [];
 let profilesCache = {};
@@ -811,6 +870,7 @@ let vendorThreads = [];
 let readVendorThreadIds = new Set();
 let lastReadVendorTimeMap = {};
 let activeThreadId = null;
+
 function loadLocalVendorReadState() {
   const userId = currentUser?.id || 'vendor';
   try {
@@ -821,6 +881,7 @@ function loadLocalVendorReadState() {
     lastReadVendorTimeMap = {};
   }
 }
+
 function saveLocalVendorReadState(partnerId) {
   const userId = currentUser?.id || 'vendor';
   if (partnerId) {
@@ -836,6 +897,39 @@ let activeSubTab = 'incoming';
 let selectedSellerCommIds = new Set();
 let pollingInterval = null;
 let chatAttachedFile = null;
+
+
+/* Payload Sanitizer Utility to prevent unmapped column schema & UUID errors */
+const ALLOWED_TABLE_COLUMNS = {
+  messages: ['id', 'created_at', 'sender_id', 'receiver_id', 'vendor_id', 'buyer_id', 'product_id', 'text', 'is_read', 'feedback_id', 'status', 'status_badge', 'type', 'amazon_review_url', 'review_url', 'commission_amount', 'link', 'content', 'file_url', 'attachment_url', 'proof_base64'],
+  commissions: ['id', 'created_at', 'updated_at', 'seller_id', 'vendor_id', 'recipient_id', 'product_id', 'amount', 'commission_amount', 'status', 'queue_type', 'role_type', 'proof_url', 'payout_proof_url', 'paypal_tx_id', 'receipt_base64'],
+  profiles: ['id', 'updated_at', 'full_name', 'email', 'paypal_email', 'role', 'verification_status', 'referral_code', 'invited_by_code', 'is_blocked']
+};
+
+function sanitizePayload(tableName, payload) {
+  if (!payload || typeof payload !== 'object') return payload;
+  const allowed = ALLOWED_TABLE_COLUMNS[tableName];
+  
+  const sanitizeItem = (obj) => {
+    const clean = {};
+    for (const key in obj) {
+      if (!allowed || allowed.includes(key)) {
+        let val = obj[key];
+        if (typeof val === 'string' && (val.trim() === '' || val === 'null' || val === 'undefined') && ((key.endsWith('_id') || key === 'id') || key === 'id')) {
+          val = null;
+        }
+        clean[key] = val;
+      }
+    }
+    return clean;
+  };
+
+  if (Array.isArray(payload)) {
+    return payload.map(sanitizeItem);
+  }
+  return sanitizeItem(payload);
+}
+
 /* Status Badge Sanitizer Helper */
 const sanitizeStatusBadge = (payload) => {
   if (payload.status_badge) {
@@ -843,6 +937,7 @@ const sanitizeStatusBadge = (payload) => {
   }
   return payload;
 };
+
 /* 1. Page-Load Workspace Initialization & Role Security Guard */
 async function initSellerWorkspace() {
   try {
@@ -852,27 +947,40 @@ async function initSellerWorkspace() {
       window.location.href = 'login.html';
       return;
     }
+
     /* Step B: Fetch user role from public.profiles */
     const { data: profile, error: profileError } = await _supabase
       .from('profiles')
       .select('role')
       .eq('id', session.user.id)
       .single();
+
     if (profileError || !profile || !profile.role) {
       await _supabase.auth.signOut();
       window.location.href = 'login.html';
       return;
     }
+
     /* Step C: Enforce role isolation (Block Buyers from Vendor Portal) */
+    
+    if (profile && profile.verification_status && (profile.verification_status.toUpperCase() === 'BANNED' || profile.verification_status.toUpperCase() === 'REJECTED')) {
+      alert("Access Restricted: Your account has been banned by Platform Administration.");
+      await _supabase.auth.signOut();
+      window.location.href = 'login.html';
+      return;
+    }
+
     if (profile.role.toLowerCase() === 'buyer') {
       alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
       window.location.href = 'index.html';
       return;
     }
+
     /* Step D: Initialize Authorized Vendor UI */
     currentUser = session.user;
     const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
     const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
     if (document.getElementById('headerUserName')) {
       document.getElementById('headerUserName').textContent = fullName;
     }
@@ -882,28 +990,74 @@ async function initSellerWorkspace() {
     if (document.getElementById('refLinkInput')) {
       document.getElementById('refLinkInput').value = `https://echohub.ja/register?ref=vendor_${currentUser.id.substring(0, 8)}`;
     }
+
     /* Step E: Load Vendor Workspace Data */
     await preloadSellerProfiles();
     await loadVendorProducts();
     await loadVendorCommissions();
     await loadVendorThreads();
+
     /* Step F: Start Live Polling Loop (10-second sync) */
     if (pollingInterval) {
       clearInterval(pollingInterval);
     }
     pollingInterval = setInterval(pollVendorData, 10000);
+
   } catch (err) {
     console.error("Initialization error:", err.message);
     window.location.href = 'login.html';
   }
 }
+
 async function pollVendorData() {
   await preloadSellerProfiles();
   await loadVendorProducts(true);
   await loadVendorCommissions(true);
   await loadVendorThreads(true);
 }
+
 /* 2. Sign Out Handler */
+
+async function handleReportAction(targetUserId) {
+  hideThreadContextMenu();
+  const thread = vendorThreads.find(t => t.partnerId === (targetUserId || activeThreadId));
+  const resolvedTargetId = targetUserId || (thread ? thread.partnerId : activeThreadId);
+  if (!resolvedTargetId) {
+    alert("Please select a conversation before submitting a report.");
+    return;
+  }
+
+  const note = prompt("Please enter details / reason for reporting this shopper to Admin:", "Inappropriate behavior or suspicious activity");
+  if (!note || !note.trim()) return;
+
+  try {
+    const reportMsg = `[USER_REPORT] Reported Shopper (${resolvedTargetId}). Reason: ${note.trim()}`;
+    const reportPayload = {
+      sender_id: currentUser.id,
+      receiver_id: resolvedTargetId,
+      vendor_id: currentUser.id,
+      buyer_id: resolvedTargetId,
+      text: reportMsg,
+      content: reportMsg,
+      message: reportMsg,
+      status_badge: 'REPORTED',
+      channel_type: 'USER_REPORT'
+    };
+
+    let { error } = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
+    if (error && error.message && error.message.includes('channel_type')) {
+      delete reportPayload.channel_type;
+      const retryRes = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
+      error = retryRes.error;
+    }
+    if (error) throw error;
+
+    showToast("Report submitted to Admin for investigation.");
+  } catch (err) {
+    alert("Failed to submit report: " + err.message);
+  }
+}
+
 async function handleLogout() {
   try {
     if (pollingInterval) {
@@ -916,7 +1070,13 @@ async function handleLogout() {
     window.location.href = 'login.html';
   }
 }
+
 function switchVendorTab(tab) {
+  if (pendingReviewLock && pendingReviewLock.active && tab !== 'messages') {
+    alert(`🚨 Feature Access Restricted!\n\nYou have a review submission from ${pendingReviewLock.shopperName} awaiting your approval.\n\nPlease approve or deny this review in the Messaging Hub to unlock all workspace features.`);
+    goToPendingReviewThread();
+    return;
+  }
   if (isReceiptLockoutActive && tab !== 'commissions' && tab !== 'messages') {
     alert('🚨 Account Restricted: 24-hour receipt deadline elapsed. Please upload the missing payment receipt in the Commissions tab or contact Admin in the Messaging Hub to restore full workspace access.');
     return;
@@ -941,40 +1101,63 @@ function switchVendorTab(tab) {
     document.getElementById('navReferralsBtn').className = 'bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20';
   }
 }
+
 /* Image Compression Utility */
 async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = (e) => {
+    reader.onload = (event) => {
       const img = new Image();
-      img.src = e.target.result;
+      img.src = event.target.result;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        let w = img.width;
-        let h = img.height;
-        if (w > maxWidth) {
-          h = Math.round((h * maxWidth) / w);
-          w = maxWidth;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
         }
-        canvas.width = w;
-        canvas.height = h;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
+        ctx.drawImage(img, 0, 0, width, height);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
     };
   });
 }
-/* Product Catalog Management - Dual Owner Querying (vendor_id or seller_id) */
+
+/* Product Catalog Management */
 async function loadVendorProducts(isPolling = false) {
   const grid = document.getElementById('vendorProductGrid');
+  if (!grid || !currentUser || !currentUser.id) return;
   try {
-    const { data, error } = await _supabase
+    let { data, error } = await _supabase
       .from('products')
       .select('*')
-      .or(`vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
+      .eq('vendor_id', currentUser.id)
       .order('created_at', { ascending: false });
+    if (error && (error.code === '42703' || (error.message && error.message.includes('vendor_id')))) {
+      console.warn('vendor_id column missing on products table, falling back to seller_id');
+      const fallback = await _supabase
+        .from('products')
+        .select('*')
+        .eq('seller_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      data = fallback.data;
+      error = fallback.error;
+    }
+    if (error && (error.code === '42703' || (error.message && error.message.includes('seller_id')))) {
+      console.warn('seller_id column missing on products table, falling back to vendor_id');
+      const fallback = await _supabase
+        .from('products')
+        .select('*')
+        .eq('vendor_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) throw error;
     vendorProducts = data || [];
     if (vendorProducts.length === 0) {
@@ -990,15 +1173,12 @@ async function loadVendorProducts(isPolling = false) {
       const priceVal = p.price !== undefined && p.price !== null ? Number(p.price).toFixed(2) : '0.00';
       const commVal = Number(p.commission || p.commission_amount || 15.00).toFixed(2);
       const imgVal = getProductImageUrl(p);
+
       return `
         <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-accentBlue/40 transition">
           <div>
             <div class="relative w-full h-48 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-2 overflow-hidden">
-              <img src="${imgVal}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
-              <div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full">
-                <i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i>
-                <span class="text-xs font-medium text-slate-400">No Image Available</span>
-              </div>
+              <img src="${imgVal}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Image Available</span></div>
               <div class="absolute top-2 left-2 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-emerald-400">
                 $${commVal} Commission
               </div>
@@ -1006,6 +1186,7 @@ async function loadVendorProducts(isPolling = false) {
                 Retail: $${priceVal}
               </div>
             </div>
+
             <div class="p-4 space-y-2">
               <div class="flex justify-between items-center">
                 <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full font-semibold uppercase">${p.status || 'ACTIVE'}</span>
@@ -1013,8 +1194,11 @@ async function loadVendorProducts(isPolling = false) {
               </div>
               <h3 class="font-bold text-white text-sm line-clamp-1">${p.title}</h3>
               <p class="text-xs text-slate-400 line-clamp-2">${p.description || 'No description provided.'}</p>
+
+
             </div>
           </div>
+
           <div class="p-4 pt-0 flex space-x-2 mt-2">
             <button onclick="editProduct('${p.id}')" class="flex-1 bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5">
               <i class="fa-solid fa-pen-to-square text-blue-400"></i>
@@ -1029,6 +1213,7 @@ async function loadVendorProducts(isPolling = false) {
     console.error("Error loading products:", err);
   }
 }
+
 function openProductModal() {
   document.getElementById('productModalTitle').textContent = 'Add New Marketplace Product';
   document.getElementById('editingProductId').value = '';
@@ -1036,9 +1221,11 @@ function openProductModal() {
   if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = '';
   document.getElementById('productModal').classList.remove('hidden');
 }
+
 function closeProductModal() {
   document.getElementById('productModal').classList.add('hidden');
 }
+
 async function editProduct(id) {
   const prod = vendorProducts.find(p => p.id == id);
   if (!prod) return;
@@ -1051,7 +1238,7 @@ async function editProduct(id) {
   if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = prod.amazon_url || prod.product_url || prod.amazon_link || '';
   document.getElementById('productModal').classList.remove('hidden');
 }
-/* Save Product Handler - Dual Owner Fields (vendor_id & seller_id) */
+
 async function handleSaveProduct(event) {
   event.preventDefault();
   const id = document.getElementById('editingProductId').value;
@@ -1062,34 +1249,35 @@ async function handleSaveProduct(event) {
   const amazonUrl = document.getElementById('prodAmazonUrl') ? document.getElementById('prodAmazonUrl').value.trim() : '';
   const fileInput = document.getElementById('prodImageFile');
   let imageUrl = '';
+
   if (id) {
     const existing = vendorProducts.find(p => p.id == id);
     if (existing) imageUrl = existing.image_url || existing.image;
   }
   if (fileInput.files && fileInput.files[0]) {
-    imageUrl = await compressImageFile(fileInput.files[0], 800, 0.7);
+    imageUrl = await compressImageFile(fileInput.files[0]);
   }
+
   try {
     const productData = {
-      vendor_id: currentUser.id,
       seller_id: currentUser.id,
-      title: title,
-      description: description,
-      price: price,
-      status: status,
+      title,
+      description,
+      price,
+      status,
       image_url: imageUrl,
       image: imageUrl,
       amazon_url: amazonUrl,
-      product_url: amazonUrl,
-      amazon_link: amazonUrl
+      product_url: amazonUrl
     };
+
     if (id) {
       const { error } = await _supabase
         .from('products')
         .update(productData)
         .eq('id', id);
       if (error) throw error;
-      showToast('Product listing updated!');
+      showToast('Product updated successfully!');
     } else {
       const { error } = await _supabase
         .from('products')
@@ -1097,6 +1285,7 @@ async function handleSaveProduct(event) {
       if (error) throw error;
       showToast('Product created successfully!');
     }
+
     closeProductModal();
     await preloadSellerProfiles();
     await loadVendorProducts();
@@ -1104,6 +1293,7 @@ async function handleSaveProduct(event) {
     alert('Error saving product: ' + err.message);
   }
 }
+
 async function deleteProduct(id) {
   if (!confirm('Are you sure you want to delete this product?')) return;
   try {
@@ -1115,28 +1305,37 @@ async function deleteProduct(id) {
     alert('Error deleting product: ' + err.message);
   }
 }
-/* 5-Tab Commissions Architecture & Lockout Engine */
+
+/* 5-Tab Commissions Architecture */
+
+/* Receipt Countdown & Account Lockout Engine */
 let isReceiptLockoutActive = false;
 let overdueBuyerIds = new Set();
 let activePendingReceiptComm = null;
+
 function checkReceiptDeadlinesAndLockout() {
   overdueBuyerIds.clear();
   activePendingReceiptComm = null;
   let activeWindowComm = null;
   let shortestRemainingMs = Infinity;
   let expiredComm = null;
+
   const now = Date.now();
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
   (vendorCommissions || []).forEach(c => {
     const statusUpper = (c.status || '').toUpperCase();
     const qTypeUpper = (c.queue_type || '').toUpperCase();
     const isApprovedOrWorking = statusUpper === 'APPROVED_IN_WORKING' || statusUpper === 'WORKING' || qTypeUpper === 'WORKING' || qTypeUpper === 'IN_WORKING' || qTypeUpper === 'WORKING_QUEUE';
     const hasNoReceipt = !c.receipt_base64;
+
     if (isApprovedOrWorking && hasNoReceipt) {
       const approvedAtTime = new Date(c.updated_at || c.created_at || now).getTime();
       const elapsedMs = now - approvedAtTime;
       const remainingMs = TWENTY_FOUR_HOURS - elapsedMs;
+
       if (c.recipient_id) overdueBuyerIds.add(c.recipient_id);
+
       if (remainingMs <= 0) {
         if (!expiredComm) expiredComm = c;
       } else {
@@ -1147,6 +1346,7 @@ function checkReceiptDeadlinesAndLockout() {
       }
     }
   });
+
   const banner = document.getElementById('receiptCountdownBanner');
   const iconBg = document.getElementById('receiptBannerIconBg');
   const icon = document.getElementById('receiptBannerIcon');
@@ -1154,15 +1354,17 @@ function checkReceiptDeadlinesAndLockout() {
   const textEl = document.getElementById('receiptBannerText');
   const actionBtn = document.getElementById('receiptBannerActionBtn');
   const btnText = document.getElementById('receiptBannerBtnText');
+
   if (expiredComm) {
     isReceiptLockoutActive = true;
     activePendingReceiptComm = expiredComm;
     if (banner) {
       banner.classList.remove('hidden');
       banner.className = 'rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6 bg-rose-950/80 border-rose-500/50 text-rose-200';
-      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0';
-      if (title) title.textContent = '🚨 Account Restricted: 24-Hour Receipt Upload Overdue';
-      if (textEl) textEl.textContent = `24 hours elapsed for ${expiredComm.recipient_email || 'Reviewer'} ($${Number(expiredComm.amount || 0).toFixed(2)} payout). Upload receipt proof now to restore full workspace features.`;
+      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-rose-500/20 text-rose-400 border border-rose-500/30';
+      if (icon) icon.className = 'fa-solid fa-triangle-exclamation';
+      if (title) title.textContent = '🚨 Account Restricted: 24-Hour Receipt Deadline Elapsed';
+      if (textEl) textEl.textContent = `24 hours elapsed for ${expiredComm.recipient_email || 'Reviewer'} ($${Number(expiredComm.amount||0).toFixed(2)} payout). Upload receipt proof now to restore full workspace features.`;
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white cursor-pointer';
       if (btnText) btnText.textContent = 'Upload Receipt Now';
     }
@@ -1174,9 +1376,10 @@ function checkReceiptDeadlinesAndLockout() {
     if (banner) {
       banner.classList.remove('hidden');
       banner.className = 'rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6 bg-amber-950/80 border-amber-500/50 text-amber-200';
-      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0';
-      if (title) title.textContent = `⚡ Payout Receipt Deadline: ${hours}h ${mins}m Remaining`;
-      if (textEl) textEl.textContent = `Pending receipt upload for ${activeWindowComm.recipient_email || 'Reviewer'} ($${Number(activeWindowComm.amount || 0).toFixed(2)} payout). Please complete transfer & upload proof before timer expires.`;
+      if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-amber-500/20 text-amber-400 border border-amber-500/30';
+      if (icon) icon.className = 'fa-solid fa-clock';
+      if (title) title.textContent = '⏱️ Action Required: Payment Receipt Pending';
+      if (textEl) textEl.textContent = `Pending receipt for ${activeWindowComm.recipient_name || activeWindowComm.recipient_email || 'Reviewer'} ($${Number(activeWindowComm.amount||0).toFixed(2)} payout) • ${hours}h ${mins}m remaining before account restriction.`;
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer';
       if (btnText) btnText.textContent = 'Upload Receipt Now';
     }
@@ -1186,24 +1389,28 @@ function checkReceiptDeadlinesAndLockout() {
     if (banner) banner.classList.add('hidden');
   }
 }
+
 function openPendingReceiptModal() {
   if (activePendingReceiptComm && activePendingReceiptComm.id) {
-    openSettlementModal(activePendingReceiptComm.id, activePendingReceiptComm.recipient_email || '');
+    openSettlementModal(activePendingReceiptComm.id, activePendingReceiptComm.recipient_email || 'recipient@paypal.com');
   } else {
     switchVendorTab('commissions');
     switchCommSubTab('workingQueue');
   }
 }
+
+
 async function loadVendorCommissions(isPolling = false) {
   if (!currentUser || !currentUser.id) return;
   try {
     let { data, error } = await _supabase
       .from('commissions')
       .select('*')
-      .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
-      .order('created_at', { ascending: false });
+      .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
     if (error) throw error;
     vendorCommissions = data || [];
+
+    /* Fetch profiles for recipients */
     const recipientIds = [...new Set(vendorCommissions.map(c => c.recipient_id).filter(Boolean))];
     if (recipientIds.length > 0) {
       const { data: profs } = await _supabase
@@ -1222,56 +1429,67 @@ async function loadVendorCommissions(isPolling = false) {
   checkReceiptDeadlinesAndLockout();
   renderSellerCommissions();
 }
+
 function setEl(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
 }
+
 function updateVendorCommissionStats() {
   let unsettledSum = 0;
   let settledSum = 0;
+
   let incomingCount = 0, incomingAmt = 0;
   let mainCount = 0, mainAmt = 0;
   let outgoingCount = 0, outgoingAmt = 0;
   let workingCount = 0, workingAmt = 0;
   let historyCount = 0, historyAmt = 0;
+
   (vendorCommissions || []).forEach(c => {
     const statusVal = (c.status || '').toUpperCase();
     const qType = (c.queue_type || '').toUpperCase();
     const amt = Number(c.amount || 0);
+
     const isPaid = statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY';
     const isDeclined = statusVal === 'DECLINED';
+
     if (isPaid) {
       settledSum += amt;
     } else if (!isDeclined) {
       unsettledSum += amt;
     }
+
     if (qType === 'INCOMING_REQUESTS' || statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'PENDING_REVIEW' || statusVal === 'AWAITING_ATTENTION') {
       incomingCount++;
       incomingAmt += amt;
-    } else if (qType === 'MAIN_ACCOUNT' || statusVal === 'APPROVED' || statusVal === 'UNREQUESTED_BALANCE') {
+    } else if (qType === 'MAIN_ACCOUNT' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'APPROVED' || statusVal === 'ACTIVE') {
       mainCount++;
       mainAmt += amt;
-    } else if (qType === 'OUTGOING_REQUESTS' || statusVal === 'REQUESTED_BY_RECIPIENT') {
+    } else if (qType === 'OUTGOING_REQUESTS' || statusVal === 'REQUESTED' || statusVal === 'REQUESTED_BY_RECIPIENT') {
       outgoingCount++;
       outgoingAmt += amt;
-    } else if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING') {
+    } else if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING' || statusVal === 'IN_WORKING') {
       workingCount++;
       workingAmt += amt;
-    } else if (qType === 'HISTORY' || statusVal === 'COMPLETED_PAID') {
+    } else if (isPaid) {
       historyCount++;
       historyAmt += amt;
     }
   });
+
   const totalSpend = unsettledSum + settledSum;
+
   setEl('statUnsettledCommissions', `$${unsettledSum.toFixed(2)}`);
   setEl('statSettledDisbursements', `$${settledSum.toFixed(2)}`);
   setEl('statTotalVendorSpend', `$${totalSpend.toFixed(2)}`);
+
   setEl('badgeIncomingComm', `${incomingCount} • $${incomingAmt.toFixed(0)}`);
   setEl('badgeMainQueueComm', `${mainCount} • $${mainAmt.toFixed(0)}`);
   setEl('badgeOutgoingComm', `${outgoingCount} • $${outgoingAmt.toFixed(0)}`);
   setEl('badgeWorkingQueueComm', `${workingCount} • $${workingAmt.toFixed(0)}`);
   setEl('badgeHistoryComm', `${historyCount} • $${historyAmt.toFixed(0)}`);
 }
+
 function switchCommSubTab(subTab) {
   activeSubTab = subTab;
   selectedSellerCommIds.clear();
@@ -1280,30 +1498,39 @@ function switchCommSubTab(subTab) {
   const tabs = ['incoming', 'mainQueue', 'outgoing', 'workingQueue', 'history'];
   tabs.forEach(t => {
     const btn = document.getElementById('subTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const badge = document.getElementById('badge' + t.charAt(0).toUpperCase() + t.slice(1) + 'Comm');
     if (btn) {
       if (t === subTab) {
         btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-1.5';
+        if (badge) badge.className = 'bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-mono';
       } else {
         btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5';
+        if (badge) badge.className = 'bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono';
       }
     }
   });
   renderSellerCommissions();
 }
+
 function renderSellerCommissions() {
   updateVendorCommissionStats();
   const tableBody = document.getElementById('sellerCommsTableBody');
   const toolbar = document.getElementById('sellerToolbar');
   const search = document.getElementById('sellerCommSearch').value.toLowerCase();
+
   const filtered = vendorCommissions.filter(c => {
     const statusUpper = (c.status || '').toUpperCase();
     const queueTypeUpper = (c.queue_type || '').toUpperCase();
-    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) || (c.recipient_email || '').toLowerCase().includes(search);
+    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) ||
+                          (c.recipient_email || '').toLowerCase().includes(search) ||
+                          (c.feedback_id || '').toLowerCase().includes(search);
     let matchesTab = false;
     if (activeSubTab === 'incoming') {
-      matchesTab = queueTypeUpper === 'INCOMING_REQUESTS' || statusUpper === 'REQUESTED_BY_RECIPIENT' || statusUpper === 'AWAITING_ATTENTION';
+      matchesTab = queueTypeUpper === 'INCOMING_REQUESTS' || queueTypeUpper === 'OUTGOING_REQUESTS' || statusUpper === 'REQUESTED_BY_RECIPIENT' || statusUpper === 'REQUESTED';
     } else if (activeSubTab === 'mainQueue') {
-      matchesTab = queueTypeUpper === 'MAIN_ACCOUNT' || statusUpper === 'APPROVED' || statusUpper === 'UNREQUESTED_BALANCE';
+      matchesTab = (queueTypeUpper === 'MAIN_ACCOUNT' || queueTypeUpper === 'MAIN_QUEUE' || statusUpper === 'APPROVED' || statusUpper === 'UNREQUESTED_BALANCE' || !c.queue_type) &&
+                   queueTypeUpper !== 'WORKING_QUEUE' && queueTypeUpper !== 'HISTORY' && queueTypeUpper !== 'PAYMENT_HISTORY' &&
+                   statusUpper !== 'REQUESTED_BY_RECIPIENT' && statusUpper !== 'OUTGOING_REQUESTS' && statusUpper !== 'OFFERED_AWAITING_ACCEPTANCE' && statusUpper !== 'OFFERED_BY_VENDOR' && statusUpper !== 'APPROVED_IN_WORKING' && statusUpper !== 'COMPLETED_PAID' && statusUpper !== 'PAID';
     } else if (activeSubTab === 'outgoing') {
       matchesTab = queueTypeUpper === 'OUTGOING_REQUESTS' || statusUpper === 'OFFERED_AWAITING_ACCEPTANCE' || statusUpper === 'OFFERED_BY_VENDOR';
     } else if (activeSubTab === 'workingQueue') {
@@ -1313,6 +1540,7 @@ function renderSellerCommissions() {
     }
     return matchesSearch && matchesTab;
   });
+
   if (activeSubTab === 'incoming') {
     toolbar.innerHTML = `
       <button onclick="batchVendorApprove()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md">
@@ -1328,6 +1556,7 @@ function renderSellerCommissions() {
   } else {
     toolbar.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Tab View: ${activeSubTab}</span>`;
   }
+
   if (filtered.length === 0) {
     tableBody.innerHTML = `
       <div class="p-8 text-center text-xs text-slate-400 col-span-full">
@@ -1337,9 +1566,11 @@ function renderSellerCommissions() {
     `;
     return;
   }
+
   tableBody.innerHTML = filtered.map(c => {
     let actionHtml = '';
     const detailsBtn = `<button onclick="viewSellerCommDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition" title="View Full Details"><i class="fa-solid fa-eye mr-1"></i> Details</button>`;
+
     if (activeSubTab === 'incoming') {
       actionHtml = `
         <button onclick="approveSingleComm('${c.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">Approve</button>
@@ -1360,9 +1591,12 @@ function renderSellerCommissions() {
         </button>
         ${detailsBtn}
       `;
+    } else if (activeSubTab === 'outgoing') {
+      actionHtml = `<span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-[10px] mr-1">AWAITING ACCEPTANCE</span> ${detailsBtn}`;
     } else {
-      actionHtml = detailsBtn;
+      actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px] mr-1">UNREQUESTED</span> ${detailsBtn}`;
     }
+
     return `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
         <div class="col-span-1">
@@ -1373,7 +1607,7 @@ function renderSellerCommissions() {
           <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
         </div>
         <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${(c.role_type || '').toUpperCase().includes('SELLER') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : ((c.role_type || '').toUpperCase().includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30')}">${(c.role_type || 'N/A').toUpperCase()}</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${(c.role_type || '').toUpperCase().includes('SELLER') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : ((c.role_type || '').toUpperCase().includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : ((c.role_type || '').toUpperCase().includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${(c.role_type || 'N/A').toUpperCase()}</span>
           <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
         </div>
         <div class="col-span-2">
@@ -1386,6 +1620,7 @@ function renderSellerCommissions() {
     `;
   }).join('');
 }
+
 function toggleSelectSellerComm(id) {
   const strId = String(id);
   if (selectedSellerCommIds.has(strId)) {
@@ -1394,6 +1629,7 @@ function toggleSelectSellerComm(id) {
     selectedSellerCommIds.add(strId);
   }
 }
+
 function toggleSelectAllSeller(master) {
   const boxes = document.querySelectorAll('#sellerCommsTableBody input[type="checkbox"]');
   boxes.forEach(b => {
@@ -1403,6 +1639,7 @@ function toggleSelectAllSeller(master) {
     else selectedSellerCommIds.delete(strVal);
   });
 }
+
 async function batchVendorApprove() {
   if (selectedSellerCommIds.size === 0) {
     alert('Please select at least one record.');
@@ -1428,6 +1665,7 @@ async function batchVendorApprove() {
     alert('Action failed: ' + err.message);
   }
 }
+
 async function approveSingleComm(id) {
   try {
     let updatePayload = { queue_type: 'WORKING_QUEUE', status: 'APPROVED_IN_WORKING' };
@@ -1442,11 +1680,11 @@ async function approveSingleComm(id) {
     alert('Approval failed: ' + err.message);
   }
 }
+
 async function denySingleComm(id) {
-  const reason = prompt('Please enter a reason for denying this commission request:', 'Verification details unconfirmed');
-  if (!reason) return;
+  if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
   try {
-    let updatePayload = { queue_type: 'MAIN_ACCOUNT', status: 'DECLINED' };
+    let updatePayload = { queue_type: 'MAIN_ACCOUNT', status: 'Approved' };
     sanitizeStatusBadge(updatePayload);
     const { error } = await _supabase
       .from('commissions')
@@ -1454,10 +1692,12 @@ async function denySingleComm(id) {
       .eq('id', id);
     if (error) throw error;
     await loadVendorCommissions();
+    alert('Claim reversed back to recipient queue.');
   } catch (err) {
-    alert('Denial failed: ' + err.message);
+    alert('Reversal failed: ' + err.message);
   }
 }
+
 async function openTopDownOfferModal() {
   const modal = document.getElementById('topDownOfferModal');
   const batchFields = document.getElementById('batchOfferFields');
@@ -1465,9 +1705,12 @@ async function openTopDownOfferModal() {
   const submitBtn = document.getElementById('topDownOfferSubmitBtn');
   const recipientInput = document.getElementById('offerRecipientId');
   const amountInput = document.getElementById('offerAmount');
+
   if (selectedSellerCommIds.size > 0) {
+    /* Batch Mode: Selected Rows Exist */
     const selectedComms = vendorCommissions.filter(c => selectedSellerCommIds.has(String(c.id)));
     let totalAmount = 0;
+    
     const listHtml = selectedComms.map(c => {
       const amt = Number(c.amount || 0);
       totalAmount += amt;
@@ -1487,26 +1730,33 @@ async function openTopDownOfferModal() {
         </div>
       `;
     }).join('');
+
     document.getElementById('batchOfferCountBadge').textContent = `${selectedComms.length} Record(s) Selected`;
     document.getElementById('batchOfferListContainer').innerHTML = listHtml;
     document.getElementById('batchOfferTotalAmount').textContent = `$${totalAmount.toFixed(2)} USD`;
+
     batchFields.classList.remove('hidden');
     manualFields.classList.add('hidden');
     recipientInput.removeAttribute('required');
     amountInput.removeAttribute('required');
     submitBtn.textContent = `Confirm & Send Proactive Offer for ${selectedComms.length} Commission(s) ($${totalAmount.toFixed(2)})`;
   } else {
+    /* Manual Mode: No Rows Selected */
     batchFields.classList.add('hidden');
     manualFields.classList.remove('hidden');
     recipientInput.setAttribute('required', 'true');
     amountInput.setAttribute('required', 'true');
     submitBtn.textContent = 'Send Proactive Offer to Outgoing Requests';
   }
+
   modal.classList.remove('hidden');
 }
+
 async function handleTopDownOfferSubmit(event) {
   event.preventDefault();
+  
   if (selectedSellerCommIds.size > 0) {
+    /* Execute Batch Proactive Offer on Selected Commission Records */
     const idsToUpdate = Array.from(selectedSellerCommIds);
     try {
       const { error } = await _supabase
@@ -1516,7 +1766,9 @@ async function handleTopDownOfferSubmit(event) {
           status: 'OFFERED_BY_VENDOR'
         })
         .in('id', idsToUpdate);
+
       if (error) throw error;
+
       document.getElementById('topDownOfferModal').classList.add('hidden');
       selectedSellerCommIds.clear();
       document.getElementById('selectAllSellerComms').checked = false;
@@ -1526,9 +1778,11 @@ async function handleTopDownOfferSubmit(event) {
       showToast('Error sending batch proactive offer: ' + err.message);
     }
   } else {
+    /* Execute Manual Top-Down Offer Generation */
     const recipientEmail = document.getElementById('offerRecipientId').value.trim();
     const recipientRole = document.getElementById('offerRecipientRole').value;
     const amount = parseFloat(document.getElementById('offerAmount').value);
+
     let insertPayload = {
       seller_id: currentUser.id,
       vendor_id: currentUser.id,
@@ -1540,11 +1794,13 @@ async function handleTopDownOfferSubmit(event) {
       link: 'N/A',
       type: 'TOP_DOWN_OFFER'
     };
+
     try {
       const { error } = await _supabase
         .from('commissions')
         .insert([insertPayload]);
       if (error) throw error;
+
       document.getElementById('topDownOfferModal').classList.add('hidden');
       document.getElementById('offerRecipientId').value = '';
       document.getElementById('offerAmount').value = '';
@@ -1555,6 +1811,7 @@ async function handleTopDownOfferSubmit(event) {
     }
   }
 }
+
 function openSettlementModal(commId, recipientEmail) {
   document.getElementById('settleTargetCommId').value = commId;
   document.getElementById('settlePaypalEmail').value = recipientEmail;
@@ -1562,11 +1819,13 @@ function openSettlementModal(commId, recipientEmail) {
   document.getElementById('settleReceiptFile').value = '';
   document.getElementById('settlementModal').classList.remove('hidden');
 }
+
 async function handleSettlementSubmit(event) {
   event.preventDefault();
   const commId = document.getElementById('settleTargetCommId').value;
   const txId = document.getElementById('settleTxId').value.trim();
   const fileInput = document.getElementById('settleReceiptFile');
+
   if (txId.length !== 17) {
     alert('PayPal Transaction ID must be exactly 17 characters.');
     return;
@@ -1575,6 +1834,7 @@ async function handleSettlementSubmit(event) {
   if (fileInput.files && fileInput.files[0]) {
     receiptBase64 = await compressImageFile(fileInput.files[0], 900, 0.7);
   }
+
   try {
     let updateData = {
       queue_type: 'HISTORY',
@@ -1595,22 +1855,29 @@ async function handleSettlementSubmit(event) {
     alert('Settlement execution failed: ' + err.message);
   }
 }
+
+
 function closeSellerCommDetailsModal() {
   const modal = document.getElementById('sellerCommDetailsModal');
   if (modal) modal.classList.add('hidden');
 }
+
 function viewSellerCommDetails(commId) {
   const c = vendorCommissions.find(item => item.id == commId);
   const container = document.getElementById('sellerCommDetailsContent');
   if (!c || !container) return;
+
   const recipientName = c.recipient_name || c.recipient_email || c.recipient_id || 'Shopper / Reviewer';
   const recipientEmail = c.recipient_email || 'N/A';
   const recipientPaypal = c.recipient_paypal || c.paypal_email || 'Not Configured';
+
   const product = vendorProducts.find(p => p.id === c.product_id);
   const productTitle = product ? product.title : (c.product_id || 'General Marketplace Review');
+
   const recRoleUpper = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
   const safeRecName = (recipientName || '').replace(/'/g, "\'");
   const safeRecEmail = (recipientEmail || '').replace(/'/g, "\'");
+
   const receiptHtml = (c.receipt_base64 || c.receipt_url) ? `
     <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
       <div class="text-[10px] text-slate-400 font-semibold mb-1">Uploaded Payment Receipt Proof:</div>
@@ -1619,6 +1886,7 @@ function viewSellerCommDetails(commId) {
       </a>
     </div>
   ` : '<div class="text-slate-500 italic text-[11px]">No payment receipt uploaded yet.</div>';
+
   const reviewProofHtml = (c.proof_base64 || c.proof_url || c.review_screenshot) ? `
     <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
       <div class="text-[10px] text-slate-400 font-semibold mb-1">Submitted Review Screenshot Proof:</div>
@@ -1627,6 +1895,7 @@ function viewSellerCommDetails(commId) {
       </a>
     </div>
   ` : '';
+
   container.innerHTML = `
     <div class="grid grid-cols-2 gap-4">
       <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
@@ -1638,10 +1907,11 @@ function viewSellerCommDetails(commId) {
         <div class="text-lg font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)} USD</div>
       </div>
     </div>
+
     <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
       <div class="flex items-center justify-between">
         <span class="text-[10px] text-slate-400 font-semibold uppercase">Recipient Info</span>
-        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${recRoleUpper.includes('SELLER') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (recRoleUpper.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30')}">${recRoleUpper}</span>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${recRoleUpper.includes('SELLER') || recRoleUpper.includes('VENDOR') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (recRoleUpper.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : (recRoleUpper.includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${recRoleUpper}</span>
       </div>
       <div class="font-bold text-slate-200">${recipientName}</div>
       <div class="text-slate-400 text-[11px]">Email: ${recipientEmail}</div>
@@ -1652,6 +1922,7 @@ function viewSellerCommDetails(commId) {
         </button>
       ` : ''}
     </div>
+
     <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-2">
       <div class="grid grid-cols-2 gap-2 text-[11px]">
         <div><span class="text-slate-500">Product / Campaign:</span> <span class="text-slate-200 font-medium">${productTitle}</span></div>
@@ -1663,7 +1934,7 @@ function viewSellerCommDetails(commId) {
       </div>
       ${c.amazon_review_url ? `
         <div class="text-[11px] pt-1">
-          <span class="text-slate-500">Amazon Review URL:</span>
+          <span class="text-slate-500">Amazon Review URL:</span> 
           <a href="${c.amazon_review_url}" target="_blank" class="text-blue-400 underline hover:text-blue-300 font-mono break-all">${c.amazon_review_url}</a>
         </div>
       ` : ''}
@@ -1671,8 +1942,10 @@ function viewSellerCommDetails(commId) {
       ${receiptHtml}
     </div>
   `;
+
   document.getElementById('sellerCommDetailsModal').classList.remove('hidden');
 }
+
 function inspectReceipt(txId, amount, receiptBase64) {
   document.getElementById('inspectModalTxId').textContent = txId || 'N/A';
   document.getElementById('inspectModalAmount').textContent = `$${Number(amount || 0).toFixed(2)}`;
@@ -1681,7 +1954,7 @@ function inspectReceipt(txId, amount, receiptBase64) {
     if (receiptBase64 && receiptBase64.trim()) {
       imgEl.src = receiptBase64;
       imgEl.classList.remove('hidden');
-      if (imgEl.nextElementSibling) imgEl.nextElementSibling.classList.remove('hidden');
+      if (imgEl.nextElementSibling) imgEl.nextElementSibling.classList.add('hidden');
     } else {
       imgEl.classList.add('hidden');
       if (imgEl.nextElementSibling) imgEl.nextElementSibling.classList.remove('hidden');
@@ -1689,14 +1962,18 @@ function inspectReceipt(txId, amount, receiptBase64) {
   }
   document.getElementById('inspectReceiptModal').classList.remove('hidden');
 }
+
 /* Messaging Hub & Review Stream */
+
 let currentMessagingSubTab = 'threads';
+
 function switchMessagingSubTab(tab) {
   currentMessagingSubTab = tab;
   const threadsBtn = document.getElementById('subTabThreadsBtn');
   const contactsBtn = document.getElementById('subTabContactsBtn');
   const threadsContainer = document.getElementById('messagingThreadsContainer');
   const contactsContainer = document.getElementById('messagingContactsContainer');
+
   if (tab === 'threads') {
     if (threadsBtn) threadsBtn.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow';
     if (contactsBtn) contactsBtn.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white';
@@ -1711,24 +1988,25 @@ function switchMessagingSubTab(tab) {
     renderSellerContactsList();
   }
 }
+
+
 async function preloadSellerProfiles() {
   try {
-    const { data, error } = await _supabase.from('profiles').select('id, full_name, email, role, paypal_email');
-    if (!error && data) {
+    const { data } = await _supabase.from('profiles').select('id, full_name, email, role, paypal_email');
+    if (data) {
       data.forEach(p => {
         profilesCache[p.id] = p;
       });
     }
-  } catch (err) {
-    console.warn('Profile preload notice:', err.message);
-  }
+  } catch(e) {}
 }
+
 function getAdminProfile() {
   if (typeof profilesCache !== 'undefined') {
-    for (let id in profilesCache) {
-      let p = profilesCache[id];
-      if (p && (p.role === 'admin' || p.role === 'ADMIN' || (p.full_name && p.full_name.toLowerCase().includes('admin')))) {
-        return p;
+    for (const id in profilesCache) {
+      const p = profilesCache[id];
+      if (p && p.role && (p.role.toUpperCase() === 'ADMIN' || p.role.toUpperCase().includes('ADMIN'))) {
+        return { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
       }
     }
   }
@@ -1739,10 +2017,12 @@ function getAdminProfile() {
     role: 'ADMIN'
   };
 }
+
 function renderSellerContactsList() {
   const container = document.getElementById('messagingContactsList');
   if (!container) return;
   const searchVal = (document.getElementById('sellerContactSearchInput')?.value || '').toLowerCase();
+
   const adminProf = getAdminProfile();
   const adminContact = {
     partnerId: adminProf.id,
@@ -1753,25 +2033,32 @@ function renderSellerContactsList() {
     lastMessage: 'Direct communication line with Echo Hub Admin.',
     isAdmin: true
   };
+
   const seenPartners = new Set();
   const shopperContacts = [];
+
   (vendorThreads || []).forEach(t => {
     const partnerId = t.partnerId;
     if (!partnerId || partnerId === adminContact.partnerId || seenPartners.has(partnerId)) return;
     seenPartners.add(partnerId);
+
     const prof = profilesCache[partnerId] || {};
     const partnerName = prof.full_name || `Shopper (${String(partnerId).substring(0, 6)})`;
     const partnerEmail = prof.email || 'N/A';
-    const hasReviewSubmitted = (vendorCommissions || []).some(c =>
+    
+    const hasReviewSubmitted = (vendorCommissions || []).some(c => 
       c.recipient_id === partnerId || c.vendor_id === currentUser?.id || c.seller_id === currentUser?.id
     );
+    
     const chatText = (t.messages || []).map(m => m._normalizedText || m.text || m.content || '').join(' ');
     const paypalInChatMatch = chatText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const hasProvidedPaypalInChat = paypalInChatMatch != null;
+
     let displayPaypal = 'Hidden (Pending review or chat submission)';
     if (hasReviewSubmitted || hasProvidedPaypalInChat) {
       displayPaypal = prof.paypal_email || (paypalInChatMatch ? paypalInChatMatch[0] : 'Not specified in profile');
     }
+
     shopperContacts.push({
       partnerId: partnerId,
       name: partnerName,
@@ -1783,9 +2070,11 @@ function renderSellerContactsList() {
       isAdmin: false
     });
   });
+
   let allContacts = [adminContact, ...shopperContacts];
+
   if (searchVal) {
-    allContacts = allContacts.filter(c =>
+    allContacts = allContacts.filter(c => 
       c.name.toLowerCase().includes(searchVal) ||
       c.email.toLowerCase().includes(searchVal) ||
       c.paypal.toLowerCase().includes(searchVal) ||
@@ -1793,40 +2082,60 @@ function renderSellerContactsList() {
       c.partnerId.toLowerCase().includes(searchVal)
     );
   }
+
   if (allContacts.length === 0) {
     container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No matching contacts found.</p>`;
     return;
   }
+
   container.innerHTML = allContacts.map(c => {
-    const isAdm = c.isAdmin;
-    const badgeBg = isAdm ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    const isAdm = c.isAdmin || c.role === 'ADMIN';
+    const roleLabel = isAdm ? 'SYSTEM ADMIN' : 'SHOPPER';
+    const actionLabel = isAdm ? 'Contact Admin' : 'Chat Now';
+    const iconClass = isAdm ? 'fa-headset' : 'fa-comment-dots';
     const channelLabel = isAdm ? 'Channel:' : 'PayPal:';
-    const actionLabel = isAdm ? 'Contact Support' : 'Chat with Reviewer';
-    const btnBg = isAdm ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40' : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30';
-    const avatarBg = isAdm ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+    const badgeBg = isAdm 
+      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
+      : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    const avatarBg = isAdm
+      ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+      : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    const borderClass = isAdm
+      ? 'border-amber-500/40 bg-amber-500/10 shadow-lg shadow-amber-500/5'
+      : 'border-borderSlate bg-darkBg hover:border-accentBlue';
+    const btnBg = isAdm
+      ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40'
+      : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30';
+    const avatarIcon = isAdm 
+      ? '<i class="fa-solid fa-user-shield text-xs"></i>' 
+      : (c.name ? c.name.charAt(0).toUpperCase() : 'S');
+    const firstContactTag = isAdm 
+      ? '<span class="text-[9px] text-amber-400 font-bold ml-1">★ 1st Contact</span>' 
+      : '';
+
     return `
-      <div class="bg-darkBg border border-borderSlate rounded-2xl p-3 space-y-2 hover:border-accentBlue/40 transition">
+      <div class="p-3 border ${borderClass} rounded-xl space-y-2 transition">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2.5 truncate">
-            <div class="w-8 h-8 rounded-xl border ${avatarBg} flex items-center justify-center font-bold text-xs shrink-0">
-              ${isAdm ? '<i class="fa-solid fa-user-shield text-xs"></i>' : c.name.charAt(0).toUpperCase()}
+          <div class="flex items-center space-x-2 truncate">
+            <div class="w-7 h-7 ${avatarBg} border rounded-full flex items-center justify-center font-bold text-[10px] shrink-0">
+              ${avatarIcon}
             </div>
             <div class="truncate">
               <h4 class="text-xs font-bold text-white truncate flex items-center space-x-1">
                 <span>${c.name}</span>
-                ${isAdm ? '<span class="text-[9px] text-amber-400 font-bold ml-1">★ 1st Contact</span>' : ''}
+                ${firstContactTag}
               </h4>
               <p class="text-[10px] text-slate-400 truncate">${c.email}</p>
             </div>
           </div>
-          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} uppercase shrink-0">${isAdm ? 'SYSTEM ADMIN' : 'SELLER'}</span>
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} uppercase shrink-0">${roleLabel}</span>
         </div>
         <div class="text-[10px] text-slate-400 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
-          <div class="flex justify-between"><span class="text-slate-500">${channelLabel}</span><span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">${channelLabel}</span> <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
           <div class="truncate"><span class="text-slate-500">Note:</span> ${c.lastMessage}</div>
         </div>
         <button onclick="selectThread('${c.partnerId}'); switchMessagingSubTab('threads');" class="w-full ${btnBg} py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
-          <i class="fa-solid ${isAdm ? 'fa-headset' : 'fa-comment-dots'} text-[10px]"></i>
+          <i class="fa-solid ${iconClass} text-[10px]"></i>
           <span>${actionLabel}</span>
         </button>
       </div>
@@ -1834,51 +2143,131 @@ function renderSellerContactsList() {
   }).join('');
 }
 
-function updateVendorUnreadBadge() {
-  const badge = document.getElementById('unreadMessagesBadge') || document.getElementById('sellerUnreadBadge');
-  if (!badge) return;
-  let totalUnread = 0;
-  (vendorThreads || []).forEach(t => {
+
+/* ================= 48-HOUR REVIEW APPROVAL COUNTDOWN & LOCKOUT ENGINE ================= */
+let pendingReviewLock = {
+  active: false,
+  shopperName: '',
+  shopperId: '',
+  messageId: '',
+  submittedAt: null,
+  deadline: null
+};
+let reviewCountdownInterval = null;
+
+function evaluatePendingReviewLockout() {
+  if (!vendorThreads || vendorThreads.length === 0) {
+    clearReviewLockout();
+    return;
+  }
+
+  let pendingMsgs = [];
+  vendorThreads.forEach(t => {
     (t.messages || []).forEach(m => {
-      if (m.receiver_id === currentUser?.id && !m.is_read) {
-        totalUnread++;
+      const statusUpper = (m.status_badge || m.status || '').toUpperCase();
+      const isPendingStatus = statusUpper === 'AWAITING_ATTENTION' || statusUpper === 'PENDING' || statusUpper === 'SUBMITTED' || statusUpper === 'PENDING_REVIEW';
+      const isShopperMsg = m.sender_id !== currentUser?.id;
+      const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
+      const isReviewProof = Boolean(m.review_url) || Boolean(m.amazon_review_url) || hasAmazonUrl(text) || hasImageAttachment(m) || Boolean(m.proof_base64) || Boolean(m.feedback_id) || m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
+
+      if (isPendingStatus && isShopperMsg && isReviewProof) {
+        const partner = profilesCache[t.partnerId] || { full_name: t.partnerName || 'Shopper' };
+        pendingMsgs.push({
+          messageId: m.id,
+          shopperId: t.partnerId,
+          shopperName: partner.full_name || partner.email || t.partnerName || `Shopper (${String(t.partnerId).substring(0, 6)})`,
+          createdAt: m.created_at ? new Date(m.created_at) : new Date()
+        });
       }
     });
   });
-  if (totalUnread > 0) {
-    badge.textContent = totalUnread;
-    badge.classList.remove('hidden');
-  } else {
-    badge.classList.add('hidden');
+
+  if (pendingMsgs.length === 0) {
+    clearReviewLockout();
+    return;
+  }
+
+  pendingMsgs.sort((a, b) => a.createdAt - b.createdAt);
+  const oldest = pendingMsgs[0];
+  const submissionTime = oldest.createdAt.getTime();
+  const deadlineTime = submissionTime + (48 * 60 * 60 * 1000);
+
+  pendingReviewLock = {
+    active: true,
+    shopperName: oldest.shopperName,
+    shopperId: oldest.shopperId,
+    messageId: oldest.messageId,
+    submittedAt: oldest.createdAt,
+    deadline: new Date(deadlineTime)
+  };
+
+  updateReviewCountdownDisplay();
+  if (!reviewCountdownInterval) {
+    reviewCountdownInterval = setInterval(updateReviewCountdownDisplay, 1000);
+  }
+
+  const banner = document.getElementById('sellerReviewCountdownBanner');
+  if (banner) {
+    banner.classList.remove('hidden');
+    const nameEl = document.getElementById('reviewLockShopperName');
+    if (nameEl) nameEl.textContent = pendingReviewLock.shopperName;
   }
 }
 
-async function handleReportAction(targetUserId) {
-  const resolvedTargetId = targetUserId || activeThreadPartnerId;
-  if (!resolvedTargetId) {
-    alert("Please select or open a conversation before submitting a report.");
+function updateReviewCountdownDisplay() {
+  if (!pendingReviewLock.active || !pendingReviewLock.deadline) {
+    clearReviewLockout();
     return;
   }
-  const note = prompt("Please enter details / reason for reporting this user to Admin:", "Inappropriate behavior or policy violation");
-  if (!note || !note.trim()) return;
-  try {
-    const reportMsg = `[USER_REPORT]: ${note.trim()}`;
-    const reportPayload = {
-      sender_id: currentUser.id,
-      vendor_id: currentUser.id,
-      receiver_id: resolvedTargetId,
-      buyer_id: resolvedTargetId,
-      text: reportMsg,
-      content: reportMsg,
-      message: reportMsg,
-      status_badge: 'REPORTED',
-      channel_type: 'USER_REPORT'
-    };
-    const { error } = await _supabase.from('messages').insert([reportPayload]);
-    if (error) throw error;
-    alert("User reported successfully to Platform Administration.");
-  } catch (err) {
-    alert("Failed to submit report: " + err.message);
+
+  const now = new Date().getTime();
+  const diff = pendingReviewLock.deadline.getTime() - now;
+  const timerEl = document.getElementById('reviewLockTimerDisplay');
+
+  if (diff <= 0) {
+    if (timerEl) {
+      timerEl.textContent = 'EXPIRED (00:00:00) - LOCKOUT ACTIVE';
+      timerEl.className = 'font-mono font-bold text-rose-400 animate-pulse';
+    }
+  } else {
+    const hrs = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+    const pad = (n) => String(n).padStart(2, '0');
+    if (timerEl) {
+      timerEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+      timerEl.className = 'font-mono font-bold text-amber-400';
+    }
+  }
+}
+
+function clearReviewLockout() {
+  pendingReviewLock = { active: false, shopperName: '', shopperId: '', messageId: '', submittedAt: null, deadline: null };
+  if (reviewCountdownInterval) {
+    clearInterval(reviewCountdownInterval);
+    reviewCountdownInterval = null;
+  }
+  const banner = document.getElementById('sellerReviewCountdownBanner');
+  if (banner) banner.classList.add('hidden');
+}
+
+function goToPendingReviewThread() {
+  if (!pendingReviewLock.active) return;
+  switchVendorTab('messages');
+  if (pendingReviewLock.shopperId) {
+    selectThread(pendingReviewLock.shopperId);
+    setTimeout(() => {
+      if (pendingReviewLock.messageId) {
+        const msgCard = document.querySelector(`[data-message-id="${pendingReviewLock.messageId}"]`);
+        if (msgCard) {
+          msgCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          msgCard.classList.add('ring-2', 'ring-amber-500', 'shadow-lg', 'animate-pulse');
+          setTimeout(() => {
+            msgCard.classList.remove('animate-pulse');
+          }, 3000);
+        }
+      }
+    }, 300);
   }
 }
 
@@ -1890,13 +2279,15 @@ async function loadVendorThreads(isPolling = false) {
     const { data: msgData } = await _supabase
       .from('messages')
       .select('*')
-      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id},buyer_id.eq.${currentUser.id}`)
+      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
+
     let commData = [];
     try {
       const { data: cData } = await _supabase.from('commissions').select('*').or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
       commData = cData || [];
     } catch (e) {}
+
     const allItems = [...(msgData || [])];
     const threadMap = {};
     allItems.forEach(m => {
@@ -1939,11 +2330,13 @@ async function loadVendorThreads(isPolling = false) {
     }
     updateSellerUnreadBadge();
     renderThreadsList();
+    evaluatePendingReviewLockout();
     if (activeThreadId) renderActiveChat();
   } catch (err) {
     console.log('Error loading threads:', err);
   }
 }
+
 function updateSellerUnreadBadge() {
   const badge = document.getElementById('sellerUnreadBadge');
   if (!badge) return;
@@ -1955,9 +2348,11 @@ function updateSellerUnreadBadge() {
     badge.classList.add('hidden');
   }
 }
+
 function refreshThreadsUI() {
   if (typeof renderThreadsList === 'function') renderThreadsList();
 }
+
 function renderThreadsList() {
   const listEl = document.getElementById('messagingThreadsList');
   if (vendorThreads.length === 0) {
@@ -1973,34 +2368,54 @@ function renderThreadsList() {
       return isOverdueBuyer || isAdmin;
     });
   }
+
   const meta = getThreadMeta();
   const hiddenMap = meta.hidden || {};
   const pinnedList = meta.pinned || [];
   const manualUnreadMap = meta.manualUnread || {};
+
+  /* Auto-unhide if latest message is newer than when hidden */
   displayThreads = displayThreads.filter(t => {
-    if (!hiddenMap[t.partnerId]) return true;
-    const hideTime = hiddenMap[t.partnerId];
-    const latestMsgTime = t.updatedAt ? new Date(t.updatedAt).getTime() : 0;
-    return latestMsgTime > hideTime;
+    const pid = t.partnerId;
+    if (hiddenMap[pid]) {
+      const hiddenTime = new Date(hiddenMap[pid]).getTime();
+      const latestMsgDate = t.messages && t.messages[0] ? new Date(t.messages[0].created_at).getTime() : 0;
+      const latestTime = Math.max(new Date(t.updatedAt || 0).getTime(), latestMsgDate);
+      if (latestTime > hiddenTime) {
+        delete hiddenMap[pid];
+        meta.hidden = hiddenMap;
+        saveThreadMeta(meta);
+        return true;
+      }
+      return false;
+    }
+    return true;
   });
+
+  /* Sort: Pinned threads first, then by updatedAt */
   displayThreads.sort((a, b) => {
-    const aPinned = pinnedList.includes(a.partnerId);
-    const bPinned = pinnedList.includes(b.partnerId);
-    if (aPinned && !bPinned) return -1;
-    if (!aPinned && bPinned) return 1;
+    const isPinnedA = pinnedList.includes(a.partnerId);
+    const isPinnedB = pinnedList.includes(b.partnerId);
+    if (isPinnedA && !isPinnedB) return -1;
+    if (!isPinnedA && isPinnedB) return 1;
     return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
   });
+
   if (displayThreads.length === 0) {
-    listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No active conversations found.</p>`;
+    listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No authorized conversations available.</p>`;
     return;
   }
+
   listEl.innerHTML = displayThreads.map(t => {
     const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
     const prof = profilesCache[t.partnerId] || {};
     const partnerName = prof.full_name || `Reviewer (${String(t.partnerId).substring(0,6)}...)`;
     const isPinned = pinnedList.includes(t.partnerId);
+    
+    /* Calculate unread count + manual unread */
     let unreadCount = (t.messages || []).filter(m => m.sender_id !== currentUser.id && !m.is_read).length;
     if (manualUnreadMap[t.partnerId]) unreadCount = Math.max(1, unreadCount);
+
     return `
       <div onclick="selectThread('${t.partnerId}')"
            oncontextmenu="showThreadContextMenu(event, '${t.partnerId}')"
@@ -2009,12 +2424,12 @@ function renderThreadsList() {
            ontouchend="handleTouchEnd()"
            class="p-3 bg-darkBg border ${activeThreadId === t.partnerId ? 'border-accentBlue' : 'border-borderSlate'} rounded-xl cursor-pointer hover:border-accentBlue transition space-y-1">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-1.5 truncate">
-            ${isPinned ? '<i class="fa-solid fa-thumbtack text-amber-400 text-[10px] rotate-45 shrink-0"></i>' : ''}
+          <div class="flex items-center space-x-1 truncate">
+            ${isPinned ? `<i class="fa-solid fa-thumbtack text-amber-400 text-[10px] mr-1" title="Pinned"></i>` : ''}
             <span class="text-xs font-semibold text-slate-200 truncate">${partnerName}</span>
           </div>
-          <div class="flex items-center space-x-1.5 shrink-0">
-            ${unreadCount > 0 ? `<span class="bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">${unreadCount}</span>` : ''}
+          <div class="flex items-center space-x-1.5 shrink-0 ml-1">
+            ${unreadCount > 0 ? `<span class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">${unreadCount}</span>` : ''}
             <span class="text-[10px] text-slate-500">${timeString}</span>
           </div>
         </div>
@@ -2023,9 +2438,11 @@ function renderThreadsList() {
     `;
   }).join('');
 }
+
 async function selectThread(partnerId) {
   activeThreadId = partnerId;
   if (partnerId) { saveLocalVendorReadState(partnerId); clearManualUnreadThread(partnerId); }
+
   const unreadMsgIds = [];
   const t = vendorThreads.find(x => x.partnerId === partnerId);
   if (t && t.messages) {
@@ -2041,6 +2458,7 @@ async function selectThread(partnerId) {
   renderActiveChat(true);
   document.getElementById('chatInputMsg').disabled = false;
   document.getElementById('chatSendBtn').disabled = false;
+
   if (unreadMsgIds.length > 0) {
     try {
       await _supabase.from('messages').update({ is_read: true }).in('id', unreadMsgIds);
@@ -2053,17 +2471,25 @@ async function selectThread(partnerId) {
     } catch (e) {}
   }
 }
+
 function hasAmazonUrl(text) {
   if (!text) return false;
-  const str = String(text).toLowerCase();
-  return str.includes('amazon.com') || str.includes('amzn.to') || str.includes('amazon.co');
+  const lower = text.toLowerCase();
+  return lower.includes('amazon.com') || lower.includes('amzn.to');
 }
+
 function hasImageAttachment(msg) {
-  return (msg._normalizedImage && msg._normalizedImage.trim() !== '') ||
+  if (!msg) return false;
+  return Boolean(
+    (msg._normalizedImage && msg._normalizedImage.trim() !== '') ||
     (msg.file_url && msg.file_url.trim() !== '') ||
+    (msg.image_url && msg.image_url.trim() !== '') ||
+    (msg.attachment_url && msg.attachment_url.trim() !== '') ||
     (msg.proof_base64 && msg.proof_base64.trim() !== '') ||
-    (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.includes('imgur') || msg._normalizedText.includes('supabase'))));
+    (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.startsWith('data:image/'))))
+  );
 }
+
 function extractProductIdFromText(text) {
   if (!text) return null;
   const m1 = text.match(/[?&]prod=([a-zA-Z0-9_-]+)/i);
@@ -2072,6 +2498,8 @@ function extractProductIdFromText(text) {
   if (m2 && m2[1]) return m2[1];
   return null;
 }
+window.extractProductIdFromText = extractProductIdFromText;
+
 window.openSellerProductDetailsModal = async function(productId) {
   if (!productId) return;
   let prod = null;
@@ -2085,12 +2513,14 @@ window.openSellerProductDetailsModal = async function(productId) {
     prod = marketplaceProducts.find(p => String(p.id) === String(productId));
   }
   if (!prod) return;
+
   const pTitle = prod.title || 'Marketplace Product';
   const pPrice = Number(prod.price || 0).toFixed(2);
   const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
   const pImg = getProductImageUrl(prod);
   const pDesc = prod.description || 'No description provided.';
   const pStatus = prod.status || 'ACTIVE';
+
   let modalEl = document.getElementById('sellerProductDetailsModal');
   if (!modalEl) {
     modalEl = document.createElement('div');
@@ -2098,6 +2528,7 @@ window.openSellerProductDetailsModal = async function(productId) {
     modalEl.className = 'fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4';
     document.body.appendChild(modalEl);
   }
+
   modalEl.innerHTML = `
     <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative">
       <div class="flex items-center justify-between border-b border-borderSlate pb-3">
@@ -2107,9 +2538,9 @@ window.openSellerProductDetailsModal = async function(productId) {
         </h3>
         <button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
+
       <div class="flex gap-4 items-start">
-        <img src="${pImg}" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0">
-        <div class="hidden flex flex-col items-center justify-center w-24 h-24 bg-slate-900 border border-borderSlate rounded-2xl text-slate-500 shrink-0"><i class="fa-solid fa-image text-2xl text-slate-400 mb-1"></i><span class="text-[9px]">No Image</span></div>
+        <img src="${pImg}" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0">
         <div class="space-y-1.5 truncate flex-1">
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20 uppercase">${pStatus}</span>
           <h4 class="text-sm font-bold text-white truncate">${pTitle}</h4>
@@ -2117,10 +2548,12 @@ window.openSellerProductDetailsModal = async function(productId) {
           <p class="text-xs text-emerald-400 font-bold">Review Reward: $${pComm} Commission</p>
         </div>
       </div>
+
       <div class="bg-darkBg p-3 rounded-2xl border border-borderSlate/60 text-xs text-slate-300 leading-relaxed max-h-36 overflow-y-auto">
         <p class="text-[11px] font-bold text-slate-400 mb-1">Product Description:</p>
         <p>${pDesc}</p>
       </div>
+
       <div class="flex justify-end space-x-2 pt-2 border-t border-borderSlate">
         ${(vendorProducts || []).some(p => String(p.id) === String(productId) || String(p.id) === String(prod.id)) ? `<button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden'); editProduct('${prod.id}');" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5"><i class="fa-solid fa-pen-to-square"></i><span>Edit Listing</span></button>` : ''}
         <button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">Close</button>
@@ -2129,16 +2562,20 @@ window.openSellerProductDetailsModal = async function(productId) {
   `;
   modalEl.classList.remove('hidden');
 };
+
 window.openProductFromChat = async function(productId) {
   if (productId) await openSellerProductDetailsModal(productId);
 };
+
 function renderActiveChat(shouldScroll = false) {
   let thread = vendorThreads.find(t => t.partnerId === activeThreadId);
   const container = document.getElementById('chatMessagesContainer');
   if (!container) return;
   const currentScrollTop = container.scrollTop;
+
   const titleEl = document.getElementById('activeChatTitle');
   const subEl = document.getElementById('activeChatSub');
+
   if (!profilesCache[activeThreadId] && activeThreadId && activeThreadId.length > 20) {
     _supabase.from('profiles').select('id, full_name, email, paypal_email, role').eq('id', activeThreadId).maybeSingle().then(({data}) => {
       if (data) {
@@ -2147,16 +2584,45 @@ function renderActiveChat(shouldScroll = false) {
       }
     });
   }
+
   const prof = profilesCache[activeThreadId] || (activeThreadId === 'admin_system_support' ? getAdminProfile() : {});
   const partnerName = prof.full_name || prof.email || (activeThreadId === 'admin_system_support' ? 'System Administrator' : `Shopper Reviewer (${String(activeThreadId).substring(0, 6)})`);
   const rawRole = (prof.role || (activeThreadId === 'admin_system_support' ? 'ADMIN' : 'SHOPPER')).toUpperCase();
-  if (titleEl) titleEl.textContent = partnerName;
-  if (subEl) subEl.textContent = `${rawRole} • ${activeThreadId}`;
+  const displayRole = rawRole === 'BUYER' ? 'SHOPPER' : rawRole;
+
+  let roleBadgeClass = 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+  if (rawRole.includes('ADMIN')) {
+    roleBadgeClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+  } else if (rawRole.includes('BUYER') || rawRole.includes('SHOPPER') || rawRole.includes('REVIEWER')) {
+    roleBadgeClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+  } else if (rawRole.includes('SELLER') || rawRole.includes('VENDOR')) {
+    roleBadgeClass = 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+  }
+
+  const rShopperBtn = document.getElementById('headerReportShopperBtn');
+  if (rShopperBtn) {
+    rShopperBtn.classList.add('hidden');
+  }
+  if (titleEl) {
+    titleEl.innerHTML = `
+      <div class="flex items-center space-x-2">
+        <span class="text-sm font-bold text-white">${partnerName}</span>
+        <span class="text-[9px] px-2.5 py-0.5 rounded-full border font-bold uppercase ${roleBadgeClass}">${displayRole}</span>
+      </div>
+    `;
+  }
+  if (subEl) {
+    const emailStr = prof.email ? ` • ${prof.email}` : '';
+    subEl.textContent = `ID: ${String(activeThreadId).substring(0, 8)}...${emailStr}`;
+  }
+
   if (!thread) {
     container.innerHTML = `<div class="m-auto text-center text-xs text-slate-500"><i class="fa-solid fa-headset text-2xl text-amber-400 mb-2 block"></i>Direct channel ready. Type a message below to contact ${partnerName}!</div>`;
     return;
   }
   const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+
+  /* Product Snapshot Header Card */
   let productHeaderCard = '';
   const msgWithProd = sorted.find(m => m.product_id);
   if (msgWithProd && msgWithProd.product_id) {
@@ -2173,11 +2639,13 @@ function renderActiveChat(shouldScroll = false) {
         if (fetched) renderActiveChat();
       });
     }
+
     const pTitle = prod ? prod.title : (msgWithProd.product_title || 'Marketplace Review Listing');
     const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (msgWithProd.product_price ? Number(msgWithProd.product_price).toFixed(2) : '29.99');
     const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
     const pImg = prod ? getProductImageUrl(prod) : (getProductImageUrl(msgWithProd) || '');
     const pUrl = prod ? (prod.amazon_url || prod.product_url || prod.amazon_link || '') : '';
+
     productHeaderCard = `
       <div onclick="openProductFromChat('${prodId}')" class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-4 shadow-lg flex items-center justify-between gap-3 shrink-0 cursor-pointer hover:border-blue-500/60 transition">
         <div class="flex items-center space-x-3 truncate">
@@ -2193,7 +2661,7 @@ function renderActiveChat(shouldScroll = false) {
               <span class="text-[10px] text-slate-400 font-mono">ID: ${String(prodId).substring(0,8)}</span>
             </div>
             <h4 class="text-xs font-bold text-white truncate mt-0.5">${pTitle}</h4>
-            <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">$${pPrice}</strong> | Review Reward: <strong class="text-emerald-400">$${pComm} Commission</strong></p>
+            <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">$${pPrice}</strong> | Review Commission: <strong class="text-emerald-400">$${pComm} Commission</strong></p>
           </div>
         </div>
         <div class="flex items-center space-x-2 shrink-0" onclick="event.stopPropagation()">
@@ -2203,74 +2671,74 @@ function renderActiveChat(shouldScroll = false) {
       </div>
     `;
   }
+
   const messagesHtml = sorted.map(m => {
     const isMe = m.sender_id === currentUser.id;
     const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
     const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
+    const fileUrl = m._normalizedImage || m.file_url || m.image_url || m.attachment_url || m.proof_base64 || '';
     const fileName = m.file_name || m.attachment_name || 'Attached File';
+    
+    const rawBadge = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase().trim();
     const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
-    const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
-    const showAsReviewCard = isExplicitReviewType || hasValidProof;
+    const reviewUrl = m.amazon_review_url || m.review_url || (hasAmazonUrl(text) ? (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '') : '');
+    
+    // Strict proof validation: must have an explicit Amazon URL OR proof_base64 OR explicit review submission type
+    const hasAmazonLink = Boolean(reviewUrl) || hasAmazonUrl(text);
+    const hasScreenshotProof = Boolean(m.proof_base64) || (isExplicitReviewType && Boolean(m.file_url || m.image_url || m.attachment_url));
+    const isReviewSubmission = isExplicitReviewType || hasAmazonLink || hasScreenshotProof;
+    const showAsReviewCard = isReviewSubmission || (Boolean(m.feedback_id) && m.feedback_id !== 'Pending Approval');
+    
     const feedbackId = m.feedback_id || 'Pending Approval';
-    const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
+    const amazonUrl = reviewUrl || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
     const commissionAmount = m.commission_amount || 5.00;
+    const statusBadge = rawBadge || 'AWAITING_ATTENTION';
+    const isAwaiting = statusBadge === 'AWAITING_ATTENTION' || statusBadge === 'PENDING_REVIEW' || statusBadge === 'PENDING' || statusBadge === 'AWAITING ATTENTION';
+
     let bubbleContent = '';
     if (showAsReviewCard) {
-      const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
-      let badgeStyle = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
-      if (statusBadge === 'APPROVED') badgeStyle = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
-      else if (statusBadge === 'DENIED' || statusBadge === 'REJECTED') badgeStyle = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+      const badgeClass = isMe 
+        ? (statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'))
+        : (statusBadge === 'APPROVED' ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold' : (statusBadge === 'DENIED' ? 'bg-rose-100 text-rose-900 border-rose-300 font-bold' : 'bg-amber-100 text-amber-950 border-amber-300 font-bold'));
+      const feedbackIdClass = isMe ? 'text-slate-400' : 'text-slate-700 font-bold';
+
       bubbleContent = `
-        <div class="space-y-2.5 p-1">
-          <div class="flex items-center justify-between border-b border-white/10 pb-2">
-            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${badgeStyle}">
-              ${statusBadge}
-            </span>
-            <span class="text-[10px] font-mono opacity-80">FB ID: ${feedbackId}</span>
+        <div class="review-submission-card space-y-2.5 p-3.5 rounded-xl border ${isMe ? 'border-amber-500/30 bg-amber-500/5' : 'border-amber-500/40 bg-amber-500/10'} shadow-md" data-message-id="${m.id}">
+          <div class="flex items-center justify-between gap-3 border-b ${isMe ? 'border-white/10' : 'border-amber-500/20'} pb-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
+            <span class="text-[10px] ${feedbackIdClass} font-mono feedback-id-display">ID: ${feedbackId}</span>
           </div>
-          <div>
-            <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="${isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold'} underline truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
-            ${text && !text.includes(amazonUrl) ? `<p class="text-xs ${isMe ? 'text-slate-300' : 'text-slate-700'} mt-1">${text}</p>` : ''}
+          <div class="space-y-1.5">
+            ${amazonUrl && amazonUrl !== '#' ? `
+              <p class="text-xs text-slate-200"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 hover:text-blue-300 font-bold underline truncate inline-block max-w-[220px] align-bottom">${amazonUrl}</a></p>
+            ` : ''}
+            ${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-200 mt-1 font-medium">${text}</p>` : ''}
             ${fileUrl ? `
               <div class="mt-2">
                 <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
-                  <img src="${fileUrl}" alt="Proof" class="h-28 w-full object-cover hover:scale-105 transition">
+                  <img src="${fileUrl}" alt="Proof Screenshot" class="h-32 w-full object-cover hover:scale-105 transition">
                 </a>
               </div>
             ` : ''}
           </div>
-          <div class="inline-action-area pt-2 border-t border-white/10">
-            ${statusBadge === 'AWAITING_ATTENTION' ? (
-              (hasAmazonUrl(amazonUrl) || hasAmazonUrl(text)) ? `
-                <div class="border border-emerald-500/40 bg-emerald-500/10 p-2.5 rounded-xl space-y-1.5">
-                  <div class="flex items-center justify-between text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-                    <span><i class="fa-brands fa-amazon mr-1 text-xs"></i> Amazon Link Verified</span>
-                    <span class="text-emerald-300 font-mono text-[9px]">$${Number(commissionAmount).toFixed(2)} Review Commission</span>
-                  </div>
-                  <div class="flex space-x-2" id="actions-${m.id}">
-                    <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                      <i class="fa-solid fa-check"></i><span>Approve Review</span>
-                    </button>
-                    <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                      <i class="fa-solid fa-xmark"></i><span>Deny</span>
-                    </button>
-                  </div>
-                </div>
-              ` : `
-                <div class="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1.5 rounded-lg flex items-center space-x-1.5">
-                  <i class="fa-brands fa-amazon text-amber-400"></i>
-                  <span>Amazon.com URL required to enable vendor approval</span>
-                </div>
-              `
-            ) : `
-              <div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
+          <div class="inline-action-area pt-2 border-t ${isMe ? 'border-white/10' : 'border-amber-500/20'}">
+            ${isAwaiting ? `
+              <div class="flex space-x-2 my-1" id="actions-${m.id}">
+                <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center space-x-1 cursor-pointer">
+                  <i class="fa-solid fa-check mr-1"></i><span>Approve Review</span>
+                </button>
+                <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center space-x-1 cursor-pointer">
+                  <i class="fa-solid fa-xmark mr-1"></i><span>Deny Review</span>
+                </button>
+              </div>
+            ` : `
+              <div class="text-[11px] text-slate-300 italic">Decision Recorded: <strong class="text-white font-bold">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
             `}
           </div>
         </div>
       `;
     } else {
-      let attachmentHtml = '';
+let attachmentHtml = '';
       if (fileUrl) {
         if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
           attachmentHtml = `
@@ -2298,14 +2766,16 @@ function renderActiveChat(shouldScroll = false) {
             if (fetched) renderActiveChat();
           });
         }
+
         const pTitle = prod ? prod.title : (m.product_title || 'Marketplace Item');
         const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (m.product_price ? Number(m.product_price).toFixed(2) : '29.99');
         const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : (m.commission_amount ? Number(m.commission_amount).toFixed(2) : '15.00');
         const pImg = prod ? getProductImageUrl(prod) : (getProductImageUrl(m) || '');
-        const cardBg = isMe
-          ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50'
+        const cardBg = isMe 
+          ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50' 
           : 'bg-white border-slate-300 text-slate-900 hover:border-blue-600 shadow-md';
         const btnColor = isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold';
+
         productCardHtml = `
           <div onclick="openProductFromChat('${msgProdId}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
             <div class="relative w-12 h-12 shrink-0">
@@ -2320,7 +2790,7 @@ function renderActiveChat(shouldScroll = false) {
                 <span class="text-[9px] font-mono ${isMe ? 'text-slate-300' : 'text-slate-600'}">ID: ${String(msgProdId).substring(0,8)}</span>
               </div>
               <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-900'} truncate mt-0.5 group-hover:text-blue-600 transition">${pTitle}</h5>
-              <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: $${pPrice} | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
+              <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: <strong>$${pPrice}</strong> | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
             </div>
             <div class="shrink-0 text-xs ${btnColor} font-bold flex items-center space-x-1 group-hover:underline">
               <span>View</span>
@@ -2329,10 +2799,12 @@ function renderActiveChat(shouldScroll = false) {
           </div>
         `;
       }
+
       const textDisplay = text ? `<div>${text}</div>` : '';
       const contentBox = (productCardHtml || textDisplay || attachmentHtml) ? (productCardHtml + textDisplay + attachmentHtml) : `<div class="italic text-slate-300 opacity-80">[Attachment / System Event]</div>`;
       bubbleContent = contentBox;
     }
+
     return `
       <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
         <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-slate-200 text-slate-900 border border-slate-300/80 rounded-bl-none shadow-md font-medium'}">
@@ -2342,6 +2814,7 @@ function renderActiveChat(shouldScroll = false) {
       </div>
     `;
   }).join('');
+
   let receiptThreadBanner = '';
   if (overdueBuyerIds.has(activeThreadId)) {
     receiptThreadBanner = `
@@ -2361,123 +2834,160 @@ function renderActiveChat(shouldScroll = false) {
     container.scrollTop = currentScrollTop;
   }
 }
+
 async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
-  const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
-  const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-  const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || '') : '';
-  const isAmazonValid = hasAmazonUrl(reviewLink) || hasAmazonUrl(msg ? msg.text : '');
-
-  if (!isAmazonValid) {
-    alert("Approval Blocked: This submission does not contain a verified amazon.com review link.");
-    return;
-  }
-
-  const actionContainer = document.getElementById(`actions-${messageId}`);
-  if (actionContainer) {
-    actionContainer.innerHTML = `<span class="text-accentBlue italic text-[11px]">Processing Approval & Ledger Split...</span>`;
-  }
+  disableAllInlineActionButtons('Processing Approval & Split...');
   try {
     const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
-    const currentCycle = msg ? msg.submission_cycle : null;
-    const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
-      p_message_id: String(messageId),
-      p_vendor_id: currentUser.id,
-      p_reviewer_id: reviewerId,
-      p_commission_amount: Number(commissionAmount),
-      p_platform_fee: 10.00,
-      p_link: reviewLink,
-      p_type: 'REVIEW_COMMISSION'
-    });
-    if (rpcError) throw rpcError;
-    if (data && data.success === false) {
-      throw new Error(data.error || 'Unknown database error');
+    const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg.review_url || msg._normalizedText || 'N/A') : 'N/A';
+    const resolvedReviewerId = reviewerId || (msg ? msg.sender_id : activeThreadId);
+    const targetFeedbackId = (msg && msg.feedback_id && typeof msg.feedback_id === 'string' && msg.feedback_id.startsWith('FB-')) 
+      ? msg.feedback_id 
+      : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
+    // 1. Try RPC with signature A (4 parameters), then RPC with signature B (7 parameters) as fallback
+    let rpcSuccess = false;
+    try {
+      const rpc1 = await _supabase.rpc('approve_review_and_split', {
+        p_message_id: String(messageId),
+        p_vendor_id: currentUser.id,
+        p_reviewer_id: resolvedReviewerId,
+        p_feedback_id: targetFeedbackId
+      });
+      if (!rpc1.error) rpcSuccess = true;
+    } catch (e1) {}
+
+    if (!rpcSuccess) {
+      try {
+        const rpc2 = await _supabase.rpc('approve_review_and_split', {
+          p_message_id: String(messageId),
+          p_vendor_id: currentUser.id,
+          p_reviewer_id: resolvedReviewerId,
+          p_commission_amount: Number(commissionAmount || 15.00),
+          p_platform_fee: 10.00,
+          p_link: reviewLink,
+          p_type: 'REVIEW_COMMISSION'
+        });
+        if (!rpc2.error) rpcSuccess = true;
+      } catch (e2) {}
     }
-    const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-    let updatePayload = {
+
+    // 2. Primary target message update (includes feedback_id)
+    const primaryPayload = {
       status_badge: 'APPROVED',
-      feedback_id: generatedFeedbackId
+      feedback_id: targetFeedbackId
     };
-    sanitizeStatusBadge(updatePayload);
-    await _supabase
-      .from('messages')
-      .update(updatePayload)
-      .eq('id', messageId);
-    showToast("Review approved and commission split generated!");
+    sanitizeStatusBadge(primaryPayload);
+    await _supabase.from('messages').update(primaryPayload).eq('id', messageId);
+
+    // 3. Secondary pending messages for this reviewer (ONLY update status_badge, DO NOT touch feedback_id to prevent 409 UNIQUE constraint conflict!)
+    if (resolvedReviewerId && resolvedReviewerId !== 'admin') {
+      const secondaryPayload = {
+        status_badge: 'APPROVED'
+      };
+      sanitizeStatusBadge(secondaryPayload);
+      await _supabase.from('messages').update(secondaryPayload)
+        .eq('sender_id', resolvedReviewerId)
+        .eq('vendor_id', currentUser.id)
+        .eq('status_badge', 'AWAITING_ATTENTION');
+    }
+
+    updateMessageCardStateLocally(messageId, 'APPROVED', targetFeedbackId);
+    showToast("Review approved successfully! Commission split generated.");
     await loadVendorCommissions();
     await loadVendorThreads(true);
   } catch (err) {
     console.error("Approval failed:", err);
-    try {
-      const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
-      const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-      const currentCycle = msg ? msg.submission_cycle : null;
-      const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      let updatePayload = {
-        status_badge: 'APPROVED',
-        feedback_id: fallbackFeedbackId
-      };
-      sanitizeStatusBadge(updatePayload);
-      await _supabase
-        .from('messages')
-        .update(updatePayload)
-        .eq('id', messageId);
-      showToast("Review approved (Direct update mode).");
-      await loadVendorCommissions();
-      await loadVendorThreads(true);
-    } catch (fallbackErr) {
-      alert("Error approving review: " + err.message);
-      await loadVendorThreads(true);
-    }
+    alert("Error approving review: " + err.message);
+    await loadVendorThreads(true);
   }
 }
+
 async function handleInlineDeny(messageId) {
   const denialReason = prompt("Please enter a reason for denying this review submission:", "Order mismatch or unreadable link.");
   if (!denialReason) return;
-  const actionContainer = document.getElementById(`actions-${messageId}`);
-  if (actionContainer) {
-    actionContainer.innerHTML = `<span class="text-rose-400 italic text-[11px]">Recording Denial...</span>`;
-  }
+
+  disableAllInlineActionButtons('Processing Denial...');
+
   try {
-    let updatePayload = {
-      status_badge: 'DENIED'
+    const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
+    const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
+    const reviewerId = msg ? (msg.sender_id || activeThreadId) : activeThreadId;
+
+    const primaryPayload = {
+      status_badge: 'DENIED',
+      status: 'DENIED',
+      denial_reason: denialReason
     };
-    sanitizeStatusBadge(updatePayload);
-    const { error } = await _supabase
-      .from('messages')
-      .update(updatePayload)
-      .eq('id', messageId);
-    if (error) throw error;
-    showToast("Submission marked as DENIED.");
-    await loadVendorCommissions();
+    sanitizeStatusBadge(primaryPayload);
+
+    // Update target message
+    await _supabase.from('messages').update(primaryPayload).eq('id', messageId);
+
+    // Secondary pending messages for this reviewer
+    if (reviewerId && reviewerId !== 'admin') {
+      const secondaryPayload = {
+        status_badge: 'DENIED',
+        status: 'DENIED'
+      };
+      sanitizeStatusBadge(secondaryPayload);
+      await _supabase.from('messages').update(secondaryPayload)
+        .eq('sender_id', reviewerId)
+        .eq('vendor_id', currentUser.id)
+        .eq('status_badge', 'AWAITING_ATTENTION');
+    }
+
+    updateMessageCardStateLocally(messageId, 'DENIED');
+    showToast("Review submission denied. Buyer notified.");
     await loadVendorThreads(true);
   } catch (err) {
+    console.error("Denial failed:", err);
     alert("Error denying review: " + err.message);
     await loadVendorThreads(true);
   }
 }
-function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
-  const card = document.querySelector(`[data-message-id="${messageId}"]`);
-  if (!card) return;
-  const badge = card.querySelector('.status-badge-label');
-  if (badge) {
-    badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
-    badge.textContent = newStatus;
-  }
+
+function disableAllInlineActionButtons(loadingText = 'Processing...') {
+  const actionContainers = document.querySelectorAll('.inline-action-area');
+  actionContainers.forEach(container => {
+    if (container.querySelector('button')) {
+      container.innerHTML = `<span class="text-accentBlue italic text-[11px]"><i class="fa-solid fa-spinner fa-spin mr-1"></i>${loadingText}</span>`;
+    }
+  });
 }
-function showToast(msg) {
-  const container = document.getElementById('toast-container') || document.body;
+
+function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
+  const cards = document.querySelectorAll('.review-submission-card');
+  cards.forEach(card => {
+    const badge = card.querySelector('.status-badge-label');
+    if (badge && (badge.innerText.includes('AWAITING') || badge.innerText.includes('PENDING'))) {
+      badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
+      badge.innerText = newStatus;
+    }
+    if (feedbackId) {
+      const idEl = card.querySelector('.feedback-id-display');
+      if (idEl) idEl.innerText = `ID: ${feedbackId}`;
+    }
+    const actionArea = card.querySelector('.inline-action-area');
+    if (actionArea) {
+      actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
+    }
+  });
+}
+
+function showToast(message) {
+  const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
-  toast.className = 'bg-slate-900 border border-blue-500/40 text-blue-300 px-4 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center space-x-2 animate-bounce';
-  toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i><span>${msg}</span>`;
+  toast.className = 'bg-cardBg border-l-4 border-accentBlue text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
+  toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
   container.appendChild(toast);
   setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transition = 'opacity 0.3s ease';
+    toast.classList.add('opacity-0');
     setTimeout(() => toast.remove(), 300);
   }, 3500);
 }
+
 function handleChatFileSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -2485,22 +2995,26 @@ function handleChatFileSelect(event) {
   document.getElementById('chatAttachmentName').textContent = file.name;
   document.getElementById('chatAttachmentPreview').classList.remove('hidden');
 }
+
 function clearChatAttachment() {
   chatAttachedFile = null;
   document.getElementById('chatFileInput').value = '';
   document.getElementById('chatAttachmentPreview').classList.add('hidden');
 }
+
 async function handleSendMessage(event) {
   event.preventDefault();
   const input = document.getElementById('chatInputMsg');
   const text = input.value.trim();
-  if (!text && !chatAttachedFile) return;
+  if ((!text && !chatAttachedFile) || !activeThreadId) return;
+
   let fileDataUrl = null;
   let fileName = null;
+
   if (chatAttachedFile) {
     fileName = chatAttachedFile.name;
     if (chatAttachedFile.type.startsWith('image/')) {
-      fileDataUrl = await compressImageFile(chatAttachedFile, 1200, 0.8);
+      fileDataUrl = await compressImageFile(chatAttachedFile, 800, 0.7);
     } else {
       fileDataUrl = await new Promise((resolve) => {
         const reader = new FileReader();
@@ -2509,9 +3023,11 @@ async function handleSendMessage(event) {
       });
     }
   }
+
   try {
     let targetReceiverId = activeThreadId;
     const isUuid = targetReceiverId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetReceiverId);
+
     if (!isUuid || targetReceiverId === 'admin_system_support') {
       const adminProf = await fetchAdminProfile();
       if (adminProf && adminProf.id && adminProf.id !== 'admin_system_support') {
@@ -2522,66 +3038,70 @@ async function handleSendMessage(event) {
         return;
       }
     }
+
     const adminProf = getAdminProfile();
     const isSendingToAdmin = (targetReceiverId === adminProf.id);
+
     let targetProdId = null;
     if (text) {
       targetProdId = extractProductIdFromText(text);
     }
+
     let payload = {
       sender_id: currentUser.id,
       receiver_id: targetReceiverId,
       vendor_id: currentUser.id,
-      buyer_id: isSendingToAdmin ? currentUser.id : targetReceiverId,
       product_id: targetProdId,
       text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-      created_at: new Date().toISOString()
+      status_badge: 'AWAITING_ATTENTION'
     };
     if (fileDataUrl) {
-      payload.proof_base64 = fileDataUrl;
       payload.file_url = fileDataUrl;
       payload.file_name = fileName;
     }
-    let { error } = await _supabase
-      .from('messages')
-      .insert([payload]);
+
+    let { error } = await _supabase.from('messages').insert([payload]);
+
     if (error) {
-      console.warn("First insert attempt failed, trying clean fallback payload:", error.message);
-      const cleanPayload = {
+      console.warn('First insert attempt failed, trying fallback payload format:', error.message);
+      const fallbackPayload = {
         sender_id: currentUser.id,
+        receiver_id: targetReceiverId,
         vendor_id: currentUser.id,
-        text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-        created_at: new Date().toISOString()
+        product_id: targetProdId,
+        text: text || (fileName ? `[Attachment: ${fileName}]` : '')
       };
-      if (isUuid) {
-        cleanPayload.receiver_id = activeThreadId;
-      }
       if (fileDataUrl) {
-        cleanPayload.proof_base64 = fileDataUrl;
+        fallbackPayload.proof_base64 = fileDataUrl;
       }
-      const { error: fallbackErr } = await _supabase.from('messages').insert([cleanPayload]);
-      if (fallbackErr) throw fallbackErr;
+      const retryRes = await _supabase.from('messages').insert([fallbackPayload]);
+      if (retryRes.error) throw retryRes.error;
     }
     input.value = '';
     clearChatAttachment();
-    showToast("Message sent successfully!");
     await loadVendorThreads(true);
+    renderActiveChat(true);
   } catch (err) {
     alert('Error sending message: ' + err.message);
   }
 }
+
+/* Event Listener */
 window.addEventListener('DOMContentLoaded', initSellerWorkspace);
+
 /* Global System Branding Loader */
 async function loadAppBranding() {
   try {
     const cachedLogo = localStorage.getItem('app_logo_base64');
     if (cachedLogo) applyLogoToElements(cachedLogo);
+
     if (typeof _supabase !== 'undefined') {
       const { data, error } = await _supabase
         .from('system_settings')
         .select('value')
         .eq('key', 'app_logo_base64')
         .maybeSingle();
+
       if (!error && data && data.value) {
         localStorage.setItem('app_logo_base64', data.value);
         applyLogoToElements(data.value);
@@ -2591,6 +3111,7 @@ async function loadAppBranding() {
     console.log('App branding database query info:', err.message || err);
   }
 }
+
 function applyLogoToElements(logoBase64) {
   if (!logoBase64) return;
   const elements = document.querySelectorAll('.app-header-logo, #appHeaderLogo');
@@ -2598,9 +3119,11 @@ function applyLogoToElements(logoBase64) {
     el.innerHTML = `<img src="${logoBase64}" alt="App Logo" class="w-full h-full object-cover rounded-xl shadow-md">`;
   });
 }
+
 document.addEventListener('DOMContentLoaded', () => {
   loadAppBranding();
 });
+
 </script>
 </body>
 </html>
