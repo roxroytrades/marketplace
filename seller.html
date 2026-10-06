@@ -2475,20 +2475,15 @@ function hasAmazonUrl(text) {
 }
 
 function hasImageAttachment(msg) {
-  return (msg._normalizedImage && msg._normalizedImage.trim() !== '') ||
+  if (!msg) return false;
+  return Boolean(
+    (msg._normalizedImage && msg._normalizedImage.trim() !== '') ||
     (msg.file_url && msg.file_url.trim() !== '') ||
+    (msg.image_url && msg.image_url.trim() !== '') ||
+    (msg.attachment_url && msg.attachment_url.trim() !== '') ||
     (msg.proof_base64 && msg.proof_base64.trim() !== '') ||
-    (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.includes('imgur') || msg._normalizedText.includes('supabase'))));
-}
-
-
-function extractProductIdFromText(text) {
-  if (!text) return null;
-  const m1 = text.match(/[?&]prod=([a-zA-Z0-9_-]+)/i);
-  if (m1 && m1[1]) return m1[1];
-  const m2 = text.match(/PROD-([a-zA-Z0-9_-]+)/i);
-  if (m2 && m2[1]) return m2[1];
-  return null;
+    (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.startsWith('data:image/'))))
+  );
 }
 
 window.openSellerProductDetailsModal = async function(productId) {
@@ -2667,58 +2662,66 @@ function renderActiveChat(shouldScroll = false) {
     const isMe = m.sender_id === currentUser.id;
     const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
     const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
+    const fileUrl = m._normalizedImage || m.file_url || m.image_url || m.attachment_url || m.proof_base64 || '';
     const fileName = m.file_name || m.attachment_name || 'Attached File';
+    
+    const rawBadge = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase().trim();
     const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
-    const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
-    const showAsReviewCard = isExplicitReviewType || hasValidProof;
+    const reviewUrl = m.review_url || m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '');
+    const hasValidProof = Boolean(reviewUrl) || hasAmazonUrl(text) || hasImageAttachment(m);
+    const hasPendingOrDecidedStatus = ['AWAITING_ATTENTION', 'PENDING_REVIEW', 'PENDING', 'APPROVED', 'DENIED', 'PAID', 'REPORTED'].includes(rawBadge) || Boolean(m.feedback_id);
+    const showAsReviewCard = isExplicitReviewType || hasValidProof || hasPendingOrDecidedStatus;
+    
     const feedbackId = m.feedback_id || 'Pending Approval';
-    const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
+    const amazonUrl = reviewUrl || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
     const commissionAmount = m.commission_amount || 5.00;
+    const statusBadge = rawBadge || 'AWAITING_ATTENTION';
+    const isAwaiting = statusBadge === 'AWAITING_ATTENTION' || statusBadge === 'PENDING_REVIEW' || statusBadge === 'PENDING' || statusBadge === 'AWAITING ATTENTION';
 
     let bubbleContent = '';
     if (showAsReviewCard) {
-      const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
       const badgeClass = isMe 
         ? (statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'))
         : (statusBadge === 'APPROVED' ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold' : (statusBadge === 'DENIED' ? 'bg-rose-100 text-rose-900 border-rose-300 font-bold' : 'bg-amber-100 text-amber-950 border-amber-300 font-bold'));
       const feedbackIdClass = isMe ? 'text-slate-400' : 'text-slate-700 font-bold';
 
       bubbleContent = `
-        <div class="review-submission-card space-y-2.5" data-message-id="${m.id}">
-          <div class="flex items-center justify-between gap-3 border-b ${isMe ? 'border-white/10' : 'border-slate-300'} pb-2">
+        <div class="review-submission-card space-y-2.5 p-3.5 rounded-xl border ${isMe ? 'border-amber-500/30 bg-amber-500/5' : 'border-amber-500/40 bg-amber-500/10'} shadow-md" data-message-id="${m.id}">
+          <div class="flex items-center justify-between gap-3 border-b ${isMe ? 'border-white/10' : 'border-amber-500/20'} pb-2">
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
             <span class="text-[10px] ${feedbackIdClass} font-mono feedback-id-display">ID: ${feedbackId}</span>
           </div>
-          <div>
-            <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="${isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold'} underline truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
-            ${text && !text.includes(amazonUrl) ? `<p class="text-xs ${isMe ? 'text-slate-300' : 'text-slate-700'} mt-1">${text}</p>` : ''}
+          <div class="space-y-1.5">
+            ${amazonUrl && amazonUrl !== '#' ? `
+              <p class="text-xs text-slate-200"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 hover:text-blue-300 font-bold underline truncate inline-block max-w-[220px] align-bottom">${amazonUrl}</a></p>
+            ` : ''}
+            ${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-200 mt-1 font-medium">${text}</p>` : ''}
             ${fileUrl ? `
               <div class="mt-2">
                 <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
-                  <img src="${fileUrl}" alt="Proof" class="h-28 w-full object-cover hover:scale-105 transition">
+                  <img src="${fileUrl}" alt="Proof Screenshot" class="h-32 w-full object-cover hover:scale-105 transition">
                 </a>
               </div>
             ` : ''}
           </div>
-          <div class="inline-action-area pt-2 border-t border-white/10">
-            ${statusBadge === 'AWAITING_ATTENTION' ? `
-              <div class="flex space-x-2" id="actions-${m.id}">
-                <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                  <i class="fa-solid fa-check"></i><span>Approve</span>
+          <div class="inline-action-area pt-2 border-t ${isMe ? 'border-white/10' : 'border-amber-500/20'}">
+            ${isAwaiting ? `
+              <div class="flex space-x-2 my-1" id="actions-${m.id}">
+                <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center space-x-1 cursor-pointer">
+                  <i class="fa-solid fa-check mr-1"></i><span>Approve Review</span>
                 </button>
-                <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                  <i class="fa-solid fa-xmark"></i><span>Deny</span>
+                <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center space-x-1 cursor-pointer">
+                  <i class="fa-solid fa-xmark mr-1"></i><span>Deny Review</span>
                 </button>
               </div>
             ` : `
-              <div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
+              <div class="text-[11px] text-slate-300 italic">Decision Recorded: <strong class="text-white font-bold">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
             `}
           </div>
         </div>
       `;
     } else {
-      let attachmentHtml = '';
+let attachmentHtml = '';
       if (fileUrl) {
         if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
           attachmentHtml = `
