@@ -298,8 +298,21 @@ eh
 </div>
 </header>
 <!-- Primary Navigation Tabs -->
-<div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-6 py-2 sticky top-[73px] z-20">
-<div class="max-w-7xl mx-auto flex items-center space-x-2 overflow-x-auto no-scrollbar text-xs">
+<div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-4 sm:px-6 py-2 sticky top-[73px] z-20">
+<div class="max-w-7xl mx-auto text-xs">
+<!-- Mobile Navigation Dropdown -->
+<div class="sm:hidden w-full">
+<select id="adminTabSelectMobile" onchange="switchAdminTab(this.value)" class="w-full bg-darkBg border border-amber-500/40 text-amber-300 font-bold text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400">
+<option value="users">👥 Accounts & ID Verification</option>
+<option value="products">📦 Product Catalog</option>
+<option value="commissions">💰 Master Commissions Ledger</option>
+<option value="messaging">💬 System Messaging & Outreach</option>
+<option value="referrals">🌐 Referral Network Hub</option>
+<option value="settings">⚙️ System Settings & Branding</option>
+</select>
+</div>
+<!-- Desktop Navigation Tab Buttons -->
+<div class="hidden sm:flex items-center space-x-2 overflow-x-auto no-scrollbar">
 <button onclick="switchAdminTab('users')" id="tabBtn-users" class="admin-tab-btn active px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30">
 <i class="fa-solid fa-users-gear text-xs"></i>
 <span>Accounts & ID Verification</span>
@@ -327,28 +340,29 @@ eh
 </button>
 </div>
 </div>
+</div>
 <!-- Main Workspace Body -->
 <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 space-y-6">
 <!-- TAB 1: ACCOUNTS & ID VERIFICATION -->
 <section id="adminTab-users" class="admin-tab-content space-y-6">
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
 <div>
 <h2 class="text-xl font-bold text-white tracking-tight">Platform Accounts & ID Verification</h2>
 <p class="text-xs text-slate-400 mt-1">Review buyer National ID verification cards, manage account access status, and audit user roles.</p>
 </div>
-<div class="flex items-center space-x-3">
-<button id="btnBatchEraseUsers" onclick="deleteSelectedUsers()" class="hidden bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center space-x-1.5 shadow-sm">
+<div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+<button id="btnBatchEraseUsers" onclick="deleteSelectedUsers()" class="hidden bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center justify-center space-x-1.5 shadow-sm w-full sm:w-auto">
 <i class="fa-solid fa-trash"></i>
 <span id="btnBatchEraseUsersText">Erase Selected (0)</span>
 </button>
-<input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search users by name, email, ID..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
-<select id="userRoleFilter" onchange="filterUsersTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
+<input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search users by name, email, ID..." class="w-full sm:w-64 bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+<select id="userRoleFilter" onchange="filterUsersTable()" class="w-full sm:w-auto bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
 <option value="ALL">All Roles</option>
 <option value="BUYER">Buyers</option>
 <option value="SELLER">Sellers / Vendors</option>
 <option value="ADMIN">Admins</option>
 </select>
-<select id="userStatusFilter" onchange="filterUsersTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
+<select id="userStatusFilter" onchange="filterUsersTable()" class="w-full sm:w-auto bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
 <option value="ALL">All Statuses</option>
 <option value="BANNED">🚫 Banned</option>
 <option value="PENDING">⏳ Pending Verification</option>
@@ -386,12 +400,12 @@ eh
 </section>
 <!-- TAB 2: PRODUCT CATALOG MODERATION -->
 <section id="adminTab-products" class="admin-tab-content space-y-6 hidden">
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
 <div>
 <h2 class="text-xl font-bold text-white tracking-tight">Marketplace Product Catalog Moderation</h2>
 <p class="text-xs text-slate-400 mt-1">Audit active vendor offerings, verify commission allocations, and moderate listings.</p>
 </div>
-<input type="text" id="productSearchInput" onkeyup="filterProductsTable()" placeholder="Search products or vendors..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+<input type="text" id="productSearchInput" onkeyup="filterProductsTable()" placeholder="Search products or vendors..." class="w-full sm:w-64 bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
 </div>
 <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
 <div class="overflow-x-auto">
@@ -419,19 +433,17 @@ eh
 </section>
 <!-- TAB 3: MASTER COMMISSIONS LEDGER -->
 <section id="adminTab-commissions" class="admin-tab-content space-y-6 hidden">
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
 <div>
 <h2 class="text-xl font-bold text-white tracking-tight">Master Financial Ledger & Payout Queue</h2>
 <p class="text-xs text-slate-400 mt-1">Monitor real-time balances, payout requests, working queues, and settlement receipts across all roles.</p>
 </div>
-<div class="flex items-center space-x-3">
-<button onclick="openManualAdjustmentModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+<button onclick="openManualAdjustmentModal()" class="w-full sm:w-auto justify-center bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-1.5">
 <i class="fa-solid fa-plus-circle"></i>
 <span>+ Manual Adjustment</span>
 </button>
-</div>
-<div class="flex items-center space-x-3">
-<button onclick="requestAllAvailableAdminPayouts()" class="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
+<button onclick="requestAllAvailableAdminPayouts()" class="w-full sm:w-auto justify-center bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
 <i class="fa-solid fa-paper-plane"></i>
 <span>Request All Liquid Payouts</span>
 </button>
@@ -504,33 +516,43 @@ eh
 </div>
 </div>
 <!-- Sub-Tab Navigation Bar with Real-Time Queue Badges -->
-<div class="flex items-center justify-between gap-2 overflow-x-auto pb-1">
-<div class="flex items-center space-x-2 bg-cardBg p-1.5 rounded-2xl border border-borderSlate min-w-max">
-<button onclick="setAdminCommTabFilter('ALL')" id="adminCommTabBtn-ALL" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-bold transition bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-md flex items-center space-x-2">
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-1">
+<div class="sm:hidden w-full">
+<select id="adminCommTabFilterMobile" onchange="setAdminCommTabFilter(this.value)" class="w-full bg-darkBg border border-amber-500/40 text-amber-300 font-bold text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400">
+<option value="ALL">All Ledger Entries</option>
+<option value="INCOMING_REQUESTS">📥 Incoming Requests</option>
+<option value="MAIN_ACCOUNT">👛 Main Queue</option>
+<option value="OUTGOING_REQUESTS">📤 Outgoing Requests</option>
+<option value="WORKING_QUEUE">🔄 Working Queue</option>
+<option value="HISTORY">📜 Payment History</option>
+</select>
+</div>
+<div class="hidden sm:flex items-center space-x-2 bg-cardBg p-1.5 rounded-2xl border border-borderSlate overflow-x-auto no-scrollbar">
+<button onclick="setAdminCommTabFilter('ALL')" id="adminCommTabBtn-ALL" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-bold transition bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-md flex items-center space-x-2 shrink-0">
 <span>All Ledger Entries</span>
 <span id="badge-comm-ALL" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/30 text-amber-200">0</span>
 </button>
-<button onclick="setAdminCommTabFilter('INCOMING_REQUESTS')" id="adminCommTabBtn-INCOMING_REQUESTS" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+<button onclick="setAdminCommTabFilter('INCOMING_REQUESTS')" id="adminCommTabBtn-INCOMING_REQUESTS" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2 shrink-0">
 <i class="fa-solid fa-inbox text-blue-400"></i>
 <span>Incoming Requests</span>
 <span id="badge-comm-INCOMING_REQUESTS" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30">0 ($0.00)</span>
 </button>
-<button onclick="setAdminCommTabFilter('MAIN_ACCOUNT')" id="adminCommTabBtn-MAIN_ACCOUNT" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+<button onclick="setAdminCommTabFilter('MAIN_ACCOUNT')" id="adminCommTabBtn-MAIN_ACCOUNT" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2 shrink-0">
 <i class="fa-solid fa-wallet text-amber-400"></i>
 <span>Main Queue</span>
 <span id="badge-comm-MAIN_ACCOUNT" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-400 border border-amber-500/30">0 ($0.00)</span>
 </button>
-<button onclick="setAdminCommTabFilter('OUTGOING_REQUESTS')" id="adminCommTabBtn-OUTGOING_REQUESTS" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+<button onclick="setAdminCommTabFilter('OUTGOING_REQUESTS')" id="adminCommTabBtn-OUTGOING_REQUESTS" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2 shrink-0">
 <i class="fa-solid fa-paper-plane text-purple-400"></i>
 <span>Outgoing Requests</span>
 <span id="badge-comm-OUTGOING_REQUESTS" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-500/20 text-purple-400 border border-purple-500/30">0 ($0.00)</span>
 </button>
-<button onclick="setAdminCommTabFilter('WORKING_QUEUE')" id="adminCommTabBtn-WORKING_QUEUE" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+<button onclick="setAdminCommTabFilter('WORKING_QUEUE')" id="adminCommTabBtn-WORKING_QUEUE" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2 shrink-0">
 <i class="fa-solid fa-arrows-rotate text-emerald-400"></i>
 <span>Working Queue</span>
 <span id="badge-comm-WORKING_QUEUE" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">0 ($0.00)</span>
 </button>
-<button onclick="setAdminCommTabFilter('HISTORY')" id="adminCommTabBtn-HISTORY" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2">
+<button onclick="setAdminCommTabFilter('HISTORY')" id="adminCommTabBtn-HISTORY" class="admin-comm-subtab px-3.5 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-darkBg border border-transparent flex items-center space-x-2 shrink-0">
 <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
 <span>Payment History</span>
 <span id="badge-comm-HISTORY" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-700/60 text-slate-300 border border-borderSlate">0 ($0.00)</span>
@@ -578,12 +600,12 @@ eh
 <h2 class="text-xl font-bold text-white tracking-tight">System-Wide Messaging & Direct Outreach</h2>
 <p class="text-xs text-slate-400 mt-1">Audit communications, inspect review submissions, detect contact policy risks, and initiate direct outreach.</p>
 </div>
-<div class="flex items-center space-x-3">
-<button onclick="openSystemBroadcastModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+<button onclick="openSystemBroadcastModal()" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
 <i class="fa-solid fa-bullhorn"></i>
 <span>📢 System Broadcast</span>
 </button>
-<button onclick="openDirectOutreachModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
+<button onclick="openDirectOutreachModal()" class="w-full sm:w-auto justify-center bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-3 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
 <i class="fa-solid fa-paper-plane"></i>
 <span>+ Start Direct Outreach</span>
 </button>
@@ -664,17 +686,17 @@ Needs Attention
 </section>
 <!-- TAB 5: REFERRAL NETWORK HUB -->
 <section id="adminTab-referrals" class="admin-tab-content space-y-6 hidden">
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-cardBg border border-borderSlate p-6 rounded-2xl">
 <div>
 <h2 class="text-xl font-bold text-white tracking-tight">Referral Network Hub & Inviter Command Center</h2>
 <p class="text-xs text-slate-400 mt-1">Audit multi-tier affiliate referral codes, share admin invitation links, and track network earnings.</p>
 </div>
-<div class="flex items-center space-x-2">
-<select id="referralScopeFilter" onchange="filterReferralsTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
+<div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+<select id="referralScopeFilter" onchange="filterReferralsTable()" class="w-full sm:w-auto bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
 <option value="ALL">All Network Referrals</option>
 <option value="ADMIN_ONLY">Invited by Admin (REF-620383CE)</option>
 </select>
-<input type="text" id="referralSearchInput" onkeyup="filterReferralsTable()" placeholder="Search referral codes or user IDs..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+<input type="text" id="referralSearchInput" onkeyup="filterReferralsTable()" placeholder="Search referral codes or user IDs..." class="w-full sm:w-64 bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
 </div>
 </div>
 <!-- Referral KPI Performance Metric Cards -->
@@ -733,18 +755,18 @@ Admin Referral Code: <span id="adminRefCodeDisplay" class="font-mono text-amber-
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
 <div class="space-y-1.5">
 <label class="font-semibold text-slate-300">Shopper Invite Link</label>
-<div class="flex items-center space-x-2">
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
 <input type="text" id="adminShopperRefLink" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none">
-<button onclick="copyRefLink('adminShopperRefLink')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-2 rounded-xl transition text-xs whitespace-nowrap">
+<button onclick="copyRefLink('adminShopperRefLink')" class="w-full sm:w-auto justify-center bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-2 rounded-xl transition text-xs whitespace-nowrap flex items-center">
 <i class="fa-solid fa-copy mr-1"></i> Copy
 </button>
 </div>
 </div>
 <div class="space-y-1.5">
 <label class="font-semibold text-slate-300">Vendor Invite Link</label>
-<div class="flex items-center space-x-2">
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
 <input type="text" id="adminVendorRefLink" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none">
-<button onclick="copyRefLink('adminVendorRefLink')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-2 rounded-xl transition text-xs whitespace-nowrap">
+<button onclick="copyRefLink('adminVendorRefLink')" class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-2 rounded-xl transition text-xs whitespace-nowrap flex items-center">
 <i class="fa-solid fa-copy mr-1"></i> Copy
 </button>
 </div>
@@ -1309,6 +1331,8 @@ const activeBtn = document.getElementById(`tabBtn-${tabKey}`);
 if (activeBtn) {
 activeBtn.className = "admin-tab-btn active px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30";
 }
+const mobileSelect = document.getElementById('adminTabSelectMobile');
+if (mobileSelect) mobileSelect.value = tabKey;
 document.querySelectorAll('.admin-tab-content').forEach(sec => sec.classList.add('hidden'));
 const targetSec = document.getElementById(`adminTab-${tabKey}`);
 if (targetSec) targetSec.classList.remove('hidden');
@@ -1804,6 +1828,8 @@ if (!isSilent) console.error("Commissions load error:", err);
 function setAdminCommTabFilter(val) {
 const select = document.getElementById('adminCommTabFilter');
 if (select) select.value = val;
+const mobileCommSelect = document.getElementById('adminCommTabFilterMobile');
+if (mobileCommSelect) mobileCommSelect.value = val;
 const tabs = ['ALL', 'INCOMING_REQUESTS', 'MAIN_ACCOUNT', 'OUTGOING_REQUESTS', 'WORKING_QUEUE', 'HISTORY'];
 tabs.forEach(t => {
 const btn = document.getElementById('adminCommTabBtn-' + t);
