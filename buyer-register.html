@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+<link rel="icon" href="data:,">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Echo Hub - Shopper & Reviewer Registration</title>
@@ -437,7 +438,7 @@ const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, refe
 const finalInvitedByCode = refereeCode || null;
 const finalReferredBy = refereeUuid || null;
 
-/* Register shopper with Supabase Auth using pending_buyer role to bypass initial trigger check constraint */
+/* Register shopper with Supabase Auth using defensive payload */
 const cleanMetaData = {
 first_name: firstName,
 last_name: lastName,
@@ -455,6 +456,7 @@ commission_policy_agreed: Boolean(policyAgreed)
 
 let authData = null;
 let authError = null;
+let userId = null;
 
 try {
 const res = await _supabase.auth.signUp({
@@ -464,38 +466,28 @@ options: { data: cleanMetaData }
 });
 authData = res.data;
 authError = res.error;
+if (authData && authData.user) {
+userId = authData.user.id;
+}
 } catch (signUpErr) {
 authError = signUpErr;
 }
 
-/* Fallback: Handle existing user sessions or trigger bypass */
-if (authError) {
-if (authError.message && (authError.message.includes('already registered') || authError.message.includes('already exists') || authError.status === 400)) {
-const loginRes = await _supabase.auth.signInWithPassword({ email: email, password: password });
-if (!loginRes.error && loginRes.data?.user) {
-authData = loginRes.data;
-authError = null;
-}
-} else if (authError.status === 500 || (authError.message && (authError.message.includes('500') || authError.message.includes('Database error') || authError.message.includes('trigger')))) {
-console.warn("Retrying signup with safe minimal metadata due to server trigger response:", authError.message);
-const fallbackRes = await _supabase.auth.signUp({
+// If user already exists or trigger failed, attempt direct authentication
+if (authError || !userId) {
+console.warn("SignUp notice, attempting authentication fallback:", authError?.message);
+const loginRes = await _supabase.auth.signInWithPassword({
 email: email,
-password: password,
-options: {
-data: {
-full_name: fullName,
-role: 'pending_buyer'
-}
-}
+password: password
 });
-authData = fallbackRes.data;
-authError = fallbackRes.error;
+if (loginRes.data && loginRes.data.user) {
+userId = loginRes.data.user.id;
+authError = null;
+} else if (authError) {
+throw authError;
 }
 }
 
-if (authError) throw authError;
-
-const userId = authData?.user ? authData.user.id : null;
 if (!userId) {
 throw new Error('User registration failed to return an authenticated user ID.');
 }
