@@ -155,7 +155,7 @@ Interactive preview demonstrating 1:1 commission matching and network split rule
 <span>How Your Commission Payment Works</span>
 </div>
 <p>
-As a seller, you pay a commission directly to the <strong>reviewer</strong> who submitted verified feedback, plus a separate fee to the <strong>platform/facility (admin)</strong> for granting the tools, workspace, and infrastructure to facilitate your business.
+As a seller, the commission amount (USD) you set is what you will <strong>payout to each reviewer for each review</strong>. In addition, that exact same amount is what you will pay towards the <strong>platform/admin fee</strong> for granting the tools, workspace, and infrastructure to facilitate your business.
 </p>
 <p class="text-[11px] text-slate-300 border-t border-blue-500/20 pt-1.5 mt-1">
 <strong>When Is Platform Commission Split?</strong> If someone introduced you to Echo Hub, or introduced the reviewer who brought you business, those inviter(s) receive an affiliate split out of the platform/facility fee paid by you—ensuring <strong>100% of the reviewer's cash reward remains untouched</strong>.
@@ -284,7 +284,9 @@ Need Info
 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-dollar-sign text-xs"></i></span>
 <input type="number" id="commissionAmount" required min="5.00" step="0.01" value="15.00" oninput="syncCommissionWithSlider(this.value)" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
 </div>
-<p class="text-[10px] text-slate-400 pl-1">Enforced minimum of $5.00 USD per review. Setting a competitive reward attracts top-rated reviewers faster.</p>
+<p class="text-[10px] text-slate-300 pl-1 leading-relaxed">
+<strong class="text-blue-400">Payout & Platform Fee Structure:</strong> The commission amount set above is what you will <strong>payout to each reviewer for each review</strong>. It is ALSO the matching amount you will pay towards the <strong>platform/admin fee</strong> (which Echo Hub splits if individual(s) invited you or the reviewer to support you). Enforced minimum: $5.00 USD per review.
+</p>
 </div>
 
 <!-- Business Description -->
@@ -403,6 +405,12 @@ if (!slider) return;
 
 const reviewCommission = parseFloat(slider.value) || 15.00;
 const scenario = scenarioSelect ? scenarioSelect.value : '2';
+
+// Keep official form input synchronized with slider value
+const mainCommissionInput = document.getElementById('commissionAmount');
+if (mainCommissionInput && document.activeElement !== mainCommissionInput) {
+mainCommissionInput.value = reviewCommission.toFixed(2);
+}
 
 document.getElementById('calcTotalDisplay').textContent = `$${reviewCommission.toFixed(2)}`;
 document.getElementById('calcReviewerAmt').textContent = `$${reviewCommission.toFixed(2)}`;
