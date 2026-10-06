@@ -905,12 +905,25 @@ eh
 <label class="block text-slate-400 font-semibold mb-1">PayPal Email</label>
 <input type="email" id="editUserPaypalEmail" class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-amber-500" placeholder="e.g. user@paypal.com">
 </div>
-<div>
+<div class="space-y-2">
 <label class="block text-slate-400 font-semibold mb-1">National ID Document</label>
-<button type="button" onclick="inspectNationalId(document.getElementById('editUserId').value)" class="w-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl px-3 py-2 text-xs font-semibold transition flex items-center justify-center space-x-2">
+<div class="flex items-center space-x-2">
+<button type="button" onclick="inspectNationalId(document.getElementById('editUserId').value)" class="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl px-3 py-2 text-xs font-semibold transition flex items-center justify-center space-x-1.5">
 <i class="fa-solid fa-id-card text-amber-400"></i>
-<span>Inspect / View Uploaded National ID</span>
+<span>Inspect ID</span>
 </button>
+<label class="flex-1 cursor-pointer bg-darkBg hover:bg-slate-800 text-slate-200 border border-borderSlate rounded-xl px-3 py-2 text-xs font-semibold transition flex items-center justify-center space-x-1.5">
+<i class="fa-solid fa-upload text-blue-400"></i>
+<span>Upload New ID</span>
+<input type="file" id="editUserNationalIdFile" accept="image/*,.pdf" onchange="handleAdminIdFileSelect(event)" class="hidden">
+</label>
+</div>
+<div id="editUserNationalIdPreview" class="hidden p-2 bg-darkBg border border-emerald-500/40 rounded-xl flex items-center space-x-3">
+<img id="editUserNationalIdImg" src="" alt="New ID Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate shrink-0">
+<div class="text-[11px] text-emerald-400 font-medium">
+<i class="fa-solid fa-circle-check mr-1"></i>New ID document ready to save
+</div>
+</div>
 </div>
 <div>
 <label class="block text-slate-400 font-semibold mb-1">Invited By Code (Referral Attribution)</label>
@@ -3016,6 +3029,50 @@ await loadUsersData();
 alert("Batch user deletion failed: " + err.message);
 }
 }
+let editUserNewIdBase64 = '';
+
+function compressImageFileAdmin(file, maxWidth = 1000, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width;
+        let h = img.height;
+        if (w > maxWidth) {
+          h = Math.round((h * maxWidth) / w);
+          w = maxWidth;
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+}
+
+async function handleAdminIdFileSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  try {
+    const base64 = await compressImageFileAdmin(file, 1000, 0.75);
+    editUserNewIdBase64 = base64;
+    const previewContainer = document.getElementById('editUserNationalIdPreview');
+    const previewImg = document.getElementById('editUserNationalIdImg');
+    if (previewImg) previewImg.src = base64;
+    if (previewContainer) previewContainer.classList.remove('hidden');
+  } catch (err) {
+    alert("Error processing National ID image: " + err.message);
+  }
+}
+
 function openEditUserModal(userId) {
 const u = allUsersCache.find(x => x.id === userId);
 if (!u) return;
@@ -3026,6 +3083,13 @@ document.getElementById('editUserRole').value = (u.role || 'buyer').toLowerCase(
 document.getElementById('editUserVerificationStatus').value = (u.verification_status || 'UNVERIFIED').toUpperCase();
 document.getElementById('editUserPaypalEmail').value = u.paypal_email || '';
 document.getElementById('editUserInvitedByCode').value = u.invited_by_code || '';
+
+editUserNewIdBase64 = '';
+const fileInput = document.getElementById('editUserNationalIdFile');
+if (fileInput) fileInput.value = '';
+const previewContainer = document.getElementById('editUserNationalIdPreview');
+if (previewContainer) previewContainer.classList.add('hidden');
+
 document.getElementById('editUserModal').classList.remove('hidden');
 }
 function closeEditUserModal() {
@@ -3041,20 +3105,26 @@ const paypalEmail = document.getElementById('editUserPaypalEmail').value.trim();
 const invitedByCode = document.getElementById('editUserInvitedByCode').value.trim();
 if (!userId) return;
 try {
-const { error } = await _supabase
-.from('profiles')
-.update({
+const updatePayload = {
 full_name: fullName,
 email: email,
 role: role,
 verification_status: verificationStatus,
 paypal_email: paypalEmail,
 invited_by_code: invitedByCode
-})
+};
+if (editUserNewIdBase64) {
+updatePayload.national_id_base64 = editUserNewIdBase64;
+}
+const sanitized = sanitizePayload('profiles', updatePayload);
+const { error } = await _supabase
+.from('profiles')
+.update(sanitized)
 .eq('id', userId);
 if (error) throw error;
 showToast("User profile updated successfully!");
 closeEditUserModal();
+editUserNewIdBase64 = '';
 await loadUsersData();
 } catch (err) {
 alert("Error updating user profile: " + err.message);
