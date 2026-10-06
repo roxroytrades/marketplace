@@ -373,7 +373,8 @@ eh
 </div>
 <!-- Users Table -->
 <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="overflow-x-auto">
+<!-- Desktop Table View -->
+<div class="hidden md:block overflow-x-auto">
 <table class="w-full text-left border-collapse text-xs">
 <thead>
 <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -396,6 +397,10 @@ eh
 </tbody>
 </table>
 </div>
+<!-- Mobile Cards View -->
+<div id="usersCardsContainer" class="block md:hidden p-4 space-y-3">
+<div class="p-6 text-center text-slate-500 text-xs"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading user accounts...</div>
+</div>
 </div>
 </section>
 <!-- TAB 2: PRODUCT CATALOG MODERATION -->
@@ -408,7 +413,8 @@ eh
 <input type="text" id="productSearchInput" onkeyup="filterProductsTable()" placeholder="Search products or vendors..." class="w-full sm:w-64 bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition">
 </div>
 <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="overflow-x-auto">
+<!-- Desktop Table View -->
+<div class="hidden md:block overflow-x-auto">
 <table class="w-full text-left border-collapse text-xs">
 <thead>
 <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -428,6 +434,10 @@ eh
 </tr>
 </tbody>
 </table>
+</div>
+<!-- Mobile Cards View -->
+<div id="productsCardsContainer" class="block md:hidden p-4 space-y-3">
+<div class="p-6 text-center text-slate-500 text-xs"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading catalog...</div>
 </div>
 </div>
 </section>
@@ -568,7 +578,8 @@ eh
 </select>
 </div>
 <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="overflow-x-auto">
+<!-- Desktop Table View -->
+<div class="hidden md:block overflow-x-auto">
 <table class="w-full text-left border-collapse text-xs">
 <thead>
 <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -589,6 +600,10 @@ eh
 </tr>
 </tbody>
 </table>
+</div>
+<!-- Mobile Cards View -->
+<div id="adminCommissionsCardsContainer" class="block md:hidden p-4 space-y-3">
+<div class="p-6 text-center text-slate-500 text-xs"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading ledger records...</div>
 </div>
 </div>
 </section>
@@ -774,7 +789,8 @@ Admin Referral Code: <span id="adminRefCodeDisplay" class="font-mono text-amber-
 </div>
 </div>
 <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="overflow-x-auto">
+<!-- Desktop Table View -->
+<div class="hidden md:block overflow-x-auto">overflow-x-auto">
 <table class="w-full text-left border-collapse text-xs">
 <thead>
 <tr class="bg-darkBg border-b border-borderSlate text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -1431,13 +1447,18 @@ alert("Failed to dismiss report: " + err.message);
 }
 function renderUsersTable(users) {
 const tbody = document.getElementById('usersTableBody');
-if (!tbody) return;
+const cardsContainer = document.getElementById('usersCardsContainer');
+if (!tbody && !cardsContainer) return;
+
 if (!users || users.length === 0) {
-tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No matching user accounts found.</td></tr>`;
+if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No matching user accounts found.</td></tr>`;
+if (cardsContainer) cardsContainer.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs">No matching user accounts found.</div>`;
 selectedUserIds.clear();
 updateUserBatchToolbar();
 return;
 }
+
+if (tbody) {
 tbody.innerHTML = users.map(u => {
 const roleUpper = (u.role || 'BUYER').toUpperCase();
 const statusUpper = (u.verification_status || 'UNVERIFIED').toUpperCase();
@@ -1446,7 +1467,6 @@ const idDocImg = u.national_id_base64 || u.id_document_url || u.id_url || u.id_c
 const hasIdDoc = Boolean(idDocImg && idDocImg.length > 20) || statusUpper.includes('PENDING') || statusUpper.includes('UNVERIFIED') || statusUpper.includes('REJECT');
 const isChecked = selectedUserIds.has(u.id) ? 'checked' : '';
 
-// Policy Agreement Badge Display
 let policyBadge = '';
 if (u.commission_policy_agreed === true || u.commission_policy_agreed === undefined || u.commission_policy_agreed === null) {
 policyBadge = `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 mr-1"><i class="fa-solid fa-circle-check mr-1"></i>Policy Agreed</span>`;
@@ -1501,6 +1521,67 @@ ${statusUpper === 'VERIFIED' ? 'Revoke Verification' : 'Mark Verified'}
 </tr>
 `;
 }).join('');
+}
+
+if (cardsContainer) {
+cardsContainer.innerHTML = users.map(u => {
+const roleUpper = (u.role || 'BUYER').toUpperCase();
+const statusUpper = (u.verification_status || 'UNVERIFIED').toUpperCase();
+const isBanned = statusUpper === 'BANNED';
+const idDocImg = u.national_id_base64 || u.id_document_url || u.id_url || u.id_card_url || u.id_proof || u.national_id_url || u.id_verification_url || u.id_doc_base64 || u.proof_base64 || '';
+const hasIdDoc = Boolean(idDocImg && idDocImg.length > 20) || statusUpper.includes('PENDING') || statusUpper.includes('UNVERIFIED') || statusUpper.includes('REJECT');
+const isChecked = selectedUserIds.has(u.id) ? 'checked' : '';
+
+let policyBadge = '';
+if (u.commission_policy_agreed === true || u.commission_policy_agreed === undefined || u.commission_policy_agreed === null) {
+policyBadge = `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"><i class="fa-solid fa-circle-check mr-1"></i>Agreed</span>`;
+} else {
+policyBadge = `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30"><i class="fa-solid fa-circle-xmark mr-1"></i>Disagreed</span>`;
+}
+
+return `
+<div class="bg-cardBg border border-borderSlate p-4 rounded-2xl space-y-3 shadow-md">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center space-x-2.5 truncate">
+<input type="checkbox" class="user-row-checkbox rounded border-borderSlate bg-darkBg text-amber-500 focus:ring-0 cursor-pointer" value="${u.id}" ${isChecked} onchange="checkUserSelection()">
+<div class="truncate">
+<div class="font-bold text-white text-xs truncate">${u.full_name || 'Unnamed Account'}</div>
+<div class="text-[10px] text-slate-400 font-mono truncate" title="${u.email || u.id}">${u.email || u.id}</div>
+</div>
+</div>
+<div class="shrink-0">${getUserRoleBadge(u.role)}</div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-[10px] text-slate-300 bg-darkBg/60 p-2.5 rounded-xl border border-borderSlate/50">
+<div><span class="text-slate-500">Status:</span> ${getUserStatusBadge(u.verification_status, u.id)}</div>
+<div><span class="text-slate-500">Policy:</span> ${policyBadge}</div>
+<div><span class="text-slate-500">Ref Code:</span> <span class="font-mono text-amber-400 font-bold">${u.referral_code || 'N/A'}</span></div>
+<div><span class="text-slate-500">ID Doc:</span> ${hasIdDoc ? `<button onclick="inspectNationalId('${u.id}')" class="text-amber-400 underline font-semibold">Inspect ID</button>` : '<span class="text-slate-500">None</span>'}</div>
+</div>
+<div class="border-t border-borderSlate/60 pt-3 flex flex-wrap items-center justify-end gap-2">
+<button onclick="openEditUserModal('${u.id}')" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-semibold px-2.5 py-1.5 rounded-xl transition">
+<i class="fa-solid fa-pen-to-square mr-1"></i> Edit
+</button>
+${isBanned ? `
+<button onclick="toggleUserStatus('${u.id}', 'UNVERIFIED')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold px-2.5 py-1.5 rounded-xl transition">
+<i class="fa-solid fa-lock-open mr-1"></i> Unban
+</button>
+` : `
+<button onclick="banUserAccount('${u.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-semibold px-2.5 py-1.5 rounded-xl transition">
+<i class="fa-solid fa-ban mr-1"></i> Ban
+</button>
+`}
+<button onclick="toggleUserStatus('${u.id}', '${statusUpper === 'VERIFIED' ? 'UNVERIFIED' : 'VERIFIED'}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-semibold px-2.5 py-1.5 rounded-xl transition">
+${statusUpper === 'VERIFIED' ? 'Revoke' : 'Verify'}
+</button>
+<button onclick="deleteUserRecord('${u.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-semibold px-2.5 py-1.5 rounded-xl transition">
+<i class="fa-solid fa-trash mr-1"></i> Erase
+</button>
+</div>
+</div>
+`;
+}).join('');
+}
+
 updateUserBatchToolbar();
 }
 function filterUsersTable() {
@@ -1667,11 +1748,16 @@ console.error("Products load error:", err);
 }
 function renderProductsTable(products) {
 const tbody = document.getElementById('productsTableBody');
-if (!tbody) return;
+const cardsContainer = document.getElementById('productsCardsContainer');
+if (!tbody && !cardsContainer) return;
+
 if (!products || products.length === 0) {
-tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No products found.</td></tr>`;
+if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No products found.</td></tr>`;
+if (cardsContainer) cardsContainer.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs">No products found.</div>`;
 return;
 }
+
+if (tbody) {
 tbody.innerHTML = products.map(p => {
 const vId = p.seller_id || p.vendor_id || p.user_id || p.created_by;
 const vendor = vId ? (profilesCache[vId] || allUsersCache.find(u => u.id === vId)) : null;
@@ -1722,6 +1808,59 @@ ${vId ? `
 </tr>
 `;
 }).join('');
+}
+
+if (cardsContainer) {
+cardsContainer.innerHTML = products.map(p => {
+const vId = p.seller_id || p.vendor_id || p.user_id || p.created_by;
+const vendor = vId ? (profilesCache[vId] || allUsersCache.find(u => u.id === vId)) : null;
+let vendorName = vendor ? (vendor.full_name || vendor.email || 'Registered Vendor') : '';
+let vendorEmail = vendor ? vendor.email : '';
+
+const safeVendorName = (vendorName || '').replace(/'/g, "\'");
+const safeVendorEmail = (vendorEmail || '').replace(/'/g, "\'");
+
+const imageHtml = getProductImageUrl(p) ? `
+<img src="${getProductImageUrl(p)}" onerror="this.style.display='none';" alt="${p.title || 'Product'}" class="w-12 h-12 object-cover rounded-xl border border-borderSlate shadow-sm flex-shrink-0">
+` : `
+<div class="w-12 h-12 bg-darkBg border border-borderSlate rounded-xl flex items-center justify-center text-slate-500 font-bold text-sm flex-shrink-0">
+<i class="fa-solid fa-box"></i>
+</div>
+`;
+return `
+<div class="bg-cardBg border border-borderSlate p-4 rounded-2xl space-y-3 shadow-md">
+<div class="flex items-start space-x-3">
+${imageHtml}
+<div class="flex-1 truncate">
+<div class="flex items-center justify-between gap-2">
+<h4 class="font-bold text-white text-xs truncate">${p.title}</h4>
+<span class="px-2 py-0.5 bg-slate-800 border border-borderSlate rounded-full text-[9px] font-semibold text-slate-300 shrink-0">${p.vendor_type || 'UPFRONT'}</span>
+</div>
+<div class="text-[10px] text-slate-500 font-mono mt-0.5">ID: ${p.id}</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-[10px] text-slate-300 bg-darkBg/60 p-2.5 rounded-xl border border-borderSlate/50">
+<div><span class="text-slate-500">Vendor:</span> <strong class="text-white truncate block">${vendorName || 'N/A'}</strong></div>
+<div><span class="text-slate-500">Email:</span> <span class="font-mono text-slate-400 truncate block">${vendorEmail || 'N/A'}</span></div>
+<div><span class="text-slate-500">Price:</span> <strong class="text-white">$${Number(p.price || 0).toFixed(2)}</strong></div>
+<div><span class="text-slate-500">Commission:</span> <strong class="text-emerald-400">$${Number(p.commission || 15).toFixed(2)}</strong></div>
+</div>
+<div class="border-t border-borderSlate/60 pt-3 flex items-center justify-end gap-2">
+${vId ? `
+<button onclick="openDirectOutreachForUser('${vId}', '${safeVendorName}', 'SELLER', '${safeVendorEmail}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
+<i class="fa-solid fa-paper-plane text-[10px]"></i>
+<span>Contact Vendor</span>
+</button>
+` : ''}
+<button onclick="deleteProductRecord('${p.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
+<i class="fa-solid fa-trash text-[10px]"></i>
+<span>Delete</span>
+</button>
+</div>
+</div>
+`;
+}).join('');
+}
 }
 function filterProductsTable() {
 const search = document.getElementById('productSearchInput').value.toLowerCase();
@@ -1877,11 +2016,16 @@ alert("Bulk payout request error: " + err.message);
 }
 function renderAdminCommissionsTable(comms) {
 const tbody = document.getElementById('adminCommissionsTableBody');
-if (!tbody) return;
+const cardsContainer = document.getElementById('adminCommissionsCardsContainer');
+if (!tbody && !cardsContainer) return;
+
 if (!comms || comms.length === 0) {
-tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No ledger entries found.</td></tr>`;
+if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No ledger entries found.</td></tr>`;
+if (cardsContainer) cardsContainer.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs">No ledger entries found.</div>`;
 return;
 }
+
+if (tbody) {
 tbody.innerHTML = comms.map(c => {
 const qType = c.queue_type || 'MAIN_ACCOUNT';
 const statusVal = c.status || 'Approved';
@@ -1997,6 +2141,122 @@ ${contactBtn}
 </tr>
 `;
 }).join('');
+}
+
+if (cardsContainer) {
+cardsContainer.innerHTML = comms.map(c => {
+const qType = c.queue_type || 'MAIN_ACCOUNT';
+const statusVal = c.status || 'Approved';
+const recipient = allUsersCache.find(u => u.id === c.recipient_id || (u.email && u.email === c.recipient_email));
+const recipientName = recipient ? (recipient.full_name || recipient.email) : (c.recipient_email || 'System / Admin');
+const recipientEmail = recipient ? recipient.email : 'N/A';
+const recipientPaypal = (recipient && recipient.paypal_email) ? recipient.paypal_email : (c.recipient_paypal || c.paypal_email || 'N/A');
+
+const vendor = (c.vendor_id || c.seller_id) ? (allUsersCache.find(u => u.id === (c.vendor_id || c.seller_id)) || profilesCache[c.vendor_id || c.seller_id]) : null;
+const vendorName = vendor ? (vendor.full_name || vendor.email) : (c.vendor_name || 'Verified Vendor');
+
+const rawRole = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
+const isAdminRole = ['ADMIN', 'ADMIN_SHARE', 'ADMIN_FEE', 'PLATFORM_FEE'].includes(rawRole);
+const hasValidRecipientMatch = Boolean(
+(c.recipient_id && currentAdminUser && c.recipient_id === currentAdminUser.id) ||
+(c.recipient_email && currentAdminUser && c.recipient_email.toLowerCase() === currentAdminUser.email.toLowerCase())
+);
+const isMyUserEarning = ['REVIEWER', 'BUYER_INVITER', 'SELLER_INVITER'].includes(rawRole) && hasValidRecipientMatch;
+const isMyCommission = isAdminRole || isMyUserEarning;
+
+let roleBadge = '';
+if (rawRole === 'SELLER_INVITER' || rawRole === 'VENDOR_INVITER' || rawRole === 'SELLER_INVITE' || rawRole === 'SELLER_REFERRAL' || rawRole === 'VENDOR_REFERRAL') {
+roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">SELLER INVITER</span>`;
+} else if (rawRole === 'BUYER_INVITER' || rawRole === 'REVIEWER_INVITER' || rawRole === 'BUYER_INVITE' || rawRole === 'BUYER_REFERRAL' || rawRole === 'REVIEWER_REFERRAL') {
+roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">BUYER INVITER</span>`;
+} else if (rawRole === 'ADMIN' || rawRole === 'ADMIN_SHARE' || rawRole === 'ADMIN_FEE' || rawRole === 'PLATFORM_FEE') {
+roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">ADMIN</span>`;
+} else {
+roleBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">REVIEWER</span>`;
+}
+
+let statusBadge = '';
+const sUpper = statusVal.toUpperCase();
+if (sUpper === 'APPROVED' || sUpper === 'UNREQUESTED_BALANCE' || sUpper === 'ACTIVE') {
+statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Approved</span>`;
+} else if (sUpper === 'OFFERED_BY_VENDOR' || sUpper === 'OFFERED_AWAITING_ACCEPTANCE') {
+statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">OFFERED</span>`;
+} else if (sUpper === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">REQUESTED</span>`;
+} else if (sUpper === 'APPROVED_IN_WORKING' || qType === 'WORKING_QUEUE') {
+statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">IN WORKING</span>`;
+} else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY') {
+statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">SETTLED & PAID</span>`;
+} else if (sUpper === 'DENIED' || sUpper === 'DECLINED' || sUpper === 'REJECTED') {
+statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">DENIED</span>`;
+}
+
+let actionButtons = '';
+if (isMyCommission) {
+if (sUpper === 'APPROVED' || sUpper === 'UNREQUESTED_BALANCE' || qType === 'MAIN_ACCOUNT') {
+actionButtons = `
+<button onclick="requestAdminPayout('${c.id}')" class="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-md shadow-amber-500/20 flex items-center space-x-1 inline-flex">
+<i class="fa-solid fa-paper-plane"></i>
+<span>Request Payout</span>
+</button>`;
+} else if (sUpper === 'OFFERED_BY_VENDOR' || sUpper === 'OFFERED_AWAITING_ACCEPTANCE') {
+actionButtons = `
+<button onclick="acceptAdminOffer('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition inline-flex items-center space-x-1 mr-1">
+<i class="fa-solid fa-check"></i><span>Accept</span>
+</button>
+<button onclick="declineAdminOffer('${c.id}')" class="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition inline-flex items-center space-x-1">
+<i class="fa-solid fa-xmark"></i><span>Decline</span>
+</button>`;
+} else if (sUpper === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+actionButtons = `<span class="text-amber-400 font-bold text-[10px] flex items-center justify-end"><i class="fa-solid fa-clock mr-1"></i>Payout Requested</span>`;
+} else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY') {
+actionButtons = `<span class="text-emerald-400 font-bold text-[10px] flex items-center justify-end"><i class="fa-solid fa-circle-check mr-1"></i>Paid</span>`;
+} else {
+actionButtons = `<span class="text-slate-500 text-[10px]">${statusVal}</span>`;
+}
+} else {
+if (sUpper === 'REQUESTED_BY_RECIPIENT' || qType === 'OUTGOING_REQUESTS') {
+actionButtons = `
+<button onclick="approveAdminPayout('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-md shadow-emerald-500/20 inline-flex items-center space-x-1">
+<i class="fa-solid fa-check-circle"></i>
+<span>Approve Payout</span>
+</button>`;
+} else if (sUpper === 'APPROVED_IN_WORKING' || qType === 'WORKING_QUEUE') {
+actionButtons = `<span class="text-blue-400 text-[10px] font-medium"><i class="fa-solid fa-spinner fa-spin mr-1"></i>In Working Queue</span>`;
+} else if (sUpper === 'COMPLETED_PAID' || sUpper === 'PAID' || qType === 'HISTORY') {
+actionButtons = `<span class="text-emerald-400 text-[10px] font-bold flex items-center justify-end"><i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i>Settled</span>`;
+} else {
+actionButtons = `<span class="text-slate-500 text-[10px]">${statusVal}</span>`;
+}
+}
+
+const inspectBtn = `<button onclick="viewCommissionDetails('${c.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
+const contactBtn = `<button onclick="openDirectOutreachForUser('${c.recipient_id || c.seller_id || c.vendor_id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-amber-400 text-[10px] font-medium px-2 py-1 rounded-lg transition ml-1" title="Direct Contact"><i class="fa-solid fa-comment-dots"></i></button>`;
+
+return `
+<div class="bg-cardBg border border-borderSlate p-4 rounded-2xl space-y-3 shadow-md">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center space-x-2">
+${roleBadge}
+${statusBadge}
+</div>
+<div class="text-sm font-bold text-emerald-400 font-mono">$${Number(c.amount || 0).toFixed(2)}</div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-[10px] text-slate-300 bg-darkBg/60 p-2.5 rounded-xl border border-borderSlate/50">
+<div class="col-span-2 truncate"><span class="text-slate-500">Recipient:</span> <strong class="text-white">${recipientName}</strong> <span class="text-slate-400 font-mono">(${recipientPaypal})</span></div>
+<div class="truncate"><span class="text-slate-500">Vendor:</span> <span class="text-slate-200 font-medium">${vendorName}</span></div>
+<div class="truncate"><span class="text-slate-500">Queue:</span> <span class="font-mono text-amber-400 font-bold">${qType}</span></div>
+<div class="col-span-2 truncate"><span class="text-slate-500">Tx ID:</span> <span class="font-mono text-slate-400">${c.id}</span></div>
+</div>
+<div class="border-t border-borderSlate/60 pt-3 flex flex-wrap items-center justify-end gap-2">
+${actionButtons}
+${inspectBtn}
+${contactBtn}
+</div>
+</div>
+`;
+}).join('');
+}
 }
 function filterAdminCommissions() {
 const filterVal = document.getElementById('adminCommTabFilter').value;
@@ -2703,11 +2963,16 @@ showToast("Referral link copied to clipboard!");
 }
 function renderReferralsTable(users) {
 const tbody = document.getElementById('referralsTableBody');
-if (!tbody) return;
+const cardsContainer = document.getElementById('referralsCardsContainer');
+if (!tbody && !cardsContainer) return;
+
 if (!users || users.length === 0) {
-tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No referral network records found.</td></tr>`;
+if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No referral network records found.</td></tr>`;
+if (cardsContainer) cardsContainer.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs">No referral network records found.</div>`;
 return;
 }
+
+if (tbody) {
 tbody.innerHTML = users.map(u => {
 const roleUpper = (u.role || 'BUYER').toUpperCase();
 const roleBadge = roleUpper === 'SELLER' || roleUpper === 'VENDOR' ?
@@ -2743,6 +3008,46 @@ ${u.paypal_email ? `<div class="text-[9px] text-blue-400 font-mono mt-0.5"><i cl
 </tr>
 `;
 }).join('');
+}
+
+if (cardsContainer) {
+cardsContainer.innerHTML = users.map(u => {
+const roleUpper = (u.role || 'BUYER').toUpperCase();
+const roleBadge = roleUpper === 'SELLER' || roleUpper === 'VENDOR' ?
+`<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">VENDOR</span>` :
+`<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">BUYER</span>`;
+
+let userEarnings = 0;
+allCommissionsCache.forEach(c => {
+if (c.recipient_id === u.id || (c.seller_id || c.vendor_id) === u.id) {
+userEarnings += Number(c.amount || 0);
+}
+});
+return `
+<div class="bg-cardBg border border-borderSlate p-4 rounded-2xl space-y-3 shadow-md">
+<div class="flex items-center justify-between gap-2">
+<div>
+<div class="font-bold text-white text-xs">${u.full_name || 'User'}</div>
+<div class="text-[10px] text-slate-400 font-mono">${u.email || u.id}</div>
+</div>
+<div>${roleBadge}</div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-[10px] text-slate-300 bg-darkBg/60 p-2.5 rounded-xl border border-borderSlate/50">
+<div><span class="text-slate-500">Ref Code:</span> <span class="font-mono text-amber-400 font-bold">${u.referral_code || 'N/A'}</span></div>
+<div><span class="text-slate-500">Invited By:</span> <span class="font-mono text-slate-400">${u.invited_by_code || 'Direct'}</span></div>
+<div><span class="text-slate-500">Joined:</span> <span class="text-slate-300">${new Date(u.created_at || Date.now()).toLocaleDateString()}</span></div>
+<div><span class="text-slate-500">Earnings:</span> <strong class="text-emerald-400">$${userEarnings.toFixed(2)}</strong></div>
+</div>
+<div class="border-t border-borderSlate/60 pt-3 flex items-center justify-end">
+<button onclick="openDirectOutreachForUser('${u.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
+<i class="fa-solid fa-comment-dots text-[10px]"></i>
+<span>Message User</span>
+</button>
+</div>
+</div>
+`;
+}).join('');
+}
 }
 function filterReferralsTable() {
 const search = (document.getElementById('referralSearchInput')?.value || '').toLowerCase();
