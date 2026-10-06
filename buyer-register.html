@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Echo Hub - Shopper & Reviewer Registration</title>
-<link rel="icon" href="data:,">
 <script>
 // Suppress Tailwind CDN production warning notice in DevTools
 (function() {
@@ -438,7 +437,7 @@ const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, refe
 const finalInvitedByCode = refereeCode || null;
 const finalReferredBy = refereeUuid || null;
 
-/* Register shopper with Supabase Auth using defensive constraint-safe role payload */
+/* Register shopper with Supabase Auth using defensive payload */
 const cleanMetaData = {
 first_name: firstName,
 last_name: lastName,
@@ -449,7 +448,7 @@ whatsapp_number: whatsappNumber,
 categories: categories,
 invited_by_code: finalInvitedByCode || '',
 referred_by: finalReferredBy || '',
-role: 'pending_buyer', // Use pending_buyer so handle_new_user trigger bypasses chk_buyer_national_id_required before ID upsert
+role: 'seller',
 verification_status: 'PENDING',
 commission_policy_agreed: Boolean(policyAgreed)
 };
@@ -469,17 +468,21 @@ authError = res.error;
 authError = signUpErr;
 }
 
-// If account already exists from a prior attempt, recover by signing in directly
-if (authError && authError.message && (authError.message.includes('already registered') || authError.message.includes('already_exists') || authError.status === 400)) {
-console.warn("User already registered notice, attempting direct authentication recovery...");
-const loginRes = await _supabase.auth.signInWithPassword({
+// Fallback: If signUp returned 500 or trigger error, retry with minimal safe metadata
+if (authError && (authError.status === 500 || (authError.message && (authError.message.includes('500') || authError.message.includes('Database error') || authError.message.includes('trigger'))))) {
+console.warn("Retrying signup with safe minimal metadata due to server trigger response:", authError.message);
+const fallbackRes = await _supabase.auth.signUp({
 email: email,
-password: password
-});
-if (!loginRes.error && loginRes.data && loginRes.data.user) {
-authData = loginRes.data;
-authError = null;
+password: password,
+options: {
+data: {
+full_name: fullName,
+role: 'seller'
 }
+}
+});
+authData = fallbackRes.data;
+authError = fallbackRes.error;
 }
 
 if (authError) throw authError;
@@ -489,7 +492,7 @@ if (!userId) {
 throw new Error('User registration failed to return an authenticated user ID.');
 }
 
-/* Upsert directly into public.profiles with role: buyer and national_id_base64 attached */
+/* Upsert directly into public.profiles */
 const { error: profileError } = await _supabase
 .from('profiles')
 .upsert({
@@ -512,7 +515,7 @@ if (profileError) {
 console.warn('Profiles table upsert notice:', profileError.message);
 }
 
-/* Automatically authenticate active session */
+/* Automatically sign in */
 const { error: loginError } = await _supabase.auth.signInWithPassword({
 email: email,
 password: password
