@@ -2167,8 +2167,10 @@ function evaluatePendingReviewLockout() {
       const statusUpper = (m.status_badge || m.status || '').toUpperCase();
       const isPendingStatus = statusUpper === 'AWAITING_ATTENTION' || statusUpper === 'PENDING' || statusUpper === 'SUBMITTED' || statusUpper === 'PENDING_REVIEW';
       const isShopperMsg = m.sender_id !== currentUser?.id;
+      const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
+      const isReviewProof = Boolean(m.review_url) || Boolean(m.amazon_review_url) || hasAmazonUrl(text) || hasImageAttachment(m) || Boolean(m.proof_base64) || Boolean(m.feedback_id) || m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
 
-      if (isPendingStatus && isShopperMsg) {
+      if (isPendingStatus && isShopperMsg && isReviewProof) {
         const partner = profilesCache[t.partnerId] || { full_name: t.partnerName || 'Shopper' };
         pendingMsgs.push({
           messageId: m.id,
@@ -2667,10 +2669,9 @@ function renderActiveChat(shouldScroll = false) {
     
     const rawBadge = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase().trim();
     const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
-    const reviewUrl = m.review_url || m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '');
-    const hasValidProof = Boolean(reviewUrl) || hasAmazonUrl(text) || hasImageAttachment(m);
-    const hasPendingOrDecidedStatus = ['AWAITING_ATTENTION', 'PENDING_REVIEW', 'PENDING', 'APPROVED', 'DENIED', 'PAID', 'REPORTED'].includes(rawBadge) || Boolean(m.feedback_id);
-    const showAsReviewCard = isExplicitReviewType || hasValidProof || hasPendingOrDecidedStatus;
+    const reviewUrl = m.amazon_review_url || m.link || m.review_url || (text.includes('amazon.com') || text.includes('amzn.to') ? (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '') : '');
+    const hasValidProof = Boolean(reviewUrl) || hasAmazonUrl(text) || hasImageAttachment(m) || Boolean(m.proof_base64) || Boolean(m.file_url);
+    const showAsReviewCard = isExplicitReviewType || hasValidProof || Boolean(m.feedback_id);
     
     const feedbackId = m.feedback_id || 'Pending Approval';
     const amazonUrl = reviewUrl || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
@@ -2819,14 +2820,11 @@ let attachmentHtml = '';
 }
 
 async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
-  const actionContainer = document.getElementById(`actions-${messageId}`);
-  if (actionContainer) {
-    actionContainer.innerHTML = `<span class="text-accentBlue italic text-[11px]">Processing Approval & Ledger Split...</span>`;
-  }
+  disableAllInlineActionButtons('Processing Approval & Split...');
   try {
     const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
+    const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg.review_url || msg._normalizedText || 'N/A') : 'N/A';
     const currentCycle = msg ? msg.submission_cycle : null;
 
     const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
@@ -2851,13 +2849,9 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
     };
     sanitizeStatusBadge(updatePayload);
 
-    let updateQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
-    if (currentCycle !== null && currentCycle !== undefined) {
-      updateQuery = updateQuery.eq('submission_cycle', currentCycle);
-    }
-    const { error: updateError } = await updateQuery;
+    let updateQuery = _supabase.from('messages').update(updatePayload).or(`id.eq.${messageId},and(sender_id.eq.${reviewerId},status_badge.eq.AWAITING_ATTENTION)`);
+    await updateQuery;
 
-    if (updateError) throw updateError;
     updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
     showToast("Review approved successfully! Commission split generated.");
     await loadVendorCommissions();
@@ -2865,9 +2859,6 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
   } catch (err) {
     console.error("Approval failed:", err);
     try {
-      const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
-      const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-      const currentCycle = msg ? msg.submission_cycle : null;
       const fallbackFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
       let updatePayload = {
@@ -2876,14 +2867,8 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
       };
       sanitizeStatusBadge(updatePayload);
 
-      let fallbackQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
-      if (currentCycle !== null && currentCycle !== undefined) {
-        fallbackQuery = fallbackQuery.eq('submission_cycle', currentCycle);
-      }
-      const { error: fallbackUpdateError } = await fallbackQuery;
-      if (fallbackUpdateError) throw fallbackUpdateError;
-
-      
+      let fallbackQuery = _supabase.from('messages').update(updatePayload).or(`id.eq.${messageId},and(sender_id.eq.${reviewerId},status_badge.eq.AWAITING_ATTENTION)`);
+      await fallbackQuery;
 
       updateMessageCardStateLocally(messageId, 'APPROVED', fallbackFeedbackId);
       showToast("Review approved & commission generated!");
@@ -2899,14 +2884,13 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
 async function handleInlineDeny(messageId) {
   const denialReason = prompt("Please enter a reason for denying this review submission:", "Order mismatch or unreadable link.");
   if (!denialReason) return;
-  const actionContainer = document.getElementById(`actions-${messageId}`);
-  if (actionContainer) {
-    actionContainer.innerHTML = `<span class="text-rose-400 italic text-[11px]">Processing Denial...</span>`;
-  }
+
+  disableAllInlineActionButtons('Processing Denial...');
+
   try {
     const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    const currentCycle = msg ? msg.submission_cycle : null;
+    const reviewerId = msg ? (msg.sender_id || activeThreadId) : activeThreadId;
 
     const updatePayload = {
       status_badge: 'DENIED',
@@ -2915,12 +2899,9 @@ async function handleInlineDeny(messageId) {
     };
     sanitizeStatusBadge(updatePayload);
 
-    let denyQuery = _supabase.from('messages').update(updatePayload).eq('id', messageId);
-    if (currentCycle !== null && currentCycle !== undefined) {
-      denyQuery = denyQuery.eq('submission_cycle', currentCycle);
-    }
-    const { error: denyError } = await denyQuery;
-    if (denyError) throw denyError;
+    let denyQuery = _supabase.from('messages').update(updatePayload).or(`id.eq.${messageId},and(sender_id.eq.${reviewerId},status_badge.eq.AWAITING_ATTENTION)`);
+    await denyQuery;
+
     updateMessageCardStateLocally(messageId, 'DENIED');
     showToast("Review submission denied. Buyer notified.");
     await loadVendorThreads(true);
@@ -2931,24 +2912,32 @@ async function handleInlineDeny(messageId) {
   }
 }
 
-function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
-  const card = document.querySelector(`[data-message-id="${messageId}"]`);
-  if (!card) return;
-  const badge = card.querySelector('.status-badge-label');
-  if (badge) {
-    badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
-    badge.innerText = newStatus;
-  }
-  if (feedbackId) {
-    const idEl = card.querySelector('.feedback-id-display');
-    if (idEl) {
-      idEl.innerText = `ID: ${feedbackId}`;
+function disableAllInlineActionButtons(loadingText = 'Processing...') {
+  const actionContainers = document.querySelectorAll('.inline-action-area');
+  actionContainers.forEach(container => {
+    if (container.querySelector('button')) {
+      container.innerHTML = `<span class="text-accentBlue italic text-[11px]"><i class="fa-solid fa-spinner fa-spin mr-1"></i>${loadingText}</span>`;
     }
-  }
-  const actionArea = card.querySelector('.inline-action-area');
-  if (actionArea) {
-    actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
-  }
+  });
+}
+
+function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
+  const cards = document.querySelectorAll('.review-submission-card');
+  cards.forEach(card => {
+    const badge = card.querySelector('.status-badge-label');
+    if (badge && (badge.innerText.includes('AWAITING') || badge.innerText.includes('PENDING'))) {
+      badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
+      badge.innerText = newStatus;
+    }
+    if (feedbackId) {
+      const idEl = card.querySelector('.feedback-id-display');
+      if (idEl) idEl.innerText = `ID: ${feedbackId}`;
+    }
+    const actionArea = card.querySelector('.inline-action-area');
+    if (actionArea) {
+      actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
+    }
+  });
 }
 
 function showToast(message) {
