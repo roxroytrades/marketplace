@@ -276,6 +276,32 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 <!-- Top Navigation Bar -->
+
+<!-- 48-Hour Seller Review Approval Countdown & Feature Lockout Banner -->
+<div id="sellerReviewCountdownBanner" class="hidden bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 border-b border-amber-500/50 px-4 py-3 text-amber-200 text-xs shadow-xl transition-all duration-300 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="flex items-center space-x-3 min-w-0 flex-1">
+      <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 animate-pulse">
+        <i class="fa-solid fa-clock text-base"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="font-bold text-white text-xs sm:text-sm flex flex-wrap items-center gap-2">
+          <span>Action Required: Review Submitted by <span id="reviewLockShopperName" class="text-amber-300 font-semibold underline">Shopper</span></span>
+          <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-md text-[10px] font-mono uppercase tracking-wider">48h Window</span>
+        </div>
+        <div class="text-slate-300 text-[11px] mt-0.5 leading-relaxed">
+          Time Remaining: <span id="reviewLockTimerDisplay" class="font-mono font-bold text-amber-400">48:00:00</span>
+          <span class="block sm:inline sm:ml-2 text-rose-400 font-semibold">(Other features locked until resolved)</span>
+        </div>
+      </div>
+    </div>
+    <button onclick="goToPendingReviewThread()" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-md shrink-0 cursor-pointer">
+      <i class="fa-solid fa-comments"></i>
+      <span>Resolve Review Now</span>
+    </button>
+  </div>
+</div>
+
 <header class="bg-cardBg border-b border-borderSlate px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 <div class="flex items-center space-x-3 min-w-0">
 <div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden shrink-0">
@@ -1053,6 +1079,11 @@ async function handleLogout() {
 }
 
 function switchVendorTab(tab) {
+  if (pendingReviewLock && pendingReviewLock.active && tab !== 'messages') {
+    alert(`🚨 Feature Access Restricted!\n\nYou have a review submission from ${pendingReviewLock.shopperName} awaiting your approval.\n\nPlease approve or deny this review in the Messaging Hub to unlock all workspace features.`);
+    goToPendingReviewThread();
+    return;
+  }
   if (isReceiptLockoutActive && tab !== 'commissions' && tab !== 'messages') {
     alert('🚨 Account Restricted: 24-hour receipt deadline elapsed. Please upload the missing payment receipt in the Commissions tab or contact Admin in the Messaging Hub to restore full workspace access.');
     return;
@@ -2118,6 +2149,118 @@ function renderSellerContactsList() {
     `;
   }).join('');
 }
+
+
+/* ================= 48-HOUR REVIEW APPROVAL COUNTDOWN & LOCKOUT ENGINE ================= */
+let pendingReviewLock = {
+  active: false,
+  shopperName: '',
+  shopperId: '',
+  messageId: '',
+  submittedAt: null,
+  deadline: null
+};
+let reviewCountdownInterval = null;
+
+function evaluatePendingReviewLockout() {
+  if (!vendorThreads || vendorThreads.length === 0) {
+    clearReviewLockout();
+    return;
+  }
+
+  let pendingMsgs = [];
+  vendorThreads.forEach(t => {
+    (t.messages || []).forEach(m => {
+      const isPending = (m.status_badge === 'AWAITING_ATTENTION' || m.status === 'AWAITING_ATTENTION') && m.sender_id !== currentUser?.id;
+      if (isPending) {
+        const partner = profilesCache[t.partnerId] || { full_name: t.partnerName || 'Shopper' };
+        pendingMsgs.push({
+          messageId: m.id,
+          shopperId: t.partnerId,
+          shopperName: partner.full_name || t.partnerName || 'Shopper',
+          createdAt: m.created_at ? new Date(m.created_at) : new Date()
+        });
+      }
+    });
+  });
+
+  if (pendingMsgs.length === 0) {
+    clearReviewLockout();
+    return;
+  }
+
+  pendingMsgs.sort((a, b) => a.createdAt - b.createdAt);
+  const oldest = pendingMsgs[0];
+  const submissionTime = oldest.createdAt.getTime();
+  const deadlineTime = submissionTime + (48 * 60 * 60 * 1000);
+
+  pendingReviewLock = {
+    active: true,
+    shopperName: oldest.shopperName,
+    shopperId: oldest.shopperId,
+    messageId: oldest.messageId,
+    submittedAt: oldest.createdAt,
+    deadline: new Date(deadlineTime)
+  };
+
+  updateReviewCountdownDisplay();
+  if (!reviewCountdownInterval) {
+    reviewCountdownInterval = setInterval(updateReviewCountdownDisplay, 1000);
+  }
+
+  const banner = document.getElementById('sellerReviewCountdownBanner');
+  if (banner) {
+    banner.classList.remove('hidden');
+    const nameEl = document.getElementById('reviewLockShopperName');
+    if (nameEl) nameEl.textContent = pendingReviewLock.shopperName;
+  }
+}
+
+function updateReviewCountdownDisplay() {
+  if (!pendingReviewLock.active || !pendingReviewLock.deadline) {
+    clearReviewLockout();
+    return;
+  }
+
+  const now = new Date().getTime();
+  const diff = pendingReviewLock.deadline.getTime() - now;
+  const timerEl = document.getElementById('reviewLockTimerDisplay');
+
+  if (diff <= 0) {
+    if (timerEl) {
+      timerEl.textContent = 'EXPIRED (00:00:00) - LOCKOUT ACTIVE';
+      timerEl.className = 'font-mono font-bold text-rose-400 animate-pulse';
+    }
+  } else {
+    const hrs = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+    const pad = (n) => String(n).padStart(2, '0');
+    if (timerEl) {
+      timerEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+      timerEl.className = 'font-mono font-bold text-amber-400';
+    }
+  }
+}
+
+function clearReviewLockout() {
+  pendingReviewLock = { active: false, shopperName: '', shopperId: '', messageId: '', submittedAt: null, deadline: null };
+  if (reviewCountdownInterval) {
+    clearInterval(reviewCountdownInterval);
+    reviewCountdownInterval = null;
+  }
+  const banner = document.getElementById('sellerReviewCountdownBanner');
+  if (banner) banner.classList.add('hidden');
+}
+
+function goToPendingReviewThread() {
+  if (!pendingReviewLock.active) return;
+  switchVendorTab('messages');
+  if (pendingReviewLock.shopperId) {
+    openThread(pendingReviewLock.shopperId);
+  }
+}
+
 
 async function loadVendorThreads(isPolling = false) {
   if (!currentUser) return;
