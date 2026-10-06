@@ -1111,22 +1111,28 @@ async function handleSaveProduct(event) {
       image: imageUrl,
       amazon_url: amazonUrl,
       product_url: amazonUrl,
-      amazon_link: amazonUrl
+      product_link: amazonUrl
     };
-    if (id) {
-      const { error } = await _supabase
-        .from('products')
-        .update(productData)
-        .eq('id', id);
-      if (error) throw error;
-      showToast('Product listing updated!');
-    } else {
-      const { error } = await _supabase
-        .from('products')
-        .insert([productData]);
-      if (error) throw error;
-      showToast('Product created successfully!');
-    }
+    const saveToSupabase = async (payload) => {
+      let reqPayload = { ...payload };
+      let res = id 
+        ? await _supabase.from('products').update(reqPayload).eq('id', id)
+        : await _supabase.from('products').insert([reqPayload]);
+      
+      if (res.error && res.error.message && res.error.message.includes('Could not find the')) {
+        const match = res.error.message.match(/Could not find the '([^']+)' column/);
+        if (match && match[1]) {
+          const badCol = match[1];
+          delete reqPayload[badCol];
+          res = id 
+            ? await _supabase.from('products').update(reqPayload).eq('id', id)
+            : await _supabase.from('products').insert([reqPayload]);
+        }
+      }
+      if (res.error) throw res.error;
+    };
+    await saveToSupabase(productData);
+    showToast(id ? 'Product listing updated!' : 'Product created successfully!');
     closeProductModal();
     await preloadSellerProfiles();
     await loadVendorProducts();
