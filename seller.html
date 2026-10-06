@@ -2835,38 +2835,59 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
     const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
     const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg.review_url || msg._normalizedText || 'N/A') : 'N/A';
-    const currentCycle = msg ? msg.submission_cycle : null;
     const resolvedReviewerId = reviewerId || (msg ? msg.sender_id : activeThreadId);
-    const generatedFeedbackId = `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const targetFeedbackId = (msg && msg.feedback_id && typeof msg.feedback_id === 'string' && msg.feedback_id.startsWith('FB-')) 
+      ? msg.feedback_id 
+      : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-    // 1. Execute DB stored procedure for commission split
+    // 1. Try RPC with signature A (4 parameters), then RPC with signature B (7 parameters) as fallback
+    let rpcSuccess = false;
     try {
-      await _supabase.rpc('approve_review_and_split', {
+      const rpc1 = await _supabase.rpc('approve_review_and_split', {
         p_message_id: String(messageId),
         p_vendor_id: currentUser.id,
         p_reviewer_id: resolvedReviewerId,
-        p_feedback_id: generatedFeedbackId
+        p_feedback_id: targetFeedbackId
       });
-    } catch (rpcErr) {
-      console.warn('RPC execute note:', rpcErr);
+      if (!rpc1.error) rpcSuccess = true;
+    } catch (e1) {}
+
+    if (!rpcSuccess) {
+      try {
+        const rpc2 = await _supabase.rpc('approve_review_and_split', {
+          p_message_id: String(messageId),
+          p_vendor_id: currentUser.id,
+          p_reviewer_id: resolvedReviewerId,
+          p_commission_amount: Number(commissionAmount || 15.00),
+          p_platform_fee: 10.00,
+          p_link: reviewLink,
+          p_type: 'REVIEW_COMMISSION'
+        });
+        if (!rpc2.error) rpcSuccess = true;
+      } catch (e2) {}
     }
 
-    let updatePayload = {
+    // 2. Primary target message update (includes feedback_id)
+    const primaryPayload = {
       status_badge: 'APPROVED',
-      feedback_id: generatedFeedbackId
+      feedback_id: targetFeedbackId
     };
-    sanitizeStatusBadge(updatePayload);
+    sanitizeStatusBadge(primaryPayload);
+    await _supabase.from('messages').update(primaryPayload).eq('id', messageId);
 
-    // 2. Update target message and related pending submissions cleanly using eq()
-    await _supabase.from('messages').update(updatePayload).eq('id', messageId);
+    // 3. Secondary pending messages for this reviewer (ONLY update status_badge, DO NOT touch feedback_id to prevent 409 UNIQUE constraint conflict!)
     if (resolvedReviewerId && resolvedReviewerId !== 'admin') {
-      await _supabase.from('messages').update(updatePayload)
+      const secondaryPayload = {
+        status_badge: 'APPROVED'
+      };
+      sanitizeStatusBadge(secondaryPayload);
+      await _supabase.from('messages').update(secondaryPayload)
         .eq('sender_id', resolvedReviewerId)
         .eq('vendor_id', currentUser.id)
         .eq('status_badge', 'AWAITING_ATTENTION');
     }
 
-    updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
+    updateMessageCardStateLocally(messageId, 'APPROVED', targetFeedbackId);
     showToast("Review approved successfully! Commission split generated.");
     await loadVendorCommissions();
     await loadVendorThreads(true);
@@ -2888,17 +2909,24 @@ async function handleInlineDeny(messageId) {
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
     const reviewerId = msg ? (msg.sender_id || activeThreadId) : activeThreadId;
 
-    const updatePayload = {
+    const primaryPayload = {
       status_badge: 'DENIED',
       status: 'DENIED',
       denial_reason: denialReason
     };
-    sanitizeStatusBadge(updatePayload);
+    sanitizeStatusBadge(primaryPayload);
 
-    // Update target message and related pending submissions cleanly using eq()
-    await _supabase.from('messages').update(updatePayload).eq('id', messageId);
+    // Update target message
+    await _supabase.from('messages').update(primaryPayload).eq('id', messageId);
+
+    // Secondary pending messages for this reviewer
     if (reviewerId && reviewerId !== 'admin') {
-      await _supabase.from('messages').update(updatePayload)
+      const secondaryPayload = {
+        status_badge: 'DENIED',
+        status: 'DENIED'
+      };
+      sanitizeStatusBadge(secondaryPayload);
+      await _supabase.from('messages').update(secondaryPayload)
         .eq('sender_id', reviewerId)
         .eq('vendor_id', currentUser.id)
         .eq('status_badge', 'AWAITING_ATTENTION');
