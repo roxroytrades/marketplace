@@ -7,10 +7,31 @@
 <!-- Tailwind CSS CDN with Dark Mode Enabled -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        darkBg: '#0F172A',
+        cardBg: '#1E293B',
+        accentBlue: '#2563EB',
+        accentHover: '#1D4ED8',
+        borderSlate: '#334155'
+      }
+    }
+  }
+}
+</script>
+<!-- FontAwesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Google Fonts: Inter / Space Grotesk -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<!-- Supabase JS Client CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 /* ==========================================================================
-   WHATSAPP-STYLE SIDEBAR CONTEXT MENU ENGINE (PIN, UNREAD, HIDE & UNDO)
-   ========================================================================== */
-
+WHATSAPP-STYLE SIDEBAR CONTEXT MENU ENGINE (PIN, UNREAD, HIDE & UNDO)
+========================================================================== */
 function getProductImageUrl(item) {
   if (!item) return '';
   let url = item.image_url || item.image || item.img_url || item.image_base64 || item.photo_url || item.picture_url || item.file_url || item.attachment_url || item.proof_base64 || '';
@@ -29,111 +50,34 @@ function getThreadMetaStorageKey() {
   let uId = 'guest';
   if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
     uId = currentUser.id;
-  } else if (typeof currentAdminUser !== 'undefined' && currentAdminUser && currentAdminUser.id) {
-    uId = currentAdminUser.id;
   }
-  return 'echo_thread_meta_' + uId;
+  return 'echohub_seller_thread_meta_' + uId;
 }
 
 function getThreadMeta() {
   try {
-    return JSON.parse(localStorage.getItem(getThreadMetaStorageKey()) || '{}');
-  } catch(e) {
-    return {};
+    return JSON.parse(localStorage.getItem(getThreadMetaStorageKey()) || '{"pinned":[],"hidden":{},"manualUnread":{}}');
+  } catch (e) {
+    return { pinned: [], hidden: {}, manualUnread: {} };
   }
 }
 
 function saveThreadMeta(meta) {
   try {
     localStorage.setItem(getThreadMetaStorageKey(), JSON.stringify(meta));
-  } catch(e) {}
-}
-
-function hideThreadTile(threadId) {
-  const meta = getThreadMeta();
-  if (!meta.hidden) meta.hidden = {};
-  meta.hidden[threadId] = new Date().toISOString();
-  saveThreadMeta(meta);
-  
-  showUndoToast(threadId);
-  refreshThreadsUI();
-}
-
-function undoHideThreadTile(threadId) {
-  const meta = getThreadMeta();
-  if (meta.hidden && meta.hidden[threadId]) {
-    delete meta.hidden[threadId];
-    saveThreadMeta(meta);
-  }
-  hideUndoToast();
-  refreshThreadsUI();
-}
-
-function togglePinThread(threadId) {
-  const meta = getThreadMeta();
-  if (!meta.pinned) meta.pinned = [];
-  const idx = meta.pinned.indexOf(threadId);
-  if (idx >= 0) {
-    meta.pinned.splice(idx, 1);
-  } else {
-    if (meta.pinned.length >= 3) {
-      alert('You can pin up to 3 priority conversations at top.');
-      return;
-    }
-    meta.pinned.push(threadId);
-  }
-  saveThreadMeta(meta);
-  refreshThreadsUI();
-}
-
-function toggleMarkUnreadThread(threadId) {
-  const meta = getThreadMeta();
-  if (!meta.manualUnread) meta.manualUnread = {};
-  if (meta.manualUnread[threadId]) {
-    delete meta.manualUnread[threadId];
-  } else {
-    meta.manualUnread[threadId] = true;
-  }
-  saveThreadMeta(meta);
-  refreshThreadsUI();
-}
-
-function clearManualUnreadThread(threadId) {
-  const meta = getThreadMeta();
-  if (meta.manualUnread && meta.manualUnread[threadId]) {
-    delete meta.manualUnread[threadId];
-    saveThreadMeta(meta);
-  }
-}
-
-function handlePinAction(threadId) {
-  togglePinThread(threadId);
-  hideThreadContextMenu();
-}
-
-function handleUnreadAction(threadId) {
-  toggleMarkUnreadThread(threadId);
-  hideThreadContextMenu();
-}
-
-function handleHideAction(threadId) {
-  hideThreadTile(threadId);
-  hideThreadContextMenu();
+  } catch (e) {}
 }
 
 function showThreadContextMenu(e, threadId) {
-  if (e && e.preventDefault) e.preventDefault();
-  if (e && e.stopPropagation) e.stopPropagation();
+  if (e) e.preventDefault();
   contextMenuTargetId = threadId;
-
   let menu = document.getElementById('threadContextMenu');
   if (!menu) {
     menu = document.createElement('div');
     menu.id = 'threadContextMenu';
-    menu.className = 'fixed z-50 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-md p-1.5 w-52 text-xs space-y-1 text-slate-200 transition-opacity duration-150';
+    menu.className = 'fixed bg-slate-900 border border-borderSlate rounded-2xl shadow-2xl p-2 z-50 text-xs text-slate-200 min-w-[180px] space-y-1 backdrop-blur-md';
     document.body.appendChild(menu);
   }
-
   const meta = getThreadMeta();
   const isPinned = (meta.pinned || []).includes(threadId);
   const isUnread = meta.manualUnread && meta.manualUnread[threadId];
@@ -147,131 +91,149 @@ function showThreadContextMenu(e, threadId) {
       <i class="fa-solid ${isUnread ? 'fa-envelope-open text-emerald-400' : 'fa-envelope text-blue-400'}"></i>
       <span>${isUnread ? 'Mark as Read' : 'Mark as Unread'}</span>
     </button>
-
     <button onclick="handleHideAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition flex items-center space-x-2 font-medium">
-      <i class="fa-solid fa-eye-slash"></i>
-      <span>Hide Conversation Tile</span>
+      <i class="fa-solid fa-eye-slash text-rose-400"></i>
+      <span>Hide Conversation</span>
+    </button>
+    <button onclick="handleReportAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition flex items-center space-x-2 font-medium">
+      <i class="fa-solid fa-flag text-rose-400"></i>
+      <span>Report Shopper</span>
     </button>
   `;
 
-  const clickX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 100);
-  const clickY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 100);
-
-  const menuWidth = 210;
-  const menuHeight = 140;
-
-  let posX = clickX;
-  let posY = clickY;
-
-  if (posX + menuWidth > window.innerWidth) posX = window.innerWidth - menuWidth - 10;
-  if (posY + menuHeight > window.innerHeight) posY = window.innerHeight - menuHeight - 10;
-
-  menu.style.left = posX + 'px';
-  menu.style.top = posY + 'px';
-  menu.style.display = 'block';
+  let pageX = e ? e.pageX : window.innerWidth / 2;
+  let pageY = e ? e.pageY : window.innerHeight / 2;
+  if (e && e.touches && e.touches[0]) {
+    pageX = e.touches[0].pageX;
+    pageY = e.touches[0].pageY;
+  }
+  menu.style.left = Math.min(pageX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(pageY, window.innerHeight - 180) + 'px';
+  menu.classList.remove('hidden');
 }
 
 function hideThreadContextMenu() {
   const menu = document.getElementById('threadContextMenu');
-  if (menu) menu.style.display = 'none';
+  if (menu) menu.classList.add('hidden');
 }
 
-function showUndoToast(threadId) {
-  let toast = document.getElementById('undoHideToast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'undoHideToast';
-    toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900/95 border border-slate-700/80 text-white px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md text-xs flex items-center space-x-3';
-    document.body.appendChild(toast);
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('threadContextMenu');
+  if (menu && !menu.contains(e.target)) {
+    hideThreadContextMenu();
   }
+});
 
-  toast.innerHTML = `
-    <div class="flex items-center space-x-2">
-      <i class="fa-solid fa-eye-slash text-amber-400"></i>
-      <span>Conversation tile hidden from sidebar.</span>
-    </div>
-    <button onclick="undoHideThreadTile('${threadId}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-xl text-xs font-bold transition shadow-md">
-      Undo
-    </button>
-  `;
+function handlePinAction(threadId) {
+  hideThreadContextMenu();
+  const meta = getThreadMeta();
+  meta.pinned = meta.pinned || [];
+  if (meta.pinned.includes(threadId)) {
+    meta.pinned = meta.pinned.filter(id => id !== threadId);
+    showToast('Conversation unpinned.');
+  } else {
+    if (meta.pinned.length >= 3) {
+      showToast('Maximum 3 pinned conversations allowed.');
+      return;
+    }
+    meta.pinned.push(threadId);
+    showToast('Conversation pinned to top.');
+  }
+  saveThreadMeta(meta);
+  refreshThreadsUI();
+}
 
-  toast.style.display = 'flex';
+function handleUnreadAction(threadId) {
+  hideThreadContextMenu();
+  const meta = getThreadMeta();
+  meta.manualUnread = meta.manualUnread || {};
+  if (meta.manualUnread[threadId]) {
+    delete meta.manualUnread[threadId];
+    showToast('Marked as read.');
+  } else {
+    meta.manualUnread[threadId] = true;
+    showToast('Marked as unread.');
+  }
+  saveThreadMeta(meta);
+  refreshThreadsUI();
+  updateSellerUnreadBadge();
+}
+
+function clearManualUnreadThread(threadId) {
+  const meta = getThreadMeta();
+  if (meta.manualUnread && meta.manualUnread[threadId]) {
+    delete meta.manualUnread[threadId];
+    saveThreadMeta(meta);
+  }
+}
+
+function handleHideAction(threadId) {
+  hideThreadContextMenu();
+  const meta = getThreadMeta();
+  meta.hidden = meta.hidden || {};
+  meta.hidden[threadId] = Date.now();
+  saveThreadMeta(meta);
+  refreshThreadsUI();
+
+  let toast = document.getElementById('undoHideToast');
+  if (toast) toast.remove();
   if (undoToastTimeout) clearTimeout(undoToastTimeout);
+
+  toast = document.createElement('div');
+  toast.id = 'undoHideToast';
+  toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border border-borderSlate text-white text-xs px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 z-50 backdrop-blur-md';
+  toast.innerHTML = `
+    <span>Conversation hidden.</span>
+    <button onclick="undoHideAction('${threadId}')" class="text-amber-400 font-bold underline hover:text-amber-300">Undo</button>
+  `;
+  document.body.appendChild(toast);
+
   undoToastTimeout = setTimeout(() => {
-    hideUndoToast();
+    if (toast) toast.remove();
   }, 5000);
 }
 
-function hideUndoToast() {
+function undoHideAction(threadId) {
+  const meta = getThreadMeta();
+  if (meta.hidden && meta.hidden[threadId]) {
+    delete meta.hidden[threadId];
+    saveThreadMeta(meta);
+    refreshThreadsUI();
+    showToast('Conversation restored.');
+  }
   const toast = document.getElementById('undoHideToast');
-  if (toast) toast.style.display = 'none';
+  if (toast) toast.remove();
 }
 
 function handleTouchStart(e, threadId) {
-  if (!e.touches || !e.touches[0]) return;
-  touchStartPos = {
-    x: e.touches[0].clientX,
-    y: e.touches[0].clientY
-  };
+  if (e.touches && e.touches[0]) {
+    touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
   touchTimer = setTimeout(() => {
-    showThreadContextMenu(e.touches[0], threadId);
-  }, 500);
+    showThreadContextMenu(e, threadId);
+  }, 600);
 }
 
 function handleTouchMove(e) {
-  if (!touchTimer || !e.touches || !e.touches[0]) return;
-  const moveX = e.touches[0].clientX;
-  const moveY = e.touches[0].clientY;
-  if (Math.abs(moveX - touchStartPos.x) > 10 || Math.abs(moveY - touchStartPos.y) > 10) {
-    clearTimeout(touchTimer);
-    touchTimer = null;
+  if (e.touches && e.touches[0]) {
+    const moveX = Math.abs(e.touches[0].clientX - touchStartPos.x);
+    const moveY = Math.abs(e.touches[0].clientY - touchStartPos.y);
+    if (moveX > 10 || moveY > 10) {
+      clearTimeout(touchTimer);
+    }
   }
 }
 
 function handleTouchEnd() {
-  if (touchTimer) {
-    clearTimeout(touchTimer);
-    touchTimer = null;
-  }
-}
-
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('#threadContextMenu')) hideThreadContextMenu();
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') hideThreadContextMenu();
-});
-
-</script>
-<script>
-tailwind.config = {
-darkMode: 'class',
-theme: {
-extend: {
-colors: {
-darkBg: '#0F172A',
-cardBg: '#1E293B',
-accentBlue: '#2563EB',
-accentHover: '#1D4ED8',
-borderSlate: '#334155'
-}
-}
-}
+  clearTimeout(touchTimer);
 }
 </script>
-<!-- FontAwesome for Icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Google Fonts: Inter / Space Grotesk -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-<!-- Supabase JS Client CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 body { font-family: 'Inter', sans-serif; }
 h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
-<!-- Top Navigation Bar -->
 
 <!-- 48-Hour Seller Review Approval Countdown & Feature Lockout Banner -->
 <div id="sellerReviewCountdownBanner" class="hidden bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 border-b border-amber-500/50 px-4 py-3 text-amber-200 text-xs shadow-xl transition-all duration-300 sticky top-0 z-50">
@@ -298,431 +260,462 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
   </div>
 </div>
 
+<!-- Top Navigation Bar -->
 <header class="bg-cardBg border-b border-borderSlate px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-<div class="flex items-center space-x-3 min-w-0">
-<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden shrink-0">
-eh
-</div>
-<span class="font-heading text-lg sm:text-xl font-bold tracking-wide text-white min-w-0">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-1 sm:ml-2">Vendor Portal</span></span>
-</div>
-<div class="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto shrink-0">
-<!-- Logged-in User Badge -->
-<div class="flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
-<div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
-<i class="fa-solid fa-store text-[10px]"></i>
-</div>
-<span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
-</div>
-
-<!-- Logout Button -->
-<button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
-<i class="fa-solid fa-right-from-bracket"></i>
-<span>Sign Out</span>
-</button>
-</div>
+  <div class="flex items-center space-x-3 min-w-0">
+    <div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden shrink-0">
+      eh
+    </div>
+    <span class="font-heading text-lg sm:text-xl font-bold tracking-wide text-white min-w-0">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-1 sm:ml-2">Vendor Portal</span></span>
+  </div>
+  <div class="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto shrink-0">
+    <!-- Logged-in User Badge -->
+    <div class="flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
+      <div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
+        <i class="fa-solid fa-store text-[10px]"></i>
+      </div>
+      <span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
+    </div>
+    <!-- Logout Button -->
+    <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      <span>Sign Out</span>
+    </button>
+  </div>
 </header>
+
 <!-- Main Workspace Container -->
 <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
-
-<!-- Receipt Upload 24-Hour Countdown & Lockout Banner -->
-<div id="receiptCountdownBanner" class="hidden rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6">
-  <div class="flex items-center space-x-3.5">
-    <div id="receiptBannerIconBg" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0">
-      <i id="receiptBannerIcon" class="fa-solid fa-clock"></i>
+  <!-- Receipt Upload 24-Hour Countdown & Lockout Banner -->
+  <div id="receiptCountdownBanner" class="hidden rounded-2xl p-4 md:p-5 text-xs shadow-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border mb-6">
+    <div class="flex items-center space-x-3.5">
+      <div id="receiptBannerIconBg" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0">
+        <i id="receiptBannerIcon" class="fa-solid fa-clock"></i>
+      </div>
+      <div>
+        <h4 id="receiptBannerTitle" class="font-bold text-sm text-white">Action Required: Payment Receipt Pending</h4>
+        <p id="receiptBannerText" class="text-xs mt-0.5 text-slate-300">Upload payment receipt screenshot for approved review payout.</p>
+      </div>
     </div>
-    <div>
-      <h4 id="receiptBannerTitle" class="font-bold text-sm text-white">Action Required: Payment Receipt Pending</h4>
-      <p id="receiptBannerText" class="text-xs mt-0.5 text-slate-300">Upload payment receipt screenshot for approved review payout.</p>
-    </div>
-  </div>
-  <button id="receiptBannerActionBtn" onclick="openPendingReceiptModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5">
-    <i class="fa-solid fa-file-arrow-up"></i>
-    <span id="receiptBannerBtnText">Upload Receipt Now</span>
-  </button>
-</div>
-
-<!-- Welcome Banner & Section Switcher Tabs -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
-<div class="space-y-1">
-<span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Vendor Management Workspace</span>
-<h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Vendor!</h1>
-<p class="text-xs text-slate-400">Manage your product catalog, review listings, coordinate messages, and settle commissions.</p>
-</div>
-<div class="flex flex-wrap items-center gap-2">
-<button onclick="switchVendorTab('catalog')" id="navCatalogBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
-<i class="fa-solid fa-boxes-stacked"></i>
-<span>Product Catalog</span>
-</button>
-<button onclick="switchVendorTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
-<i class="fa-solid fa-file-invoice-dollar"></i>
-<span>Commissions</span>
-</button>
-<button onclick="switchVendorTab('messages')" id="navMessagesBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 relative">
-<i class="fa-solid fa-comments"></i>
-<span>Messaging Hub</span>
-<span id="sellerUnreadBadge" class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full hidden ml-1">0</span>
-</button>
-<button onclick="switchVendorTab('referrals')" id="navReferralsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
-<i class="fa-solid fa-users-rectangle"></i>
-<span>Referrals</span>
-</button>
-</div>
-</div>
-<!-- ================= SECTION A: PRODUCT CATALOG MANAGEMENT ================= -->
-<div id="catalogSection" class="space-y-6">
-<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-<div>
-<h2 class="text-lg font-bold text-white tracking-tight">Your Product Inventory</h2>
-<p class="text-xs text-slate-400">Add, pause, or remove review products displayed on the public marketplace.</p>
-</div>
-<button onclick="openProductModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
-<i class="fa-solid fa-plus"></i>
-<span>Add New Product</span>
-</button>
-</div>
-<!-- Product Grid -->
-<div id="vendorProductGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
-<i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-<p>Loading your product inventory...</p>
-</div>
-</div>
-</div>
-<!-- ================= SECTION B: 5-TAB COMMISSIONS DISBURSEMENT DASHBOARD ================= -->
-<div id="commissionsSection" class="space-y-6 hidden">
-<div class="space-y-1">
-<h2 class="text-lg font-bold text-white tracking-tight">Vendor Commissions & Disbursement Dashboard</h2>
-<p class="text-xs text-slate-400">Process incoming bottom-up claims, top-down offers, working queue settlements, and master history logs.</p>
-</div>
-<!-- Vendor Financial KPI Header Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-  <!-- Unsettled Commissions Card -->
-  <div class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-amber-500/60 transition">
-    <div class="space-y-1 z-10">
-      <p class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1">
-        <i class="fa-solid fa-clock mr-1"></i>
-        <span>Unsettled Commissions</span>
-      </p>
-      <h3 id="statUnsettledCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-      <p class="text-[10px] text-slate-400">Active reviews awaiting approval/settlement</p>
-    </div>
-    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl group-hover:scale-110 transition shrink-0">
-      <i class="fa-solid fa-hourglass-half"></i>
-    </div>
-  </div>
-
-  <!-- Settled Review Disbursements Card -->
-  <div class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-emerald-500/60 transition">
-    <div class="space-y-1 z-10">
-      <p class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
-        <i class="fa-solid fa-circle-check mr-1"></i>
-        <span>Settled Disbursements</span>
-      </p>
-      <h3 id="statSettledDisbursements" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-      <p class="text-[10px] text-slate-400">Total historical payouts completed & archived</p>
-    </div>
-    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl group-hover:scale-110 transition shrink-0">
-      <i class="fa-solid fa-wallet"></i>
-    </div>
-  </div>
-
-  <!-- Total Lifetime Review Spend Card -->
-  <div class="bg-cardBg border border-purple-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-purple-500/60 transition">
-    <div class="space-y-1 z-10">
-      <p class="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center space-x-1">
-        <i class="fa-solid fa-chart-line mr-1"></i>
-        <span>Total Lifetime Review Spend</span>
-      </p>
-      <h3 id="statTotalVendorSpend" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
-      <p class="text-[10px] text-slate-400">Grand total review campaign expenditure</p>
-    </div>
-    <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl group-hover:scale-110 transition shrink-0">
-      <i class="fa-solid fa-vault"></i>
-    </div>
-  </div>
-</div>
-
-<!-- Commissions 5-Tab Pipeline Navigation -->
-<div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
-  <button onclick="switchCommSubTab('incoming')" id="subTabIncoming" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-1.5">
-    <span>Incoming Requests</span>
-    <span id="badgeIncomingComm" class="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-  </button>
-  <button onclick="switchCommSubTab('mainQueue')" id="subTabMainQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
-    <span>Main Queue</span>
-    <span id="badgeMainQueueComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-  </button>
-  <button onclick="switchCommSubTab('outgoing')" id="subTabOutgoing" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
-    <span>Outgoing Requests</span>
-    <span id="badgeOutgoingComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-  </button>
-  <button onclick="switchCommSubTab('workingQueue')" id="subTabWorkingQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
-    <span>Working Queue</span>
-    <span id="badgeWorkingQueueComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-  </button>
-  <button onclick="switchCommSubTab('history')" id="subTabHistory" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
-    <span>Payment History</span>
-    <span id="badgeHistoryComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
-  </button>
-</div>
-<!-- Action Toolbar -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
-<div class="flex items-center space-x-3 w-full sm:w-auto">
-<div class="relative w-full sm:w-72">
-<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
-<input type="text" id="sellerCommSearch" oninput="renderSellerCommissions()" placeholder="Search Reference ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-</div>
-<div id="sellerToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-<!-- Dynamic action buttons -->
-</div>
-</div>
-<!-- Commissions Table -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
-<div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
-<span class="col-span-1"><input type="checkbox" id="selectAllSellerComms" onclick="toggleSelectAllSeller(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"></span>
-<span class="col-span-3">Reference ID</span>
-<span class="col-span-3">Recipient Role & Target</span>
-<span class="col-span-2">Amount</span>
-<span class="col-span-3 text-right">Status & Action</span>
-</div>
-<div id="sellerCommsTableBody" class="divide-y divide-borderSlate">
-<!-- Populated dynamically -->
-</div>
-</div>
-</div>
-<!-- ================= SECTION C: MESSAGING THREADS HUB ================= -->
-<div id="messagesSection" class="space-y-6 hidden">
-<div class="flex items-center justify-between">
-<div>
-<h2 class="text-lg font-bold text-white tracking-tight">Buyer & Reviewer Messaging Threads</h2>
-<p class="text-xs text-slate-400">Coordinate campaign details, review submissions, and answer queries in real time.</p>
-</div>
-<span class="text-xs text-slate-400 bg-cardBg border border-borderSlate px-3 py-1.5 rounded-xl">Inbox Active</span>
-</div>
-<!-- Messaging Grid Layout -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<!-- Thread & Contact List Sidebar -->
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 h-[500px] flex flex-col overflow-hidden">
-  <!-- Sub-tab switcher: Active Chats vs Contact List -->
-  <div class="flex bg-darkBg border border-borderSlate p-1 rounded-xl shrink-0">
-    <button type="button" id="subTabThreadsBtn" onclick="switchMessagingSubTab('threads')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow">
-      <i class="fa-solid fa-comments mr-1"></i> Active Chats
-    </button>
-    <button type="button" id="subTabContactsBtn" onclick="switchMessagingSubTab('contacts')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white">
-      <i class="fa-solid fa-address-book mr-1"></i> Contact List
+    <button id="receiptBannerActionBtn" onclick="openPendingReceiptModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5">
+      <i class="fa-solid fa-file-arrow-up"></i>
+      <span id="receiptBannerBtnText">Upload Receipt Now</span>
     </button>
   </div>
 
-  <!-- Active Conversations View -->
-  <div id="messagingThreadsContainer" class="flex-1 overflow-y-auto space-y-2 pr-1">
-    <div id="messagingThreadsList" class="space-y-2">
-      <!-- Dynamic Threads -->
+  <!-- Welcome Banner & Section Switcher Tabs -->
+  <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-xl">
+    <div class="space-y-1">
+      <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Vendor Management Workspace</span>
+      <h1 id="welcomeTitle" class="text-2xl font-bold text-white">Welcome back, Vendor!</h1>
+      <p class="text-xs text-slate-400">Manage your product catalog, review listings, coordinate messages, and settle commissions.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <button onclick="switchVendorTab('catalog')" id="navCatalogBtn" class="bg-accentBlue text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 shadow-lg shadow-blue-500/20">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <span>Product Catalog</span>
+      </button>
+      <button onclick="switchVendorTab('commissions')" id="navCommissionsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span>Commissions</span>
+      </button>
+      <button onclick="switchVendorTab('messages')" id="navMessagesBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2 relative">
+        <i class="fa-solid fa-comments"></i>
+        <span>Messaging Hub</span>
+        <span id="sellerUnreadBadge" class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full hidden ml-1">0</span>
+      </button>
+      <button onclick="switchVendorTab('referrals')" id="navReferralsBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+        <i class="fa-solid fa-users-rectangle"></i>
+        <span>Referrals</span>
+      </button>
     </div>
   </div>
 
-  <!-- Contact Directory View -->
-  <div id="messagingContactsContainer" class="flex-1 overflow-y-auto space-y-2 hidden pr-1">
-    <input type="text" id="sellerContactSearchInput" oninput="renderSellerContactsList()" placeholder="Search contacts by name, email..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition mb-2">
-    <div id="messagingContactsList" class="space-y-2">
-      <!-- Dynamic Contacts -->
+  <!-- ================= SECTION A: PRODUCT CATALOG MANAGEMENT ================= -->
+  <div id="catalogSection" class="space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h2 class="text-lg font-bold text-white tracking-tight">Your Product Inventory</h2>
+        <p class="text-xs text-slate-400">Add, pause, or remove review products displayed on the public marketplace.</p>
+      </div>
+      <button onclick="openProductModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add New Product</span>
+      </button>
+    </div>
+    <!-- Product Grid -->
+    <div id="vendorProductGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+        <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+        <p>Loading your product inventory...</p>
+      </div>
     </div>
   </div>
-</div>
-<!-- Active Chat Panel -->
-<div class="lg:col-span-2 bg-cardBg border border-borderSlate rounded-2xl p-6 flex flex-col justify-between h-[500px]">
-<div id="chatHeader" class="border-b border-borderSlate pb-3 flex items-center justify-between">
-<div>
-<h3 id="activeChatTitle" class="text-sm font-bold text-white">Select a conversation</h3>
-<p id="activeChatSub" class="text-[10px] text-slate-400">Reviewer or Support Agent</p>
-</div>
 
-</div>
-<div id="chatMessagesContainer" class="flex-1 overflow-y-auto py-4 space-y-3 pr-2">
-<div class="text-center py-16 text-xs text-slate-500">
-<i class="fa-solid fa-comments text-2xl mb-2"></i>
-<p>Choose a thread on the left to start messaging.</p>
-</div>
-</div>
-<!-- Attached File Preview Container -->
-<div id="chatAttachmentPreview" class="hidden px-4 py-2 bg-darkBg border-t border-borderSlate flex items-center justify-between text-xs text-slate-300">
-<div class="flex items-center space-x-2 truncate">
-<i class="fa-solid fa-paperclip text-blue-400"></i>
-<span id="chatAttachmentName" class="truncate"></span>
-</div>
-<button type="button" onclick="clearChatAttachment()" class="text-slate-400 hover:text-rose-400 transition"><i class="fa-solid fa-xmark"></i></button>
-</div>
-<form id="chatForm" onsubmit="handleSendMessage(event)" class="pt-3 border-t border-borderSlate flex gap-2 items-center">
-<!-- Paper-clip attachment button -->
-<label class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 hover:text-white px-3.5 py-2.5 rounded-xl cursor-pointer transition flex items-center justify-center">
-<i class="fa-solid fa-paperclip text-xs"></i>
-<input type="file" id="chatFileInput" onchange="handleChatFileSelect(event)" class="hidden" accept="image/*,.pdf,.doc,.docx,.txt">
-</label>
-<input type="text" id="chatInputMsg" placeholder="Type your message here..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition" disabled>
-<button type="submit" id="chatSendBtn" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition shadow-md" disabled>Send</button>
-</form>
-</div>
-</div>
-</div>
-<!-- ================= SECTION D: REFERRAL NETWORK WIDGET ================= -->
-<div id="referralsSection" class="space-y-6 hidden">
-<div class="space-y-1">
-<h2 class="text-lg font-bold text-white tracking-tight">Vendor Referral & Affiliate Program</h2>
-<p class="text-xs text-slate-400">Invite new vendors and reviewers to earn recurring platform commission rewards.</p>
-</div>
-
-<!-- Prominent Referral Code Banner -->
-<div class="bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-transparent border border-purple-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-  <div class="flex items-center space-x-4">
-    <div class="w-12 h-12 bg-purple-500/20 border border-purple-500/40 rounded-xl flex items-center justify-center text-purple-400 text-xl font-bold">
-      <i class="fa-solid fa-ticket"></i>
+  <!-- ================= SECTION B: 5-TAB COMMISSIONS DISBURSEMENT DASHBOARD ================= -->
+  <div id="commissionsSection" class="space-y-6 hidden">
+    <div class="space-y-1">
+      <h2 class="text-lg font-bold text-white tracking-tight">Vendor Commissions & Disbursement Dashboard</h2>
+      <p class="text-xs text-slate-400">Process incoming bottom-up claims, top-down offers, working queue settlements, and master history logs.</p>
     </div>
-    <div>
-      <span class="text-[10px] font-bold uppercase tracking-wider text-purple-400">Your Unique Inviter Referral Code</span>
-      <h3 id="vendorRefCodeDisplay" class="text-2xl font-extrabold text-white font-mono tracking-wide">REF-LOADING</h3>
-      <p class="text-[11px] text-slate-400">Give this code to merchants or shoppers to enter on sign-up.</p>
+
+    <!-- Vendor Financial KPI Header Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <!-- Unsettled Commissions Card -->
+      <div class="bg-cardBg border border-amber-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-amber-500/60 transition">
+        <div class="space-y-1 z-10">
+          <p class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1">
+            <i class="fa-solid fa-clock mr-1"></i>
+            <span>Unsettled Commissions</span>
+          </p>
+          <h3 id="statUnsettledCommissions" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+          <p class="text-[10px] text-slate-400">Active reviews awaiting approval/settlement</p>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl group-hover:scale-110 transition shrink-0">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+      </div>
+
+      <!-- Settled Review Disbursements Card -->
+      <div class="bg-cardBg border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-emerald-500/60 transition">
+        <div class="space-y-1 z-10">
+          <p class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
+            <i class="fa-solid fa-circle-check mr-1"></i>
+            <span>Settled Disbursements</span>
+          </p>
+          <h3 id="statSettledDisbursements" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+          <p class="text-[10px] text-slate-400">Total historical payouts completed & archived</p>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl group-hover:scale-110 transition shrink-0">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+      </div>
+
+      <!-- Total Lifetime Review Spend Card -->
+      <div class="bg-cardBg border border-purple-500/30 p-5 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group hover:border-purple-500/60 transition">
+        <div class="space-y-1 z-10">
+          <p class="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center space-x-1">
+            <i class="fa-solid fa-chart-line mr-1"></i>
+            <span>Total Lifetime Review Spend</span>
+          </p>
+          <h3 id="statTotalVendorSpend" class="text-2xl font-black text-white tracking-tight">$0.00</h3>
+          <p class="text-[10px] text-slate-400">Grand total review campaign expenditure</p>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl group-hover:scale-110 transition shrink-0">
+          <i class="fa-solid fa-vault"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commissions 5-Tab Pipeline Navigation -->
+    <div class="flex flex-wrap gap-2 border-b border-borderSlate pb-3">
+      <button onclick="switchCommSubTab('incoming')" id="subTabIncoming" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-1.5">
+        <span>Incoming Requests</span>
+        <span id="badgeIncomingComm" class="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+      </button>
+      <button onclick="switchCommSubTab('mainQueue')" id="subTabMainQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
+        <span>Main Queue</span>
+        <span id="badgeMainQueueComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+      </button>
+      <button onclick="switchCommSubTab('outgoing')" id="subTabOutgoing" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
+        <span>Outgoing Requests</span>
+        <span id="badgeOutgoingComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+      </button>
+      <button onclick="switchCommSubTab('workingQueue')" id="subTabWorkingQueue" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
+        <span>Working Queue</span>
+        <span id="badgeWorkingQueueComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+      </button>
+      <button onclick="switchCommSubTab('history')" id="subTabHistory" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5">
+        <span>Payment History</span>
+        <span id="badgeHistoryComm" class="bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono">0 • $0</span>
+      </button>
+    </div>
+
+    <!-- Action Toolbar -->
+    <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-md">
+      <div class="flex items-center space-x-3 w-full sm:w-auto">
+        <div class="relative w-full sm:w-72">
+          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-search text-xs"></i></span>
+          <input type="text" id="sellerCommSearch" oninput="renderSellerCommissions()" placeholder="Search Reference ID..." class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        </div>
+      </div>
+      <div id="sellerToolbar" class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+        <!-- Dynamic action buttons -->
+      </div>
+    </div>
+
+    <!-- Commissions Table -->
+    <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
+      <div class="p-4 border-b border-borderSlate bg-slate-900/40 grid grid-cols-12 gap-3 text-xs text-slate-400 font-semibold items-center">
+        <span class="col-span-1"><input type="checkbox" id="selectAllSellerComms" onclick="toggleSelectAllSeller(this)" class="rounded border-borderSlate bg-darkBg text-blue-600"></span>
+        <span class="col-span-3">Reference ID</span>
+        <span class="col-span-3">Recipient Role & Target</span>
+        <span class="col-span-2">Amount</span>
+        <span class="col-span-3 text-right">Status & Action</span>
+      </div>
+      <div id="sellerCommsTableBody" class="divide-y divide-borderSlate">
+        <!-- Populated dynamically -->
+      </div>
     </div>
   </div>
-  <button onclick="copyVendorRefCode()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-purple-500/20 flex items-center space-x-2 whitespace-nowrap">
-    <i class="fa-solid fa-copy"></i>
-    <span>Copy Code</span>
-  </button>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
-<span class="text-xs text-slate-400">Total Referrals</span>
-<h3 id="refTotalCount" class="text-2xl font-bold text-white">0</h3>
-</div>
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
-<span class="text-xs text-slate-400">Active Affiliates</span>
-<h3 id="refActiveCount" class="text-2xl font-bold text-blue-400">0</h3>
-</div>
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-2 shadow-xl">
-<span class="text-xs text-slate-400">Referral Earnings</span>
-<h3 id="refTotalEarnings" class="text-2xl font-bold text-emerald-400">$0.00</h3>
-</div>
-</div>
-<div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
-<h3 class="text-sm font-bold text-white">Your Unique Referral Link</h3>
-<div class="flex flex-wrap gap-2">
-<input type="text" id="refLinkInput" readonly value="https://echohub.ja/register?ref=VENDOR_PENDING" class="flex-1 min-w-[200px] bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-300 outline-none">
-<button onclick="copyReferralLink()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition whitespace-nowrap">
-<i class="fa-solid fa-copy mr-1"></i> Copy Link
-</button>
-<button onclick="shareVendorWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition whitespace-nowrap flex items-center space-x-1">
-<i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
-</button>
-</div>
-</div>
-</div>
+
+  <!-- ================= SECTION C: MESSAGING THREADS HUB ================= -->
+  <div id="messagesSection" class="space-y-6 hidden">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-white tracking-tight">Buyer & Reviewer Messaging Threads</h2>
+        <p class="text-xs text-slate-400">Direct WhatsApp-style communication channel with shoppers and reviewers.</p>
+      </div>
+    </div>
+
+    <div class="bg-cardBg border border-borderSlate rounded-3xl h-[680px] flex overflow-hidden shadow-2xl">
+      <!-- Left Panel: Thread List / Contact List -->
+      <div class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden">
+        <div class="p-3 border-b border-borderSlate bg-darkBg/60">
+          <div class="flex bg-darkBg border border-borderSlate p-1 rounded-xl">
+            <button type="button" id="subTabThreadsBtn" onclick="switchMessagingSubTab('threads')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition bg-accentBlue text-white shadow">
+              <i class="fa-solid fa-comments mr-1"></i> Active Chats
+            </button>
+            <button type="button" id="subTabContactsBtn" onclick="switchMessagingSubTab('contacts')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition text-slate-400 hover:text-white">
+              <i class="fa-solid fa-address-book mr-1"></i> Contact List
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Conversations View -->
+        <div id="messagingThreadsContainer" class="flex-1 overflow-y-auto space-y-2 p-2">
+          <div id="messagingThreadsList" class="space-y-2">
+            <!-- Dynamic Threads -->
+          </div>
+        </div>
+
+        <!-- Contact Directory View -->
+        <div id="messagingContactsContainer" class="flex-1 flex flex-col overflow-hidden hidden p-2">
+          <input type="text" id="sellerContactSearchInput" oninput="renderSellerContactsList()" placeholder="Search contacts by name, email..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue transition mb-2">
+          <div id="messagingContactsList" class="flex-1 overflow-y-auto space-y-2">
+            <!-- Dynamic Contacts -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Active Chat Stream -->
+      <div class="hidden sm:flex flex-1 flex-col bg-darkBg/50 relative overflow-hidden">
+        <div class="p-4 border-b border-borderSlate bg-cardBg flex items-center justify-between shadow-md">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div>
+              <h3 id="activeChatTitle" class="font-bold text-white text-xs">Select a conversation</h3>
+              <p id="activeChatSubtitle" class="text-[10px] text-slate-400">Direct Message & Review Stream</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="chatMessagesContainer" class="flex-1 p-4 overflow-y-auto space-y-3">
+          <div class="m-auto text-center text-xs text-slate-500 py-12">
+            <i class="fa-regular fa-comments text-3xl text-slate-600 mb-2"></i>
+            <p>Select a conversation thread on the left to view messages.</p>
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="p-3 bg-cardBg border-t border-borderSlate">
+          <form onsubmit="handleSendChatMessage(event)" class="flex items-center space-x-2">
+            <input type="text" id="chatInputMsg" placeholder="Type a message..." disabled class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition disabled:opacity-50">
+            <button type="submit" id="chatSendBtn" disabled class="bg-accentBlue hover:bg-accentHover disabled:opacity-50 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md flex items-center space-x-1">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Send</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SECTION D: REFERRAL NETWORK WIDGET ================= -->
+  <div id="referralsSection" class="space-y-6 hidden">
+    <div class="space-y-1">
+      <h2 class="text-lg font-bold text-white tracking-tight">Vendor Referral & Affiliate Program</h2>
+      <p class="text-xs text-slate-400">Invite new vendors and reviewers to earn recurring platform commission rewards.</p>
+    </div>
+
+    <!-- Prominent Referral Code Banner -->
+    <div class="bg-gradient-to-r from-purple-500/20 via-purple-500/10 to-transparent border border-purple-500/30 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 bg-purple-500/20 border border-purple-500/40 rounded-xl flex items-center justify-center text-purple-400 text-xl font-bold">
+          <i class="fa-solid fa-ticket"></i>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-purple-400">Your Unique Inviter Referral Code</span>
+          <h3 id="vendorRefCodeDisplay" class="text-2xl font-extrabold text-white font-mono tracking-wide">REF-LOADING</h3>
+          <p class="text-[11px] text-slate-400">Give this code to merchants or shoppers to enter on sign-up.</p>
+        </div>
+      </div>
+      <button onclick="copyVendorRefCode()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition shadow-lg shadow-purple-500/20 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-copy"></i>
+        <span>Copy Code</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl flex items-center justify-center font-bold">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-sm">Shopper Invitation Link</h3>
+            <p class="text-[11px] text-slate-400">Invite new reviewers to Echo Hub.</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="sellerShopperRefLink" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
+          <button onclick="copyRefLink('sellerShopperRefLink')" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+            <i class="fa-solid fa-copy mr-1"></i> Copy
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-cardBg border border-borderSlate rounded-2xl p-6 space-y-4 shadow-xl">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl flex items-center justify-center font-bold">
+            <i class="fa-solid fa-store"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-sm">Vendor Invitation Link</h3>
+            <p class="text-[11px] text-slate-400">Invite merchants & sellers to list products.</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="sellerVendorRefLink" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono outline-none" value="Loading...">
+          <button onclick="copyRefLink('sellerVendorRefLink')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-md whitespace-nowrap">
+            <i class="fa-solid fa-copy mr-1"></i> Copy
+          </button>
+          <button onclick="shareVendorWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition whitespace-nowrap flex items-center space-x-1">
+            <i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
+
 <!-- ================= MODALS ================= -->
+
 <!-- Add/Edit Product Modal -->
 <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-4">
-<h3 id="productModalTitle" class="text-lg font-bold text-white">Add New Marketplace Product</h3>
-<button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+      <h3 id="productModalTitle" class="text-lg font-bold text-white">Add New Marketplace Product</h3>
+      <button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <form id="productForm" onsubmit="handleSaveProduct(event)" class="space-y-4">
+      <input type="hidden" id="editingProductId">
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Product Title</label>
+        <input type="text" id="prodTitle" required placeholder="e.g., Wireless Gaming Keyboard" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Description</label>
+        <textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Retail Price ($ USD) *</label>
+        <input type="number" id="prodPrice" step="0.01" min="0" required placeholder="0.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Product Thumbnail (Auto-Compressed)</label>
+        <input type="file" id="prodImageFile" accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
+      </div>
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-medium text-slate-300">Direct Amazon Listing URL</label>
+          <span class="text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full"><i class="fa-solid fa-lock mr-1"></i>Private to Vendor</span>
+        </div>
+        <input type="url" id="prodAmazonUrl" placeholder="https://www.amazon.com/dp/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        <p class="text-[10px] text-amber-300/80 flex items-center space-x-1 mt-0.5">
+          <i class="fa-solid fa-shield-halved text-amber-400 shrink-0"></i>
+          <span>🔒 Private Reference Link: Strictly visible to YOU for easy inventory reference. Shoppers will NEVER see this link.</span>
+        </p>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Listing Status</label>
+        <select id="prodStatus" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+          <option value="ACTIVE">ACTIVE (Visible on Marketplace)</option>
+          <option value="PAUSED">PAUSED (Hidden)</option>
+        </select>
+      </div>
+      <button type="submit" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
+        Save Product Listing
+      </button>
+    </form>
+  </div>
 </div>
-<form id="productForm" onsubmit="handleSaveProduct(event)" class="space-y-4">
-<input type="hidden" id="editingProductId">
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Product Title</label>
-<input type="text" id="prodTitle" required placeholder="e.g., Wireless Gaming Keyboard" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Description</label>
-<textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Retail Price ($ USD) *</label>
-<input type="number" id="prodPrice" step="0.01" min="0" required placeholder="0.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Product Thumbnail (Auto-Compressed)</label>
-<input type="file" id="prodImageFile" accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
-</div>
-<div class="space-y-1.5">
-<div class="flex items-center justify-between">
-<label class="text-xs font-medium text-slate-300">Direct Amazon Listing URL</label>
-<span class="text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full"><i class="fa-solid fa-lock mr-1"></i>Private to Vendor</span>
-</div>
-<input type="url" id="prodAmazonUrl" placeholder="https://www.amazon.com/dp/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-<p class="text-[10px] text-amber-300/80 flex items-center space-x-1 mt-0.5">
-<i class="fa-solid fa-shield-halved text-amber-400 shrink-0"></i>
-<span>🔒 Private Reference Link: Strictly visible to YOU for easy inventory reference. Shoppers will NEVER see this link.</span>
-</p>
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Listing Status</label>
-<select id="prodStatus" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-<option value="ACTIVE">ACTIVE (Visible on Marketplace)</option>
-<option value="PAUSED">PAUSED (Hidden)</option>
-</select>
-</div>
-<button type="submit" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
-Save Product Listing
-</button>
-</form>
-</div>
-</div>
+
 <!-- Pay & Settle Modal (Working Queue Settlement) -->
 <div id="settlementModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-4">
-<h3 class="text-lg font-bold text-white">Execute Payout Settlement</h3>
-<button onclick="document.getElementById('settlementModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+      <h3 class="text-lg font-bold text-white">Execute Payout Settlement</h3>
+      <button onclick="document.getElementById('settlementModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <form onsubmit="handleSettlementSubmit(event)" class="space-y-4">
+      <input type="hidden" id="settleTargetCommId">
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Recipient PayPal Email</label>
+        <input type="email" id="settlePaypalEmail" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-400 outline-none">
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">PayPal Transaction ID (17 Chars) *</label>
+        <input type="text" id="settleTxId" required maxlength="17" placeholder="e.g. 9AB12345CD67890EF" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition font-mono">
+        <p class="text-[10px] text-slate-500">Must be exactly 17 alphanumeric characters.</p>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Payment Receipt Proof Screenshot *</label>
+        <input type="file" id="settleReceiptFile" required accept="image/*,.pdf" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
+      </div>
+      <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
+        Complete & Archive to History
+      </button>
+    </form>
+  </div>
 </div>
-<form onsubmit="handleSettlementSubmit(event)" class="space-y-4">
-<input type="hidden" id="settleTargetCommId">
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Verified Recipient PayPal Address</label>
-<input type="text" id="settlePaypalEmail" readonly class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-400 outline-none font-mono">
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Mandatory 17-Character PayPal Transaction ID</label>
-<input type="text" id="settleTxId" required minlength="17" maxlength="17" placeholder="e.g., 9X123456AB7890123" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition font-mono">
-<p class="text-[10px] text-slate-500">Must be exactly 17 alphanumeric characters.</p>
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Payment Receipt Proof Screenshot</label>
-<input type="file" id="settleReceiptFile" required accept="image/*,.pdf" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
-</div>
-<button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
-Complete & Archive to History
-</button>
-</form>
-</div>
-</div>
+
 <!-- Inspect Receipt Modal (Payment History Audit) -->
 <div id="inspectReceiptModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-4">
-<h3 class="text-lg font-bold text-white">Payment Receipt Audit Proof</h3>
-<button onclick="document.getElementById('inspectReceiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-</div>
-<div class="space-y-4">
-<div class="grid grid-cols-2 gap-4 text-xs">
-<div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1">
-<span class="text-slate-500">PayPal Transaction ID</span>
-<p id="inspectModalTxId" class="font-mono font-bold text-white">-</p>
-</div>
-<div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1">
-<span class="text-slate-500">Settled Amount</span>
-<p id="inspectModalAmount" class="font-bold text-emerald-400">-</p>
-</div>
-</div>
-<div class="space-y-1.5">
-<span class="text-xs text-slate-400">Attached Receipt Image Proof</span>
-<div class="bg-darkBg border border-borderSlate rounded-xl p-2 text-center max-h-64 overflow-y-auto">
-<img id="inspectModalImage" src="" alt="Receipt Proof" class="mx-auto rounded object-contain max-h-56" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-darkBg border border-borderSlate rounded-xl"><i class="fa-solid fa-receipt text-3xl text-emerald-400 mb-2"></i><span class="text-xs font-medium">Payment Receipt Image Unavailable</span></div>
-</div>
-</div>
-<button onclick="document.getElementById('inspectReceiptModal').classList.add('hidden')" class="w-full bg-darkBg hover:bg-slate-800 border border-borderSlate text-white text-xs font-semibold py-3 rounded-xl transition">
-Close Inspector
-</button>
-</div>
-</div>
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-4">
+      <h3 class="text-lg font-bold text-white">Payment Receipt Audit Proof</h3>
+      <button onclick="document.getElementById('inspectReceiptModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4 text-xs">
+        <div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1">
+          <span class="text-slate-500">PayPal Transaction ID</span>
+          <p id="inspectModalTxId" class="font-mono font-bold text-white">-</p>
+        </div>
+        <div class="bg-darkBg p-3 rounded-xl border border-borderSlate space-y-1">
+          <span class="text-slate-500">Settled Amount</span>
+          <p id="inspectModalAmount" class="font-bold text-emerald-400">-</p>
+        </div>
+      </div>
+      <div class="space-y-1.5">
+        <span class="text-xs text-slate-400">Attached Receipt Image Proof</span>
+        <div class="bg-darkBg border border-borderSlate rounded-xl p-2 text-center max-h-64 overflow-y-auto">
+          <img id="inspectModalImage" src="" alt="Receipt Proof" class="mx-auto rounded object-contain max-h-56" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+          <div class="hidden flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-darkBg border border-borderSlate rounded-xl">
+            <i class="fa-solid fa-receipt text-3xl text-emerald-400 mb-2"></i>
+            <span class="text-xs font-medium">Payment Receipt Image Unavailable</span>
+          </div>
+        </div>
+      </div>
+      <button onclick="document.getElementById('inspectReceiptModal').classList.add('hidden')" class="w-full bg-darkBg hover:bg-slate-800 border border-borderSlate text-white text-xs font-semibold py-3 rounded-xl transition">
+        Close Inspector
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- Seller Commission Details Modal -->
@@ -740,11 +733,9 @@ Close Inspector
       </div>
       <button onclick="closeSellerCommDetailsModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-base"></i></button>
     </div>
-
     <div id="sellerCommDetailsContent" class="space-y-4 text-xs">
       <!-- Dynamic Details Filled via JS -->
     </div>
-
     <div class="flex justify-end space-x-2 border-t border-borderSlate pt-3">
       <button onclick="closeSellerCommDetailsModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Close</button>
     </div>
@@ -766,9 +757,8 @@ Close Inspector
       </div>
       <button onclick="document.getElementById('topDownOfferModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
-
     <form onsubmit="handleTopDownOfferSubmit(event)" class="space-y-4">
-      <!-- Batch Mode Summary View (When rows are checked) -->
+      <!-- Batch Mode Summary View -->
       <div id="batchOfferFields" class="hidden space-y-3">
         <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between">
           <div class="flex items-center space-x-2">
@@ -777,18 +767,16 @@ Close Inspector
           </div>
           <span id="batchOfferCountBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">0 Selected</span>
         </div>
-
         <div class="bg-darkBg border border-borderSlate rounded-2xl p-3 space-y-2 max-h-48 overflow-y-auto" id="batchOfferListContainer">
           <!-- Selected rows summarized dynamically -->
         </div>
-
         <div class="p-3 bg-darkBg border border-borderSlate rounded-2xl flex items-center justify-between text-xs">
           <span class="text-slate-400 font-medium">Total Offer Amount:</span>
           <span id="batchOfferTotalAmount" class="font-bold text-emerald-400 text-sm">$0.00 USD</span>
         </div>
       </div>
 
-      <!-- Manual Entry Mode View (When no rows are checked) -->
+      <!-- Manual Entry Mode View -->
       <div id="manualOfferFields" class="space-y-3">
         <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-300">
           <i class="fa-solid fa-info-circle mr-1"></i> No records selected. Enter details manually to generate a new custom top-down offer.
@@ -820,10 +808,12 @@ Close Inspector
 
 <!-- Toast Notification Container -->
 <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2"></div>
+
 <!-- Footer -->
 <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
-<p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace Engine.</p>
+  <p>&copy; 2026 Echo Hub Marketplace. Vendor Workspace Engine.</p>
 </footer>
+
 <!-- Vendor Workspace Script -->
 <script>
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
@@ -831,34 +821,19 @@ const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 
-/* Global Chat Products Cache & Lookup Engine */
 let chatProducts = {};
-
 async function getSellerChatProduct(productId) {
   if (!productId) return null;
   let prod = (vendorProducts || []).find(p => p.id === productId || String(p.id).toLowerCase() === String(productId).toLowerCase());
   if (prod) return prod;
   if (chatProducts[productId]) return chatProducts[productId];
-  if (typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
-    prod = marketplaceProducts.find(p => p.id === productId || String(p.id).toLowerCase() === String(productId).toLowerCase());
-    if (prod) {
-      chatProducts[productId] = prod;
-      return prod;
-    }
-  }
   try {
-    const { data, error } = await _supabase
-      .from('products')
-      .select('*')
-      .eq('id', productId)
-      .maybeSingle();
+    const { data, error } = await _supabase.from('products').select('*').eq('id', productId).single();
     if (data && !error) {
       chatProducts[productId] = data;
       return data;
     }
-  } catch (err) {
-    console.warn('getSellerChatProduct lookup error:', err);
-  }
+  } catch (err) {}
   return null;
 }
 
@@ -876,61 +851,47 @@ function loadLocalVendorReadState() {
   try {
     readVendorThreadIds = new Set(JSON.parse(localStorage.getItem('echohub_seller_read_threads_' + userId) || '[]'));
     lastReadVendorTimeMap = JSON.parse(localStorage.getItem('echohub_seller_read_times_' + userId) || '{}');
-  } catch(e) {
-    readVendorThreadIds = new Set();
-    lastReadVendorTimeMap = {};
-  }
+  } catch(e) {}
 }
 
-function saveLocalVendorReadState(partnerId) {
+function saveLocalVendorReadState(threadId) {
   const userId = currentUser?.id || 'vendor';
-  if (partnerId) {
-    readVendorThreadIds.add(partnerId);
-    lastReadVendorTimeMap[partnerId] = Date.now();
-  }
   try {
+    readVendorThreadIds.add(threadId);
+    lastReadVendorTimeMap[threadId] = Date.now();
     localStorage.setItem('echohub_seller_read_threads_' + userId, JSON.stringify(Array.from(readVendorThreadIds)));
     localStorage.setItem('echohub_seller_read_times_' + userId, JSON.stringify(lastReadVendorTimeMap));
   } catch(e) {}
 }
+
 let activeSubTab = 'incoming';
 let selectedSellerCommIds = new Set();
 let pollingInterval = null;
-let chatAttachedFile = null;
-
 
 /* Payload Sanitizer Utility to prevent unmapped column schema & UUID errors */
 const ALLOWED_TABLE_COLUMNS = {
   messages: ['id', 'created_at', 'sender_id', 'receiver_id', 'vendor_id', 'buyer_id', 'product_id', 'text', 'is_read', 'feedback_id', 'status', 'status_badge', 'type', 'amazon_review_url', 'review_url', 'commission_amount', 'link', 'content', 'file_url', 'attachment_url', 'proof_base64'],
-  commissions: ['id', 'created_at', 'updated_at', 'seller_id', 'vendor_id', 'recipient_id', 'product_id', 'amount', 'commission_amount', 'status', 'queue_type', 'role_type', 'proof_url', 'payout_proof_url', 'paypal_tx_id', 'receipt_base64'],
-  profiles: ['id', 'updated_at', 'full_name', 'email', 'paypal_email', 'role', 'verification_status', 'referral_code', 'invited_by_code', 'is_blocked']
+  commissions: ['id', 'created_at', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'recipient_role', 'role_type', 'amount', 'queue_type', 'status', 'paypal_tx_id', 'paypal_transaction_id', 'receipt_base64', 'proof_base64']
 };
 
 function sanitizePayload(tableName, payload) {
-  if (!payload || typeof payload !== 'object') return payload;
   const allowed = ALLOWED_TABLE_COLUMNS[tableName];
-  
-  const sanitizeItem = (obj) => {
+  if (!allowed || !payload) return payload;
+  const sanitizeItem = (item) => {
     const clean = {};
-    for (const key in obj) {
-      if (!allowed || allowed.includes(key)) {
-        let val = obj[key];
-        if (typeof val === 'string' && (val.trim() === '' || val === 'null' || val === 'undefined') && ((key.endsWith('_id') || key === 'id') || key === 'id')) {
-          val = null;
-        }
-        clean[key] = val;
+    Object.keys(item).forEach(key => {
+      if (allowed.includes(key)) {
+        clean[key] = item[key];
       }
-    }
+    });
     return clean;
   };
-
   if (Array.isArray(payload)) {
     return payload.map(sanitizeItem);
   }
   return sanitizeItem(payload);
 }
 
-/* Status Badge Sanitizer Helper */
 const sanitizeStatusBadge = (payload) => {
   if (payload.status_badge) {
     payload.status_badge = payload.status_badge.trim().toUpperCase();
@@ -938,71 +899,56 @@ const sanitizeStatusBadge = (payload) => {
   return payload;
 };
 
-/* 1. Page-Load Workspace Initialization & Role Security Guard */
+/* Workspace Initialization */
 async function initSellerWorkspace() {
   try {
-    /* Step A: Check for active Supabase auth session */
     const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
     if (sessionError || !session) {
       window.location.href = 'login.html';
       return;
     }
-
-    /* Step B: Fetch user role from public.profiles */
     const { data: profile, error: profileError } = await _supabase
       .from('profiles')
-      .select('role')
+      .select('*')
       .eq('id', session.user.id)
       .single();
 
-    if (profileError || !profile || !profile.role) {
-      await _supabase.auth.signOut();
+    if (profileError || !profile) {
+      alert("Profile Error: Unable to verify vendor credentials.");
       window.location.href = 'login.html';
       return;
     }
-
-    /* Step C: Enforce role isolation (Block Buyers from Vendor Portal) */
-    
-    if (profile && profile.verification_status && (profile.verification_status.toUpperCase() === 'BANNED' || profile.verification_status.toUpperCase() === 'REJECTED')) {
+    if (profile.verification_status === 'BANNED' || profile.status === 'BANNED') {
       alert("Access Restricted: Your account has been banned by Platform Administration.");
       await _supabase.auth.signOut();
       window.location.href = 'login.html';
       return;
     }
-
-    if (profile.role.toLowerCase() === 'buyer') {
+    if (profile.role && profile.role.toLowerCase() === 'buyer') {
       alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
       window.location.href = 'index.html';
       return;
     }
 
-    /* Step D: Initialize Authorized Vendor UI */
     currentUser = session.user;
     const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
     const fullName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+    document.getElementById('headerUserName').textContent = fullName;
+    document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName}!`;
 
-    if (document.getElementById('headerUserName')) {
-      document.getElementById('headerUserName').textContent = fullName;
-    }
-    if (document.getElementById('welcomeTitle')) {
-      document.getElementById('welcomeTitle').textContent = `Welcome back, ${fullName.split(' ')[0]}!`;
-    }
-    if (document.getElementById('refLinkInput')) {
-      document.getElementById('refLinkInput').value = `https://echohub.ja/register?ref=vendor_${currentUser.id.substring(0, 8)}`;
-    }
+    const vendorRefCode = profile.referral_code || currentUser.id;
+    const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+    if (document.getElementById('vendorRefCodeDisplay')) document.getElementById('vendorRefCodeDisplay').textContent = vendorRefCode;
+    if (document.getElementById('sellerShopperRefLink')) document.getElementById('sellerShopperRefLink').value = `${baseUrl}buyer-register.html?ref=${vendorRefCode}`;
+    if (document.getElementById('sellerVendorRefLink')) document.getElementById('sellerVendorRefLink').value = `${baseUrl}seller-register.html?ref=${vendorRefCode}`;
 
-    /* Step E: Load Vendor Workspace Data */
     await preloadSellerProfiles();
     await loadVendorProducts();
     await loadVendorCommissions();
     await loadVendorThreads();
 
-    /* Step F: Start Live Polling Loop (10-second sync) */
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-    }
+    if (pollingInterval) clearInterval(pollingInterval);
     pollingInterval = setInterval(pollVendorData, 10000);
-
   } catch (err) {
     console.error("Initialization error:", err.message);
     window.location.href = 'login.html';
@@ -1016,8 +962,6 @@ async function pollVendorData() {
   await loadVendorThreads(true);
 }
 
-/* 2. Sign Out Handler */
-
 async function handleReportAction(targetUserId) {
   hideThreadContextMenu();
   const thread = vendorThreads.find(t => t.partnerId === (targetUserId || activeThreadId));
@@ -1026,33 +970,22 @@ async function handleReportAction(targetUserId) {
     alert("Please select a conversation before submitting a report.");
     return;
   }
-
-  const note = prompt("Please enter details / reason for reporting this shopper to Admin:", "Inappropriate behavior or suspicious activity");
-  if (!note || !note.trim()) return;
+  const reason = prompt("Report Shopper to Platform Administration: Please enter the details of the issue or policy violation:");
+  if (!reason || !reason.trim()) return;
 
   try {
-    const reportMsg = `[USER_REPORT] Reported Shopper (${resolvedTargetId}). Reason: ${note.trim()}`;
-    const reportPayload = {
+    const payload = sanitizePayload('messages', {
       sender_id: currentUser.id,
       receiver_id: resolvedTargetId,
       vendor_id: currentUser.id,
       buyer_id: resolvedTargetId,
-      text: reportMsg,
-      content: reportMsg,
-      message: reportMsg,
+      text: `[SHOPPER REPORTED BY VENDOR]: ${reason.trim()}`,
       status_badge: 'REPORTED',
-      channel_type: 'USER_REPORT'
-    };
-
-    let { error } = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
-    if (error && error.message && error.message.includes('channel_type')) {
-      delete reportPayload.channel_type;
-      const retryRes = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
-      error = retryRes.error;
-    }
+      type: 'user_report'
+    });
+    const { error } = await _supabase.from('messages').insert([payload]);
     if (error) throw error;
-
-    showToast("Report submitted to Admin for investigation.");
+    showToast("Report submitted to Platform Administration.");
   } catch (err) {
     alert("Failed to submit report: " + err.message);
   }
@@ -1060,9 +993,7 @@ async function handleReportAction(targetUserId) {
 
 async function handleLogout() {
   try {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-    }
+    if (pollingInterval) clearInterval(pollingInterval);
     await _supabase.auth.signOut();
   } catch (err) {
     console.error("Logout error:", err.message);
@@ -1073,7 +1004,11 @@ async function handleLogout() {
 
 function switchVendorTab(tab) {
   if (pendingReviewLock && pendingReviewLock.active && tab !== 'messages') {
-    alert(`🚨 Feature Access Restricted!\n\nYou have a review submission from ${pendingReviewLock.shopperName} awaiting your approval.\n\nPlease approve or deny this review in the Messaging Hub to unlock all workspace features.`);
+    alert(`🚨 Feature Access Restricted!
+
+You have a review submission from ${pendingReviewLock.shopperName} awaiting your approval.
+
+Please approve or deny this review in the Messaging Hub to unlock all workspace features.`);
     goToPendingReviewThread();
     return;
   }
@@ -1102,14 +1037,13 @@ function switchVendorTab(tab) {
   }
 }
 
-/* Image Compression Utility */
 async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = (event) => {
+    reader.onload = (e) => {
       const img = new Image();
-      img.src = event.target.result;
+      img.src = e.target.result;
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
@@ -1128,7 +1062,6 @@ async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
   });
 }
 
-/* Product Catalog Management */
 async function loadVendorProducts(isPolling = false) {
   const grid = document.getElementById('vendorProductGrid');
   if (!grid || !currentUser || !currentUser.id) return;
@@ -1138,47 +1071,45 @@ async function loadVendorProducts(isPolling = false) {
       .select('*')
       .eq('vendor_id', currentUser.id)
       .order('created_at', { ascending: false });
+
     if (error && (error.code === '42703' || (error.message && error.message.includes('vendor_id')))) {
-      console.warn('vendor_id column missing on products table, falling back to seller_id');
-      const fallback = await _supabase
+      let res2 = await _supabase
         .from('products')
         .select('*')
         .eq('seller_id', currentUser.id)
         .order('created_at', { ascending: false });
-      data = fallback.data;
-      error = fallback.error;
+      data = res2.data;
+      error = res2.error;
     }
-    if (error && (error.code === '42703' || (error.message && error.message.includes('seller_id')))) {
-      console.warn('seller_id column missing on products table, falling back to vendor_id');
-      const fallback = await _supabase
-        .from('products')
-        .select('*')
-        .eq('vendor_id', currentUser.id)
-        .order('created_at', { ascending: false });
-      data = fallback.data;
-      error = fallback.error;
-    }
+
     if (error) throw error;
     vendorProducts = data || [];
+
     if (vendorProducts.length === 0) {
       grid.innerHTML = `
         <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
-          <p>You have not listed any products yet. Click "Add New Product" above to begin.</p>
+          <i class="fa-solid fa-box-open text-3xl mb-3 text-slate-500"></i>
+          <p class="font-bold text-white text-sm">No Products Listed Yet</p>
+          <p class="mt-1">Click "+ Add New Product" above to create your first marketplace review listing.</p>
         </div>
       `;
       return;
     }
+
     grid.innerHTML = vendorProducts.map(p => {
       const amazonLink = p.amazon_url || p.product_url || p.amazon_link || '';
       const priceVal = p.price !== undefined && p.price !== null ? Number(p.price).toFixed(2) : '0.00';
       const commVal = Number(p.commission || p.commission_amount || 15.00).toFixed(2);
       const imgVal = getProductImageUrl(p);
-
       return `
         <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-accentBlue/40 transition">
           <div>
             <div class="relative w-full h-48 bg-slate-950/60 border-b border-borderSlate flex items-center justify-center p-2 overflow-hidden">
-              <img src="${imgVal}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i><span class="text-xs font-medium text-slate-400">No Image Available</span></div>
+              <img src="${imgVal}" alt="Product" class="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+              <div class="hidden flex flex-col items-center justify-center p-4 text-center text-slate-500 w-full h-full">
+                <i class="fa-solid fa-box-open text-3xl text-slate-400 mb-1.5"></i>
+                <span class="text-xs font-medium text-slate-400">No Image Available</span>
+              </div>
               <div class="absolute top-2 left-2 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-emerald-400">
                 $${commVal} Commission
               </div>
@@ -1186,19 +1117,15 @@ async function loadVendorProducts(isPolling = false) {
                 Retail: $${priceVal}
               </div>
             </div>
-
             <div class="p-4 space-y-2">
-              <div class="flex justify-between items-center">
-                <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full font-semibold uppercase">${p.status || 'ACTIVE'}</span>
-                <span class="text-[10px] text-slate-400 font-mono">ID: ${String(p.id).substring(0,8)}</span>
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${p.status || 'ACTIVE'}</span>
+                <span class="text-[10px] text-slate-300 font-mono font-medium">ID: ${String(p.id).substring(0,8)}</span>
               </div>
               <h3 class="font-bold text-white text-sm line-clamp-1">${p.title}</h3>
-              <p class="text-xs text-slate-400 line-clamp-2">${p.description || 'No description provided.'}</p>
-
-
+              <p class="text-xs text-slate-300 line-clamp-2">${p.description || 'No description provided.'}</p>
             </div>
           </div>
-
           <div class="p-4 pt-0 flex space-x-2 mt-2">
             <button onclick="editProduct('${p.id}')" class="flex-1 bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5">
               <i class="fa-solid fa-pen-to-square text-blue-400"></i>
@@ -1248,67 +1175,60 @@ async function handleSaveProduct(event) {
   const status = document.getElementById('prodStatus').value;
   const amazonUrl = document.getElementById('prodAmazonUrl') ? document.getElementById('prodAmazonUrl').value.trim() : '';
   const fileInput = document.getElementById('prodImageFile');
-  let imageUrl = '';
 
+  let imageUrl = '';
   if (id) {
     const existing = vendorProducts.find(p => p.id == id);
     if (existing) imageUrl = existing.image_url || existing.image;
   }
+
   if (fileInput.files && fileInput.files[0]) {
-    imageUrl = await compressImageFile(fileInput.files[0]);
+    imageUrl = await compressImageFile(fileInput.files[0], 800, 0.7);
   }
 
   try {
-    const productData = {
+    const payload = {
+      vendor_id: currentUser.id,
       seller_id: currentUser.id,
-      title,
-      description,
-      price,
-      status,
+      title: title,
+      description: description,
+      price: price,
+      commission_amount: 15.00,
       image_url: imageUrl,
-      image: imageUrl,
-      amazon_url: amazonUrl,
-      product_url: amazonUrl
+      status: status,
+      amazon_url: amazonUrl
     };
 
     if (id) {
-      const { error } = await _supabase
-        .from('products')
-        .update(productData)
-        .eq('id', id);
+      const { error } = await _supabase.from('products').update(payload).eq('id', id);
       if (error) throw error;
       showToast('Product updated successfully!');
     } else {
-      const { error } = await _supabase
-        .from('products')
-        .insert([productData]);
+      const { error } = await _supabase.from('products').insert([payload]);
       if (error) throw error;
-      showToast('Product created successfully!');
+      showToast('New product added to marketplace!');
     }
 
     closeProductModal();
-    await preloadSellerProfiles();
     await loadVendorProducts();
   } catch (err) {
-    alert('Error saving product: ' + err.message);
+    alert('Failed to save product: ' + err.message);
   }
 }
 
 async function deleteProduct(id) {
-  if (!confirm('Are you sure you want to delete this product?')) return;
+  if (!confirm('Are you sure you want to remove this product listing?')) return;
   try {
     const { error } = await _supabase.from('products').delete().eq('id', id);
     if (error) throw error;
-    await preloadSellerProfiles();
+    showToast('Product deleted.');
     await loadVendorProducts();
   } catch (err) {
     alert('Error deleting product: ' + err.message);
   }
 }
 
-/* 5-Tab Commissions Architecture */
-
-/* Receipt Countdown & Account Lockout Engine */
+/* 5-Tab Commissions Architecture & Receipt Lockout Engine */
 let isReceiptLockoutActive = false;
 let overdueBuyerIds = new Set();
 let activePendingReceiptComm = null;
@@ -1318,18 +1238,17 @@ function checkReceiptDeadlinesAndLockout() {
   activePendingReceiptComm = null;
   let activeWindowComm = null;
   let shortestRemainingMs = Infinity;
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
   let expiredComm = null;
 
-  const now = Date.now();
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
   (vendorCommissions || []).forEach(c => {
-    const statusUpper = (c.status || '').toUpperCase();
-    const qTypeUpper = (c.queue_type || '').toUpperCase();
-    const isApprovedOrWorking = statusUpper === 'APPROVED_IN_WORKING' || statusUpper === 'WORKING' || qTypeUpper === 'WORKING' || qTypeUpper === 'IN_WORKING' || qTypeUpper === 'WORKING_QUEUE';
-    const hasNoReceipt = !c.receipt_base64;
+    const qType = (c.queue_type || '').toUpperCase();
+    const statusVal = (c.status || '').toUpperCase();
+    const isWorkingQueue = qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING';
+    const isMissingReceipt = !c.receipt_base64 && !c.receipt_url && !c.paypal_tx_id && !c.paypal_transaction_id;
 
-    if (isApprovedOrWorking && hasNoReceipt) {
+    if (isWorkingQueue && isMissingReceipt) {
       const approvedAtTime = new Date(c.updated_at || c.created_at || now).getTime();
       const elapsedMs = now - approvedAtTime;
       const remainingMs = TWENTY_FOUR_HOURS - elapsedMs;
@@ -1364,7 +1283,7 @@ function checkReceiptDeadlinesAndLockout() {
       if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-rose-500/20 text-rose-400 border border-rose-500/30';
       if (icon) icon.className = 'fa-solid fa-triangle-exclamation';
       if (title) title.textContent = '🚨 Account Restricted: 24-Hour Receipt Deadline Elapsed';
-      if (textEl) textEl.textContent = `24 hours elapsed for ${expiredComm.recipient_email || 'Reviewer'} ($${Number(expiredComm.amount||0).toFixed(2)} payout). Upload receipt proof now to restore full workspace features.`;
+      if (textEl) textEl.textContent = `24 hours elapsed for ${expiredComm.recipient_email || 'Reviewer'} ($${Number(expiredComm.amount || 0).toFixed(2)} payout). Upload receipt proof now to restore full workspace features.`;
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white cursor-pointer';
       if (btnText) btnText.textContent = 'Upload Receipt Now';
     }
@@ -1379,7 +1298,7 @@ function checkReceiptDeadlinesAndLockout() {
       if (iconBg) iconBg.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 bg-amber-500/20 text-amber-400 border border-amber-500/30';
       if (icon) icon.className = 'fa-solid fa-clock';
       if (title) title.textContent = '⏱️ Action Required: Payment Receipt Pending';
-      if (textEl) textEl.textContent = `Pending receipt for ${activeWindowComm.recipient_name || activeWindowComm.recipient_email || 'Reviewer'} ($${Number(activeWindowComm.amount||0).toFixed(2)} payout) • ${hours}h ${mins}m remaining before account restriction.`;
+      if (textEl) textEl.textContent = `Pending receipt for ${activeWindowComm.recipient_email || 'Reviewer'} ($${Number(activeWindowComm.amount || 0).toFixed(2)} payout) • ${hours}h ${mins}m remaining before account restriction.`;
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer';
       if (btnText) btnText.textContent = 'Upload Receipt Now';
     }
@@ -1399,7 +1318,6 @@ function openPendingReceiptModal() {
   }
 }
 
-
 async function loadVendorCommissions(isPolling = false) {
   if (!currentUser || !currentUser.id) return;
   try {
@@ -1407,27 +1325,14 @@ async function loadVendorCommissions(isPolling = false) {
       .from('commissions')
       .select('*')
       .or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
+
     if (error) throw error;
     vendorCommissions = data || [];
-
-    /* Fetch profiles for recipients */
-    const recipientIds = [...new Set(vendorCommissions.map(c => c.recipient_id).filter(Boolean))];
-    if (recipientIds.length > 0) {
-      const { data: profs } = await _supabase
-        .from('profiles')
-        .select('id, full_name, paypal_email, email')
-        .in('id', recipientIds);
-      if (profs) {
-        profs.forEach(p => {
-          vendorProfilesCache[p.id] = p;
-        });
-      }
-    }
+    checkReceiptDeadlinesAndLockout();
+    renderSellerCommissions();
   } catch (err) {
-    vendorCommissions = [];
+    console.error("Error loading commissions:", err);
   }
-  checkReceiptDeadlinesAndLockout();
-  renderSellerCommissions();
 }
 
 function setEl(id, val) {
@@ -1438,7 +1343,6 @@ function setEl(id, val) {
 function updateVendorCommissionStats() {
   let unsettledSum = 0;
   let settledSum = 0;
-
   let incomingCount = 0, incomingAmt = 0;
   let mainCount = 0, mainAmt = 0;
   let outgoingCount = 0, outgoingAmt = 0;
@@ -1450,39 +1354,34 @@ function updateVendorCommissionStats() {
     const qType = (c.queue_type || '').toUpperCase();
     const amt = Number(c.amount || 0);
 
-    const isPaid = statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY';
-    const isDeclined = statusVal === 'DECLINED';
-
-    if (isPaid) {
+    if (statusVal === 'COMPLETED_PAID' || statusVal === 'PAID' || qType === 'HISTORY' || qType === 'PAYMENT_HISTORY') {
       settledSum += amt;
-    } else if (!isDeclined) {
+    } else {
       unsettledSum += amt;
     }
 
-    if (qType === 'INCOMING_REQUESTS' || statusVal === 'OFFERED_BY_VENDOR' || statusVal === 'PENDING_REVIEW' || statusVal === 'AWAITING_ATTENTION') {
+    if (qType === 'INCOMING_REQUESTS' || statusVal === 'REQUESTED_BY_RECIPIENT') {
       incomingCount++;
       incomingAmt += amt;
-    } else if (qType === 'MAIN_ACCOUNT' || statusVal === 'UNREQUESTED_BALANCE' || statusVal === 'APPROVED' || statusVal === 'ACTIVE') {
+    } else if (qType === 'MAIN_ACCOUNT' || qType === 'MAIN_QUEUE' || !c.queue_type) {
       mainCount++;
       mainAmt += amt;
-    } else if (qType === 'OUTGOING_REQUESTS' || statusVal === 'REQUESTED' || statusVal === 'REQUESTED_BY_RECIPIENT') {
+    } else if (qType === 'OUTGOING_REQUESTS' || statusVal === 'OFFERED_BY_VENDOR') {
       outgoingCount++;
       outgoingAmt += amt;
-    } else if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING' || statusVal === 'IN_WORKING') {
+    } else if (qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING') {
       workingCount++;
       workingAmt += amt;
-    } else if (isPaid) {
+    } else if (qType === 'HISTORY' || qType === 'PAYMENT_HISTORY' || statusVal === 'COMPLETED_PAID' || statusVal === 'PAID') {
       historyCount++;
       historyAmt += amt;
     }
   });
 
   const totalSpend = unsettledSum + settledSum;
-
   setEl('statUnsettledCommissions', `$${unsettledSum.toFixed(2)}`);
   setEl('statSettledDisbursements', `$${settledSum.toFixed(2)}`);
   setEl('statTotalVendorSpend', `$${totalSpend.toFixed(2)}`);
-
   setEl('badgeIncomingComm', `${incomingCount} • $${incomingAmt.toFixed(0)}`);
   setEl('badgeMainQueueComm', `${mainCount} • $${mainAmt.toFixed(0)}`);
   setEl('badgeOutgoingComm', `${outgoingCount} • $${outgoingAmt.toFixed(0)}`);
@@ -1495,20 +1394,6 @@ function switchCommSubTab(subTab) {
   selectedSellerCommIds.clear();
   const selectAll = document.getElementById('selectAllSellerComms');
   if (selectAll) selectAll.checked = false;
-  const tabs = ['incoming', 'mainQueue', 'outgoing', 'workingQueue', 'history'];
-  tabs.forEach(t => {
-    const btn = document.getElementById('subTab' + t.charAt(0).toUpperCase() + t.slice(1));
-    const badge = document.getElementById('badge' + t.charAt(0).toUpperCase() + t.slice(1) + 'Comm');
-    if (btn) {
-      if (t === subTab) {
-        btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-accentBlue text-white shadow-md transition flex items-center space-x-1.5';
-        if (badge) badge.className = 'bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-mono';
-      } else {
-        btn.className = 'px-3.5 py-2 rounded-xl text-xs font-semibold bg-cardBg border border-borderSlate text-slate-300 hover:bg-slate-800 transition flex items-center space-x-1.5';
-        if (badge) badge.className = 'bg-darkBg text-slate-400 border border-borderSlate text-[10px] px-2 py-0.5 rounded-full font-mono';
-      }
-    }
-  });
   renderSellerCommissions();
 }
 
@@ -1516,27 +1401,24 @@ function renderSellerCommissions() {
   updateVendorCommissionStats();
   const tableBody = document.getElementById('sellerCommsTableBody');
   const toolbar = document.getElementById('sellerToolbar');
-  const search = document.getElementById('sellerCommSearch').value.toLowerCase();
+  const search = (document.getElementById('sellerCommSearch')?.value || '').toLowerCase();
 
   const filtered = vendorCommissions.filter(c => {
-    const statusUpper = (c.status || '').toUpperCase();
-    const queueTypeUpper = (c.queue_type || '').toUpperCase();
-    const matchesSearch = (String(c.id || '')).toLowerCase().includes(search) ||
-                          (c.recipient_email || '').toLowerCase().includes(search) ||
-                          (c.feedback_id || '').toLowerCase().includes(search);
+    const statusVal = (c.status || '').toUpperCase();
+    const qType = (c.queue_type || '').toUpperCase();
+    const matchesSearch = String(c.id || '').toLowerCase().includes(search) || String(c.feedback_id || '').toLowerCase().includes(search);
     let matchesTab = false;
+
     if (activeSubTab === 'incoming') {
-      matchesTab = queueTypeUpper === 'INCOMING_REQUESTS' || queueTypeUpper === 'OUTGOING_REQUESTS' || statusUpper === 'REQUESTED_BY_RECIPIENT' || statusUpper === 'REQUESTED';
+      matchesTab = qType === 'INCOMING_REQUESTS' || statusVal === 'REQUESTED_BY_RECIPIENT';
     } else if (activeSubTab === 'mainQueue') {
-      matchesTab = (queueTypeUpper === 'MAIN_ACCOUNT' || queueTypeUpper === 'MAIN_QUEUE' || statusUpper === 'APPROVED' || statusUpper === 'UNREQUESTED_BALANCE' || !c.queue_type) &&
-                   queueTypeUpper !== 'WORKING_QUEUE' && queueTypeUpper !== 'HISTORY' && queueTypeUpper !== 'PAYMENT_HISTORY' &&
-                   statusUpper !== 'REQUESTED_BY_RECIPIENT' && statusUpper !== 'OUTGOING_REQUESTS' && statusUpper !== 'OFFERED_AWAITING_ACCEPTANCE' && statusUpper !== 'OFFERED_BY_VENDOR' && statusUpper !== 'APPROVED_IN_WORKING' && statusUpper !== 'COMPLETED_PAID' && statusUpper !== 'PAID';
+      matchesTab = (qType === 'MAIN_ACCOUNT' || qType === 'MAIN_QUEUE' || !c.queue_type) && qType !== 'WORKING_QUEUE' && qType !== 'HISTORY';
     } else if (activeSubTab === 'outgoing') {
-      matchesTab = queueTypeUpper === 'OUTGOING_REQUESTS' || statusUpper === 'OFFERED_AWAITING_ACCEPTANCE' || statusUpper === 'OFFERED_BY_VENDOR';
+      matchesTab = qType === 'OUTGOING_REQUESTS' || statusVal === 'OFFERED_BY_VENDOR';
     } else if (activeSubTab === 'workingQueue') {
-      matchesTab = queueTypeUpper === 'WORKING_QUEUE' || statusUpper === 'APPROVED_IN_WORKING';
+      matchesTab = qType === 'WORKING_QUEUE' || statusVal === 'APPROVED_IN_WORKING';
     } else if (activeSubTab === 'history') {
-      matchesTab = queueTypeUpper === 'HISTORY' || queueTypeUpper === 'PAYMENT_HISTORY' || statusUpper === 'COMPLETED_PAID' || statusUpper === 'PAID';
+      matchesTab = qType === 'HISTORY' || qType === 'PAYMENT_HISTORY' || statusVal === 'COMPLETED_PAID' || statusVal === 'PAID';
     }
     return matchesSearch && matchesTab;
   });
@@ -1597,6 +1479,7 @@ function renderSellerCommissions() {
       actionHtml = `<span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-full text-[10px] mr-1">UNREQUESTED</span> ${detailsBtn}`;
     }
 
+    const roleText = (c.role_type || c.recipient_role || 'N/A').toUpperCase();
     return `
       <div class="p-4 grid grid-cols-12 gap-3 items-center text-xs text-slate-300 hover:bg-slate-800/40 transition">
         <div class="col-span-1">
@@ -1604,11 +1487,11 @@ function renderSellerCommissions() {
         </div>
         <div class="col-span-3 space-y-0.5">
           <span class="font-bold text-white">Ref ID: ${String(c.id).substring(0,8)}</span>
-          <p class="text-[10px] text-slate-500 font-mono">${c.id}</p>
+          <p class="text-[10px] text-slate-300 font-mono font-medium">${c.id}</p>
         </div>
         <div class="col-span-3 space-y-0.5">
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${(c.role_type || '').toUpperCase().includes('SELLER') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : ((c.role_type || '').toUpperCase().includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : ((c.role_type || '').toUpperCase().includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${(c.role_type || 'N/A').toUpperCase()}</span>
-          <p class="text-[10px] text-slate-400 font-mono truncate">${c.recipient_email || 'Recipient'}</p>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${roleText.includes('SELLER') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (roleText.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : (roleText.includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${roleText}</span>
+          <p class="text-[10px] text-slate-300 font-mono truncate font-medium">${c.recipient_email || 'Recipient'}</p>
         </div>
         <div class="col-span-2">
           <p class="font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)}</p>
@@ -1646,55 +1529,47 @@ async function batchVendorApprove() {
     return;
   }
   try {
-    for (const id of selectedSellerCommIds) {
-      let updatePayload = {
-        queue_type: 'WORKING_QUEUE',
-        status: 'APPROVED_IN_WORKING'
-      };
-      sanitizeStatusBadge(updatePayload);
-      const { error } = await _supabase
-        .from('commissions')
-        .update(updatePayload)
-        .eq('id', id);
-      if (error) throw error;
-    }
+    const ids = Array.from(selectedSellerCommIds);
+    const { error } = await _supabase.from('commissions').update({
+      queue_type: 'WORKING_QUEUE',
+      status: 'APPROVED_IN_WORKING'
+    }).in('id', ids);
+    if (error) throw error;
     selectedSellerCommIds.clear();
     await loadVendorCommissions();
-    alert('Selected requests successfully moved to Working Queue.');
+    showToast('Selected claims approved to Working Queue!');
   } catch (err) {
-    alert('Action failed: ' + err.message);
+    alert('Batch approval failed: ' + err.message);
   }
 }
 
 async function approveSingleComm(id) {
   try {
-    let updatePayload = { queue_type: 'WORKING_QUEUE', status: 'APPROVED_IN_WORKING' };
-    sanitizeStatusBadge(updatePayload);
-    const { error } = await _supabase
-      .from('commissions')
-      .update(updatePayload)
-      .eq('id', id);
+    const { error } = await _supabase.from('commissions').update({
+      queue_type: 'WORKING_QUEUE',
+      status: 'APPROVED_IN_WORKING'
+    }).eq('id', id);
     if (error) throw error;
     await loadVendorCommissions();
+    showToast('Claim approved to Working Queue!');
   } catch (err) {
     alert('Approval failed: ' + err.message);
   }
 }
 
 async function denySingleComm(id) {
-  if (!confirm('Denying this request will execute a non-destructive reversal back to the recipient main queue. Continue?')) return;
+  const reason = prompt('Please enter denial reason:', 'Claim details unverified');
+  if (!reason) return;
   try {
-    let updatePayload = { queue_type: 'MAIN_ACCOUNT', status: 'Approved' };
-    sanitizeStatusBadge(updatePayload);
-    const { error } = await _supabase
-      .from('commissions')
-      .update(updatePayload)
-      .eq('id', id);
+    const { error } = await _supabase.from('commissions').update({
+      queue_type: 'MAIN_ACCOUNT',
+      status: 'DENIED'
+    }).eq('id', id);
     if (error) throw error;
     await loadVendorCommissions();
-    alert('Claim reversed back to recipient queue.');
+    showToast('Claim reverted to Main Queue.');
   } catch (err) {
-    alert('Reversal failed: ' + err.message);
+    alert('Denial failed: ' + err.message);
   }
 }
 
@@ -1707,16 +1582,12 @@ async function openTopDownOfferModal() {
   const amountInput = document.getElementById('offerAmount');
 
   if (selectedSellerCommIds.size > 0) {
-    /* Batch Mode: Selected Rows Exist */
     const selectedComms = vendorCommissions.filter(c => selectedSellerCommIds.has(String(c.id)));
     let totalAmount = 0;
-    
     const listHtml = selectedComms.map(c => {
       const amt = Number(c.amount || 0);
       totalAmount += amt;
       const roleUpper = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
-      const recipient = vendorProfilesCache[c.recipient_id] || {};
-      const recName = recipient.full_name || c.recipient_email || 'Recipient';
       return `
         <div class="p-2 bg-cardBg border border-borderSlate rounded-xl flex items-center justify-between text-[11px]">
           <div class="space-y-0.5">
@@ -1724,7 +1595,7 @@ async function openTopDownOfferModal() {
               <span>Ref: ${String(c.id).substring(0,8)}</span>
               <span class="px-1.5 py-0.2 bg-blue-500/20 text-blue-400 rounded text-[9px] font-mono">${roleUpper}</span>
             </div>
-            <div class="text-slate-400 text-[10px] truncate max-w-[200px]">${recName} (${c.recipient_email || 'N/A'})</div>
+            <div class="text-slate-300 text-[10px] truncate max-w-[200px] font-medium">${c.recipient_email || 'N/A'}</div>
           </div>
           <div class="font-bold text-emerald-400">$${amt.toFixed(2)}</div>
         </div>
@@ -1734,29 +1605,24 @@ async function openTopDownOfferModal() {
     document.getElementById('batchOfferCountBadge').textContent = `${selectedComms.length} Record(s) Selected`;
     document.getElementById('batchOfferListContainer').innerHTML = listHtml;
     document.getElementById('batchOfferTotalAmount').textContent = `$${totalAmount.toFixed(2)} USD`;
-
     batchFields.classList.remove('hidden');
     manualFields.classList.add('hidden');
     recipientInput.removeAttribute('required');
     amountInput.removeAttribute('required');
     submitBtn.textContent = `Confirm & Send Proactive Offer for ${selectedComms.length} Commission(s) ($${totalAmount.toFixed(2)})`;
   } else {
-    /* Manual Mode: No Rows Selected */
     batchFields.classList.add('hidden');
     manualFields.classList.remove('hidden');
     recipientInput.setAttribute('required', 'true');
     amountInput.setAttribute('required', 'true');
     submitBtn.textContent = 'Send Proactive Offer to Outgoing Requests';
   }
-
   modal.classList.remove('hidden');
 }
 
 async function handleTopDownOfferSubmit(event) {
   event.preventDefault();
-  
   if (selectedSellerCommIds.size > 0) {
-    /* Execute Batch Proactive Offer on Selected Commission Records */
     const idsToUpdate = Array.from(selectedSellerCommIds);
     try {
       const { error } = await _supabase
@@ -1766,9 +1632,7 @@ async function handleTopDownOfferSubmit(event) {
           status: 'OFFERED_BY_VENDOR'
         })
         .in('id', idsToUpdate);
-
       if (error) throw error;
-
       document.getElementById('topDownOfferModal').classList.add('hidden');
       selectedSellerCommIds.clear();
       document.getElementById('selectAllSellerComms').checked = false;
@@ -1778,29 +1642,21 @@ async function handleTopDownOfferSubmit(event) {
       showToast('Error sending batch proactive offer: ' + err.message);
     }
   } else {
-    /* Execute Manual Top-Down Offer Generation */
     const recipientEmail = document.getElementById('offerRecipientId').value.trim();
     const recipientRole = document.getElementById('offerRecipientRole').value;
-    const amount = parseFloat(document.getElementById('offerAmount').value);
-
-    let insertPayload = {
-      seller_id: currentUser.id,
-      vendor_id: currentUser.id,
-      recipient_email: recipientEmail,
-      role_type: recipientRole,
-      amount: amount,
-      queue_type: 'OUTGOING_REQUESTS',
-      status: 'OFFERED_BY_VENDOR',
-      link: 'N/A',
-      type: 'TOP_DOWN_OFFER'
-    };
-
+    const amount = parseFloat(document.getElementById('offerAmount').value) || 0;
     try {
-      const { error } = await _supabase
-        .from('commissions')
-        .insert([insertPayload]);
+      const payload = {
+        vendor_id: currentUser.id,
+        seller_id: currentUser.id,
+        recipient_email: recipientEmail,
+        role_type: recipientRole,
+        amount: amount,
+        queue_type: 'OUTGOING_REQUESTS',
+        status: 'OFFERED_BY_VENDOR'
+      };
+      const { error } = await _supabase.from('commissions').insert([payload]);
       if (error) throw error;
-
       document.getElementById('topDownOfferModal').classList.add('hidden');
       document.getElementById('offerRecipientId').value = '';
       document.getElementById('offerAmount').value = '';
@@ -1827,22 +1683,23 @@ async function handleSettlementSubmit(event) {
   const fileInput = document.getElementById('settleReceiptFile');
 
   if (txId.length !== 17) {
-    alert('PayPal Transaction ID must be exactly 17 characters.');
+    alert('PayPal Transaction ID must be exactly 17 alphanumeric characters.');
     return;
   }
+
   let receiptBase64 = '';
   if (fileInput.files && fileInput.files[0]) {
-    receiptBase64 = await compressImageFile(fileInput.files[0], 900, 0.7);
+    receiptBase64 = await compressImageFile(fileInput.files[0], 1000, 0.7);
   }
 
   try {
-    let updateData = {
+    const updateData = {
       queue_type: 'HISTORY',
       status: 'COMPLETED_PAID',
       paypal_tx_id: txId,
+      paypal_transaction_id: txId,
       receipt_base64: receiptBase64
     };
-    sanitizeStatusBadge(updateData);
     const { error } = await _supabase
       .from('commissions')
       .update(updateData)
@@ -1850,12 +1707,11 @@ async function handleSettlementSubmit(event) {
     if (error) throw error;
     document.getElementById('settlementModal').classList.add('hidden');
     await loadVendorCommissions();
-    alert('Payment successfully settled and archived to Payment History!');
+    showToast('Payment successfully settled and archived to Payment History!');
   } catch (err) {
     alert('Settlement execution failed: ' + err.message);
   }
 }
-
 
 function closeSellerCommDetailsModal() {
   const modal = document.getElementById('sellerCommDetailsModal');
@@ -1866,83 +1722,52 @@ function viewSellerCommDetails(commId) {
   const c = vendorCommissions.find(item => item.id == commId);
   const container = document.getElementById('sellerCommDetailsContent');
   if (!c || !container) return;
-
   const recipientName = c.recipient_name || c.recipient_email || c.recipient_id || 'Shopper / Reviewer';
   const recipientEmail = c.recipient_email || 'N/A';
   const recipientPaypal = c.recipient_paypal || c.paypal_email || 'Not Configured';
-
   const product = vendorProducts.find(p => p.id === c.product_id);
   const productTitle = product ? product.title : (c.product_id || 'General Marketplace Review');
-
   const recRoleUpper = (c.role_type || c.recipient_role || 'REVIEWER').toUpperCase();
-  const safeRecName = (recipientName || '').replace(/'/g, "\'");
-  const safeRecEmail = (recipientEmail || '').replace(/'/g, "\'");
 
   const receiptHtml = (c.receipt_base64 || c.receipt_url) ? `
     <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
-      <div class="text-[10px] text-slate-400 font-semibold mb-1">Uploaded Payment Receipt Proof:</div>
+      <div class="text-[10px] text-slate-300 font-semibold mb-1">Uploaded Payment Receipt Proof:</div>
       <a href="${c.receipt_base64 || c.receipt_url}" target="_blank" class="block overflow-hidden rounded-lg">
         <img src="${c.receipt_base64 || c.receipt_url}" alt="Payment Receipt" class="max-h-48 w-full object-contain rounded-lg border border-borderSlate">
       </a>
     </div>
-  ` : '<div class="text-slate-500 italic text-[11px]">No payment receipt uploaded yet.</div>';
-
-  const reviewProofHtml = (c.proof_base64 || c.proof_url || c.review_screenshot) ? `
-    <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
-      <div class="text-[10px] text-slate-400 font-semibold mb-1">Submitted Review Screenshot Proof:</div>
-      <a href="${c.proof_base64 || c.proof_url || c.review_screenshot}" target="_blank" class="block overflow-hidden rounded-lg">
-        <img src="${c.proof_base64 || c.proof_url || c.review_screenshot}" alt="Review Proof" class="max-h-48 w-full object-contain rounded-lg border border-borderSlate">
-      </a>
-    </div>
-  ` : '';
+  ` : '<div class="text-slate-400 italic text-[11px]">No payment receipt uploaded yet.</div>';
 
   container.innerHTML = `
     <div class="grid grid-cols-2 gap-4">
       <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
-        <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Transaction ID</span>
-        <div class="font-mono text-xs text-white break-all">${c.id}</div>
+        <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Transaction ID</span>
+        <p class="font-mono text-white font-bold text-xs">${c.id}</p>
       </div>
       <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1">
-        <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Disbursement Amount</span>
-        <div class="text-lg font-bold text-emerald-400">$${Number(c.amount || 0).toFixed(2)} USD</div>
+        <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Amount</span>
+        <p class="font-bold text-emerald-400 text-xs">$${Number(c.amount || 0).toFixed(2)} USD</p>
       </div>
     </div>
-
-    <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-1.5">
+    <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-2">
       <div class="flex items-center justify-between">
-        <span class="text-[10px] text-slate-400 font-semibold uppercase">Recipient Info</span>
-        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${recRoleUpper.includes('SELLER') || recRoleUpper.includes('VENDOR') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (recRoleUpper.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : (recRoleUpper.includes('ADMIN') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'))}">${recRoleUpper}</span>
+        <span class="text-[10px] text-slate-300 font-semibold uppercase">Recipient Info</span>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${recRoleUpper.includes('SELLER') ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' : (recRoleUpper.includes('BUYER') ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30')}">${recRoleUpper}</span>
       </div>
-      <div class="font-bold text-slate-200">${recipientName}</div>
-      <div class="text-slate-400 text-[11px]">Email: ${recipientEmail}</div>
-      <div class="text-slate-400 text-[11px]">PayPal Address: <span class="font-mono text-slate-300">${recipientPaypal}</span></div>
-      ${c.recipient_id ? `
-        <button onclick="closeSellerCommDetailsModal(); selectThread('${c.recipient_id}'); switchVendorTab('messages');" class="mt-2 w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 py-1.5 rounded-xl text-[10px] font-semibold transition">
-          <i class="fa-solid fa-comment-dots mr-1"></i> Open Message Thread with Recipient
-        </button>
-      ` : ''}
+      <div class="font-bold text-slate-100">${recipientName}</div>
+      <div class="text-slate-300 text-[11px]">Email: ${recipientEmail}</div>
+      <div class="text-slate-300 text-[11px]">PayPal Address: <span class="font-mono text-slate-200 font-semibold">${recipientPaypal}</span></div>
     </div>
-
     <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-2">
       <div class="grid grid-cols-2 gap-2 text-[11px]">
-        <div><span class="text-slate-500">Product / Campaign:</span> <span class="text-slate-200 font-medium">${productTitle}</span></div>
-        <div><span class="text-slate-500">Queue Placement:</span> <span class="text-amber-400 font-mono">${c.queue_type || 'MAIN_ACCOUNT'}</span></div>
-        <div><span class="text-slate-500">Transaction Status:</span> <span class="text-blue-400 font-semibold">${c.status || 'Approved'}</span></div>
-        <div><span class="text-slate-500">PayPal Tx ID:</span> <span class="text-slate-300 font-mono">${c.paypal_tx_id || 'Pending Settlement'}</span></div>
-        <div><span class="text-slate-500">Created Timestamp:</span> <span class="text-slate-400">${new Date(c.created_at || Date.now()).toLocaleString()}</span></div>
-        ${c.feedback_id ? `<div><span class="text-slate-500">Feedback ID:</span> <span class="text-purple-400 font-mono">${c.feedback_id}</span></div>` : ''}
+        <div><span class="text-slate-400">Product / Campaign:</span> <span class="text-slate-100 font-medium">${productTitle}</span></div>
+        <div><span class="text-slate-400">Queue Placement:</span> <span class="text-amber-400 font-mono font-semibold">${c.queue_type || 'MAIN_ACCOUNT'}</span></div>
+        <div><span class="text-slate-400">Transaction Status:</span> <span class="text-blue-400 font-semibold">${c.status || 'Approved'}</span></div>
+        <div><span class="text-slate-400">PayPal Tx ID:</span> <span class="text-slate-200 font-mono font-medium">${c.paypal_tx_id || 'Pending Settlement'}</span></div>
       </div>
-      ${c.amazon_review_url ? `
-        <div class="text-[11px] pt-1">
-          <span class="text-slate-500">Amazon Review URL:</span> 
-          <a href="${c.amazon_review_url}" target="_blank" class="text-blue-400 underline hover:text-blue-300 font-mono break-all">${c.amazon_review_url}</a>
-        </div>
-      ` : ''}
-      ${reviewProofHtml}
       ${receiptHtml}
     </div>
   `;
-
   document.getElementById('sellerCommDetailsModal').classList.remove('hidden');
 }
 
@@ -1964,9 +1789,7 @@ function inspectReceipt(txId, amount, receiptBase64) {
 }
 
 /* Messaging Hub & Review Stream */
-
 let currentMessagingSubTab = 'threads';
-
 function switchMessagingSubTab(tab) {
   currentMessagingSubTab = tab;
   const threadsBtn = document.getElementById('subTabThreadsBtn');
@@ -1989,33 +1812,14 @@ function switchMessagingSubTab(tab) {
   }
 }
 
-
 async function preloadSellerProfiles() {
+  if (Object.keys(profilesCache).length > 0) return;
   try {
-    const { data } = await _supabase.from('profiles').select('id, full_name, email, role, paypal_email');
+    const { data } = await _supabase.from('profiles').select('id, full_name, email, paypal_email, role');
     if (data) {
-      data.forEach(p => {
-        profilesCache[p.id] = p;
-      });
+      data.forEach(p => { profilesCache[p.id] = p; });
     }
-  } catch(e) {}
-}
-
-function getAdminProfile() {
-  if (typeof profilesCache !== 'undefined') {
-    for (const id in profilesCache) {
-      const p = profilesCache[id];
-      if (p && p.role && (p.role.toUpperCase() === 'ADMIN' || p.role.toUpperCase().includes('ADMIN'))) {
-        return { id: id, full_name: p.full_name || 'System Administrator', email: p.email || 'admin@echohub.com', role: 'ADMIN' };
-      }
-    }
-  }
-  return {
-    id: 'admin_system_support',
-    full_name: 'System Administrator',
-    email: 'admin@echohub.com',
-    role: 'ADMIN'
-  };
+  } catch (e) {}
 }
 
 function renderSellerContactsList() {
@@ -2023,128 +1827,54 @@ function renderSellerContactsList() {
   if (!container) return;
   const searchVal = (document.getElementById('sellerContactSearchInput')?.value || '').toLowerCase();
 
-  const adminProf = getAdminProfile();
-  const adminContact = {
-    partnerId: adminProf.id,
-    name: adminProf.full_name || 'System Administrator',
-    email: adminProf.email || 'admin@echohub.com',
-    paypal: 'Official Platform Support Channel',
-    role: 'ADMIN',
-    lastMessage: 'Direct communication line with Echo Hub Admin.',
-    isAdmin: true
-  };
-
-  const seenPartners = new Set();
-  const shopperContacts = [];
-
-  (vendorThreads || []).forEach(t => {
+  let shopperContacts = [];
+  vendorThreads.forEach(t => {
     const partnerId = t.partnerId;
-    if (!partnerId || partnerId === adminContact.partnerId || seenPartners.has(partnerId)) return;
-    seenPartners.add(partnerId);
-
+    if (!partnerId) return;
     const prof = profilesCache[partnerId] || {};
     const partnerName = prof.full_name || `Shopper (${String(partnerId).substring(0, 6)})`;
     const partnerEmail = prof.email || 'N/A';
-    
-    const hasReviewSubmitted = (vendorCommissions || []).some(c => 
-      c.recipient_id === partnerId || c.vendor_id === currentUser?.id || c.seller_id === currentUser?.id
-    );
-    
-    const chatText = (t.messages || []).map(m => m._normalizedText || m.text || m.content || '').join(' ');
-    const paypalInChatMatch = chatText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-    const hasProvidedPaypalInChat = paypalInChatMatch != null;
-
-    let displayPaypal = 'Hidden (Pending review or chat submission)';
-    if (hasReviewSubmitted || hasProvidedPaypalInChat) {
-      displayPaypal = prof.paypal_email || (paypalInChatMatch ? paypalInChatMatch[0] : 'Not specified in profile');
-    }
-
     shopperContacts.push({
       partnerId: partnerId,
       name: partnerName,
       email: partnerEmail,
-      paypal: displayPaypal,
+      paypal: prof.paypal_email || 'Not specified',
       role: prof.role || 'buyer',
-      lastMessage: t.lastMessage || 'No recent messages',
-      updatedAt: t.updatedAt,
-      isAdmin: false
+      lastMessage: t.lastMessage || 'No recent messages'
     });
   });
 
-  let allContacts = [adminContact, ...shopperContacts];
-
   if (searchVal) {
-    allContacts = allContacts.filter(c => 
+    shopperContacts = shopperContacts.filter(c =>
       c.name.toLowerCase().includes(searchVal) ||
       c.email.toLowerCase().includes(searchVal) ||
-      c.paypal.toLowerCase().includes(searchVal) ||
-      c.role.toLowerCase().includes(searchVal) ||
-      c.partnerId.toLowerCase().includes(searchVal)
+      c.paypal.toLowerCase().includes(searchVal)
     );
   }
 
-  if (allContacts.length === 0) {
-    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No matching contacts found.</p>`;
+  if (shopperContacts.length === 0) {
+    container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4 font-medium">No shopper contacts found.</p>`;
     return;
   }
 
-  container.innerHTML = allContacts.map(c => {
-    const isAdm = c.isAdmin || c.role === 'ADMIN';
-    const roleLabel = isAdm ? 'SYSTEM ADMIN' : 'SHOPPER';
-    const actionLabel = isAdm ? 'Contact Admin' : 'Chat Now';
-    const iconClass = isAdm ? 'fa-headset' : 'fa-comment-dots';
-    const channelLabel = isAdm ? 'Channel:' : 'PayPal:';
-    const badgeBg = isAdm 
-      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
-      : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-    const avatarBg = isAdm
-      ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-      : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-    const borderClass = isAdm
-      ? 'border-amber-500/40 bg-amber-500/10 shadow-lg shadow-amber-500/5'
-      : 'border-borderSlate bg-darkBg hover:border-accentBlue';
-    const btnBg = isAdm
-      ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40'
-      : 'bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border-accentBlue/30';
-    const avatarIcon = isAdm 
-      ? '<i class="fa-solid fa-user-shield text-xs"></i>' 
-      : (c.name ? c.name.charAt(0).toUpperCase() : 'S');
-    const firstContactTag = isAdm 
-      ? '<span class="text-[9px] text-amber-400 font-bold ml-1">★ 1st Contact</span>' 
-      : '';
-
-    return `
-      <div class="p-3 border ${borderClass} rounded-xl space-y-2 transition">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2 truncate">
-            <div class="w-7 h-7 ${avatarBg} border rounded-full flex items-center justify-center font-bold text-[10px] shrink-0">
-              ${avatarIcon}
-            </div>
-            <div class="truncate">
-              <h4 class="text-xs font-bold text-white truncate flex items-center space-x-1">
-                <span>${c.name}</span>
-                ${firstContactTag}
-              </h4>
-              <p class="text-[10px] text-slate-400 truncate">${c.email}</p>
-            </div>
-          </div>
-          <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} uppercase shrink-0">${roleLabel}</span>
-        </div>
-        <div class="text-[10px] text-slate-400 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
-          <div class="flex justify-between"><span class="text-slate-500">${channelLabel}</span> <span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
-          <div class="truncate"><span class="text-slate-500">Note:</span> ${c.lastMessage}</div>
-        </div>
-        <button onclick="selectThread('${c.partnerId}'); switchMessagingSubTab('threads');" class="w-full ${btnBg} py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
-          <i class="fa-solid ${iconClass} text-[10px]"></i>
-          <span>${actionLabel}</span>
-        </button>
+  container.innerHTML = shopperContacts.map(c => `
+    <div class="p-3 bg-darkBg border border-borderSlate rounded-xl space-y-2 hover:border-accentBlue transition">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-white">${c.name}</span>
+        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase">SHOPPER</span>
       </div>
-    `;
-  }).join('');
+      <div class="text-[10px] text-slate-300 bg-cardBg p-2 rounded-lg border border-borderSlate/50 space-y-1">
+        <div class="flex justify-between"><span class="text-slate-400">PayPal:</span><span class="font-mono text-emerald-400 font-semibold truncate">${c.paypal}</span></div>
+      </div>
+      <button onclick="selectThread('${c.partnerId}'); switchMessagingSubTab('threads');" class="w-full bg-accentBlue/20 hover:bg-accentBlue/30 text-accentBlue border border-accentBlue/30 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1">
+        <i class="fa-solid fa-comment-dots text-[10px]"></i>
+        <span>Chat Now</span>
+      </button>
+    </div>
+  `).join('');
 }
 
-
-/* ================= 48-HOUR REVIEW APPROVAL COUNTDOWN & LOCKOUT ENGINE ================= */
+/* 48-Hour Review Decision Countdown & Lockout Engine */
 let pendingReviewLock = {
   active: false,
   shopperName: '',
@@ -2160,7 +1890,6 @@ function evaluatePendingReviewLockout() {
     clearReviewLockout();
     return;
   }
-
   let pendingMsgs = [];
   vendorThreads.forEach(t => {
     (t.messages || []).forEach(m => {
@@ -2202,6 +1931,7 @@ function evaluatePendingReviewLockout() {
   };
 
   updateReviewCountdownDisplay();
+
   if (!reviewCountdownInterval) {
     reviewCountdownInterval = setInterval(updateReviewCountdownDisplay, 1000);
   }
@@ -2219,7 +1949,6 @@ function updateReviewCountdownDisplay() {
     clearReviewLockout();
     return;
   }
-
   const now = new Date().getTime();
   const diff = pendingReviewLock.deadline.getTime() - now;
   const timerEl = document.getElementById('reviewLockTimerDisplay');
@@ -2271,7 +2000,6 @@ function goToPendingReviewThread() {
   }
 }
 
-
 async function loadVendorThreads(isPolling = false) {
   if (!currentUser) return;
   loadLocalVendorReadState();
@@ -2282,45 +2010,36 @@ async function loadVendorThreads(isPolling = false) {
       .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
 
-    let commData = [];
-    try {
-      const { data: cData } = await _supabase.from('commissions').select('*').or(`seller_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id}`);
-      commData = cData || [];
-    } catch (e) {}
-
-    const allItems = [...(msgData || [])];
+    const allMsgs = msgData || [];
     const threadMap = {};
-    allItems.forEach(m => {
+
+    allMsgs.forEach(m => {
       const text = m.text || m.message_text || m.message || m.content || m.body || m.link || '';
-      const partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id) || 'general_shopper';
-      if (!threadMap[partnerId]) {
-        threadMap[partnerId] = {
+      let partnerId = (m.sender_id === currentUser.id ? m.receiver_id : m.sender_id);
+      if (!partnerId || partnerId === currentUser.id) {
+        partnerId = m.buyer_id || (m.sender_id !== currentUser.id ? m.sender_id : m.receiver_id);
+      }
+      const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(partnerId);
+      const displayKey = isUuid ? partnerId : (m.buyer_id || m.sender_id || 'general_shopper');
+
+      if (!threadMap[displayKey]) {
+        threadMap[displayKey] = {
           partnerId: partnerId,
+          displayKey: displayKey,
           lastMessage: text,
           updatedAt: m.created_at,
           messages: []
         };
       }
+
       m._normalizedText = text;
       m._normalizedImage = m.file_url || m.attachment_url || m.image || m.image_url || m.proof_base64 ||
-        (m.link && (m.link.match(/\.(jpeg|jpg|png|gif)$/i) || m.link.startsWith('data:image/')) ? m.link : null) ||
-        (m.content && m.content.startsWith('data:image/') ? m.content : null);
-      threadMap[partnerId].messages.push(m);
+        (m.link && (m.link.match(/\.(jpeg|jpg|png|gif)$/i) || m.link.startsWith('data:image/')) ? m.link : null);
+      threadMap[displayKey].messages.push(m);
     });
+
     vendorThreads = Object.values(threadMap);
-    vendorThreads.forEach(t => {
-      const lastReadTime = lastReadVendorTimeMap[t.partnerId] || 0;
-      if (readVendorThreadIds.has(t.partnerId) || t.partnerId === activeThreadId || lastReadTime > 0) {
-        if (t.messages) {
-          t.messages.forEach(m => {
-            const msgTime = new Date(m.created_at).getTime();
-            if (m.sender_id !== currentUser.id && (m.is_read || readVendorThreadIds.has(t.partnerId) || t.partnerId === activeThreadId || (lastReadTime > 0 && msgTime <= lastReadTime))) {
-              m.is_read = true;
-            }
-          });
-        }
-      }
-    });
+
     const partnerIds = vendorThreads.map(t => t.partnerId).filter(id => id && id.length > 20);
     if (partnerIds.length > 0) {
       try {
@@ -2328,6 +2047,7 @@ async function loadVendorThreads(isPolling = false) {
         if (profs) profs.forEach(p => { profilesCache[p.id] = p; });
       } catch (e) {}
     }
+
     updateSellerUnreadBadge();
     renderThreadsList();
     evaluatePendingReviewLockout();
@@ -2355,18 +2075,16 @@ function refreshThreadsUI() {
 
 function renderThreadsList() {
   const listEl = document.getElementById('messagingThreadsList');
+  if (!listEl) return;
+
   if (vendorThreads.length === 0) {
-    listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No conversations yet.</p>`;
+    listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4 font-medium">No conversations yet.</p>`;
     return;
   }
+
   let displayThreads = vendorThreads;
   if (isReceiptLockoutActive) {
-    displayThreads = vendorThreads.filter(t => {
-      const prof = profilesCache[t.partnerId] || {};
-      const isOverdueBuyer = overdueBuyerIds.has(t.partnerId);
-      const isAdmin = t.partnerId === 'admin' || prof.role === 'admin' || (prof.full_name && prof.full_name.toLowerCase().includes('admin'));
-      return isOverdueBuyer || isAdmin;
-    });
+    displayThreads = vendorThreads.filter(t => overdueBuyerIds.has(t.partnerId));
   }
 
   const meta = getThreadMeta();
@@ -2374,45 +2092,22 @@ function renderThreadsList() {
   const pinnedList = meta.pinned || [];
   const manualUnreadMap = meta.manualUnread || {};
 
-  /* Auto-unhide if latest message is newer than when hidden */
-  displayThreads = displayThreads.filter(t => {
-    const pid = t.partnerId;
-    if (hiddenMap[pid]) {
-      const hiddenTime = new Date(hiddenMap[pid]).getTime();
-      const latestMsgDate = t.messages && t.messages[0] ? new Date(t.messages[0].created_at).getTime() : 0;
-      const latestTime = Math.max(new Date(t.updatedAt || 0).getTime(), latestMsgDate);
-      if (latestTime > hiddenTime) {
-        delete hiddenMap[pid];
-        meta.hidden = hiddenMap;
-        saveThreadMeta(meta);
-        return true;
-      }
-      return false;
-    }
-    return true;
-  });
+  displayThreads = displayThreads.filter(t => !hiddenMap[t.partnerId]);
 
-  /* Sort: Pinned threads first, then by updatedAt */
   displayThreads.sort((a, b) => {
-    const isPinnedA = pinnedList.includes(a.partnerId);
-    const isPinnedB = pinnedList.includes(b.partnerId);
-    if (isPinnedA && !isPinnedB) return -1;
-    if (!isPinnedA && isPinnedB) return 1;
-    return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+    const aPinned = pinnedList.includes(a.partnerId);
+    const bPinned = pinnedList.includes(b.partnerId);
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    return new Date(b.updatedAt) - new Date(a.updatedAt);
   });
-
-  if (displayThreads.length === 0) {
-    listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No authorized conversations available.</p>`;
-    return;
-  }
 
   listEl.innerHTML = displayThreads.map(t => {
     const timeString = t.updatedAt ? new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
     const prof = profilesCache[t.partnerId] || {};
     const partnerName = prof.full_name || `Reviewer (${String(t.partnerId).substring(0,6)}...)`;
     const isPinned = pinnedList.includes(t.partnerId);
-    
-    /* Calculate unread count + manual unread */
+
     let unreadCount = (t.messages || []).filter(m => m.sender_id !== currentUser.id && !m.is_read).length;
     if (manualUnreadMap[t.partnerId]) unreadCount = Math.max(1, unreadCount);
 
@@ -2430,10 +2125,10 @@ function renderThreadsList() {
           </div>
           <div class="flex items-center space-x-1.5 shrink-0 ml-1">
             ${unreadCount > 0 ? `<span class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">${unreadCount}</span>` : ''}
-            <span class="text-[10px] text-slate-500">${timeString}</span>
+            <span class="text-[10px] text-slate-300 font-medium">${timeString}</span>
           </div>
         </div>
-        <p class="text-xs text-slate-400 truncate">${t.lastMessage || 'Attachment or link submitted'}</p>
+        <p class="text-xs text-slate-200 truncate font-medium">${t.lastMessage || 'Attachment or link submitted'}</p>
       </div>
     `;
   }).join('');
@@ -2442,7 +2137,6 @@ function renderThreadsList() {
 async function selectThread(partnerId) {
   activeThreadId = partnerId;
   if (partnerId) { saveLocalVendorReadState(partnerId); clearManualUnreadThread(partnerId); }
-
   const unreadMsgIds = [];
   const t = vendorThreads.find(x => x.partnerId === partnerId);
   if (t && t.messages) {
@@ -2462,32 +2156,18 @@ async function selectThread(partnerId) {
   if (unreadMsgIds.length > 0) {
     try {
       await _supabase.from('messages').update({ is_read: true }).in('id', unreadMsgIds);
-    } catch (e) {
-      console.warn("Error marking vendor messages read:", e);
-    }
-  } else {
-    try {
-      await _supabase.from('messages').update({ is_read: true }).or(`and(receiver_id.eq.${currentUser.id},sender_id.eq.${partnerId}),and(vendor_id.eq.${currentUser.id},sender_id.eq.${partnerId})`);
     } catch (e) {}
   }
 }
 
 function hasAmazonUrl(text) {
-  if (!text) return false;
-  const lower = text.toLowerCase();
-  return lower.includes('amazon.com') || lower.includes('amzn.to');
+  return text && (text.includes('amazon.com') || text.includes('amzn.to') || text.includes('http'));
 }
 
 function hasImageAttachment(msg) {
-  if (!msg) return false;
-  return Boolean(
-    (msg._normalizedImage && msg._normalizedImage.trim() !== '') ||
+  return (msg._normalizedImage && msg._normalizedImage.trim() !== '') ||
     (msg.file_url && msg.file_url.trim() !== '') ||
-    (msg.image_url && msg.image_url.trim() !== '') ||
-    (msg.attachment_url && msg.attachment_url.trim() !== '') ||
-    (msg.proof_base64 && msg.proof_base64.trim() !== '') ||
-    (msg._normalizedText && (msg._normalizedText.includes('http') && (msg._normalizedText.match(/\.(jpeg|jpg|gif|png)$/i) != null || msg._normalizedText.startsWith('data:image/'))))
-  );
+    (msg.proof_base64 && msg.proof_base64.trim() !== '');
 }
 
 function extractProductIdFromText(text) {
@@ -2498,20 +2178,13 @@ function extractProductIdFromText(text) {
   if (m2 && m2[1]) return m2[1];
   return null;
 }
+
 window.extractProductIdFromText = extractProductIdFromText;
 
 window.openSellerProductDetailsModal = async function(productId) {
   if (!productId) return;
-  let prod = null;
-  if (typeof getSellerChatProduct === 'function') {
-    prod = await getSellerChatProduct(productId);
-  }
-  if (!prod) {
-    prod = (vendorProducts || []).find(p => String(p.id) === String(productId));
-  }
-  if (!prod && typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
-    prod = marketplaceProducts.find(p => String(p.id) === String(productId));
-  }
+  let prod = await getSellerChatProduct(productId);
+  if (!prod) prod = (vendorProducts || []).find(p => String(p.id) === String(productId));
   if (!prod) return;
 
   const pTitle = prod.title || 'Marketplace Product';
@@ -2538,9 +2211,9 @@ window.openSellerProductDetailsModal = async function(productId) {
         </h3>
         <button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-
       <div class="flex gap-4 items-start">
-        <img src="${pImg}" onerror="this.classList.add(\'hidden\'); if(this.nextElementSibling) this.nextElementSibling.classList.remove(\'hidden\');" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0">
+        <img src="${pImg}" alt="Product" class="w-24 h-24 object-cover rounded-2xl border border-borderSlate shrink-0" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+        <div class="hidden w-24 h-24 rounded-2xl border border-borderSlate bg-slate-900 flex items-center justify-center text-slate-500 shrink-0"><i class="fa-solid fa-image text-slate-400 text-xl"></i></div>
         <div class="space-y-1.5 truncate flex-1">
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20 uppercase">${pStatus}</span>
           <h4 class="text-sm font-bold text-white truncate">${pTitle}</h4>
@@ -2548,14 +2221,11 @@ window.openSellerProductDetailsModal = async function(productId) {
           <p class="text-xs text-emerald-400 font-bold">Review Reward: $${pComm} Commission</p>
         </div>
       </div>
-
       <div class="bg-darkBg p-3 rounded-2xl border border-borderSlate/60 text-xs text-slate-300 leading-relaxed max-h-36 overflow-y-auto">
         <p class="text-[11px] font-bold text-slate-400 mb-1">Product Description:</p>
         <p>${pDesc}</p>
       </div>
-
       <div class="flex justify-end space-x-2 pt-2 border-t border-borderSlate">
-        ${(vendorProducts || []).some(p => String(p.id) === String(productId) || String(p.id) === String(prod.id)) ? `<button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden'); editProduct('${prod.id}');" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5"><i class="fa-solid fa-pen-to-square"></i><span>Edit Listing</span></button>` : ''}
         <button onclick="document.getElementById('sellerProductDetailsModal').classList.add('hidden')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">Close</button>
       </div>
     </div>
@@ -2568,270 +2238,92 @@ window.openProductFromChat = async function(productId) {
 };
 
 function renderActiveChat(shouldScroll = false) {
-  let thread = vendorThreads.find(t => t.partnerId === activeThreadId);
+  const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
   const container = document.getElementById('chatMessagesContainer');
-  if (!container) return;
-  const currentScrollTop = container.scrollTop;
+  if (!thread || !container) return;
 
-  const titleEl = document.getElementById('activeChatTitle');
-  const subEl = document.getElementById('activeChatSub');
+  const prof = profilesCache[activeThreadId] || {};
+  const partnerName = prof.full_name || `Shopper (${String(activeThreadId).substring(0, 8)}...)`;
+  document.getElementById('activeChatTitle').textContent = `Chat Stream with ${partnerName}`;
 
-  if (!profilesCache[activeThreadId] && activeThreadId && activeThreadId.length > 20) {
-    _supabase.from('profiles').select('id, full_name, email, paypal_email, role').eq('id', activeThreadId).maybeSingle().then(({data}) => {
-      if (data) {
-        profilesCache[data.id] = data;
-        renderActiveChat();
-      }
-    });
-  }
+  const sorted = [...thread.messages].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-  const prof = profilesCache[activeThreadId] || (activeThreadId === 'admin_system_support' ? getAdminProfile() : {});
-  const partnerName = prof.full_name || prof.email || (activeThreadId === 'admin_system_support' ? 'System Administrator' : `Shopper Reviewer (${String(activeThreadId).substring(0, 6)})`);
-  const rawRole = (prof.role || (activeThreadId === 'admin_system_support' ? 'ADMIN' : 'SHOPPER')).toUpperCase();
-  const displayRole = rawRole === 'BUYER' ? 'SHOPPER' : rawRole;
-
-  let roleBadgeClass = 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-  if (rawRole.includes('ADMIN')) {
-    roleBadgeClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-  } else if (rawRole.includes('BUYER') || rawRole.includes('SHOPPER') || rawRole.includes('REVIEWER')) {
-    roleBadgeClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-  } else if (rawRole.includes('SELLER') || rawRole.includes('VENDOR')) {
-    roleBadgeClass = 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-  }
-
-  const rShopperBtn = document.getElementById('headerReportShopperBtn');
-  if (rShopperBtn) {
-    rShopperBtn.classList.add('hidden');
-  }
-  if (titleEl) {
-    titleEl.innerHTML = `
-      <div class="flex items-center space-x-2">
-        <span class="text-sm font-bold text-white">${partnerName}</span>
-        <span class="text-[9px] px-2.5 py-0.5 rounded-full border font-bold uppercase ${roleBadgeClass}">${displayRole}</span>
-      </div>
-    `;
-  }
-  if (subEl) {
-    const emailStr = prof.email ? ` • ${prof.email}` : '';
-    subEl.textContent = `ID: ${String(activeThreadId).substring(0, 8)}...${emailStr}`;
-  }
-
-  if (!thread) {
-    container.innerHTML = `<div class="m-auto text-center text-xs text-slate-500"><i class="fa-solid fa-headset text-2xl text-amber-400 mb-2 block"></i>Direct channel ready. Type a message below to contact ${partnerName}!</div>`;
-    return;
-  }
-  const sorted = [...thread.messages].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-
-  /* Product Snapshot Header Card */
-  let productHeaderCard = '';
-  const msgWithProd = sorted.find(m => m.product_id);
-  if (msgWithProd && msgWithProd.product_id) {
-    const prodId = msgWithProd.product_id;
-    let prod = (vendorProducts || []).find(p => p.id === prodId);
-    if (!prod && typeof chatProducts !== 'undefined' && chatProducts[prodId]) {
-      prod = chatProducts[prodId];
-    }
-    if (!prod && typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
-      prod = marketplaceProducts.find(p => p.id === prodId || String(p.id).toLowerCase() === String(prodId).toLowerCase());
-    }
-    if (!prod && typeof getSellerChatProduct === 'function') {
-      getSellerChatProduct(prodId).then(fetched => {
-        if (fetched) renderActiveChat();
-      });
-    }
-
-    const pTitle = prod ? prod.title : (msgWithProd.product_title || 'Marketplace Review Listing');
-    const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (msgWithProd.product_price ? Number(msgWithProd.product_price).toFixed(2) : '29.99');
-    const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
-    const pImg = prod ? getProductImageUrl(prod) : (getProductImageUrl(msgWithProd) || '');
-    const pUrl = prod ? (prod.amazon_url || prod.product_url || prod.amazon_link || '') : '';
-
-    productHeaderCard = `
-      <div onclick="openProductFromChat('${prodId}')" class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-4 shadow-lg flex items-center justify-between gap-3 shrink-0 cursor-pointer hover:border-blue-500/60 transition">
-        <div class="flex items-center space-x-3 truncate">
-          <div class="relative w-12 h-12 shrink-0">
-            <img src="${pImg}" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" alt="Product" class="w-12 h-12 object-cover rounded-xl border border-borderSlate">
-            <div class="hidden flex flex-col items-center justify-center w-12 h-12 bg-slate-800 rounded-xl border border-slate-700 text-slate-400">
-              <i class="fa-solid fa-box-open text-base"></i>
-            </div>
-          </div>
-          <div class="truncate">
-            <div class="flex items-center space-x-1.5">
-              <span class="text-[9px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.2 rounded-full font-bold uppercase">Inquired Item</span>
-              <span class="text-[10px] text-slate-400 font-mono">ID: ${String(prodId).substring(0,8)}</span>
-            </div>
-            <h4 class="text-xs font-bold text-white truncate mt-0.5">${pTitle}</h4>
-            <p class="text-[10px] text-slate-300">Retail: <strong class="text-white">$${pPrice}</strong> | Review Commission: <strong class="text-emerald-400">$${pComm} Commission</strong></p>
-          </div>
-        </div>
-        <div class="flex items-center space-x-2 shrink-0" onclick="event.stopPropagation()">
-          ${prod ? `<button onclick="editProduct('${prod.id}')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-200 text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition flex items-center space-x-1"><i class="fa-solid fa-pen-to-square text-blue-400"></i><span>Edit</span></button>` : ''}
-          ${pUrl ? `<a href="${pUrl}" target="_blank" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition flex items-center space-x-1" title="🔒 Strictly private to vendor - hidden from shoppers"><i class="fa-solid fa-lock text-[9px] text-amber-400"></i><i class="fa-brands fa-amazon text-[10px]"></i><span>Amazon Page (Private)</span></a>` : ''}
-        </div>
-      </div>
-    `;
-  }
-
-  const messagesHtml = sorted.map(m => {
+  container.innerHTML = sorted.map(m => {
     const isMe = m.sender_id === currentUser.id;
     const text = m._normalizedText || m.text || m.message_text || m.message || m.content || m.body || '';
     const timeString = m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    const fileUrl = m._normalizedImage || m.file_url || m.image_url || m.attachment_url || m.proof_base64 || '';
-    const fileName = m.file_name || m.attachment_name || 'Attached File';
-    
-    const rawBadge = (m.status_badge || m.status || (m.review_url ? 'AWAITING_ATTENTION' : '')).toUpperCase().trim();
+    const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
     const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
-    const reviewUrl = m.amazon_review_url || m.review_url || (hasAmazonUrl(text) ? (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '') : '');
-    
-    // Strict proof validation: must have an explicit Amazon URL OR proof_base64 OR explicit review submission type
-    const hasAmazonLink = Boolean(reviewUrl) || hasAmazonUrl(text);
-    const hasScreenshotProof = Boolean(m.proof_base64) || (isExplicitReviewType && Boolean(m.file_url || m.image_url || m.attachment_url));
-    const isReviewSubmission = isExplicitReviewType || hasAmazonLink || hasScreenshotProof;
-    const showAsReviewCard = isReviewSubmission || (Boolean(m.feedback_id) && m.feedback_id !== 'Pending Approval');
-    
+    const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
+    const showAsReviewCard = isExplicitReviewType || hasValidProof;
     const feedbackId = m.feedback_id || 'Pending Approval';
-    const amazonUrl = reviewUrl || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
-    const commissionAmount = m.commission_amount || 5.00;
-    const statusBadge = rawBadge || 'AWAITING_ATTENTION';
-    const isAwaiting = statusBadge === 'AWAITING_ATTENTION' || statusBadge === 'PENDING_REVIEW' || statusBadge === 'PENDING' || statusBadge === 'AWAITING ATTENTION';
+    const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
+    const commissionAmount = m.commission_amount || 15.00;
 
     let bubbleContent = '';
     if (showAsReviewCard) {
-      const badgeClass = isMe 
-        ? (statusBadge === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (statusBadge === 'DENIED' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'))
-        : (statusBadge === 'APPROVED' ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold' : (statusBadge === 'DENIED' ? 'bg-rose-100 text-rose-900 border-rose-300 font-bold' : 'bg-amber-100 text-amber-950 border-amber-300 font-bold'));
-      const feedbackIdClass = isMe ? 'text-slate-400' : 'text-slate-700 font-bold';
+      const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
+      const badgeClass = statusBadge === 'APPROVED' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40' : (statusBadge === 'DENIED' ? 'bg-rose-950/90 text-rose-300 border-rose-500/40' : 'bg-amber-950/90 text-amber-300 border-amber-500/40');
 
       bubbleContent = `
-        <div class="review-submission-card space-y-2.5 p-3.5 rounded-xl border ${isMe ? 'border-amber-500/30 bg-amber-500/5' : 'border-amber-500/40 bg-amber-500/10'} shadow-md" data-message-id="${m.id}">
-          <div class="flex items-center justify-between gap-3 border-b ${isMe ? 'border-white/10' : 'border-amber-500/20'} pb-2">
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} status-badge-label">${statusBadge}</span>
-            <span class="text-[10px] ${feedbackIdClass} font-mono feedback-id-display">ID: ${feedbackId}</span>
+        <div class="review-submission-card space-y-2.5 p-3.5 rounded-xl border border-amber-500/40 bg-slate-950/90 shadow-xl text-slate-100" data-message-id="${m.id}">
+          <div class="flex items-center justify-between gap-3 border-b border-amber-500/20 pb-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${badgeClass}">${statusBadge}</span>
+            <span class="text-[10px] text-amber-300 font-mono font-bold feedback-id-display">ID: ${feedbackId}</span>
           </div>
-          <div class="space-y-1.5">
-            ${amazonUrl && amazonUrl !== '#' ? `
-              <p class="text-xs text-slate-200"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-blue-400 hover:text-blue-300 font-bold underline truncate inline-block max-w-[220px] align-bottom">${amazonUrl}</a></p>
-            ` : ''}
+          <div>
+            ${amazonUrl && amazonUrl !== '#' ? `<p class="text-xs text-slate-200"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="text-sky-300 font-bold underline hover:text-sky-200 truncate inline-block max-w-[220px] align-bottom">${amazonUrl}</a></p>` : ''}
             ${text && !text.includes(amazonUrl) ? `<p class="text-xs text-slate-200 mt-1 font-medium">${text}</p>` : ''}
             ${fileUrl ? `
               <div class="mt-2">
                 <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-lg border border-white/20">
-                  <img src="${fileUrl}" alt="Proof Screenshot" class="h-32 w-full object-cover hover:scale-105 transition">
+                  <img src="${fileUrl}" alt="Proof" class="h-32 w-full object-cover hover:scale-105 transition">
                 </a>
               </div>
             ` : ''}
           </div>
-          <div class="inline-action-area pt-2 border-t ${isMe ? 'border-white/10' : 'border-amber-500/20'}">
-            ${isAwaiting ? `
-              <div class="flex space-x-2 my-1" id="actions-${m.id}">
-                <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center space-x-1 cursor-pointer">
-                  <i class="fa-solid fa-check mr-1"></i><span>Approve Review</span>
+          <div class="inline-action-area pt-2 border-t border-amber-500/20">
+            ${statusBadge === 'AWAITING_ATTENTION' ? `
+              <div class="flex space-x-2" id="actions-${m.id}">
+                <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1 cursor-pointer">
+                  <i class="fa-solid fa-check"></i><span>Approve</span>
                 </button>
-                <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition shadow-md flex items-center justify-center space-x-1 cursor-pointer">
-                  <i class="fa-solid fa-xmark mr-1"></i><span>Deny Review</span>
+                <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1 cursor-pointer">
+                  <i class="fa-solid fa-xmark"></i><span>Deny</span>
                 </button>
               </div>
             ` : `
-              <div class="text-[11px] text-slate-300 italic">Decision Recorded: <strong class="text-white font-bold">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
+              <div class="text-[11px] text-slate-300 italic">Decision Recorded: <strong class="text-slate-100 font-bold">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400 font-bold">${m.feedback_id}</span>)` : ''}</div>
             `}
           </div>
         </div>
       `;
     } else {
-let attachmentHtml = '';
+      let attachmentHtml = '';
       if (fileUrl) {
-        if (fileUrl.startsWith('data:image/') || fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) || fileUrl.startsWith('http')) {
-          attachmentHtml = `
-            <div class="mt-2.5">
-              <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-xl border border-white/20 shadow-md">
-                <img src="${fileUrl}" alt="Attachment" class="max-h-52 w-full object-cover hover:scale-105 transition duration-300">
-              </a>
-            </div>`;
-        } else {
-          attachmentHtml = `<div class="mt-2"><a href="${fileUrl}" target="_blank" class="flex items-center space-x-2 bg-black/20 px-3 py-1.5 rounded-lg text-xs underline"><i class="fa-solid fa-file-arrow-down"></i><span>${fileName}</span></a></div>`;
-        }
-      }
-      const msgProdId = m.product_id || extractProductIdFromText(text);
-      let productCardHtml = '';
-      if (msgProdId) {
-        let prod = (vendorProducts || []).find(p => p.id === msgProdId);
-        if (!prod && typeof chatProducts !== 'undefined' && chatProducts[msgProdId]) {
-          prod = chatProducts[msgProdId];
-        }
-        if (!prod && typeof marketplaceProducts !== 'undefined' && Array.isArray(marketplaceProducts)) {
-          prod = marketplaceProducts.find(p => p.id === msgProdId || String(p.id).toLowerCase().includes(String(msgProdId).toLowerCase()));
-        }
-        if (!prod && typeof getSellerChatProduct === 'function') {
-          getSellerChatProduct(msgProdId).then(fetched => {
-            if (fetched) renderActiveChat();
-          });
-        }
-
-        const pTitle = prod ? prod.title : (m.product_title || 'Marketplace Item');
-        const pPrice = prod && prod.price !== undefined && prod.price !== null ? Number(prod.price).toFixed(2) : (m.product_price ? Number(m.product_price).toFixed(2) : '29.99');
-        const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : (m.commission_amount ? Number(m.commission_amount).toFixed(2) : '15.00');
-        const pImg = prod ? getProductImageUrl(prod) : (getProductImageUrl(m) || '');
-        const cardBg = isMe 
-          ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50' 
-          : 'bg-white border-slate-300 text-slate-900 hover:border-blue-600 shadow-md';
-        const btnColor = isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold';
-
-        productCardHtml = `
-          <div onclick="openProductFromChat('${msgProdId}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
-            <div class="relative w-12 h-12 shrink-0">
-              <img src="${pImg}" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" alt="Product" class="w-12 h-12 object-cover rounded-lg border border-slate-300 group-hover:scale-105 transition">
-              <div class="hidden flex flex-col items-center justify-center w-12 h-12 bg-slate-800 rounded-lg border border-slate-700 text-slate-400">
-                <i class="fa-solid fa-box-open text-base"></i>
-              </div>
-            </div>
-            <div class="truncate flex-1">
-              <div class="flex items-center space-x-1">
-                <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
-                <span class="text-[9px] font-mono ${isMe ? 'text-slate-300' : 'text-slate-600'}">ID: ${String(msgProdId).substring(0,8)}</span>
-              </div>
-              <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-900'} truncate mt-0.5 group-hover:text-blue-600 transition">${pTitle}</h5>
-              <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: <strong>$${pPrice}</strong> | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
-            </div>
-            <div class="shrink-0 text-xs ${btnColor} font-bold flex items-center space-x-1 group-hover:underline">
-              <span>View</span>
-              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-            </div>
+        attachmentHtml = `
+          <div class="mt-2.5">
+            <a href="${fileUrl}" target="_blank" class="block overflow-hidden rounded-xl border border-white/20 shadow-md">
+              <img src="${fileUrl}" alt="Attachment" class="max-h-52 w-full object-cover hover:scale-105 transition duration-300">
+            </a>
           </div>
         `;
       }
-
-      const textDisplay = text ? `<div>${text}</div>` : '';
-      const contentBox = (productCardHtml || textDisplay || attachmentHtml) ? (productCardHtml + textDisplay + attachmentHtml) : `<div class="italic text-slate-300 opacity-80">[Attachment / System Event]</div>`;
-      bubbleContent = contentBox;
+      bubbleContent = `<div>${text}</div>${attachmentHtml}`;
     }
 
     return `
       <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-2">
-        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-slate-200 text-slate-900 border border-slate-300/80 rounded-bl-none shadow-md font-medium'}">
+        <div class="max-w-[80%] px-4 py-3 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-blue-600 border border-blue-400/60 text-white rounded-br-none shadow-lg font-medium' : 'bg-slate-900 border border-slate-700 text-slate-100 rounded-bl-none shadow-lg font-normal'}">
           ${bubbleContent}
         </div>
-        <span class="text-[9px] text-slate-500 mt-1 px-1">${timeString}</span>
+        <span class="text-[10px] text-slate-300 font-medium mt-1 px-1">${timeString}</span>
       </div>
     `;
   }).join('');
 
-  let receiptThreadBanner = '';
-  if (overdueBuyerIds.has(activeThreadId)) {
-    receiptThreadBanner = `
-      <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 mb-3 text-xs text-amber-300 flex items-center justify-between gap-2">
-        <div class="flex items-center space-x-2">
-          <i class="fa-solid fa-clock text-amber-400"></i>
-          <span><strong>Pending Disbursement:</strong> Upload payment receipt screenshot to clear this review transaction.</span>
-        </div>
-        <button onclick="switchVendorTab('commissions'); switchCommSubTab('workingQueue');" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1 rounded-lg text-[11px] transition shrink-0">Upload Receipt</button>
-      </div>
-    `;
-  }
-  container.innerHTML = receiptThreadBanner + productHeaderCard + messagesHtml;
   if (shouldScroll) {
     container.scrollTop = container.scrollHeight;
-  } else {
-    container.scrollTop = currentScrollTop;
   }
 }
 
@@ -2840,60 +2332,41 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
   try {
     const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg.review_url || msg._normalizedText || 'N/A') : 'N/A';
-    const resolvedReviewerId = reviewerId || (msg ? msg.sender_id : activeThreadId);
-    const targetFeedbackId = (msg && msg.feedback_id && typeof msg.feedback_id === 'string' && msg.feedback_id.startsWith('FB-')) 
-      ? msg.feedback_id 
-      : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(reviewerId);
+    const validReviewerId = isUuid ? reviewerId : (msg?.sender_id || msg?.buyer_id || null);
 
-    // 1. Try RPC with signature A (4 parameters), then RPC with signature B (7 parameters) as fallback
-    let rpcSuccess = false;
-    try {
-      const rpc1 = await _supabase.rpc('approve_review_and_split', {
-        p_message_id: String(messageId),
-        p_vendor_id: currentUser.id,
-        p_reviewer_id: resolvedReviewerId,
-        p_feedback_id: targetFeedbackId
-      });
-      if (!rpc1.error) rpcSuccess = true;
-    } catch (e1) {}
+    const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
+      p_message_id: String(messageId),
+      p_vendor_id: currentUser.id,
+      p_reviewer_id: validReviewerId,
+      p_commission_amount: Number(commissionAmount) || 15.00,
+      p_platform_fee: 10.00,
+      p_link: reviewLink,
+      p_type: 'REVIEW_COMMISSION'
+    });
 
-    if (!rpcSuccess) {
-      try {
-        const rpc2 = await _supabase.rpc('approve_review_and_split', {
-          p_message_id: String(messageId),
-          p_vendor_id: currentUser.id,
-          p_reviewer_id: resolvedReviewerId,
-          p_commission_amount: Number(commissionAmount || 15.00),
-          p_platform_fee: 10.00,
-          p_link: reviewLink,
-          p_type: 'REVIEW_COMMISSION'
-        });
-        if (!rpc2.error) rpcSuccess = true;
-      } catch (e2) {}
-    }
+    if (rpcError) throw rpcError;
+    const generatedFeedbackId = (data && data.feedback_id) ? data.feedback_id : `FB-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-    // 2. Primary target message update (includes feedback_id)
-    const primaryPayload = {
+    let updatePayload = {
       status_badge: 'APPROVED',
-      feedback_id: targetFeedbackId
+      feedback_id: generatedFeedbackId
     };
-    sanitizeStatusBadge(primaryPayload);
-    await _supabase.from('messages').update(primaryPayload).eq('id', messageId);
+    sanitizeStatusBadge(updatePayload);
 
-    // 3. Secondary pending messages for this reviewer (ONLY update status_badge, DO NOT touch feedback_id to prevent 409 UNIQUE constraint conflict!)
-    if (resolvedReviewerId && resolvedReviewerId !== 'admin') {
-      const secondaryPayload = {
-        status_badge: 'APPROVED'
-      };
+    await _supabase.from('messages').update(updatePayload).eq('id', messageId);
+
+    if (validReviewerId) {
+      const secondaryPayload = { status_badge: 'APPROVED' };
       sanitizeStatusBadge(secondaryPayload);
       await _supabase.from('messages').update(secondaryPayload)
-        .eq('sender_id', resolvedReviewerId)
+        .eq('sender_id', validReviewerId)
         .eq('vendor_id', currentUser.id)
         .eq('status_badge', 'AWAITING_ATTENTION');
     }
 
-    updateMessageCardStateLocally(messageId, 'APPROVED', targetFeedbackId);
+    updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
     showToast("Review approved successfully! Commission split generated.");
     await loadVendorCommissions();
     await loadVendorThreads(true);
@@ -2907,36 +2380,16 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
 async function handleInlineDeny(messageId) {
   const denialReason = prompt("Please enter a reason for denying this review submission:", "Order mismatch or unreadable link.");
   if (!denialReason) return;
-
-  disableAllInlineActionButtons('Processing Denial...');
+  disableAllInlineActionButtons('Recording Denial...');
 
   try {
-    const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
-    const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    const reviewerId = msg ? (msg.sender_id || activeThreadId) : activeThreadId;
-
-    const primaryPayload = {
+    let updatePayload = {
       status_badge: 'DENIED',
-      status: 'DENIED',
-      denial_reason: denialReason
+      text: `[REVIEW REJECTED]: ${denialReason.trim()}`
     };
-    sanitizeStatusBadge(primaryPayload);
+    sanitizeStatusBadge(updatePayload);
 
-    // Update target message
-    await _supabase.from('messages').update(primaryPayload).eq('id', messageId);
-
-    // Secondary pending messages for this reviewer
-    if (reviewerId && reviewerId !== 'admin') {
-      const secondaryPayload = {
-        status_badge: 'DENIED',
-        status: 'DENIED'
-      };
-      sanitizeStatusBadge(secondaryPayload);
-      await _supabase.from('messages').update(secondaryPayload)
-        .eq('sender_id', reviewerId)
-        .eq('vendor_id', currentUser.id)
-        .eq('status_badge', 'AWAITING_ATTENTION');
-    }
+    await _supabase.from('messages').update(updatePayload).eq('id', messageId);
 
     updateMessageCardStateLocally(messageId, 'DENIED');
     showToast("Review submission denied. Buyer notified.");
@@ -2958,29 +2411,29 @@ function disableAllInlineActionButtons(loadingText = 'Processing...') {
 }
 
 function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
-  const cards = document.querySelectorAll('.review-submission-card');
-  cards.forEach(card => {
-    const badge = card.querySelector('.status-badge-label');
-    if (badge && (badge.innerText.includes('AWAITING') || badge.innerText.includes('PENDING'))) {
-      badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`;
-      badge.innerText = newStatus;
-    }
-    if (feedbackId) {
-      const idEl = card.querySelector('.feedback-id-display');
-      if (idEl) idEl.innerText = `ID: ${feedbackId}`;
-    }
-    const actionArea = card.querySelector('.inline-action-area');
-    if (actionArea) {
-      actionArea.innerHTML = `<div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400">${feedbackId}</span>)` : ''}</div>`;
-    }
-  });
+  const card = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!card) return;
+  const badge = card.querySelector('.status-badge-label');
+  if (badge) {
+    badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40' : 'bg-rose-950/90 text-rose-300 border-rose-500/40'}`;
+    badge.innerText = newStatus;
+  }
+  if (feedbackId) {
+    const idEl = card.querySelector('.feedback-id-display');
+    if (idEl) idEl.innerText = `ID: ${feedbackId}`;
+  }
+  const actionArea = card.querySelector('.inline-action-area');
+  if (actionArea) {
+    actionArea.innerHTML = `<div class="text-[11px] text-slate-300 italic">Decision Recorded: <strong class="text-slate-100 font-bold">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400 font-bold">${feedbackId}</span>)` : ''}</div>`;
+  }
 }
 
 function showToast(message) {
   const container = document.getElementById('toast-container');
+  if (!container) return;
   const toast = document.createElement('div');
-  toast.className = 'bg-cardBg border-l-4 border-accentBlue text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
-  toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
+  toast.className = 'bg-cardBg border-l-4 border-blue-500 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 transition-all duration-300';
+  toast.innerHTML = `<i class="fa-solid fa-circle-check text-blue-400"></i><span>${message}</span>`;
   container.appendChild(toast);
   setTimeout(() => {
     toast.classList.add('opacity-0');
@@ -2988,142 +2441,55 @@ function showToast(message) {
   }, 3500);
 }
 
-function handleChatFileSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  chatAttachedFile = file;
-  document.getElementById('chatAttachmentName').textContent = file.name;
-  document.getElementById('chatAttachmentPreview').classList.remove('hidden');
-}
-
-function clearChatAttachment() {
-  chatAttachedFile = null;
-  document.getElementById('chatFileInput').value = '';
-  document.getElementById('chatAttachmentPreview').classList.add('hidden');
-}
-
-async function handleSendMessage(event) {
+async function handleSendChatMessage(event) {
   event.preventDefault();
   const input = document.getElementById('chatInputMsg');
   const text = input.value.trim();
-  if ((!text && !chatAttachedFile) || !activeThreadId) return;
-
-  let fileDataUrl = null;
-  let fileName = null;
-
-  if (chatAttachedFile) {
-    fileName = chatAttachedFile.name;
-    if (chatAttachedFile.type.startsWith('image/')) {
-      fileDataUrl = await compressImageFile(chatAttachedFile, 800, 0.7);
-    } else {
-      fileDataUrl = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.readAsDataURL(chatAttachedFile);
-      });
-    }
-  }
+  if (!text || !activeThreadId) return;
 
   try {
-    let targetReceiverId = activeThreadId;
-    const isUuid = targetReceiverId && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetReceiverId);
-
-    if (!isUuid || targetReceiverId === 'admin_system_support') {
-      const adminProf = await fetchAdminProfile();
-      if (adminProf && adminProf.id && adminProf.id !== 'admin_system_support') {
-        targetReceiverId = adminProf.id;
-        activeThreadId = targetReceiverId;
-      } else {
-        alert("Unable to locate System Administrator profile in database.");
-        return;
-      }
-    }
-
-    const adminProf = getAdminProfile();
-    const isSendingToAdmin = (targetReceiverId === adminProf.id);
-
-    let targetProdId = null;
-    if (text) {
-      targetProdId = extractProductIdFromText(text);
-    }
-
-    let payload = {
+    const payload = sanitizePayload('messages', {
       sender_id: currentUser.id,
-      receiver_id: targetReceiverId,
+      receiver_id: activeThreadId,
       vendor_id: currentUser.id,
-      product_id: targetProdId,
-      text: text || (fileName ? `[Attachment: ${fileName}]` : ''),
-      status_badge: 'AWAITING_ATTENTION'
-    };
-    if (fileDataUrl) {
-      payload.file_url = fileDataUrl;
-      payload.file_name = fileName;
-    }
+      buyer_id: activeThreadId,
+      text: text
+    });
 
-    let { error } = await _supabase.from('messages').insert([payload]);
+    const { error } = await _supabase.from('messages').insert([payload]);
+    if (error) throw error;
 
-    if (error) {
-      console.warn('First insert attempt failed, trying fallback payload format:', error.message);
-      const fallbackPayload = {
-        sender_id: currentUser.id,
-        receiver_id: targetReceiverId,
-        vendor_id: currentUser.id,
-        product_id: targetProdId,
-        text: text || (fileName ? `[Attachment: ${fileName}]` : '')
-      };
-      if (fileDataUrl) {
-        fallbackPayload.proof_base64 = fileDataUrl;
-      }
-      const retryRes = await _supabase.from('messages').insert([fallbackPayload]);
-      if (retryRes.error) throw retryRes.error;
-    }
     input.value = '';
-    clearChatAttachment();
     await loadVendorThreads(true);
-    renderActiveChat(true);
   } catch (err) {
-    alert('Error sending message: ' + err.message);
+    alert("Failed to send message: " + err.message);
   }
 }
 
-/* Event Listener */
+function copyVendorRefCode() {
+  const code = document.getElementById('vendorRefCodeDisplay').textContent;
+  if (!code || code.includes('LOADING')) return;
+  navigator.clipboard.writeText(code);
+  showToast("Vendor Referral Code copied!");
+}
+
+function copyRefLink(id) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  input.select();
+  navigator.clipboard.writeText(input.value);
+  showToast("Referral link copied!");
+}
+
+function shareVendorWhatsApp() {
+  const code = document.getElementById('vendorRefCodeDisplay').textContent;
+  const url = document.getElementById('sellerVendorRefLink').value;
+  const msg = encodeURIComponent(`Join me on Echo Hub! Vendor Inviter Code: ${code}
+Register here: ${url}`);
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
+}
+
 window.addEventListener('DOMContentLoaded', initSellerWorkspace);
-
-/* Global System Branding Loader */
-async function loadAppBranding() {
-  try {
-    const cachedLogo = localStorage.getItem('app_logo_base64');
-    if (cachedLogo) applyLogoToElements(cachedLogo);
-
-    if (typeof _supabase !== 'undefined') {
-      const { data, error } = await _supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'app_logo_base64')
-        .maybeSingle();
-
-      if (!error && data && data.value) {
-        localStorage.setItem('app_logo_base64', data.value);
-        applyLogoToElements(data.value);
-      }
-    }
-  } catch (err) {
-    console.log('App branding database query info:', err.message || err);
-  }
-}
-
-function applyLogoToElements(logoBase64) {
-  if (!logoBase64) return;
-  const elements = document.querySelectorAll('.app-header-logo, #appHeaderLogo');
-  elements.forEach(el => {
-    el.innerHTML = `<img src="${logoBase64}" alt="App Logo" class="w-full h-full object-cover rounded-xl shadow-md">`;
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadAppBranding();
-});
-
 </script>
 </body>
 </html>
