@@ -1204,7 +1204,7 @@ function checkReviewSLADeadlinesAndLockout() {
       if (actionBtn) actionBtn.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition shrink-0 shadow-md flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white cursor-pointer';
       if (btnText) btnText.textContent = 'Open Messaging Hub';
     }
-  } else if (activeReviewComm && activeReviewComm.remainingMs <= 24 * 60 * 60 * 1000) {
+  } else if (activeReviewComm) {
     isReviewLockoutActive = false;
     const hours = Math.floor(activeReviewComm.remainingMs / (1000 * 60 * 60));
     const mins = Math.floor((activeReviewComm.remainingMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -2336,7 +2336,7 @@ function renderActiveChat(shouldScroll = false) {
             <span class="text-[10px] font-mono opacity-80">FB ID: ${feedbackId}</span>
           </div>
           <div>
-            <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="${isMe ? 'text-blue-200 hover:text-white font-bold' : 'text-blue-400 hover:text-blue-300 font-bold'} underline truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
+            <p class="text-xs"><strong>Review Link:</strong> <a href="${amazonUrl}" target="_blank" class="${isMe ? 'text-blue-300 hover:text-white' : 'text-blue-700 hover:text-blue-900 font-bold'} underline truncate inline-block max-w-[200px]">${amazonUrl}</a></p>
             ${text && !text.includes(amazonUrl) ? `<p class="text-xs ${isMe ? 'text-blue-100' : 'text-slate-200'} mt-1">${text}</p>` : ''}
             ${fileUrl ? `
               <div class="mt-2">
@@ -2409,9 +2409,9 @@ function renderActiveChat(shouldScroll = false) {
         const pComm = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : (m.commission_amount ? Number(m.commission_amount).toFixed(2) : '15.00');
         const pImg = prod ? getProductImageUrl(prod) : (getProductImageUrl(m) || '');
         const cardBg = isMe
-          ? 'bg-blue-700/50 border-blue-400/30 text-white hover:border-white/50 hover:bg-blue-700/80'
+          ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50'
           : 'bg-slate-900/80 border-slate-700 text-slate-100 hover:border-blue-500/60 shadow-md';
-        const btnColor = isMe ? 'text-blue-200 hover:text-white font-bold' : 'text-blue-400 hover:text-blue-300 font-bold';
+        const btnColor = isMe ? 'text-blue-300 hover:text-white' : 'text-blue-400 hover:text-blue-300 font-bold';
         productCardHtml = `
           <div onclick="openProductFromChat('${msgProdId}')" class="product-chat-card cursor-pointer my-2 p-2.5 rounded-xl border ${cardBg} transition flex items-center space-x-3 group">
             <div class="relative w-12 h-12 shrink-0">
@@ -2425,8 +2425,8 @@ function renderActiveChat(shouldScroll = false) {
                 <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${isMe ? 'bg-blue-500/30 text-blue-200 border border-white/10' : 'bg-blue-100 text-blue-800 border border-blue-300'}">Item Showcase</span>
                 <span class="text-[9px] font-mono ${isMe ? 'text-slate-300' : 'text-slate-600'}">ID: ${String(msgProdId).substring(0,8)}</span>
               </div>
-              <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-900'} truncate mt-0.5 group-hover:text-blue-600 transition">${pTitle}</h5>
-              <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-700'}">Retail: $${pPrice} | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-700 font-bold'}">$${pComm} Commission</span></p>
+              <h5 class="text-xs font-bold ${isMe ? 'text-white' : 'text-slate-100'} truncate mt-0.5 group-hover:text-blue-600 transition">${pTitle}</h5>
+              <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-slate-300'}">Retail: $${pPrice} | <span class="${isMe ? 'text-emerald-300' : 'text-emerald-400 font-bold'}">$${pComm} Commission</span></p>
             </div>
             <div class="shrink-0 text-xs ${btnColor} font-bold flex items-center space-x-1 group-hover:underline">
               <span>View</span>
