@@ -2355,16 +2355,8 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
     };
     sanitizeStatusBadge(updatePayload);
 
-    await _supabase.from('messages').update(updatePayload).eq('id', messageId);
-
-    if (validReviewerId) {
-      const secondaryPayload = { status_badge: 'APPROVED' };
-      sanitizeStatusBadge(secondaryPayload);
-      await _supabase.from('messages').update(secondaryPayload)
-        .eq('sender_id', validReviewerId)
-        .eq('vendor_id', currentUser.id)
-        .eq('status_badge', 'AWAITING_ATTENTION');
-    }
+    const { error: updateError } = await _supabase.from('messages').update(updatePayload).eq('id', messageId);
+    if (updateError) throw updateError;
 
     updateMessageCardStateLocally(messageId, 'APPROVED', generatedFeedbackId);
     showToast("Review approved successfully! Commission split generated.");
@@ -2411,20 +2403,37 @@ function disableAllInlineActionButtons(loadingText = 'Processing...') {
 }
 
 function updateMessageCardStateLocally(messageId, newStatus, feedbackId = '') {
+  if (typeof vendorThreads !== 'undefined' && vendorThreads && vendorThreads.length > 0) {
+    vendorThreads.forEach(t => {
+      (t.messages || []).forEach(m => {
+        if (m.id == messageId) {
+          m.status_badge = newStatus;
+          m.status = newStatus;
+          if (feedbackId) m.feedback_id = feedbackId;
+        }
+      });
+    });
+  }
+
   const card = document.querySelector(`[data-message-id="${messageId}"]`);
-  if (!card) return;
-  const badge = card.querySelector('.status-badge-label');
-  if (badge) {
-    badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40' : 'bg-rose-950/90 text-rose-300 border-rose-500/40'}`;
-    badge.innerText = newStatus;
+  if (card) {
+    const badge = card.querySelector('.status-badge-label');
+    if (badge) {
+      badge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border status-badge-label ${newStatus === 'APPROVED' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40' : 'bg-rose-950/90 text-rose-300 border-rose-500/40'}`;
+      badge.innerText = newStatus;
+    }
+    if (feedbackId) {
+      const idEl = card.querySelector('.feedback-id-display');
+      if (idEl) idEl.innerText = `ID: ${feedbackId}`;
+    }
+    const actionArea = card.querySelector('.inline-action-area');
+    if (actionArea) {
+      actionArea.innerHTML = `<div class="text-[11px] text-slate-300 italic">Decision Recorded: <strong class="text-slate-100 font-bold">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400 font-bold">${feedbackId}</span>)` : ''}</div>`;
+    }
   }
-  if (feedbackId) {
-    const idEl = card.querySelector('.feedback-id-display');
-    if (idEl) idEl.innerText = `ID: ${feedbackId}`;
-  }
-  const actionArea = card.querySelector('.inline-action-area');
-  if (actionArea) {
-    actionArea.innerHTML = `<div class="text-[11px] text-slate-300 italic">Decision Recorded: <strong class="text-slate-100 font-bold">${newStatus}</strong> ${feedbackId ? `(FB ID: <span class="font-mono text-emerald-400 font-bold">${feedbackId}</span>)` : ''}</div>`;
+
+  if (typeof evaluatePendingReviewLockout === 'function') {
+    evaluatePendingReviewLockout();
   }
 }
 
