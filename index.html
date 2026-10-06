@@ -719,6 +719,21 @@ eh
 </div>
 </div>
 <!-- Message Stream Area -->
+<!-- Active Chat Review Submission Guidance Banner -->
+<div id="chatReviewGuidanceBanner" class="bg-blue-500/10 border-b border-blue-500/30 px-3.5 py-2.5 flex items-start sm:items-center justify-between gap-2 text-xs text-blue-200 shrink-0">
+  <div class="flex items-start space-x-2.5 min-w-0 flex-1">
+    <div class="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 font-bold text-xs">
+      <i class="fa-solid fa-circle-info"></i>
+    </div>
+    <div class="leading-relaxed text-[11px] sm:text-xs">
+      <strong class="text-blue-300 font-bold">Ready to claim your payout?</strong> Take a screenshot of your review, then click the <i class="fa-solid fa-paperclip text-blue-400 font-bold mx-0.5"></i> <strong>paperclip icon</strong> below to open the <strong>Attachment Options Drawer</strong>. You must submit <strong>both</strong> your <strong>Screenshot Proof</strong> and your <strong>amazon.com Review URL</strong> to complete your review verification!
+    </div>
+  </div>
+  <button type="button" onclick="document.getElementById('chatReviewGuidanceBanner').classList.add('hidden')" class="text-slate-400 hover:text-white transition shrink-0 p-1 rounded-lg hover:bg-slate-800" title="Dismiss notice">
+    <i class="fa-solid fa-xmark text-sm"></i>
+  </button>
+</div>
+
 <div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden">
 <div class="m-auto text-center text-xs text-slate-500 space-y-1">
 <i class="fa-regular fa-comments text-2xl text-slate-600"></i>
@@ -745,6 +760,10 @@ eh
 <p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
 </div>
 </button>
+<p class="text-[10px] text-amber-300/90 px-2 pt-1 border-t border-borderSlate/60 font-medium flex items-center space-x-1">
+  <i class="fa-solid fa-triangle-exclamation text-[10px] text-amber-400 shrink-0"></i>
+  <span>Both Screenshot Proof & Amazon URL are required.</span>
+</p>
 <!-- Hidden file uploader container -->
 <input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
 </div>
@@ -769,7 +788,7 @@ eh
 <button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner" title="Attach options">
 <i class="fa-solid fa-paperclip text-blue-400"></i>
 </button>
-<input type="text" id="messageInputBox" placeholder="Type your message or attach review proof..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+<input type="text" id="messageInputBox" placeholder="Type message or click 📎 to submit both review URL & screenshot proof..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
 <button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1">
 <span class="hidden sm:inline">Send</span>
 <i class="fa-solid fa-paper-plane"></i>
