@@ -455,7 +455,7 @@ form.addEventListener('submit', async (e) => {
     const finalInvitedByCode = refereeCode || null;
     const finalReferredBy = refereeUuid || null;
 
-    /* Register shopper with Supabase Auth */
+    /* Register shopper with Supabase Auth (passing both whatsapp and whatsapp_number keys in metadata) */
     const { data: authData, error: authError } = await _supabase.auth.signUp({
       email: email,
       password: password,
@@ -465,6 +465,7 @@ form.addEventListener('submit', async (e) => {
           last_name: lastName,
           full_name: fullName,
           paypal_email: paypalEmail,
+          whatsapp: whatsappNumber,
           whatsapp_number: whatsappNumber,
           categories: categories,
           invited_by_code: finalInvitedByCode,
@@ -493,13 +494,13 @@ form.addEventListener('submit', async (e) => {
       console.warn('Auto login notice:', loginError.message);
     }
 
-    /* Upsert directly into public.profiles as authenticated user */
+    /* Primary Profile Payload using correct database column 'whatsapp' from schema */
     const profilePayload = {
       id: userId,
       full_name: fullName,
       email: email,
       paypal_email: paypalEmail,
-      whatsapp_number: whatsappNumber,
+      whatsapp: whatsappNumber,
       categories: categories,
       invited_by_code: finalInvitedByCode,
       referred_by: finalReferredBy,
@@ -510,28 +511,38 @@ form.addEventListener('submit', async (e) => {
       created_at: new Date().toISOString()
     };
 
-    const { error: profileError } = await _supabase
+    let { error: profileError } = await _supabase
       .from('profiles')
       .upsert(profilePayload);
 
     if (profileError) {
-      console.warn('Profiles table upsert notice:', profileError.message);
-      /* Fallback explicit update */
-      await _supabase
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          paypal_email: paypalEmail,
-          whatsapp_number: whatsappNumber,
-          categories: categories,
-          invited_by_code: finalInvitedByCode,
-          referred_by: finalReferredBy,
-          national_id_base64: compressedNationalIdBase64,
-          role: 'buyer',
-          verification_status: 'PENDING',
-          commission_policy_agreed: policyAgreed
-        })
-        .eq('id', userId);
+      console.warn('Profiles table upsert warning with primary payload:', profileError.message);
+      /* Fallback 1: Try upsert with whatsapp_number if table uses that alias */
+      const fallbackPayload = {
+        ...profilePayload,
+        whatsapp_number: whatsappNumber
+      };
+      delete fallbackPayload.whatsapp;
+      const fallbackRes = await _supabase.from('profiles').upsert(fallbackPayload);
+      if (fallbackRes.error) {
+        console.warn('Profiles table upsert fallback warning:', fallbackRes.error.message);
+        /* Fallback 2: Direct update targeting whatsapp column */
+        await _supabase
+          .from('profiles')
+          .update({
+            full_name: fullName,
+            paypal_email: paypalEmail,
+            whatsapp: whatsappNumber,
+            categories: categories,
+            invited_by_code: finalInvitedByCode,
+            referred_by: finalReferredBy,
+            national_id_base64: compressedNationalIdBase64,
+            role: 'buyer',
+            verification_status: 'PENDING',
+            commission_policy_agreed: policyAgreed
+          })
+          .eq('id', userId);
+      }
     }
 
     alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
