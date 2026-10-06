@@ -1626,7 +1626,7 @@ w.document.close();
 }
 }
 async function inspectNationalId(userId) {
-let user = allUsersCache.find(u => u.id === userId);
+let user = allUsersCache.find(u => u.id === userId) || profilesCache[userId];
 if (!user) {
 alert("User account not found.");
 return;
@@ -1648,10 +1648,11 @@ const { data, error } = await _supabase
 .from('profiles')
 .select('national_id_base64')
 .eq('id', userId)
-.single();
+.maybeSingle();
 if (!error && data && data.national_id_base64) {
 idDocImg = data.national_id_base64;
 user.national_id_base64 = idDocImg;
+if (profilesCache[userId]) profilesCache[userId].national_id_base64 = idDocImg;
 }
 } catch (err) {
 console.warn("On-demand National ID fetch warning:", err);
@@ -1673,17 +1674,16 @@ userInfoEl.innerHTML = `
 }
 const imgEl = document.getElementById('idModalImage');
 if (imgEl) {
+imgEl.style.display = 'block';
 imgEl.classList.remove('hidden');
+imgEl.src = idDocImg;
 if (imgEl.nextElementSibling) {
 imgEl.nextElementSibling.classList.add('hidden');
 }
-imgEl.src = idDocImg;
 }
-const modalEl = document.getElementById('nationalIdModal');
-if (modalEl) {
-modalEl.classList.remove('hidden');
+document.getElementById('nationalIdModal').classList.remove('hidden');
 }
-}
+
 function closeNationalIdModal() {
 document.getElementById('nationalIdModal').classList.add('hidden');
 currentInspectingUserId = null;
@@ -3395,8 +3395,20 @@ const role = document.getElementById('editUserRole').value;
 const verificationStatus = document.getElementById('editUserVerificationStatus').value;
 const paypalEmail = document.getElementById('editUserPaypalEmail').value.trim();
 const invitedByCode = document.getElementById('editUserInvitedByCode').value.trim();
+const saveBtn = document.querySelector('#editUserModal button[onclick="saveUserEdit()"]');
 if (!userId) return;
+
 try {
+if (saveBtn) {
+saveBtn.disabled = true;
+saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+}
+
+const fileInput = document.getElementById('editUserNationalIdFile');
+if (!editUserNewIdBase64 && fileInput && fileInput.files && fileInput.files[0]) {
+editUserNewIdBase64 = await compressImageFileAdmin(fileInput.files[0]);
+}
+
 const updatePayload = {
 full_name: fullName,
 email: email,
@@ -3405,42 +3417,45 @@ verification_status: verificationStatus,
 paypal_email: paypalEmail,
 invited_by_code: invitedByCode
 };
+
 if (editUserNewIdBase64) {
 updatePayload.national_id_base64 = editUserNewIdBase64;
 }
-let reqPayload = sanitizePayload('profiles', updatePayload);
-let res = await _supabase.from('profiles').update(reqPayload).eq('id', userId);
 
-if (res.error && res.error.message && res.error.message.includes('Could not find the')) {
-  const match = res.error.message.match(/Could not find the '([^']+)' column/);
-  if (match && match[1]) {
-    const badCol = match[1];
-    delete reqPayload[badCol];
-    res = await _supabase.from('profiles').update(reqPayload).eq('id', userId);
-  }
-}
-if (res.error) throw res.error;
+const sanitizedPayload = sanitizePayload('profiles', updatePayload);
+const { error } = await _supabase.from('profiles').update(sanitizedPayload).eq('id', userId);
 
-// Update local cache immediately
+if (error) throw error;
+
+// Update local caches immediately
 const cachedUser = allUsersCache.find(u => u.id === userId);
 if (cachedUser) {
-  cachedUser.full_name = fullName;
-  cachedUser.email = email;
-  cachedUser.role = role;
-  cachedUser.verification_status = verificationStatus;
-  cachedUser.paypal_email = paypalEmail;
-  cachedUser.invited_by_code = invitedByCode;
-  if (editUserNewIdBase64) cachedUser.national_id_base64 = editUserNewIdBase64;
+cachedUser.full_name = fullName;
+cachedUser.email = email;
+cachedUser.role = role;
+cachedUser.verification_status = verificationStatus;
+cachedUser.paypal_email = paypalEmail;
+cachedUser.invited_by_code = invitedByCode;
+if (editUserNewIdBase64) cachedUser.national_id_base64 = editUserNewIdBase64;
 }
-editUserNewIdBase64 = '';
+if (profilesCache[userId]) {
+profilesCache[userId] = { ...profilesCache[userId], ...sanitizedPayload };
+}
 
+editUserNewIdBase64 = '';
 showToast("User profile updated successfully!");
 closeEditUserModal();
 await loadUsersData();
 } catch (err) {
 alert("Error updating user profile: " + err.message);
+} finally {
+if (saveBtn) {
+saveBtn.disabled = false;
+saveBtn.innerHTML = 'Save Profile Updates';
 }
 }
+}
+
 function openManualAdjustmentModal() {
 document.getElementById('adjRecipientId').value = '';
 document.getElementById('adjAmount').value = '';
