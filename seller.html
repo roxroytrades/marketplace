@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Echo Hub - Vendor Management Workspace</title>a
+<title>Echo Hub - Vendor Management Workspace</title>
 <!-- Tailwind CSS CDN with Dark Mode Enabled -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -148,6 +148,10 @@ function showThreadContextMenu(e, threadId) {
       <span>${isUnread ? 'Mark as Read' : 'Mark as Unread'}</span>
     </button>
     <div class="border-t border-slate-800 my-1"></div>
+    <button onclick="handleReportAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-amber-500/20 text-amber-400 transition flex items-center space-x-2 font-medium">
+      <i class="fa-solid fa-flag text-amber-400"></i>
+      <span>Report Shopper</span>
+    </button>
     <button onclick="handleHideAction('${threadId}')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/20 text-rose-400 transition flex items-center space-x-2 font-medium">
       <i class="fa-solid fa-eye-slash"></i>
       <span>Hide Conversation Tile</span>
@@ -272,16 +276,16 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 <!-- Top Navigation Bar -->
-<header class="bg-cardBg border-b border-borderSlate px-6 py-4 flex items-center justify-between">
-<div class="flex items-center space-x-3">
-<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden">
+<header class="bg-cardBg border-b border-borderSlate px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div class="flex items-center space-x-3 min-w-0">
+<div id="appHeaderLogo" class="app-header-logo w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-lg overflow-hidden shrink-0">
 eh
 </div>
-<span class="font-heading text-xl font-bold tracking-wide text-white">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-2">Vendor Portal</span></span>
+<span class="font-heading text-lg sm:text-xl font-bold tracking-wide text-white min-w-0">echo<span class="text-blue-500">hub</span> <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full ml-1 sm:ml-2">Vendor Portal</span></span>
 </div>
-<div class="flex items-center space-x-4">
+<div class="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto shrink-0">
 <!-- Logged-in User Badge -->
-<div class="hidden sm:flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
+<div class="flex items-center space-x-2.5 bg-darkBg border border-borderSlate px-3.5 py-1.5 rounded-xl shadow-inner">
 <div class="w-6 h-6 bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-lg flex items-center justify-center text-xs font-bold">
 <i class="fa-solid fa-store text-[10px]"></i>
 </div>
@@ -510,6 +514,10 @@ eh
 <h3 id="activeChatTitle" class="text-sm font-bold text-white">Select a conversation</h3>
 <p id="activeChatSub" class="text-[10px] text-slate-400">Reviewer or Support Agent</p>
 </div>
+<button onclick="handleReportAction(activeThreadId)" id="headerReportShopperBtn" class="hidden text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center space-x-1 shadow-sm" title="Report this shopper to Admin">
+<i class="fa-solid fa-flag text-[10px]"></i>
+<span>Report Shopper</span>
+</button>
 </div>
 <div id="chatMessagesContainer" class="flex-1 overflow-y-auto py-4 space-y-3 pr-2">
 <div class="text-center py-16 text-xs text-slate-500">
@@ -935,6 +943,14 @@ async function initSellerWorkspace() {
     }
 
     /* Step C: Enforce role isolation (Block Buyers from Vendor Portal) */
+    
+    if (profile && profile.verification_status && (profile.verification_status.toUpperCase() === 'BANNED' || profile.verification_status.toUpperCase() === 'REJECTED')) {
+      alert("Access Restricted: Your account has been banned by Platform Administration.");
+      await _supabase.auth.signOut();
+      window.location.href = 'login.html';
+      return;
+    }
+
     if (profile.role.toLowerCase() === 'buyer') {
       alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
       window.location.href = 'index.html';
@@ -982,6 +998,47 @@ async function pollVendorData() {
 }
 
 /* 2. Sign Out Handler */
+
+async function handleReportAction(targetUserId) {
+  hideThreadContextMenu();
+  const thread = vendorThreads.find(t => t.partnerId === (targetUserId || activeThreadId));
+  const resolvedTargetId = targetUserId || (thread ? thread.partnerId : activeThreadId);
+  if (!resolvedTargetId) {
+    alert("Please select a conversation before submitting a report.");
+    return;
+  }
+
+  const note = prompt("Please enter details / reason for reporting this shopper to Admin:", "Inappropriate behavior or suspicious activity");
+  if (!note || !note.trim()) return;
+
+  try {
+    const reportMsg = `[USER_REPORT] Reported Shopper (${resolvedTargetId}). Reason: ${note.trim()}`;
+    const reportPayload = {
+      sender_id: currentUser.id,
+      receiver_id: resolvedTargetId,
+      vendor_id: currentUser.id,
+      buyer_id: resolvedTargetId,
+      text: reportMsg,
+      content: reportMsg,
+      message: reportMsg,
+      status_badge: 'REPORTED',
+      channel_type: 'USER_REPORT'
+    };
+
+    let { error } = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
+    if (error && error.message && error.message.includes('channel_type')) {
+      delete reportPayload.channel_type;
+      const retryRes = await _supabase.from('messages').insert([sanitizePayload('messages', reportPayload)]);
+      error = retryRes.error;
+    }
+    if (error) throw error;
+
+    showToast("Report submitted to Admin for investigation.");
+  } catch (err) {
+    alert("Failed to submit report: " + err.message);
+  }
+}
+
 async function handleLogout() {
   try {
     if (pollingInterval) {
@@ -1055,14 +1112,14 @@ async function loadVendorProducts(isPolling = false) {
     let { data, error } = await _supabase
       .from('products')
       .select('*')
-      .or(`vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id},user_id.eq.${currentUser.id}`)
+      .eq('vendor_id', currentUser.id)
       .order('created_at', { ascending: false });
-    if (error) {
-      console.warn('Multi-column query fallback to vendor_id filter:', error.message);
+    if (error && (error.code === '42703' || (error.message && error.message.includes('vendor_id')))) {
+      console.warn('vendor_id column missing on products table, falling back to seller_id');
       const fallback = await _supabase
         .from('products')
         .select('*')
-        .eq('vendor_id', currentUser.id)
+        .eq('seller_id', currentUser.id)
         .order('created_at', { ascending: false });
       data = fallback.data;
       error = fallback.error;
@@ -1311,7 +1368,7 @@ function checkReceiptDeadlinesAndLockout() {
 
 function openPendingReceiptModal() {
   if (activePendingReceiptComm && activePendingReceiptComm.id) {
-    openSettleModal(activePendingReceiptComm.id);
+    openSettlementModal(activePendingReceiptComm.id, activePendingReceiptComm.recipient_email || 'recipient@paypal.com');
   } else {
     switchVendorTab('commissions');
     switchCommSubTab('workingQueue');
@@ -2381,6 +2438,14 @@ function renderActiveChat(shouldScroll = false) {
     roleBadgeClass = 'bg-purple-500/20 text-purple-400 border-purple-500/30';
   }
 
+  const rShopperBtn = document.getElementById('headerReportShopperBtn');
+  if (rShopperBtn) {
+    if (activeThreadId && activeThreadId !== 'admin' && activeThreadId !== 'admin_system_support') {
+      rShopperBtn.classList.remove('hidden');
+    } else {
+      rShopperBtn.classList.add('hidden');
+    }
+  }
   if (titleEl) {
     titleEl.innerHTML = `
       <div class="flex items-center space-x-2">
