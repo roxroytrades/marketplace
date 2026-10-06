@@ -298,46 +298,33 @@ eh
 </div>
 </header>
 <!-- Primary Navigation Tabs -->
-<div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-4 md:px-6 py-2 sticky top-[73px] z-20">
-<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 text-xs">
-<!-- Mobile Dropdown Navigation -->
-<div class="md:hidden w-full">
-<select id="adminTabSelectMobile" onchange="switchAdminTab(this.value)" class="w-full bg-darkBg border border-amber-500/40 text-amber-300 font-bold text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400">
-<option value="users">👥 Accounts & ID Verification</option>
-<option value="products">📦 Product Catalog</option>
-<option value="commissions">💰 Commissions & Ledger</option>
-<option value="messaging">💬 System Messaging & Outreach</option>
-<option value="referrals">🌐 Referral Network</option>
-</select>
-</div>
-<!-- Desktop Tab Navigation Buttons -->
-<div class="hidden md:flex items-center space-x-2 overflow-x-auto no-scrollbar">
-<button onclick="switchAdminTab('users')" id="tabBtn-users" class="admin-tab-btn active px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30">
+<div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-4 sm:px-6 py-2 sticky top-[73px] z-20">
+<div class="max-w-7xl mx-auto flex flex-wrap items-center gap-2 text-xs overflow-x-auto no-scrollbar">
+<button onclick="switchAdminTab('users')" id="tabBtn-users" class="admin-tab-btn active px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
 <i class="fa-solid fa-users-gear text-xs"></i>
 <span>Accounts & ID Verification</span>
 </button>
-<button onclick="switchAdminTab('products')" id="tabBtn-products" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
+<button onclick="switchAdminTab('products')" id="tabBtn-products" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0">
 <i class="fa-solid fa-box-archive text-xs"></i>
 <span>Product Catalog</span>
 </button>
-<button onclick="switchAdminTab('commissions')" id="tabBtn-commissions" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
+<button onclick="switchAdminTab('commissions')" id="tabBtn-commissions" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0">
 <i class="fa-solid fa-receipt text-xs"></i>
 <span>Master Commissions Ledger</span>
 </button>
-<button onclick="switchAdminTab('messaging')" id="tabBtn-messaging" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent relative">
+<button onclick="switchAdminTab('messaging')" id="tabBtn-messaging" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0 relative">
 <i class="fa-solid fa-comments text-xs"></i>
 <span>System Messaging & Outreach</span>
-<span id="unreadMessagesBadge" class="hidden bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+<span id="unreadMessagesBadge" class="hidden bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full ml-1">0</span>
 </button>
-<button onclick="switchAdminTab('referrals')" id="tabBtn-referrals" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
+<button onclick="switchAdminTab('referrals')" id="tabBtn-referrals" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0">
 <i class="fa-solid fa-sitemap text-xs"></i>
 <span>Referral Network Hub</span>
 </button>
-<button onclick="switchAdminTab('settings')" id="tabBtn-settings" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
+<button onclick="switchAdminTab('settings')" id="tabBtn-settings" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0">
 <i class="fa-solid fa-gear text-xs"></i>
 <span>System Settings & Branding</span>
 </button>
-</div>
 </div>
 </div>
 <!-- Main Workspace Body -->
