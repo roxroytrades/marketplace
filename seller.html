@@ -1856,7 +1856,7 @@ async function loadVendorThreads(isPolling = false) {
     const { data: msgData } = await _supabase
       .from('messages')
       .select('*')
-      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
+      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id},vendor_id.eq.${currentUser.id},buyer_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
     let commData = [];
     try {
