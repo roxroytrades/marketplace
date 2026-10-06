@@ -511,21 +511,23 @@ invited_by_code: finalInvitedByCode,
 referred_by: finalReferredBy,
 paypal_email: paypalEmail,
 role: 'seller',
+user_role: 'seller',
 commission_policy_agreed: commissionPolicyAgreed
 }
 }
 });
 if (authError) throw authError;
-const userId = authData.user ? authData.user.id : null;
-if (!userId) {
-throw new Error('User registration failed to return an authenticated ID.');
-}
 
-const { error: loginError } = await _supabase.auth.signInWithPassword({
+const { data: loginData, error: loginError } = await _supabase.auth.signInWithPassword({
 email: email,
 password: password
 });
 if (loginError) throw loginError;
+
+const userId = loginData && loginData.user ? loginData.user.id : (authData && authData.user ? authData.user.id : null);
+if (!userId) {
+throw new Error('User registration failed to return an authenticated ID.');
+}
 
 const { error: profileError } = await _supabase
 .from('profiles')
@@ -535,29 +537,20 @@ full_name: fullName,
 email: email,
 paypal_email: paypalEmail,
 invited_by_code: finalInvitedByCode,
-referred_by: finalReferredBy,
+invited_by_user_id: finalReferredBy,
 role: 'seller',
 verification_status: 'VERIFIED',
 commission_amount: commissionAmount,
 commission_policy_agreed: commissionPolicyAgreed,
 created_at: new Date().toISOString()
 });
-
 if (profileError) {
-console.warn('Profiles table upsert notice, retrying with update:', profileError.message);
-await _supabase
-.from('profiles')
-.update({
+console.warn('Profiles table upsert notice, attempting fallback update:', profileError.message);
+await _supabase.from('profiles').update({
 role: 'seller',
 verification_status: 'VERIFIED',
-commission_amount: commissionAmount,
-paypal_email: paypalEmail,
-full_name: fullName,
-invited_by_code: finalInvitedByCode,
-referred_by: finalReferredBy,
-commission_policy_agreed: commissionPolicyAgreed
-})
-.eq('id', userId);
+commission_amount: commissionAmount
+}).eq('id', userId);
 }
 
 alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
