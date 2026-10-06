@@ -2044,6 +2044,7 @@ async function loadVendorThreads(isPolling = false) {
       } catch (e) {}
     }
     updateSellerUnreadBadge();
+    checkReviewSLADeadlinesAndLockout();
     renderThreadsList();
     if (activeThreadId) renderActiveChat();
   } catch (err) {
@@ -2510,6 +2511,12 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
       .from('messages')
       .update(updatePayload)
       .eq('id', messageId);
+    if (msg) {
+      msg.status_badge = 'APPROVED';
+      msg.status = 'APPROVED';
+      msg.feedback_id = generatedFeedbackId;
+    }
+    checkReviewSLADeadlinesAndLockout();
     showToast("Review approved and commission split generated!");
     await loadVendorCommissions();
     await loadVendorThreads(true);
@@ -2529,6 +2536,12 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
         .from('messages')
         .update(updatePayload)
         .eq('id', messageId);
+      if (msg) {
+        msg.status_badge = 'APPROVED';
+        msg.status = 'APPROVED';
+        msg.feedback_id = fallbackFeedbackId;
+      }
+      checkReviewSLADeadlinesAndLockout();
       showToast("Review approved (Direct update mode).");
       await loadVendorCommissions();
       await loadVendorThreads(true);
@@ -2555,6 +2568,13 @@ async function handleInlineDeny(messageId) {
       .update(updatePayload)
       .eq('id', messageId);
     if (error) throw error;
+    const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
+    const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
+    if (msg) {
+      msg.status_badge = 'DENIED';
+      msg.status = 'DENIED';
+    }
+    checkReviewSLADeadlinesAndLockout();
     showToast("Submission marked as DENIED.");
     await loadVendorCommissions();
     await loadVendorThreads(true);
