@@ -521,6 +521,12 @@ if (!userId) {
 throw new Error('User registration failed to return an authenticated ID.');
 }
 
+const { error: loginError } = await _supabase.auth.signInWithPassword({
+email: email,
+password: password
+});
+if (loginError) throw loginError;
+
 const { error: profileError } = await _supabase
 .from('profiles')
 .upsert({
@@ -532,18 +538,27 @@ invited_by_code: finalInvitedByCode,
 referred_by: finalReferredBy,
 role: 'seller',
 verification_status: 'VERIFIED',
+commission_amount: commissionAmount,
 commission_policy_agreed: commissionPolicyAgreed,
 created_at: new Date().toISOString()
 });
-if (profileError) {
-console.warn('Profiles table upsert notice:', profileError.message);
-}
 
-const { error: loginError } = await _supabase.auth.signInWithPassword({
-email: email,
-password: password
-});
-if (loginError) throw loginError;
+if (profileError) {
+console.warn('Profiles table upsert notice, retrying with update:', profileError.message);
+await _supabase
+.from('profiles')
+.update({
+role: 'seller',
+verification_status: 'VERIFIED',
+commission_amount: commissionAmount,
+paypal_email: paypalEmail,
+full_name: fullName,
+invited_by_code: finalInvitedByCode,
+referred_by: finalReferredBy,
+commission_policy_agreed: commissionPolicyAgreed
+})
+.eq('id', userId);
+}
 
 alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
 alertBox.textContent = 'Vendor profile created successfully! Unlocking workspace...';
