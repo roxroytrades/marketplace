@@ -437,7 +437,16 @@ const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, refe
 const finalInvitedByCode = refereeCode || null;
 const finalReferredBy = refereeUuid || null;
 
-/* Register shopper with Supabase Auth using defensive payload */
+if (password.length < 6) {
+alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+alertBox.textContent = 'Password must be at least 6 characters long.';
+alertBox.classList.remove('hidden');
+submitBtn.disabled = false;
+submitBtn.innerHTML = '<span>Complete Buyer Registration</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>';
+return;
+}
+
+/* Register shopper with Supabase Auth using defensive pending role payload */
 const cleanMetaData = {
 first_name: firstName,
 last_name: lastName,
@@ -448,7 +457,7 @@ whatsapp_number: whatsappNumber,
 categories: categories,
 invited_by_code: finalInvitedByCode || '',
 referred_by: finalReferredBy || '',
-role: 'seller',
+role: 'pending_buyer',
 verification_status: 'PENDING',
 commission_policy_agreed: Boolean(policyAgreed)
 };
@@ -468,21 +477,32 @@ authError = res.error;
 authError = signUpErr;
 }
 
-// Fallback: If signUp returned 500 or trigger error, retry with minimal safe metadata
-if (authError && (authError.status === 500 || (authError.message && (authError.message.includes('500') || authError.message.includes('Database error') || authError.message.includes('trigger'))))) {
-console.warn("Retrying signup with safe minimal metadata due to server trigger response:", authError.message);
+/* Fallback for trigger constraint errors or duplicate emails */
+if (authError) {
+const errStr = (authError.message || JSON.stringify(authError)).toLowerCase();
+if (authError.status === 500 || errStr.includes('500') || errStr.includes('database error') || errStr.includes('trigger')) {
+console.warn("Retrying signup with safe pending_buyer metadata:", authError.message);
 const fallbackRes = await _supabase.auth.signUp({
 email: email,
 password: password,
 options: {
 data: {
 full_name: fullName,
-role: 'seller'
+role: 'pending_buyer'
 }
 }
 });
 authData = fallbackRes.data;
 authError = fallbackRes.error;
+} else if (authError.status === 422 || errStr.includes('already registered') || errStr.includes('already exists')) {
+console.warn("User already exists, attempting login recovery:", authError.message);
+const loginRes = await _supabase.auth.signInWithPassword({
+email: email,
+password: password
+});
+authData = loginRes.data;
+authError = loginRes.error;
+}
 }
 
 if (authError) throw authError;
