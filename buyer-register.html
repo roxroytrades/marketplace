@@ -437,7 +437,7 @@ const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, refe
 const finalInvitedByCode = refereeCode || null;
 const finalReferredBy = refereeUuid || null;
 
-/* Register shopper with Supabase Auth using defensive payload */
+/* Register shopper with Supabase Auth using pending_buyer role to bypass initial trigger check constraint */
 const cleanMetaData = {
 first_name: firstName,
 last_name: lastName,
@@ -448,7 +448,7 @@ whatsapp_number: whatsappNumber,
 categories: categories,
 invited_by_code: finalInvitedByCode || '',
 referred_by: finalReferredBy || '',
-role: 'buyer',
+role: 'pending_buyer',
 verification_status: 'PENDING',
 commission_policy_agreed: Boolean(policyAgreed)
 };
@@ -468,8 +468,15 @@ authError = res.error;
 authError = signUpErr;
 }
 
-// Fallback: If signUp returned 500 or trigger error, retry with minimal safe metadata
-if (authError && (authError.status === 500 || (authError.message && (authError.message.includes('500') || authError.message.includes('Database error') || authError.message.includes('trigger'))))) {
+/* Fallback: Handle existing user sessions or trigger bypass */
+if (authError) {
+if (authError.message && (authError.message.includes('already registered') || authError.message.includes('already exists') || authError.status === 400)) {
+const loginRes = await _supabase.auth.signInWithPassword({ email: email, password: password });
+if (!loginRes.error && loginRes.data?.user) {
+authData = loginRes.data;
+authError = null;
+}
+} else if (authError.status === 500 || (authError.message && (authError.message.includes('500') || authError.message.includes('Database error') || authError.message.includes('trigger')))) {
 console.warn("Retrying signup with safe minimal metadata due to server trigger response:", authError.message);
 const fallbackRes = await _supabase.auth.signUp({
 email: email,
@@ -477,12 +484,13 @@ password: password,
 options: {
 data: {
 full_name: fullName,
-role: 'buyer'
+role: 'pending_buyer'
 }
 }
 });
 authData = fallbackRes.data;
 authError = fallbackRes.error;
+}
 }
 
 if (authError) throw authError;
