@@ -496,6 +496,7 @@ const { refereeUuid, refereeCode } = await resolveRefereeProfile(_supabase, refe
 const finalInvitedByCode = refereeCode || null;
 const finalReferredBy = refereeUuid || null;
 
+// 1. Create Auth User with explicit 'role' and 'user_role' metadata
 const { data: authData, error: authError } = await _supabase.auth.signUp({
 email: email,
 password: password,
@@ -518,17 +519,19 @@ commission_policy_agreed: commissionPolicyAgreed
 });
 if (authError) throw authError;
 
+// 2. Immediately sign in to establish an authenticated session for RLS
 const { data: loginData, error: loginError } = await _supabase.auth.signInWithPassword({
 email: email,
 password: password
 });
 if (loginError) throw loginError;
 
-const userId = loginData && loginData.user ? loginData.user.id : (authData && authData.user ? authData.user.id : null);
+const userId = loginData.user ? loginData.user.id : (authData.user ? authData.user.id : null);
 if (!userId) {
 throw new Error('User registration failed to return an authenticated ID.');
 }
 
+// 3. Upsert into public.profiles with active authenticated session
 const { error: profileError } = await _supabase
 .from('profiles')
 .upsert({
@@ -537,20 +540,25 @@ full_name: fullName,
 email: email,
 paypal_email: paypalEmail,
 invited_by_code: finalInvitedByCode,
-invited_by_user_id: finalReferredBy,
+referred_by: finalReferredBy,
 role: 'seller',
 verification_status: 'VERIFIED',
 commission_amount: commissionAmount,
 commission_policy_agreed: commissionPolicyAgreed,
 created_at: new Date().toISOString()
 });
+
 if (profileError) {
-console.warn('Profiles table upsert notice, attempting fallback update:', profileError.message);
-await _supabase.from('profiles').update({
+console.warn('Profiles table upsert notice:', profileError.message);
+// Fallback explicit update on profiles
+await _supabase
+.from('profiles')
+.update({
 role: 'seller',
 verification_status: 'VERIFIED',
 commission_amount: commissionAmount
-}).eq('id', userId);
+})
+.eq('id', userId);
 }
 
 alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
