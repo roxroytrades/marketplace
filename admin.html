@@ -3408,12 +3408,32 @@ invited_by_code: invitedByCode
 if (editUserNewIdBase64) {
 updatePayload.national_id_base64 = editUserNewIdBase64;
 }
-const sanitizedPayload = sanitizePayload('profiles', updatePayload);
-const { error } = await _supabase
-.from('profiles')
-.update(sanitizedPayload)
-.eq('id', userId);
-if (error) throw error;
+let reqPayload = sanitizePayload('profiles', updatePayload);
+let res = await _supabase.from('profiles').update(reqPayload).eq('id', userId);
+
+if (res.error && res.error.message && res.error.message.includes('Could not find the')) {
+  const match = res.error.message.match(/Could not find the '([^']+)' column/);
+  if (match && match[1]) {
+    const badCol = match[1];
+    delete reqPayload[badCol];
+    res = await _supabase.from('profiles').update(reqPayload).eq('id', userId);
+  }
+}
+if (res.error) throw res.error;
+
+// Update local cache immediately
+const cachedUser = allUsersCache.find(u => u.id === userId);
+if (cachedUser) {
+  cachedUser.full_name = fullName;
+  cachedUser.email = email;
+  cachedUser.role = role;
+  cachedUser.verification_status = verificationStatus;
+  cachedUser.paypal_email = paypalEmail;
+  cachedUser.invited_by_code = invitedByCode;
+  if (editUserNewIdBase64) cachedUser.national_id_base64 = editUserNewIdBase64;
+}
+editUserNewIdBase64 = '';
+
 showToast("User profile updated successfully!");
 closeEditUserModal();
 await loadUsersData();
