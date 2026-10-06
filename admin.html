@@ -418,7 +418,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
           <i class="fa-solid fa-trash"></i>
           <span id="btnBatchEraseUsersText">Erase Selected (0)</span>
         </button>
-        <input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search users by name, email, ID..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
+        <input type="text" id="userSearchInput" oninput="filterUsersTable()" placeholder="Search users by name, email, ID..." class="bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-200 outline-none focus:border-amber-500 transition w-64">
         <select id="userRoleFilter" onchange="filterUsersTable()" class="bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-amber-500">
           <option value="ALL">All Roles</option>
           <option value="BUYER">Buyers</option>
@@ -1312,6 +1312,7 @@ let currentAdminUser = null;
 let currentUser = null;
 let profilesCache = {};
 let allUsersCache = [];
+let allUserReports = [];
 let allProductsCache = [];
 let allCommissionsCache = [];
 let allThreadsCache = [];
@@ -1468,7 +1469,7 @@ async function loadUsersData() {
       currentUser = currentAdminUser;
     }
 
-    renderUsersTable(allUsersCache);
+    filterUsersTable();
   } catch (err) {
     console.error("Users load error:", err);
   }
@@ -1707,7 +1708,8 @@ function filterUsersTable() {
   const role = roleSelect ? roleSelect.value : 'ALL';
   const status = statusSelect ? statusSelect.value : 'ALL';
 
-  const reportedUserIds = new Set((allUserReports || []).map(r => r.reported_id).filter(Boolean));
+  const userReportsList = (typeof allUserReports !== "undefined" && Array.isArray(allUserReports)) ? allUserReports : [];
+  const reportedUserIds = new Set(userReportsList.map(r => r.reported_id).filter(Boolean));
 
   const filtered = allUsersCache.filter(u => {
     const matchesSearch = !search || 
