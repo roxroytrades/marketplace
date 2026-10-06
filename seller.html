@@ -1163,7 +1163,7 @@ function checkReviewSLADeadlinesAndLockout() {
       const isFromShopper = m.sender_id !== currentUser.id;
       const statusBadge = (m.status_badge || m.status || 'AWAITING_ATTENTION').toUpperCase();
       const isPending = statusBadge === 'AWAITING_ATTENTION' || statusBadge === 'PENDING';
-      const hasReviewProof = hasAmazonUrl(m.text || m.review_url || m.link || '') || hasImageAttachment(m) || m.type === 'review_submission';
+      const hasReviewProof = hasAmazonUrl(m.text || m.review_url || m.link || m.amazon_review_url || '') || m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
 
       if (isFromShopper && isPending && hasReviewProof) {
         const createdAtTime = new Date(m.created_at || now).getTime();
@@ -2511,11 +2511,26 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
       .from('messages')
       .update(updatePayload)
       .eq('id', messageId);
-    if (msg) {
-      msg.status_badge = 'APPROVED';
-      msg.status = 'APPROVED';
-      msg.feedback_id = generatedFeedbackId;
+    if (thread && thread.messages) {
+      thread.messages.forEach(tm => {
+        const stUpper = (tm.status_badge || tm.status || 'AWAITING_ATTENTION').toUpperCase();
+        if (stUpper === 'AWAITING_ATTENTION' || stUpper === 'PENDING') {
+          tm.status_badge = 'APPROVED';
+          tm.status = 'APPROVED';
+          tm.feedback_id = generatedFeedbackId;
+        }
+      });
     }
+    try {
+      if (reviewerId && currentUser && currentUser.id) {
+        await _supabase
+          .from('messages')
+          .update({ status_badge: 'APPROVED', status: 'APPROVED', feedback_id: generatedFeedbackId })
+          .eq('sender_id', reviewerId)
+          .eq('receiver_id', currentUser.id)
+          .or('status_badge.eq.AWAITING_ATTENTION,status_badge.eq.PENDING');
+      }
+    } catch (cleanErr) {}
     checkReviewSLADeadlinesAndLockout();
     showToast("Review approved and commission split generated!");
     await loadVendorCommissions();
@@ -2570,10 +2585,25 @@ async function handleInlineDeny(messageId) {
     if (error) throw error;
     const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
-    if (msg) {
-      msg.status_badge = 'DENIED';
-      msg.status = 'DENIED';
+    if (thread && thread.messages) {
+      thread.messages.forEach(tm => {
+        const stUpper = (tm.status_badge || tm.status || 'AWAITING_ATTENTION').toUpperCase();
+        if (stUpper === 'AWAITING_ATTENTION' || stUpper === 'PENDING') {
+          tm.status_badge = 'DENIED';
+          tm.status = 'DENIED';
+        }
+      });
     }
+    try {
+      if (activeThreadId && currentUser && currentUser.id) {
+        await _supabase
+          .from('messages')
+          .update({ status_badge: 'DENIED', status: 'DENIED' })
+          .eq('sender_id', activeThreadId)
+          .eq('receiver_id', currentUser.id)
+          .or('status_badge.eq.AWAITING_ATTENTION,status_badge.eq.PENDING');
+      }
+    } catch (cleanErr) {}
     checkReviewSLADeadlinesAndLockout();
     showToast("Submission marked as DENIED.");
     await loadVendorCommissions();
