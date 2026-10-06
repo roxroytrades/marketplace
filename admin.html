@@ -298,30 +298,30 @@ eh
 </div>
 </header>
 <!-- Primary Navigation Tabs -->
-<div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-4 sm:px-6 py-2 sticky top-[73px] z-20">
-<div class="max-w-7xl mx-auto flex flex-wrap items-center gap-2 text-xs overflow-x-auto no-scrollbar">
-<button onclick="switchAdminTab('users')" id="tabBtn-users" class="admin-tab-btn active px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+<div class="bg-cardBg/80 backdrop-blur border-b border-borderSlate px-6 py-2 sticky top-[73px] z-20">
+<div class="max-w-7xl mx-auto flex items-center space-x-2 overflow-x-auto no-scrollbar text-xs">
+<button onclick="switchAdminTab('users')" id="tabBtn-users" class="admin-tab-btn active px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30">
 <i class="fa-solid fa-users-gear text-xs"></i>
 <span>Accounts & ID Verification</span>
 </button>
-<button onclick="switchAdminTab('products')" id="tabBtn-products" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0">
+<button onclick="switchAdminTab('products')" id="tabBtn-products" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
 <i class="fa-solid fa-box-archive text-xs"></i>
 <span>Product Catalog</span>
 </button>
-<button onclick="switchAdminTab('commissions')" id="tabBtn-commissions" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0">
+<button onclick="switchAdminTab('commissions')" id="tabBtn-commissions" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
 <i class="fa-solid fa-receipt text-xs"></i>
 <span>Master Commissions Ledger</span>
 </button>
-<button onclick="switchAdminTab('messaging')" id="tabBtn-messaging" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0 relative">
+<button onclick="switchAdminTab('messaging')" id="tabBtn-messaging" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent relative">
 <i class="fa-solid fa-comments text-xs"></i>
 <span>System Messaging & Outreach</span>
-<span id="unreadMessagesBadge" class="hidden bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full ml-1">0</span>
+<span id="unreadMessagesBadge" class="hidden bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">0</span>
 </button>
-<button onclick="switchAdminTab('referrals')" id="tabBtn-referrals" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0">
+<button onclick="switchAdminTab('referrals')" id="tabBtn-referrals" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
 <i class="fa-solid fa-sitemap text-xs"></i>
 <span>Referral Network Hub</span>
 </button>
-<button onclick="switchAdminTab('settings')" id="tabBtn-settings" class="admin-tab-btn px-3 sm:px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent shrink-0">
+<button onclick="switchAdminTab('settings')" id="tabBtn-settings" class="admin-tab-btn px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
 <i class="fa-solid fa-gear text-xs"></i>
 <span>System Settings & Branding</span>
 </button>
@@ -435,7 +435,6 @@ eh
 <i class="fa-solid fa-paper-plane"></i>
 <span>Request All Liquid Payouts</span>
 </button>
-</div>
 </div>
 </div>
 <!-- 3 Non-Redundant Summary KPI Cards for Admin Financial Accounting -->
@@ -590,7 +589,6 @@ eh
 </button>
 </div>
 </div>
-</div>
 <!-- Main Messaging Workspace Grid (Left Thread List + Right Transcript Inspector) -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px]">
 <!-- LEFT PANE: 5-Tab Quick-Switch Thread Manager & Search -->
@@ -622,7 +620,6 @@ Needs Attention
 <button onclick="switchLeftPaneFilter('CONTACTS')" id="leftTab-CONTACTS" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
 📇 User Directory
 </button>
-</div>
 </div>
 </div>
 <!-- Scrollable Left Thread Cards List -->
@@ -754,7 +751,6 @@ Admin Referral Code: <span id="adminRefCodeDisplay" class="font-mono text-amber-
 </div>
 </div>
 </div>
-</div>
 <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl">
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse text-xs">
@@ -808,7 +804,6 @@ eh
 </button>
 </div>
 </div>
-</div>
 </section>
 </main>
 <!-- Footer -->
@@ -844,7 +839,6 @@ eh
 <button id="idModalVerifyBtn" onclick="approveUserVerificationFromModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-emerald-500/20">
 <i class="fa-solid fa-check-circle mr-1.5"></i> Set Status to VERIFIED
 </button>
-</div>
 </div>
 </div>
 </div>
@@ -906,7 +900,7 @@ eh
 </label>
 </div>
 <div id="editUserNationalIdPreview" class="hidden p-2 bg-darkBg border border-emerald-500/40 rounded-xl flex items-center space-x-3">
-<img id="editUserNationalIdImg" src="" alt="New ID Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate shrink-0">
+<img id="editUserNationalIdImg" src="" alt="New ID Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate shrink-0" onerror="this.style.display='none';">
 <div class="text-[11px] text-emerald-400 font-medium">
 <i class="fa-solid fa-circle-check mr-1"></i>New ID document ready to save
 </div>
@@ -920,7 +914,6 @@ eh
 <div class="flex items-center justify-end space-x-3 pt-2 border-t border-borderSlate/60">
 <button onclick="closeEditUserModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Cancel</button>
 <button onclick="saveUserEdit()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-amber-500/20">Save Profile Updates</button>
-</div>
 </div>
 </div>
 </div>
@@ -982,7 +975,6 @@ eh
 </div>
 </div>
 </div>
-</div>
 <!-- GLOBAL SYSTEM BROADCAST MODAL -->
 <div id="systemBroadcastModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
 <div class="bg-cardBg border border-borderSlate rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 relative">
@@ -1014,7 +1006,6 @@ eh
 <div class="flex items-center justify-end space-x-3 pt-2 border-t border-borderSlate/60">
 <button onclick="closeSystemBroadcastModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Cancel</button>
 <button onclick="executeSystemBroadcast()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-blue-500/20">Dispatch Broadcast</button>
-</div>
 </div>
 </div>
 </div>
@@ -1071,10 +1062,8 @@ Apply Force Move
 </button>
 </div>
 </div>
-</div>
 <div class="flex justify-end space-x-2 pt-2">
 <button onclick="closeCommissionDetailsModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-medium px-4 py-2 rounded-xl transition">Close</button>
-</div>
 </div>
 </div>
 </div>
@@ -1151,7 +1140,6 @@ Apply Force Move
 </div>
 </div>
 </div>
-</div>
 <!-- SUPABASE INTEGRATION & ENGINE SCRIPT -->
 <script>
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
@@ -1168,11 +1156,6 @@ const SCHEMA_COLUMNS = {
   system_settings: ['key', 'value', 'updated_at', 'created_at'],
   notifications: ['id', 'user_id', 'title', 'message', 'is_read', 'created_at']
 };
-const ALLOWED_TABLE_COLUMNS = SCHEMA_COLUMNS;
-
-function getAdminRefCode() {
-  return (currentUser && currentUser.referral_code) ? currentUser.referral_code : 'ADMIN_PROMO_2026';
-}
 
 function sanitizeOrFilter(tableName, filterStr) {
   if (!filterStr || !SCHEMA_COLUMNS[tableName]) return filterStr;
@@ -1326,8 +1309,6 @@ const activeBtn = document.getElementById(`tabBtn-${tabKey}`);
 if (activeBtn) {
 activeBtn.className = "admin-tab-btn active px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 bg-amber-500/20 text-amber-400 border border-amber-500/30";
 }
-const mobileSelect = document.getElementById('adminTabSelectMobile');
-if (mobileSelect) mobileSelect.value = tabKey;
 document.querySelectorAll('.admin-tab-content').forEach(sec => sec.classList.add('hidden'));
 const targetSec = document.getElementById(`adminTab-${tabKey}`);
 if (targetSec) targetSec.classList.remove('hidden');
@@ -2381,7 +2362,6 @@ modalEl.innerHTML = `
 <button onclick="document.getElementById('adminProductDetailsModal').classList.add('hidden')" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">Close</button>
 </div>
 </div>
-</div>
 `;
 modalEl.classList.remove('hidden');
 };
@@ -3016,10 +2996,11 @@ await loadUsersData();
 alert("Batch user deletion failed: " + err.message);
 }
 }
+
 let editUserNewIdBase64 = '';
 
 function compressImageFileAdmin(file, maxWidth = 1000, quality = 0.75) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (e) => {
@@ -3039,25 +3020,20 @@ function compressImageFileAdmin(file, maxWidth = 1000, quality = 0.75) {
         ctx.drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
-      img.onerror = (err) => reject(err);
+      img.onerror = () => resolve(e.target.result);
     };
-    reader.onerror = (err) => reject(err);
   });
 }
 
 async function handleAdminIdFileSelect(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
-  try {
-    const base64 = await compressImageFileAdmin(file, 1000, 0.75);
-    editUserNewIdBase64 = base64;
-    const previewContainer = document.getElementById('editUserNationalIdPreview');
-    const previewImg = document.getElementById('editUserNationalIdImg');
-    if (previewImg) previewImg.src = base64;
-    if (previewContainer) previewContainer.classList.remove('hidden');
-  } catch (err) {
-    alert("Error processing National ID image: " + err.message);
-  }
+  const compressed = await compressImageFileAdmin(file);
+  editUserNewIdBase64 = compressed;
+  const previewBox = document.getElementById('editUserNationalIdPreview');
+  const previewImg = document.getElementById('editUserNationalIdImg');
+  if (previewImg) previewImg.src = compressed;
+  if (previewBox) previewBox.classList.remove('hidden');
 }
 
 function openEditUserModal(userId) {
@@ -3070,13 +3046,11 @@ document.getElementById('editUserRole').value = (u.role || 'buyer').toLowerCase(
 document.getElementById('editUserVerificationStatus').value = (u.verification_status || 'UNVERIFIED').toUpperCase();
 document.getElementById('editUserPaypalEmail').value = u.paypal_email || '';
 document.getElementById('editUserInvitedByCode').value = u.invited_by_code || '';
-
 editUserNewIdBase64 = '';
 const fileInput = document.getElementById('editUserNationalIdFile');
 if (fileInput) fileInput.value = '';
-const previewContainer = document.getElementById('editUserNationalIdPreview');
-if (previewContainer) previewContainer.classList.add('hidden');
-
+const previewBox = document.getElementById('editUserNationalIdPreview');
+if (previewBox) previewBox.classList.add('hidden');
 document.getElementById('editUserModal').classList.remove('hidden');
 }
 function closeEditUserModal() {
@@ -3103,15 +3077,14 @@ invited_by_code: invitedByCode
 if (editUserNewIdBase64) {
 updatePayload.national_id_base64 = editUserNewIdBase64;
 }
-const sanitized = sanitizePayload('profiles', updatePayload);
+const sanitizedPayload = sanitizePayload('profiles', updatePayload);
 const { error } = await _supabase
 .from('profiles')
-.update(sanitized)
+.update(sanitizedPayload)
 .eq('id', userId);
 if (error) throw error;
 showToast("User profile updated successfully!");
 closeEditUserModal();
-editUserNewIdBase64 = '';
 await loadUsersData();
 } catch (err) {
 alert("Error updating user profile: " + err.message);
@@ -3181,7 +3154,9 @@ content.innerHTML = `
 `;
 document.getElementById('commissionDetailsModal').classList.remove('hidden');
 }
-
+function closeCommissionDetailsModal() {
+document.getElementById('commissionDetailsModal').classList.add('hidden');
+}
 async function executeForceMoveQueue() {
 const commId = document.getElementById('forceMoveCommId').value;
 const targetQueue = document.getElementById('forceMoveQueueSelect').value;
