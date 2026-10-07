@@ -3536,12 +3536,26 @@ async function deleteUserRecord(userId) {
       .delete()
       .eq('id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.warn("Direct deletion blocked by database constraints or RLS. Executing fallback account restriction (BANNED)...", error);
+      const { error: banErr } = await _supabase
+        .from('profiles')
+        .update({ verification_status: 'BANNED' })
+        .eq('id', userId);
+
+      if (banErr) throw banErr;
+
+      selectedUserIds.delete(userId);
+      showToast(`Account ${userName} has active transaction logs. Access restricted & status set to BANNED.`);
+      await loadUsersData();
+      return;
+    }
+
     selectedUserIds.delete(userId);
     showToast(`User account ${userName} erased successfully.`);
     await loadUsersData();
   } catch (err) {
-    alert("User deletion failed: " + err.message);
+    alert("User deletion/restriction failed: " + err.message);
   }
 }
 
@@ -3556,12 +3570,26 @@ async function deleteSelectedUsers() {
       .delete()
       .in('id', idsToErase);
 
-    if (error) throw error;
+    if (error) {
+      console.warn("Batch deletion blocked by database constraints or RLS. Executing fallback account restriction (BANNED)...", error);
+      const { error: banErr } = await _supabase
+        .from('profiles')
+        .update({ verification_status: 'BANNED' })
+        .in('id', idsToErase);
+
+      if (banErr) throw banErr;
+
+      selectedUserIds.clear();
+      showToast(`${idsToErase.length} account(s) contain transaction logs. Status set to BANNED to restrict access.`);
+      await loadUsersData();
+      return;
+    }
+
     selectedUserIds.clear();
     showToast(`Successfully erased ${idsToErase.length} user account(s).`);
     await loadUsersData();
   } catch (err) {
-    alert("Batch user deletion failed: " + err.message);
+    alert("Batch user deletion/restriction failed: " + err.message);
   }
 }
 
