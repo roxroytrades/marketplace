@@ -872,7 +872,7 @@ pollingInterval = setInterval(async () => {
 await loadMarketplaceProducts(true);
 await loadShopperCommissions(true);
 await loadMessagingThreads(true);
-}, 10000);
+}, 60000);
 
 } catch (err) {
 console.error("Workspace initialization error:", err.message);
