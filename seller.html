@@ -906,7 +906,7 @@ async function initSellerWorkspace() {
     if (pollingInterval) {
       clearInterval(pollingInterval);
     }
-    pollingInterval = setInterval(pollVendorData, 10000);
+    pollingInterval = setInterval(pollVendorData, 60000);
   } catch (err) {
     console.error("Initialization error:", err.message);
     window.location.href = 'login.html';
