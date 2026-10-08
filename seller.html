@@ -1697,7 +1697,7 @@ async function handleSettlementSubmit(event) {
   }
   let receiptBase64 = '';
   if (fileInput.files && fileInput.files[0]) {
-    receiptBase64 = await compressImageFile(fileInput.files[0], 900, 0.7);
+    receiptBase64 = await uploadImageToStorage(fileInput.files[0], 'receipts');
   }
   try {
     let updateData = {
