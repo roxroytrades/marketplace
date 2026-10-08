@@ -1107,7 +1107,7 @@ async function handleSaveProduct(event) {
     if (existing) imageUrl = existing.image_url || existing.image;
   }
   if (fileInput.files && fileInput.files[0]) {
-    imageUrl = await imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');;
+imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');
   }
   try {
     const productData = {
