@@ -2662,7 +2662,7 @@ async function handleSendMessage(event) {
   if (chatAttachedFile) {
     fileName = chatAttachedFile.name;
     if (chatAttachedFile.type.startsWith('image/')) {
-      fileDataUrl = await compressImageFile(chatAttachedFile, 1200, 0.8);
+      fileDataUrl = await uploadImageToStorage(chatAttachedFile, 'messages');
     } else {
       fileDataUrl = await new Promise((resolve) => {
         const reader = new FileReader();
@@ -2700,10 +2700,9 @@ async function handleSendMessage(event) {
       created_at: new Date().toISOString()
     };
     if (fileDataUrl) {
-      payload.proof_base64 = fileDataUrl;
-      payload.file_url = fileDataUrl;
-      payload.file_name = fileName;
-    }
+  payload.proof_base64 = fileDataUrl;
+  payload.file_name = fileName;
+}
     let { error } = await _supabase
       .from('messages')
       .insert([payload]);
