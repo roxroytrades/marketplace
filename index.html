@@ -2059,13 +2059,19 @@ async function submitReviewUrlMessage() {
   if (!url || !activeRecipientId) return;
 
   // ---- 1. Must be a valid URL ----
-  let parsed;
-  try {
-    parsed = new URL(url);
-  } catch {
-    alert("That doesn't look like a valid URL. Please paste the full link to your review.");
-    return;
-  }
+  // Normalize: prepend https:// if the user pasted a bare domain like "amazon.com/..."
+let normalized = url.trim();
+if (!/^https?:\/\//i.test(normalized)) {
+  normalized = 'https://' + normalized;
+}
+
+let parsed;
+try {
+  parsed = new URL(normalized);
+} catch {
+  alert("That doesn't look like a valid URL. Please paste the full link to your review.");
+  return;
+}
 
   // ---- 2. Must be an Amazon-family host ----
   const host = parsed.hostname.toLowerCase();
