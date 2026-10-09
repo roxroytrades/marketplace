@@ -2055,25 +2055,25 @@ alert("Failed to send message: " + err.message);
 
 async function submitReviewUrlMessage() {
   const field = document.getElementById('reviewUrlField');
-  const url = field ? field.value.trim() : '';
-  if (!url || !activeRecipientId) return;
+  const rawUrl = field ? field.value.trim() : '';
+  if (!rawUrl || !activeRecipientId) return;
 
-  // ---- 1. Must be a valid URL ----
-  // Normalize: prepend https:// if the user pasted a bare domain like "amazon.com/..."
-let normalized = url.trim();
-if (!/^https?:\/\//i.test(normalized)) {
-  normalized = 'https://' + normalized;
-}
+  // ---- 1. Normalize: add https:// if the user pasted a bare domain ----
+  let normalized = rawUrl;
+  if (!/^https?:\/\//i.test(normalized)) {
+    normalized = 'https://' + normalized;
+  }
 
-let parsed;
-try {
-  parsed = new URL(normalized);
-} catch {
-  alert("That doesn't look like a valid URL. Please paste the full link to your review.");
-  return;
-}
+  // ---- 2. Must be a parseable URL ----
+  let parsed;
+  try {
+    parsed = new URL(normalized);
+  } catch {
+    alert("That doesn't look like a valid URL. Please paste the full link to your review.");
+    return;
+  }
 
-  // ---- 2. Must be an Amazon-family host ----
+  // ---- 3. Must be an Amazon-family host ----
   const host = parsed.hostname.toLowerCase();
   const isAmazon = host.includes('amazon.') || host === 'a.co' || host === 'amzn.to';
   if (!isAmazon) {
@@ -2081,12 +2081,12 @@ try {
     return;
   }
 
-  // ---- 3. Classify the URL shape ----
+  // ---- 4. Classify the URL shape ----
   const isExplicitReviewUrl = /(\/gp\/customer-reviews\/|\/review\/|\/product-reviews\/)/i.test(parsed.pathname);
   const isShortLink = host === 'a.co' || host === 'amzn.to';
   const isProductUrl = /(\/dp\/|\/gp\/product\/)/i.test(parsed.pathname);
 
-  // ---- 4. Confirmation popup ----
+  // ---- 5. Confirmation popup ----
   let confirmMsg;
   if (isProductUrl && !isExplicitReviewUrl) {
     confirmMsg =
@@ -2101,16 +2101,16 @@ try {
       "Confirm that this link goes to YOUR posted Amazon review.";
   } else if (!isExplicitReviewUrl) {
     confirmMsg =
-      "You're about to submit this URL:\n\n" + url + "\n\n" +
+      "You're about to submit this URL:\n\n" + normalized + "\n\n" +
       "Confirm that this link points to YOUR posted Amazon review (not the product page).";
   } else {
     confirmMsg =
-      "Submit this review URL?\n\n" + url;
+      "Submit this review URL?\n\n" + normalized;
   }
 
   if (!confirm(confirmMsg)) return;
 
-  // ---- 5. Send the message ----
+  // ---- 6. Send the message (with the normalized URL) ----
   try {
     const payload = {
       sender_id: currentUser.id,
@@ -2118,8 +2118,8 @@ try {
       buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
       vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
       product_id: activeProductId || null,
-      text: `Submitted Review URL: ${url}`,
-      review_url: url,
+      text: `Submitted Review URL: ${normalized}`,
+      review_url: normalized,
       status_badge: 'AWAITING_ATTENTION'
     };
 
