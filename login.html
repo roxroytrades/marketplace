@@ -98,6 +98,46 @@ tailwind.config = {
   </div>
 </main>
 
+<!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-blue-400">
+          <i class="fa-solid fa-key text-sm"></i>
+        </div>
+        <h3 class="text-sm font-bold text-white">Reset Your Password</h3>
+      </div>
+      <button onclick="closeForgotPasswordModal()" class="text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <p class="text-xs text-slate-400 leading-relaxed">
+      Enter the email address on your account. We'll send you a secure link to reset your password.
+    </p>
+
+    <form onsubmit="handleForgotPasswordSubmit(event)" class="space-y-4">
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">Account Email</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500">
+            <i class="fa-solid fa-envelope text-xs"></i>
+          </span>
+          <input type="email" id="forgotEmailInput" required placeholder="you@example.com" class="w-full bg-darkBg border border-borderSlate rounded-xl pl-10 pr-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        </div>
+      </div>
+
+      <div id="forgotPasswordAlert" class="hidden p-3 rounded-xl text-xs font-medium border"></div>
+
+      <button type="submit" id="forgotPasswordSubmitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>Send Reset Link</span>
+      </button>
+    </form>
+  </div>
+</div>
+
 <!-- Footer -->
 <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
   <p>&copy; 2026 Echo Hub Marketplace. Secure Authentication Engine.</p>
@@ -242,6 +282,52 @@ async function handleLogin(event) {
     btn.innerHTML = `<i class="fa-solid fa-right-to-bracket mr-2"></i> Sign In to Dashboard`;
   }
 }
+/* ================= FORGOT PASSWORD FLOW ================= */
+function openForgotPasswordModal() {
+  const modal = document.getElementById('forgotPasswordModal');
+  const alertEl = document.getElementById('forgotPasswordAlert');
+  if (alertEl) alertEl.classList.add('hidden');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeForgotPasswordModal() {
+  const modal = document.getElementById('forgotPasswordModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleForgotPasswordSubmit(event) {
+  event.preventDefault();
+  const email = document.getElementById('forgotEmailInput').value.trim();
+  const alertEl = document.getElementById('forgotPasswordAlert');
+  const submitBtn = document.getElementById('forgotPasswordSubmitBtn');
+
+  if (!email) return;
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Sending...</span>';
+
+  try {
+    const redirectUrl = window.location.origin + '/marketplace/reset-password.html';
+
+    const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
+
+    if (error) throw error;
+
+    alertEl.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+    alertEl.textContent = 'If an account with that email exists, a reset link has been sent. Check your inbox and spam folder.';
+    alertEl.classList.remove('hidden');
+  } catch (err) {
+    alertEl.className = 'p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+    alertEl.textContent = err.message || 'Unable to send reset link. Please try again.';
+    alertEl.classList.remove('hidden');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i><span>Send Reset Link</span>';
+  }
+}
+
 window.addEventListener('DOMContentLoaded', loadAppBranding);
 </script>
 </body>
