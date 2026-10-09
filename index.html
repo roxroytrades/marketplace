@@ -2054,33 +2054,80 @@ alert("Failed to send message: " + err.message);
 }
 
 async function submitReviewUrlMessage() {
-const field = document.getElementById('reviewUrlField');
-const url = field ? field.value.trim() : '';
-if (!url || !activeRecipientId) return;
+  const field = document.getElementById('reviewUrlField');
+  const url = field ? field.value.trim() : '';
+  if (!url || !activeRecipientId) return;
 
-try {
-const payload = {
-sender_id: currentUser.id,
-receiver_id: activeRecipientId,
-buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
-vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
-product_id: activeProductId || null,
-text: `Submitted Review URL: ${url}`,
-review_url: url,
-status_badge: 'AWAITING_ATTENTION'
-};
+  // ---- 1. Must be a valid URL ----
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    alert("That doesn't look like a valid URL. Please paste the full link to your review.");
+    return;
+  }
 
-const { error } = await _supabase.from('messages').insert([payload]);
-if (error) throw error;
+  // ---- 2. Must be an Amazon-family host ----
+  const host = parsed.hostname.toLowerCase();
+  const isAmazon = host.includes('amazon.') || host === 'a.co' || host === 'amzn.to';
+  if (!isAmazon) {
+    alert("Review links must be to an amazon.com review page (or a.co / amzn.to short link).");
+    return;
+  }
 
-if (field) field.value = '';
-document.getElementById('reviewUrlInputBoxContainer')?.classList.add('hidden');
+  // ---- 3. Classify the URL shape ----
+  const isExplicitReviewUrl = /(\/gp\/customer-reviews\/|\/review\/|\/product-reviews\/)/i.test(parsed.pathname);
+  const isShortLink = host === 'a.co' || host === 'amzn.to';
+  const isProductUrl = /(\/dp\/|\/gp\/product\/)/i.test(parsed.pathname);
 
-await loadMessageStream(activeRecipientId, activeProductId);
-await loadMessagingThreads(true);
-} catch (err) {
-alert("Failed to submit review link: " + err.message);
-}
+  // ---- 4. Confirmation popup ----
+  let confirmMsg;
+  if (isProductUrl && !isExplicitReviewUrl) {
+    confirmMsg =
+      "⚠️ Heads up: this link looks like a PRODUCT page, not a review page.\n\n" +
+      "URLs that contain /dp/ point to the product itself, not to a review you posted.\n\n" +
+      "Are you sure this is the link to YOUR posted review?";
+  } else if (isShortLink) {
+    confirmMsg =
+      "You're about to submit a shortened link (" + host + ").\n\n" +
+      "Short links can point to either the product page or your review page. " +
+      "Vendors can only approve reviews that link to an actual customer review you posted.\n\n" +
+      "Confirm that this link goes to YOUR posted Amazon review.";
+  } else if (!isExplicitReviewUrl) {
+    confirmMsg =
+      "You're about to submit this URL:\n\n" + url + "\n\n" +
+      "Confirm that this link points to YOUR posted Amazon review (not the product page).";
+  } else {
+    confirmMsg =
+      "Submit this review URL?\n\n" + url;
+  }
+
+  if (!confirm(confirmMsg)) return;
+
+  // ---- 5. Send the message ----
+  try {
+    const payload = {
+      sender_id: currentUser.id,
+      receiver_id: activeRecipientId,
+      buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
+      vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
+      product_id: activeProductId || null,
+      text: `Submitted Review URL: ${url}`,
+      review_url: url,
+      status_badge: 'AWAITING_ATTENTION'
+    };
+
+    const { error } = await _supabase.from('messages').insert([payload]);
+    if (error) throw error;
+
+    if (field) field.value = '';
+    document.getElementById('reviewUrlInputBoxContainer')?.classList.add('hidden');
+
+    await loadMessageStream(activeRecipientId, activeProductId);
+    await loadMessagingThreads(true);
+  } catch (err) {
+    alert("Failed to submit review link: " + err.message);
+  }
 }
 
 function updateUnreadBadge() {
