@@ -394,15 +394,17 @@ async function handleIdFileSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
   try {
-    compressedNationalIdBase64 = await uploadImageToStorage(file, 'ids');
+    const localPreview = await compressImageFile(file, 1000, 0.75);
     const previewContainer = document.getElementById('idPreviewContainer');
     const previewImg = document.getElementById('idPreviewImg');
-    if (previewContainer && previewImg && compressedNationalIdBase64.startsWith('data:image')) {
-      previewImg.src = compressedNationalIdBase64;
+    if (previewContainer && previewImg && localPreview.startsWith('data:image')) {
+      previewImg.src = localPreview;
       previewContainer.classList.remove('hidden');
     }
+    compressedNationalIdBase64 = await uploadImageToStorage(file, 'ids');
   } catch (err) {
-    console.warn('ID compression warning:', err);
+    console.warn('ID upload warning:', err);
+    alert('Failed to upload ID document. Please try again.');
   }
 }
 
