@@ -258,7 +258,8 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
-<!-- Top Navigation Bar (Adaptive Mobile Header Fix - Arch Doc v5.4) -->
+<div id="debugOverlay" style="position:fixed;top:0;left:0;right:0;background:black;color:lime;font-size:11px;padding:8px;z-index:99999;font-family:monospace;max-height:45vh;overflow-y:auto;border-bottom:2px solid lime;"></div>
+  <!-- Top Navigation Bar (Adaptive Mobile Header Fix - Arch Doc v5.4) -->
 <header class="bg-cardBg border-b border-borderSlate px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between gap-3 sticky top-0 z-40 shadow-lg">
 <div class="flex items-center space-x-2.5 sm:space-x-3 shrink-0 min-w-0">
 <div id="appHeaderLogo" class="app-header-logo w-9 h-9 sm:w-10 sm:h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-heading font-bold text-base sm:text-lg overflow-hidden shrink-0">
