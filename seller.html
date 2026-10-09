@@ -965,7 +965,7 @@ async function uploadImageToStorage(file, folder = 'products') {
   const dataUrl = await compressImageFile(file, 800, 0.7);
   const res = await fetch(dataUrl);
   const blob = await res.blob();
-  const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop().toLowerCase() : 'jpg';
+  const ext = 'jpg';
   const filename = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${ext}`;
   const { error } = await _supabase
     .storage
@@ -975,11 +975,7 @@ async function uploadImageToStorage(file, folder = 'products') {
       upsert: false
     });
   if (error) throw new Error('Image upload failed: ' + error.message);
-  const { data: publicUrlData } = _supabase
-    .storage
-    .from('echohub-images')
-    .getPublicUrl(filename);
-  return publicUrlData.publicUrl;
+    return `${SUPABASE_URL}/storage/v1/object/public/echohub-images/${filename}`;
 }
 /* Image Compression Utility */
 async function compressImageFile(file, maxWidth = 800, quality = 0.7) {
