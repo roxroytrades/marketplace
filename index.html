@@ -665,83 +665,85 @@ eh
 </div>
 
 <!-- Right Panel: Active Chat Stream (Sibling Flex Modal Architecture - Arch Doc v5.4) -->
-<div id="activeChatPanel" class="hidden sm:flex flex-1 flex-col bg-cardBg relative overflow-hidden">
-<div id="activeChatHeader" class="p-4 border-b border-borderSlate flex items-center justify-between bg-slate-900/30 shrink-0"><button onclick="backToThreadsList()" class="sm:hidden text-slate-400 hover:text-white p-1 transition">
-<i class="fa-solid fa-arrow-left text-base"></i>
-</button>
-<div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs shrink-0">
-<i class="fa-solid fa-user"></i>
-</div>
-<div class="truncate">
-<h4 id="activeChatTitle" class="font-bold text-white text-xs truncate">Select a conversation</h4>
-<span id="activeChatSubtitle" class="text-[10px] text-slate-400 flex items-center space-x-1.5 truncate">
-<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0"></span>
-<span id="activeChatRoleTag" class="truncate">Vendor / Shopper Chat</span>
-</span>
-</div>
-</div>
-<button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
-<i class="fa-solid fa-xmark text-lg"></i>
-</button>
-</div>
-<!-- Message Stream Area -->
-<div id="messageStreamContainer" class="flex-1 min-h-0 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden"><i class="fa-regular fa-comments text-2xl text-slate-600"></i>
-<p>Choose a thread from the left to start messaging.</p>
-</div>
-</div>
-<!-- Interactive Attachment Options Drawer (Initially Hidden) -->
-<div id="attachmentOptionsDrawer" class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-72 space-y-2">
-<div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
-<span>Attach Options</span>
-<button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-</div>
-<button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
-<div class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
-<div>
-<p class="font-semibold">Submit Review URL</p>
-<p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
-</div>
-</button>
-<button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
-<div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
-<div>
-<p class="font-semibold">Attach Screenshot Proof</p>
-<p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
-</div>
-</button>
-<!-- Hidden file uploader container -->
-<input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
-</div>
-<!-- Inline Review URL Input Prompt Modal / Container -->
-<div id="reviewUrlInputBoxContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center space-x-2">
-<input type="text" id="reviewUrlField" placeholder="Paste Amazon/Store review URL here..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue">
-<button onclick="submitReviewUrlMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold">Send URL</button>
-<button onclick="document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-xmark"></i></button>
-</div>
-<!-- Thumbnail Preview Container -->
-<div id="chatThumbnailPreviewContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center justify-between">
-<div class="flex items-center space-x-3">
-<img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"><div class="hidden w-10 h-10 rounded-lg border border-borderSlate bg-slate-900 flex items-center justify-center text-slate-500"><i class="fa-solid fa-file-image"></i></div>
-<span class="text-xs text-slate-300 font-medium">Screenshot attached ready to send</span>
-</div>
-<button onclick="clearChatThumbnail()" class="text-rose-400 hover:text-rose-300 text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i> Remove</button>
-</div>
-<!-- Message Input Footer with Paperclip Attachment Button -->
-<div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40 hidden shrink-0"><!-- Paperclip Attachment Button -->
-<button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner" title="Attach options">
-<i class="fa-solid fa-paperclip text-blue-400"></i>
-</button>
-<input type="text" id="messageInputBox" placeholder="Type your message or attach review proof..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-<button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1">
-<span class="hidden sm:inline">Send</span>
-<i class="fa-solid fa-paper-plane"></i>
-</button>
-</form>
-</div>
-</div>
-</div>
-</div>
+<div id="activeChatPanel" class="hidden flex flex-1 flex-col bg-cardBg relative overflow-hidden">
+  <div id="activeChatHeader" class="p-4 border-b border-borderSlate flex items-center justify-between bg-slate-900/30 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="backToThreadsList()" class="sm:hidden text-slate-400 hover:text-white p-1 transition">
+        <i class="fa-solid fa-arrow-left text-base"></i>
+      </button>
+      <div class="w-9 h-9 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center font-bold text-xs shrink-0">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <div class="truncate">
+        <h4 id="activeChatTitle" class="font-bold text-white text-xs truncate">Select a conversation</h4>
+        <span id="activeChatSubtitle" class="text-[10px] text-slate-400 flex items-center space-x-1.5 truncate">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+          <span id="activeChatRoleTag" class="truncate">Vendor / Shopper Chat</span>
+        </span>
+      </div>
+    </div>
+    <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+  </div>
 
+  <div id="messageStreamContainer" class="flex-1 min-h-0 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden">
+    <div class="m-auto text-center text-xs text-slate-500 space-y-1">
+      <i class="fa-regular fa-comments text-2xl text-slate-600"></i>
+      <p>Choose a thread from the left to start messaging.</p>
+    </div>
+  </div>
+
+  <div id="attachmentOptionsDrawer" class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-72 space-y-2">
+    <div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
+      <span>Attach Options</span>
+      <button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+      <div class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
+      <div>
+        <p class="font-semibold">Submit Review URL</p>
+        <p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
+      </div>
+    </button>
+    <button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+      <div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
+      <div>
+        <p class="font-semibold">Attach Screenshot Proof</p>
+        <p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
+      </div>
+    </button>
+    <input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
+  </div>
+
+  <div id="reviewUrlInputBoxContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center space-x-2 shrink-0">
+    <input type="text" id="reviewUrlField" placeholder="Paste Amazon/Store review URL here..." class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue">
+    <button onclick="submitReviewUrlMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold">Send URL</button>
+    <button onclick="document.getElementById('reviewUrlInputBoxContainer').classList.add('hidden')" class="text-slate-400 hover:text-white px-2"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <div id="chatThumbnailPreviewContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center justify-between shrink-0">
+    <div class="flex items-center space-x-3">
+      <img id="chatPreviewThumb" src="" alt="Preview" class="w-10 h-10 object-cover rounded-lg border border-borderSlate" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+      <div class="hidden w-10 h-10 rounded-lg border border-borderSlate bg-slate-900 flex items-center justify-center text-slate-500"><i class="fa-solid fa-file-image"></i></div>
+      <span class="text-xs text-slate-300 font-medium">Screenshot attached ready to send</span>
+    </div>
+    <button onclick="clearChatThumbnail()" class="text-rose-400 hover:text-rose-300 text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i> Remove</button>
+  </div>
+
+  <div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40 hidden shrink-0">
+    <form onsubmit="handleSendMessage(event)" class="flex items-center space-x-2 relative">
+      <button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner" title="Attach options">
+        <i class="fa-solid fa-paperclip text-blue-400"></i>
+      </button>
+      <input type="text" id="messageInputBox" placeholder="Type your message or attach review proof..." autocomplete="off" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+      <button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1">
+        <span class="hidden sm:inline">Send</span>
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </form>
+  </div>
+</div>
 <!-- Footer -->
 <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
 <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Referral Engine.</p>
@@ -1785,10 +1787,13 @@ const profile = profilesCache[resolvedRecipientId] || { full_name: `User #${Stri
 const leftSidebar = document.getElementById('threadsListContainerWrapper');
 const activePanel = document.getElementById('activeChatPanel');
 if (window.innerWidth < 640 && leftSidebar && activePanel) {
-leftSidebar.classList.add('hidden');
-activePanel.classList.remove('hidden');
+  leftSidebar.classList.add('hidden');
+  activePanel.classList.remove('hidden');
+  activePanel.classList.add('flex');
+  activePanel.style.display = 'flex';
 } else if (activePanel) {
-activePanel.classList.remove('hidden');
+  activePanel.classList.remove('hidden');
+  activePanel.classList.add('flex');
 }
 
 const inputArea = document.getElementById('messageInputArea');
@@ -1822,12 +1827,14 @@ setupRealtimeMessageSubscription(resolvedRecipientId, productId);
 }
 
 function backToThreadsList() {
-const leftSidebar = document.getElementById('threadsListContainerWrapper');
-const activePanel = document.getElementById('activeChatPanel');
-if (leftSidebar && activePanel) {
-activePanel.classList.add('hidden');
-leftSidebar.classList.remove('hidden');
-}
+  const leftSidebar = document.getElementById('threadsListContainerWrapper');
+  const activePanel = document.getElementById('activeChatPanel');
+  if (leftSidebar && activePanel) {
+    activePanel.classList.add('hidden');
+    activePanel.classList.remove('flex');
+    activePanel.style.display = '';
+    leftSidebar.classList.remove('hidden');
+  }
 }
 
 function renderMessageStatusBadge(m) {
