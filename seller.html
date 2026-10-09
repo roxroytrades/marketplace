@@ -795,6 +795,7 @@ function sanitizePayload(tableName, payload) {
 }
 
 let currentUser = null;
+
 /* Global Chat Products Cache & Lookup Engine */
 let chatProducts = {};
 async function getSellerChatProduct(productId) {
@@ -869,15 +870,16 @@ async function initSellerWorkspace() {
     }
     /* Step B: Fetch user role from public.profiles */
     const { data: profile, error: profileError } = await _supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
+  .from('profiles')
+  .select('*')
+  .eq('id', session.user.id)
+  .single();
     if (profileError || !profile || !profile.role) {
       await _supabase.auth.signOut();
       window.location.href = 'login.html';
       return;
     }
+        currentProfile = profile;
     /* Step C: Enforce role isolation (Block Buyers from Vendor Portal) */
     if (profile.role.toLowerCase() === 'buyer') {
       alert("Access Denied: Buyer accounts are not permitted in the Vendor Workspace.");
@@ -1106,6 +1108,7 @@ async function handleSaveProduct(event) {
 imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');
   }
   try {
+        const sellerDefaultCommission = Number(currentProfile?.commission_amount ?? 15.00);
     const productData = {
       vendor_id: currentUser.id,
       seller_id: currentUser.id,
@@ -1117,7 +1120,9 @@ imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');
       image: imageUrl,
       amazon_url: amazonUrl,
       product_url: amazonUrl,
-      product_link: amazonUrl
+      product_link: amazonUrl,
+      commission: sellerDefaultCommission,
+      commission_amount: sellerDefaultCommission
     };
     const saveToSupabase = async (payload) => {
       let reqPayload = { ...payload };
