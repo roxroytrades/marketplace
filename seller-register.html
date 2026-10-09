@@ -558,19 +558,20 @@ throw new Error('User registration failed to return an authenticated ID.');
 }
 
 const { error: profileError } = await _supabase
-.from('profiles')
-.upsert({
-id: userId,
-full_name: fullName,
-email: email,
-paypal_email: paypalEmail,
-invited_by_code: finalInvitedByCode,
-referred_by: finalReferredBy,
-role: 'seller',
-verification_status: 'VERIFIED',
-commission_policy_agreed: commissionPolicyAgreed,
-created_at: new Date().toISOString()
-});
+  .from('profiles')
+  .upsert({
+    id: userId,
+    full_name: fullName,
+    email: email,
+    paypal_email: paypalEmail,
+    invited_by_code: finalInvitedByCode,
+    referred_by: finalReferredBy,
+    role: 'seller',
+    verification_status: 'VERIFIED',
+    commission_policy_agreed: commissionPolicyAgreed,
+    commission_amount: commissionAmount,   // ← ADDED
+    created_at: new Date().toISOString()
+  });
 if (profileError) {
 console.warn('Profiles table upsert notice:', profileError.message);
 }
