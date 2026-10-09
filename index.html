@@ -777,9 +777,7 @@ function resolveVendorName(vendorId) {
   const p = profilesCache[vendorId];
   if (!p) return 'Unknown Merchant';
   return (
-    p.business_name ||
     p.full_name ||
-    p.store_name ||
     (p.email ? p.email.split('@')[0] : null) ||
     'Unknown Merchant'
   );
@@ -1030,7 +1028,7 @@ async function loadMarketplaceProducts(isPolling = false) {
     if (missingSellerIds.size > 0) {
       const { data: profs, error: profErr } = await _supabase
         .from('profiles')
-        .select('id, full_name, email, role, business_name, paypal_email')
+.select('id, full_name, email, role, paypal_email, whatsapp, referral_code')
         .in('id', Array.from(missingSellerIds));
 
       if (profErr) {
