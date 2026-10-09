@@ -1181,8 +1181,9 @@ function checkReviewSLADeadlinesAndLockout() {
       const isFromShopper = m.sender_id !== currentUser.id;
       const statusBadge = (m.status_badge || m.status || '').toUpperCase();
       const isPending = statusBadge === 'AWAITING_ATTENTION' || statusBadge === 'PENDING';
-      const hasReviewProof = hasAmazonUrl(m.text || m.review_url || m.link || m.amazon_review_url || '') || (m.type === 'review_submission' && hasAmazonUrl(m.text || m.link || ''));
-
+const hasReviewProof =
+  hasAmazonReviewUrl(m.text || m.review_url || m.link || m.amazon_review_url || '') ||
+  (m.type === 'review_submission' && hasAmazonReviewUrl(m.text || m.link || ''));
       if (isFromShopper && isPending && hasReviewProof) {
         const createdAtTime = new Date(m.created_at || now).getTime();
         const elapsedMs = now - createdAtTime;
@@ -2187,6 +2188,19 @@ async function selectThread(partnerId) {
     } catch (e) {}
   }
 }
+// Strict: only matches URLs that are specifically AMAZON REVIEW URLs, not product links
+function hasAmazonReviewUrl(text) {
+  if (!text) return false;
+  const str = String(text).toLowerCase();
+  // Full review URL patterns
+  if (/amazon\.[a-z.]+(\/gp\/customer-reviews\/|\/review\/|\/product-reviews\/)/i.test(str)) return true;
+  if (/amazon\.[a-z.]+\/[^\s]*\/customer-reviews\//i.test(str)) return true;
+  // Shortened links that are ambiguous — you can either allow or reject.
+  // Safer to reject because they can be product links too.
+  return false;
+}
+
+// Keep the old loose function for general "is this an amazon link at all" checks
 function hasAmazonUrl(text) {
   if (!text) return false;
   const str = String(text).toLowerCase();
@@ -2345,9 +2359,16 @@ function renderActiveChat(shouldScroll = false) {
     const fileName = m.file_name || m.attachment_name || 'Attached File';
     const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
     const explicitStatus = (m.status_badge || m.status || '').toUpperCase();
-const hasAmazonProof = hasAmazonUrl(text) || hasAmazonUrl(m.review_url || m.link || m.amazon_review_url || '');
-const hasScreenshotProof = hasImageAttachment(m) && (explicitStatus === 'AWAITING_ATTENTION' || explicitStatus === 'APPROVED' || explicitStatus === 'DENIED' || explicitStatus === 'PENDING');
-const showAsReviewCard = isExplicitReviewType || hasAmazonProof || hasScreenshotProof;
+// A message is a review submission ONLY if:
+//   1. It has an explicit review status badge, AND
+//   2. It contains a strict Amazon REVIEW URL (not a product URL)
+const reviewStatuses = ['AWAITING_ATTENTION', 'APPROVED', 'DENIED', 'REJECTED', 'PENDING'];
+const hasReviewStatus = reviewStatuses.includes(explicitStatus);
+const hasAmazonReviewProof = hasAmazonReviewUrl(
+  text + ' ' + (m.review_url || '') + ' ' + (m.link || '') + ' ' + (m.amazon_review_url || '')
+);
+const hasScreenshotProof = hasImageAttachment(m) && hasReviewStatus;
+const showAsReviewCard = hasReviewStatus && (hasAmazonReviewProof || hasScreenshotProof);
     const feedbackId = m.feedback_id || 'Pending Approval';
     const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
     const commissionAmount = m.commission_amount || 5.00;
@@ -2378,29 +2399,12 @@ const showAsReviewCard = isExplicitReviewType || hasAmazonProof || hasScreenshot
           </div>
           <div class="inline-action-area pt-2 border-t border-white/10">
             ${statusBadge === 'AWAITING_ATTENTION' ? (
-              (hasAmazonUrl(amazonUrl) || hasAmazonUrl(text)) ? `
-                <div class="border border-emerald-500/40 bg-emerald-500/10 p-2.5 rounded-xl space-y-1.5">
-                  <div class="flex items-center justify-between text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-                    <span><i class="fa-brands fa-amazon mr-1 text-xs"></i> Amazon Link Verified</span>
-                    <span class="text-emerald-300 font-mono text-[9px]">$${Number(commissionAmount).toFixed(2)} Review Commission</span>
-                  </div>
-                  <div class="flex space-x-2" id="actions-${m.id}">
-                    <button onclick="handleInlineApprove('${m.id}','${m.sender_id}',${commissionAmount})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                      <i class="fa-solid fa-check"></i><span>Approve Review</span>
-                    </button>
-                    <button onclick="handleInlineDeny('${m.id}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition shadow-md flex items-center justify-center space-x-1">
-                      <i class="fa-solid fa-xmark"></i><span>Deny</span>
-                    </button>
-                  </div>
-                </div>
-              ` : `
-                <div class="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1.5 rounded-lg flex items-center space-x-1.5">
-                  <i class="fa-brands fa-amazon text-amber-400"></i>
-                  <span>Amazon.com URL required to enable vendor approval</span>
-                </div>
-              `
-            ) : `
-              <div class="text-[11px] text-slate-400 italic">Decision Recorded: <strong class="text-slate-200">${statusBadge}</strong> ${m.feedback_id ? `(FB ID: <span class="font-mono text-emerald-400">${m.feedback_id}</span>)` : ''}</div>
+  (hasAmazonReviewUrl(amazonUrl) || hasAmazonReviewUrl(text)) ? `
+    ...Approve / Deny buttons...
+  ` : `
+    ...A valid Amazon review URL is required to enable vendor approval...
+  `
+) : `...Decision Recorded...`}</div>
             `}
           </div>
         </div>
@@ -2501,8 +2505,7 @@ async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
   const thread = vendorThreads.find(t => t.partnerId === activeThreadId);
   const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
   const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || '') : '';
-  const isAmazonValid = hasAmazonUrl(reviewLink) || hasAmazonUrl(msg ? msg.text : '');
-
+  const isAmazonValid = hasAmazonReviewUrl(reviewLink) || hasAmazonReviewUrl(msg ? msg.text : '');
   if (!isAmazonValid) {
     alert("Approval Blocked: This submission does not contain a verified amazon.com review link.");
     return;
