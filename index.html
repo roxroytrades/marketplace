@@ -2084,8 +2084,7 @@ async function submitReviewUrlMessage() {
   // ---- 4. Classify the URL shape ----
   const isExplicitReviewUrl = /(\/gp\/customer-reviews\/|\/review\/|\/product-reviews\/)/i.test(parsed.pathname);
   const isShortLink = host === 'a.co' || host === 'amzn.to';
-  const isProductUrl = /(\/dp\/|\/gp\/product\/)/i.test(parsed.pathname);
-
+  const isProductUrl = /(\/dp\/|\/gp\/product\/|\/shop\/|\/stores\/)/i.test(parsed.pathname);
   // ---- 5. Confirmation popup ----
   let confirmMsg;
   if (isProductUrl && !isExplicitReviewUrl) {
