@@ -2014,9 +2014,17 @@ loadMessagingThreads(true);
 }
 
 async function handleSendMessage(e) {
-e.preventDefault();
-const input = document.getElementById('messageInputBox');
-const text = input ? input.value.trim() : '';
+  e.preventDefault();
+
+  // 🚫 Verification gate — blocks FAB, Contacts, existing threads, everything
+  const status = (currentProfile?.verification_status || '').trim().toUpperCase();
+  if (currentProfile?.role === 'buyer' && status !== 'VERIFIED') {
+    alert("Account locked: National ID verification is required before sending messages.");
+    return;
+  }
+
+  const input = document.getElementById('messageInputBox');
+  const text = input ? input.value.trim() : '';
 
 if ((!text && !attachedImageBase64) || !activeRecipientId) return;
 
