@@ -335,6 +335,7 @@ const form = document.getElementById('buyerRegisterForm');
 const alertBox = document.getElementById('formAlert');
 const submitBtn = document.getElementById('submitBtn');
 let compressedNationalIdBase64 = '';
+let selectedIdFile = null;
 
 /* Upload a compressed image to Supabase Storage, return public URL */
 async function uploadImageToStorage(file, folder = 'ids') {
@@ -393,6 +394,7 @@ function compressImageFile(file, maxWidth = 1000, quality = 0.75) {
 async function handleIdFileSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
+  selectedIdFile = file;
   try {
     const localPreview = await compressImageFile(file, 1000, 0.75);
     const previewContainer = document.getElementById('idPreviewContainer');
@@ -401,10 +403,8 @@ async function handleIdFileSelect(event) {
       previewImg.src = localPreview;
       previewContainer.classList.remove('hidden');
     }
-    compressedNationalIdBase64 = await uploadImageToStorage(file, 'ids');
   } catch (err) {
-    console.warn('ID upload warning:', err);
-    alert('Failed to upload ID document. Please try again.');
+    console.warn('ID preview warning:', err);
   }
 }
 
@@ -460,7 +460,7 @@ form.addEventListener('submit', async (e) => {
   const referralCode = document.getElementById('referralCode').value.trim();
   const policyAgreed = document.getElementById('policyAgreeCheckbox').checked;
 
-  if (!compressedNationalIdBase64) {
+  if (!selectedIdFile) {
     alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
     alertBox.textContent = 'Please attach a valid Government National ID document before submitting.';
     alertBox.classList.remove('hidden');
@@ -514,6 +514,11 @@ form.addEventListener('submit', async (e) => {
     if (loginError) {
       console.warn('Auto login notice:', loginError.message);
     }
+        // Upload the selected ID file now that the user is authenticated
+    let nationalIdUrl = '';
+    if (selectedIdFile) {
+      nationalIdUrl = await uploadImageToStorage(selectedIdFile, 'ids');
+    }
 
     /* Primary Profile Payload using correct database column 'whatsapp' from schema */
     const profilePayload = {
@@ -525,7 +530,7 @@ form.addEventListener('submit', async (e) => {
       categories: categories,
       invited_by_code: finalInvitedByCode,
       referred_by: finalReferredBy,
-      national_id_base64: compressedNationalIdBase64,
+      national_id_base64: nationalIdUrl,
       role: 'buyer',
       verification_status: 'PENDING',
       commission_policy_agreed: policyAgreed,
@@ -557,7 +562,7 @@ form.addEventListener('submit', async (e) => {
             categories: categories,
             invited_by_code: finalInvitedByCode,
             referred_by: finalReferredBy,
-            national_id_base64: compressedNationalIdBase64,
+            national_id_base64: nationalIdUrl,
             role: 'buyer',
             verification_status: 'PENDING',
             commission_policy_agreed: policyAgreed
