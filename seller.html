@@ -1173,7 +1173,7 @@ function checkReviewSLADeadlinesAndLockout() {
   (vendorThreads || []).forEach(t => {
     (t.messages || []).forEach(m => {
       const isFromShopper = m.sender_id !== currentUser.id;
-      const statusBadge = (m.status_badge || m.status || 'AWAITING_ATTENTION').toUpperCase();
+      const statusBadge = (m.status_badge || m.status || '').toUpperCase();
       const isPending = statusBadge === 'AWAITING_ATTENTION' || statusBadge === 'PENDING';
       const hasReviewProof = hasAmazonUrl(m.text || m.review_url || m.link || m.amazon_review_url || '') || (m.type === 'review_submission' && hasAmazonUrl(m.text || m.link || ''));
 
@@ -2338,14 +2338,16 @@ function renderActiveChat(shouldScroll = false) {
     const fileUrl = m._normalizedImage || m.file_url || m.attachment_url || m.proof_base64;
     const fileName = m.file_name || m.attachment_name || 'Attached File';
     const isExplicitReviewType = m.type === 'review_submission' || m.type === 'submission' || m.type === 'feedback';
-    const hasValidProof = hasAmazonUrl(text) || hasImageAttachment(m);
-    const showAsReviewCard = isExplicitReviewType || hasValidProof;
+    const explicitStatus = (m.status_badge || m.status || '').toUpperCase();
+const hasAmazonProof = hasAmazonUrl(text) || hasAmazonUrl(m.review_url || m.link || m.amazon_review_url || '');
+const hasScreenshotProof = hasImageAttachment(m) && (explicitStatus === 'AWAITING_ATTENTION' || explicitStatus === 'APPROVED' || explicitStatus === 'DENIED' || explicitStatus === 'PENDING');
+const showAsReviewCard = isExplicitReviewType || hasAmazonProof || hasScreenshotProof;
     const feedbackId = m.feedback_id || 'Pending Approval';
     const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
     const commissionAmount = m.commission_amount || 5.00;
     let bubbleContent = '';
     if (showAsReviewCard) {
-      const statusBadge = m.status_badge || m.status || 'AWAITING_ATTENTION';
+      const statusBadge = explicitStatus || 'AWAITING_ATTENTION';
       let badgeStyle = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
       if (statusBadge === 'APPROVED') badgeStyle = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
       else if (statusBadge === 'DENIED' || statusBadge === 'REJECTED') badgeStyle = 'bg-rose-500/20 text-rose-300 border-rose-500/40';

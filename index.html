@@ -1991,14 +1991,14 @@ if ((!text && !attachedImageBase64) || !activeRecipientId) return;
 
 try {
 const payload = {
-sender_id: currentUser.id,
-receiver_id: activeRecipientId,
-buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
-vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
-product_id: activeProductId || null,
-text: text || null,
-proof_base64: attachedImageBase64 || null,
-status_badge: 'AWAITING_ATTENTION'
+  sender_id: currentUser.id,
+  receiver_id: activeRecipientId,
+  buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
+  vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
+  product_id: activeProductId || null,
+  text: text || null,
+  proof_base64: attachedImageBase64 || null,
+  status_badge: null
 };
 
 const { error } = await _supabase.from('messages').insert([payload]);
