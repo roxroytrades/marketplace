@@ -773,6 +773,17 @@ let currentProfile = null;
 let currentUser = null;
 let pollingInterval = null;
 let profilesCache = {};
+function resolveVendorName(vendorId) {
+  const p = profilesCache[vendorId];
+  if (!p) return 'Unknown Merchant';
+  return (
+    p.business_name ||
+    p.full_name ||
+    p.store_name ||
+    (p.email ? p.email.split('@')[0] : null) ||
+    'Unknown Merchant'
+  );
+}
 let readThreadIds = new Set();
 
 function getReadTimeStorageKey() {
@@ -997,28 +1008,50 @@ console.log('Shopper referral fallback active.');
 
 /* ================= MARKETPLACE CATALOG & INQUIRY ================= */
 async function loadMarketplaceProducts(isPolling = false) {
-const grid = document.getElementById('marketplaceGrid');
-try {
-if (Object.keys(profilesCache).length === 0) {
-await preloadProfiles();
-}
-const { data, error } = await _supabase
-.from('products')
-.select('*')
-.eq('status', 'ACTIVE')
-.order('created_at', { ascending: false });
-if (error) throw error;
-marketplaceProducts = data || [];
-filterMarketplaceProducts();
-} catch (err) {
-if (marketplaceProducts.length === 0 && grid) {
-grid.innerHTML = `
-<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
-<p>No active marketplace products found.</p>
-</div>
-`;
-}
-}
+  const grid = document.getElementById('marketplaceGrid');
+  try {
+    /* 1. Fetch active products first */
+    const { data, error } = await _supabase
+      .from('products')
+      .select('*')
+      .eq('status', 'ACTIVE')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    marketplaceProducts = data || [];
+
+    /* 2. Determine which seller profiles we're missing */
+    const missingSellerIds = new Set();
+    marketplaceProducts.forEach(p => {
+      const sid = p.seller_id || p.vendor_id;
+      if (sid && !profilesCache[sid]) missingSellerIds.add(sid);
+    });
+
+    /* 3. Fetch only the missing seller profiles */
+    if (missingSellerIds.size > 0) {
+      const { data: profs, error: profErr } = await _supabase
+        .from('profiles')
+        .select('id, full_name, email, role, business_name, paypal_email')
+        .in('id', Array.from(missingSellerIds));
+
+      if (profErr) {
+        console.warn("Seller profile fetch failed:", profErr.message);
+      } else if (profs) {
+        profs.forEach(p => { profilesCache[p.id] = p; });
+      }
+    }
+
+    /* 4. Render the grid */
+    filterMarketplaceProducts();
+  } catch (err) {
+    console.error("loadMarketplaceProducts error:", err);
+    if (marketplaceProducts.length === 0 && grid) {
+      grid.innerHTML = `
+  <div class="p-8 text-center text-xs text-slate-400 col-span-full bg-cardBg border border-borderSlate rounded-2xl">
+  <p>No active marketplace products found.</p>
+  </div>
+  `;
+    }
+  }
 }
 
 function filterMarketplaceProducts() {
@@ -1047,7 +1080,7 @@ const isLocked = currentProfile && currentProfile.role === 'buyer' && currentPro
 grid.innerHTML = filtered.map(item => {
 const vendorId = item.seller_id || item.vendor_id;
 const vendorProfile = profilesCache[vendorId];
-const vendorName = vendorProfile ? (vendorProfile.full_name || vendorProfile.email || 'Verified Merchant') : 'Verified Merchant';
+const vendorName = resolveVendorName(vendorId);
 const retailPrice = Number(item.price || 0).toFixed(2);
 const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
 return `
@@ -2091,7 +2124,7 @@ if (!modal || !content || !item) return;
 
 const vendorId = item.seller_id || item.vendor_id;
 const vendorProfile = profilesCache[vendorId] || {};
-const vendorName = vendorProfile.full_name || vendorProfile.email || 'Verified Merchant';
+const vendorName = resolveVendorName(vendorId);
 const retailPrice = Number(item.price || 0).toFixed(2);
 const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
 const shareUrl = `${window.location.origin}${window.location.pathname}?prod=${item.id}`;
@@ -2182,7 +2215,7 @@ alert('Product share link copied to clipboard!');
 
 function openVendorStorefrontModal(vendorId) {
 const vendorProfile = profilesCache[vendorId] || {};
-const vendorName = vendorProfile.full_name || vendorProfile.email || 'Verified Merchant';
+const vendorName = resolveVendorName(vendorId);
 const vendorProducts = marketplaceProducts.filter(p => (p.seller_id === vendorId || p.vendor_id === vendorId));
 const modal = document.getElementById('vendorStorefrontModal');
 const body = document.getElementById('vendorStorefrontModalContent');
