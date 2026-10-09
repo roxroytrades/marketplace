@@ -341,7 +341,7 @@ async function uploadImageToStorage(file, folder = 'ids') {
   const dataUrl = await compressImageFile(file, 1000, 0.75);
   const res = await fetch(dataUrl);
   const blob = await res.blob();
-  const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop().toLowerCase() : 'jpg';
+  const ext = 'jpg';
   const filename = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${ext}`;
   const { error } = await _supabase
     .storage
@@ -351,11 +351,7 @@ async function uploadImageToStorage(file, folder = 'ids') {
       upsert: false
     });
   if (error) throw new Error('ID upload failed: ' + error.message);
-  const { data: publicUrlData } = _supabase
-    .storage
-    .from('echohub-images')
-    .getPublicUrl(filename);
-  return publicUrlData.publicUrl;
+    return `${SUPABASE_URL}/storage/v1/object/public/echohub-images/${filename}`;
 }
 
 /* Client-Side HTML5 Canvas Image Compression */
