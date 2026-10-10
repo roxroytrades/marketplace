@@ -732,8 +732,9 @@ eh
 <!-- Message Input Footer with Paperclip Attachment Button -->
 <div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40" style="flex-shrink: 0;">
   <form onsubmit="handleSendMessage(event)" style="display: flex; flex-direction: row; align-items: flex-end; gap: 8px; width: 100%;">
-    <button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner shrink-0" title="Attach options">
-      <i class="fa-solid fa-paperclip text-blue-400"></i>
+<button type="button" onclick="openAttachmentConfirmModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner shrink-0" title="Attach options">
+  <i class="fa-solid fa-paperclip text-blue-400"></i>
+</button>      <i class="fa-solid fa-paperclip text-blue-400"></i>
     </button>
     <textarea id="messageInputBox" placeholder="Type your message or attach review proof..." rows="1" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition resize-none" style="resize: none; overflow-y: hidden; max-height: 120px; line-height: 1.4; flex: 1 1 auto;"></textarea>
     <button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1 shrink-0">
@@ -746,6 +747,62 @@ eh
 </div>
 </div>
 
+<!-- ================= ATTACHMENT CONFIRMATION MODAL ================= -->
+<div id="attachmentConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+        <i class="fa-solid fa-shield-halved text-amber-400"></i>
+        <span>Confirm Before Attaching</span>
+      </h3>
+      <button type="button" onclick="closeAttachmentConfirmModal()" class="text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+    </div>
+
+    <p class="text-xs text-slate-300">
+      Please confirm the following before attaching a file or link. Both boxes must be checked to proceed.
+    </p>
+
+    <div class="space-y-3">
+      <label class="flex items-start space-x-3 bg-darkBg border border-borderSlate rounded-xl p-3 cursor-pointer hover:border-amber-500/40 transition">
+        <input type="checkbox" id="confirmReceivedProduct" onchange="validateAttachmentConfirm()"
+               class="mt-0.5 rounded border-borderSlate bg-darkBg text-amber-500 focus:ring-0 cursor-pointer">
+        <span class="text-xs text-slate-200">
+          I have <strong>received the product</strong> I purchased from this seller.
+        </span>
+      </label>
+
+      <label class="flex items-start space-x-3 bg-darkBg border border-borderSlate rounded-xl p-3 cursor-pointer hover:border-amber-500/40 transition">
+        <input type="checkbox" id="confirmReviewProof" onchange="validateAttachmentConfirm()"
+               class="mt-0.5 rounded border-borderSlate bg-darkBg text-amber-500 focus:ring-0 cursor-pointer">
+        <span class="text-xs text-slate-200">
+          I am about to send a <strong>screenshot</strong> or a <strong>hyperlink pointing directly to my posted review</strong>
+          (not a product page, storefront, or unrelated file).
+        </span>
+      </label>
+    </div>
+
+    <div id="attachmentConfirmWarning" class="hidden text-[11px] text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-xl p-2.5">
+      <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+      <span>Both confirmations are required before you can attach a file.</span>
+    </div>
+
+    <div class="flex items-center justify-end space-x-2 pt-2 border-t border-borderSlate">
+      <button type="button" onclick="closeAttachmentConfirmModal()"
+              class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">
+        Cancel
+      </button>
+      <button type="button" id="attachmentProceedBtn" onclick="proceedWithAttachment()"
+              disabled
+              class="bg-amber-500 hover:bg-amber-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-amber-500/20">
+        <i class="fa-solid fa-paperclip mr-1"></i> Continue
+      </button>
+    </div>
+
+  </div>
+</div>
 <!-- Footer -->
 <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
 <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Referral Engine.</p>
@@ -1453,6 +1510,78 @@ if (!modal.classList.contains('hidden')) {
 loadMessagingThreads();
 }
 }
+
+/* ==========================================================================
+   ATTACHMENT CONFIRMATION GATE — Buyer Review Proof Protection
+   ========================================================================== */
+
+function openAttachmentConfirmModal() {
+  const modal = document.getElementById('attachmentConfirmModal');
+  const cb1 = document.getElementById('confirmReceivedProduct');
+  const cb2 = document.getElementById('confirmReviewProof');
+  const warn = document.getElementById('attachmentConfirmWarning');
+
+  // Reset on every open
+  if (cb1) cb1.checked = false;
+  if (cb2) cb2.checked = false;
+  if (warn) warn.classList.add('hidden');
+  validateAttachmentConfirm();
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeAttachmentConfirmModal() {
+  const modal = document.getElementById('attachmentConfirmModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function validateAttachmentConfirm() {
+  const cb1 = document.getElementById('confirmReceivedProduct');
+  const cb2 = document.getElementById('confirmReviewProof');
+  const btn = document.getElementById('attachmentProceedBtn');
+  const warn = document.getElementById('attachmentConfirmWarning');
+
+  const bothChecked = !!(cb1 && cb1.checked && cb2 && cb2.checked);
+
+  if (btn) btn.disabled = !bothChecked;
+
+  if (warn) {
+    if (!bothChecked && (cb1?.checked || cb2?.checked)) {
+      warn.classList.remove('hidden');
+    } else {
+      warn.classList.add('hidden');
+    }
+  }
+}
+
+function proceedWithAttachment() {
+  const cb1 = document.getElementById('confirmReceivedProduct');
+  const cb2 = document.getElementById('confirmReviewProof');
+
+  if (!cb1?.checked || !cb2?.checked) {
+    alert("Both confirmations are required before attaching a file.");
+    return;
+  }
+
+  // Close confirmation, then open the existing attachment drawer
+  closeAttachmentConfirmModal();
+
+  const drawer = document.getElementById('attachmentOptionsDrawer');
+  if (drawer) drawer.classList.remove('hidden');
+}
+
+// Close on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAttachmentConfirmModal();
+});
+
+// Close on backdrop click
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('attachmentConfirmModal');
+  if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+    closeAttachmentConfirmModal();
+  }
+});
 
 function toggleAttachmentDrawer() {
 const drawer = document.getElementById('attachmentOptionsDrawer');
