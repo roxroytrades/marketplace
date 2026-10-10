@@ -1353,6 +1353,7 @@ let allUserReports = [];
 let allProductsCache = [];
 let allCommissionsCache = [];
 let allThreadsCache = [];
+window.messagesCache = [];
 let readAdminThreadKeys = new Set();
 let lastReadAdminTimeMap = {};
 let activeSelectedThreadId = null;
@@ -2518,6 +2519,7 @@ async function loadMessagingData(isSilent = false) {
 
     if (error) throw error;
     const rawMessages = data || [];
+    window.messagesCache = rawMessages;
     
     loadLocalAdminReadState();
 
@@ -3409,6 +3411,27 @@ function viewCommissionDetails(commId) {
   const safeVenName = (vendorName || '').replace(/'/g, "\'");
   const safeVenEmail = (vendorEmail || '').replace(/'/g, "\'");
 
+    /* ---- Fetch the original review URL from the message that generated this commission ---- */
+  let reviewUrlHtml = '<div class="text-slate-500 italic text-[11px]">No linked review submission found for this transaction.</div>';
+
+  const fbId = c.feedback_id;
+  if (fbId) {
+    const msg = (window.messagesCache || []).find(m => m.feedback_id === fbId);
+    if (msg) {
+      const url = msg.review_url || (msg.text && msg.text.match(/https?:\/\/[^\s]+/) ? msg.text.match(/https?:\/\/[^\s]+/)[0] : null);
+      if (url) {
+        reviewUrlHtml = `
+          <div class="mt-2 border border-blue-500/30 rounded-xl p-2 bg-blue-500/5">
+            <div class="text-[10px] text-blue-400 font-semibold mb-1 flex items-center space-x-1">
+              <i class="fa-solid fa-link"></i>
+              <span>Original Review Link Submitted by Shopper:</span>
+            </div>
+            <a href="${url}" target="_blank" rel="noopener" class="block text-[11px] text-blue-400 hover:text-blue-300 underline font-mono break-all">${url}</a>
+          </div>
+        `;
+      }
+    }
+  }
   const receiptHtml = (c.receipt_base64 || c.receipt_url) ? `
     <div class="mt-2 border border-borderSlate rounded-xl p-2 bg-darkBg">
       <div class="text-[10px] text-slate-400 font-semibold mb-1">Uploaded Payout Proof Receipt:</div>
@@ -3470,6 +3493,7 @@ function viewCommissionDetails(commId) {
         <div><span class="text-slate-500">PayPal Tx ID:</span> <span class="text-slate-300 font-mono">${c.paypal_tx_id || 'Pending Settlement'}</span></div>
         <div><span class="text-slate-500">Created Timestamp:</span> <span class="text-slate-400">${new Date(c.created_at || Date.now()).toLocaleString()}</span></div>
       </div>
+      ${reviewUrlHtml}
       ${receiptHtml}
     </div>
   `;
