@@ -1640,9 +1640,27 @@ function renderUsersTable(users) {
         <td class="py-3 px-4 text-center">
           <input type="checkbox" class="user-row-checkbox rounded border-borderSlate bg-darkBg text-amber-500 focus:ring-0 cursor-pointer" value="${u.id}" ${isChecked} onchange="checkUserSelection()">
         </td>
-        <td class="py-3 px-4">
+               <td class="py-3 px-4">
           <div class="font-bold text-white">${u.full_name || 'Unnamed Account'}</div>
           <div class="text-[11px] text-slate-400 font-mono truncate max-w-[180px]" title="${u.email || u.id}">${u.email || u.id}</div>
+          ${u.whatsapp ? `
+            <div class="flex items-center space-x-2 mt-1.5">
+              <span class="text-[10px] text-emerald-400 font-mono inline-flex items-center space-x-1">
+                <i class="fa-brands fa-whatsapp text-emerald-400"></i>
+                <span>${u.whatsapp}</span>
+              </span>
+              <a href="https://wa.me/${String(u.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hi ' + (u.full_name || 'there') + ', this is Echo Hub Support reaching out about your account.')}"
+                 target="_blank"
+                 rel="noopener"
+                 class="text-[9px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold transition inline-flex items-center space-x-1"
+                 title="Open WhatsApp chat with prefilled message">
+                <i class="fa-solid fa-comment-dots text-[9px]"></i>
+                <span>Chat</span>
+              </a>
+            </div>
+          ` : `
+            <div class="text-[10px] text-slate-500 italic mt-1">No WhatsApp on file</div>
+          `}
           ${policyBadgeHtml}
         </td>
         <td class="py-3 px-4">

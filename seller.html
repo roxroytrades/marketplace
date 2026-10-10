@@ -2526,6 +2526,22 @@ const isAmazonValid = hasAmazonReviewUrl(reviewLink, true) || hasAmazonReviewUrl
     alert("Approval Blocked: This submission does not contain a verified amazon.com review link.");
     return;
   }
+    // 🛡️ Confirmation gate — seller must explicitly confirm this is a review of their product
+  const confirmedAsReview = window.confirm(
+    "Before approving, please confirm:\n\n" +
+    "Does this link point to a review of YOUR product?\n\n" +
+    "• Choose OK if it's a review of your product.\n" +
+    "• Choose Cancel if it points to anything else (product page, storefront, or unrelated content)."
+  );
+
+  if (!confirmedAsReview) {
+    alert(
+      "Approval Cancelled\n\n" +
+      "You can only approve links that point to a review of your product.\n" +
+      "This submission has not been approved."
+    );
+    return;
+  }
 
   const actionContainer = document.getElementById(`actions-${messageId}`);
   if (actionContainer) {
