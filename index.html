@@ -258,8 +258,7 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
-<div id="debugOverlay" style="position:fixed;top:0;left:0;right:0;background:black;color:lime;font-size:11px;padding:8px;z-index:99999;font-family:monospace;max-height:45vh;overflow-y:auto;border-bottom:2px solid lime;"></div>
-  <div id="debugOverlay" style="position:fixed;top:0;left:0;right:0;background:black;color:lime;font-size:11px;padding:8px;z-index:99999;font-family:monospace;max-height:45vh;overflow-y:auto;border-bottom:2px solid lime;"></div>
+
   <!-- Top Navigation Bar (Adaptive Mobile Header Fix - Arch Doc v5.4) -->
 <header class="bg-cardBg border-b border-borderSlate px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between gap-3 sticky top-0 z-40 shadow-lg">
 <div class="flex items-center space-x-2.5 sm:space-x-3 shrink-0 min-w-0">
@@ -622,9 +621,10 @@ eh
 </div>
 
 <!-- ================= WHATSAPP-STYLE TWO-PANEL MESSAGING HUB MODAL ================= -->
-<div id="messagingHubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full h-[85vh] flex overflow-hidden shadow-2xl">
+<div id="messagingHubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6" style="height: 100dvh; max-height: 100dvh; padding-bottom: max(0.5rem, env(safe-area-inset-bottom));">
+<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full flex overflow-hidden shadow-2xl" style="height: calc(100dvh - 1rem); max-height: calc(100dvh - 1rem);">
 <!-- Left Sidebar: Thread List -->
+<div id="threadsListContainerWrapper"
 <div id="threadsListContainerWrapper" class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden shrink-0">
 <div class="p-3 border-b border-borderSlate flex items-center justify-between">
 <h3 class="font-bold text-white text-sm flex items-center space-x-2">
@@ -689,8 +689,7 @@ eh
 </button>
 </div>
 <!-- Message Stream Area -->
-<div id="messageStreamContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden">
-<div class="m-auto text-center text-xs text-slate-500 space-y-1">
+<div id="messageStreamContainer" class="p-4 overflow-y-auto space-y-3 bg-darkBg/50 flex flex-col overflow-x-hidden" style="flex: 1 1 0%; min-height: 0; max-height: 100%;"><div class="m-auto text-center text-xs text-slate-500 space-y-1">
 <i class="fa-regular fa-comments text-2xl text-slate-600"></i>
 <p>Choose a thread from the left to start messaging.</p>
 </div>
@@ -762,35 +761,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ================= DEBUG OVERLAY =================
-function dbg(msg) {
-  const el = document.getElementById('debugOverlay');
-  if (el) {
-    el.innerHTML += '> ' + msg + '<br>';
-    el.scrollTop = el.scrollHeight;
-  }
-  console.log('[DBG]', msg);
-}
-window.addEventListener('error', (e) => dbg('ERR: ' + e.message));
-window.addEventListener('unhandledrejection', (e) => dbg('REJ: ' + (e.reason?.message || e.reason)));
 
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    const sidebar = document.getElementById('threadsListContainerWrapper');
-    if (!sidebar) { dbg('sidebar NOT FOUND'); return; }
-    dbg('Initial sidebar class: ' + sidebar.className);
-    const mo = new MutationObserver((ms) => {
-      ms.forEach(m => {
-        if (m.attributeName === 'class') {
-          dbg('CLASS CHANGED to: ' + sidebar.className);
-        }
-      });
-    });
-    mo.observe(sidebar, { attributes: true });
-    dbg('Watching sidebar. Open the messaging hub.');
-  }, 800);
-});
-// ============== END DEBUG OVERLAY ==============
 
 let activeCommTab = 'incoming';
 let selectedCommIds = new Set();
