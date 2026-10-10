@@ -21,6 +21,26 @@ function getProductImageUrl(item) {
   return url.trim();
 }
 
+function getCommissionStatusBadgeClass(status) {
+  const s = (status || '').toUpperCase();
+  if (s === 'COMPLETED_PAID' || s === 'PAID') {
+    return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+  }
+  if (s === 'APPROVED' || s === 'APPROVED_IN_WORKING' || s === 'MAIN_QUEUE') {
+    return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+  }
+  if (s === 'OFFERED_BY_VENDOR' || s === 'OFFERED_AWAITING_ACCEPTANCE' || s === 'PENDING') {
+    return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+  }
+  if (s === 'REQUESTED_BY_RECIPIENT' || s === 'OUTGOING') {
+    return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+  }
+  if (s === 'DECLINED' || s === 'REJECTED') {
+    return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+  }
+  return 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+}
+
 function getUserRoleBadge(role) {
   const r = (role || 'BUYER').toUpperCase();
   let bg = 'bg-blue-500/10 text-blue-400 border-blue-500/30';
