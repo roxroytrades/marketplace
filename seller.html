@@ -575,6 +575,36 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 <label class="text-xs font-medium text-slate-300">Description</label>
 <textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
 </div>
+<!-- ================= SEARCH KEYWORDS INPUT ================= -->
+<div class="space-y-2">
+  <label class="block text-xs font-medium text-slate-300">
+    Search Keywords
+    <span class="text-slate-500 font-normal">(help buyers find this product with alternate phrases)</span>
+  </label>
+
+  <div id="keywordPills" class="flex flex-wrap gap-1.5 min-h-[42px] bg-darkBg border border-borderSlate rounded-xl px-3 py-2">
+    <span class="text-[11px] text-slate-500 italic">No keywords added yet — buyers will only find this via the title.</span>
+  </div>
+
+  <div class="flex gap-2">
+    <input
+      type="text"
+      id="keywordInput"
+      placeholder="e.g. wireless earbuds, bluetooth headphones, gaming headset"
+      class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue"
+      onkeydown="handleKeywordKeydown(event)">
+    <button
+      type="button"
+      onclick="addKeywordFromInput()"
+      class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-3 py-2 rounded-xl transition">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+  </div>
+
+  <p class="text-[10px] text-slate-500">
+    Tip: Add phrases buyers would search for — brand names, alternate names, use cases. Max 15 keywords, 40 chars each.
+  </p>
+</div>
 <div class="space-y-1.5">
 <label class="text-xs font-medium text-slate-300">Retail Price ($ USD) *</label>
 <input type="number" id="prodPrice" step="0.01" min="0" required placeholder="0.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
@@ -764,7 +794,7 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* ================= SCHEMA GUARD & RUNTIME SANITIZER UTILITIES ================= */
 const SCHEMA_COLUMNS = {
   profiles: ['id', 'full_name', 'email', 'role', 'verification_status', 'whatsapp', 'paypal_email', 'referral_code', 'invited_by_code', 'categories', 'commission_amount', 'national_id_base64', 'commission_policy_agreed', 'created_at'],
-  products: ['id', 'seller_id', 'vendor_id', 'title', 'category', 'image', 'image_url', 'image_url_2', 'product_link', 'price', 'commission', 'commission_amount', 'status', 'is_active', 'description', 'amazon_url', 'product_url', 'amazon_link', 'created_at'],
+  products: ['id', 'seller_id', 'vendor_id', 'title', 'category', 'image', 'image_url', 'image_url_2', 'product_link', 'price', 'commission', 'commission_amount', 'status', 'is_active', 'description', 'amazon_url', 'product_url', 'amazon_link', 'search_keywords', 'search_keywords', 'created_at'],
 messages: ['id', 'buyer_id', 'vendor_id', 'sender_id', 'receiver_id', 'product_id', 'text', 'message_text', 'content', 'body', 'review_url', 'link', 'image_url', 'file_url', 'attachment_url', 'proof_base64', 'status_badge', 'status', 'feedback_id', 'submission_cycle', 'is_read', 'channel_type', 'message_type', 'created_at'],  commissions: ['id', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'role_type', 'queue_type', 'amount', 'status', 'status_tag', 'paypal_tx_id', 'receipt_base64', 'receipt_url', 'created_at'],
   system_settings: ['key', 'value', 'updated_at', 'created_at'],
   notifications: ['id', 'user_id', 'title', 'message', 'is_read', 'created_at']
@@ -853,6 +883,75 @@ let pollingInterval = null;
 
 let renderDebounceTimer = null;
 let chatAttachedFile = null;
+/* ==========================================================================
+   PRODUCT SEARCH KEYWORDS — Tag Input
+   ========================================================================== */
+let productKeywords = [];
+
+function renderKeywordPills() {
+  const container = document.getElementById('keywordPills');
+  if (!container) return;
+
+  if (productKeywords.length === 0) {
+    container.innerHTML = `<span class="text-[11px] text-slate-500 italic">No keywords added yet — buyers will only find this via the title.</span>`;
+    return;
+  }
+
+  container.innerHTML = productKeywords.map((kw, i) => `
+    <span class="inline-flex items-center gap-1.5 bg-blue-500/15 text-blue-300 border border-blue-500/30 px-2.5 py-1 rounded-full text-[11px] font-medium">
+      <span>${escapeHtmlKeyword(kw)}</span>
+      <button type="button" onclick="removeKeyword(${i})" class="text-blue-400 hover:text-rose-400 transition">
+        <i class="fa-solid fa-xmark text-[10px]"></i>
+      </button>
+    </span>
+  `).join('');
+}
+
+function handleKeywordKeydown(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    addKeywordFromInput();
+  } else if (e.key === 'Backspace' && !e.target.value && productKeywords.length > 0) {
+    productKeywords.pop();
+    renderKeywordPills();
+  }
+}
+
+function addKeywordFromInput() {
+  const input = document.getElementById('keywordInput');
+  if (!input) return;
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  const parts = raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
+  for (const kw of parts) {
+    if (productKeywords.length >= 15) {
+      alert('Maximum 15 keywords per product.');
+      break;
+    }
+    if (kw.length > 40) {
+      alert(`Keyword "${kw}" is too long. Max 40 characters.`);
+      continue;
+    }
+    if (productKeywords.includes(kw)) continue;
+    productKeywords.push(kw);
+  }
+
+  input.value = '';
+  renderKeywordPills();
+}
+
+function removeKeyword(index) {
+  productKeywords.splice(index, 1);
+  renderKeywordPills();
+}
+
+function escapeHtmlKeyword(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 /* Status Badge Sanitizer Helper */
 const sanitizeStatusBadge = (payload) => {
   if (payload.status_badge) {
@@ -1128,6 +1227,8 @@ function openProductModal() {
   document.getElementById('editingProductId').value = '';
   document.getElementById('productForm').reset();
   if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = '';
+  productKeywords = [];
+  renderKeywordPills();
   document.getElementById('productModal').classList.remove('hidden');
 }
 function closeProductModal() {
@@ -1143,6 +1244,8 @@ async function editProduct(id) {
   document.getElementById('prodPrice').value = prod.price !== undefined ? Number(prod.price).toFixed(2) : '0.00';
   document.getElementById('prodStatus').value = prod.status || 'ACTIVE';
   if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = prod.amazon_url || prod.product_url || prod.amazon_link || '';
+ productKeywords = Array.isArray(prod.search_keywords) ? [...prod.search_keywords] : [];
+renderKeywordPills();
   document.getElementById('productModal').classList.remove('hidden');
 }
 /* Save Product Handler - Dual Owner Fields (vendor_id & seller_id) */
@@ -1166,20 +1269,21 @@ imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');
   try {
         const sellerDefaultCommission = Number(currentProfile?.commission_amount ?? 15.00);
     const productData = {
-      vendor_id: currentUser.id,
-      seller_id: currentUser.id,
-      title: title,
-      description: description,
-      price: price,
-      status: status,
-      image_url: imageUrl,
-      image: imageUrl,
-      amazon_url: amazonUrl,
-      product_url: amazonUrl,
-      product_link: amazonUrl,
-      commission: sellerDefaultCommission,
-      commission_amount: sellerDefaultCommission
-    };
+  vendor_id: currentUser.id,
+  seller_id: currentUser.id,
+  title: title,
+  description: description,
+  price: price,
+  status: status,
+  image_url: imageUrl,
+  image: imageUrl,
+  amazon_url: amazonUrl,
+  product_url: amazonUrl,
+  product_link: amazonUrl,
+  commission: sellerDefaultCommission,
+  commission_amount: sellerDefaultCommission,
+  search_keywords: productKeywords
+};
     const saveToSupabase = async (payload) => {
       let reqPayload = { ...payload };
       let res = id 
