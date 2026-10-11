@@ -1721,15 +1721,9 @@ document.getElementById('receiptModal')?.classList.remove('hidden');
 const EDUCATION_DISMISS_KEY = 'echohub_messaging_education_dismissed';
 
 function shouldShowMessagingEducation() {
-  // Don't show if user checked "Don't show again"
-  if (localStorage.getItem(EDUCATION_DISMISS_KEY) === 'true') return false;
-
-  // Don't show if user is a returning visitor with existing threads
-  if (messagingThreads && messagingThreads.length > 0) return false;
-
-  return true;
+  // Show only if user hasn't permanently dismissed it
+  return localStorage.getItem(EDUCATION_DISMISS_KEY) !== 'true';
 }
-
 function openMessagingEducationModal() {
   const modal = document.getElementById('messagingEducationModal');
   if (!modal) return;
@@ -1769,6 +1763,10 @@ document.addEventListener('click', (e) => {
   }
 });
 
+let educationPopupCheckedThisSession = false;
+
+let educationPopupCheckedThisSession = false;
+
 function toggleMessagingHub() {
   const modal = document.getElementById('messagingHubModal');
   if (!modal) return;
@@ -1779,9 +1777,10 @@ function toggleMessagingHub() {
   if (isOpening) {
     loadMessagingThreads();
 
-    // Show the education popup on first open
-    if (shouldShowMessagingEducation()) {
-      setTimeout(() => openMessagingEducationModal(), 250);
+    // Show the education popup once per page load (until permanently dismissed)
+    if (!educationPopupCheckedThisSession && shouldShowMessagingEducation()) {
+      educationPopupCheckedThisSession = true;
+      setTimeout(() => openMessagingEducationModal(), 300);
     }
   }
 }
