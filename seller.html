@@ -806,7 +806,7 @@ Send Offer to Outgoing Requests
 const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+const DEFAULT_COMMISSION = 5.00;
 /* ================= SCHEMA GUARD & RUNTIME SANITIZER UTILITIES ================= */
 const SCHEMA_COLUMNS = {
   profiles: ['id', 'full_name', 'email', 'role', 'verification_status', 'whatsapp', 'paypal_email', 'referral_code', 'invited_by_code', 'categories', 'commission_amount', 'national_id_base64', 'commission_policy_agreed', 'created_at'],
@@ -1301,23 +1301,34 @@ imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');
   search_keywords: productKeywords
 };
     const saveToSupabase = async (payload) => {
-      let reqPayload = { ...payload };
-      let res = id 
-        ? await _supabase.from('products').update(reqPayload).eq('id', id)
-        : await _supabase.from('products').insert([reqPayload]);
-      
-      if (res.error && res.error.message && res.error.message.includes('Could not find the')) {
-        const match = res.error.message.match(/Could not find the '([^']+)' column/);
-        if (match && match[1]) {
-          const badCol = match[1];
-          delete reqPayload[badCol];
-          res = id 
-            ? await _supabase.from('products').update(reqPayload).eq('id', id)
-            : await _supabase.from('products').insert([reqPayload]);
-        }
-      }
-      if (res.error) throw res.error;
-    };
+  let reqPayload = { ...payload };
+  let attempts = 0;
+  const MAX_ATTEMPTS = 10;
+
+  while (attempts < MAX_ATTEMPTS) {
+    attempts++;
+    const res = id 
+      ? await _supabase.from('products').update(reqPayload).eq('id', id)
+      : await _supabase.from('products').insert([reqPayload]);
+
+    if (!res.error) return res;
+
+    // If the error is about a missing column, strip it and retry
+    const msg = res.error.message || '';
+    const match = msg.match(/Could not find the '([^']+)' column/);
+    if (match && match[1]) {
+      const badCol = match[1];
+      console.warn(`[Auto-Heal] Stripping missing column '${badCol}' and retrying...`);
+      delete reqPayload[badCol];
+      continue;
+    }
+
+    // Any other error → throw
+    throw res.error;
+  }
+
+  throw new Error('Too many missing columns — check your schema.');
+};
     await saveToSupabase(productData);
     showToast(id ? 'Product listing updated!' : 'Product created successfully!');
     closeProductModal();
