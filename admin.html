@@ -714,14 +714,11 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
             <button onclick="switchLeftPaneFilter('MARKETPLACE')" id="leftTab-MARKETPLACE" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
               Reviews
             </button>
-            <button onclick="switchLeftPaneFilter('ACTION_REQUIRED')" id="leftTab-ACTION_REQUIRED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
-              Needs Attention
-            </button>
-            <button onclick="switchLeftPaneFilter('FLAGGED')" id="leftTab-FLAGGED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20">
-              <button onclick="switchLeftPaneFilter('VENDOR_SOLICITATION')" id="leftTab-VENDOR_SOLICITATION" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/20 text-rose-400 border-rose-500/40 hover:bg-rose-500/30">
-  🚩 Vendor Solicitation
-</button>
+                        <button onclick="switchLeftPaneFilter('FLAGGED')" id="leftTab-FLAGGED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20">
               🚨 Contact Risk
+            </button>
+            <button onclick="switchLeftPaneFilter('VENDOR_SOLICITATION')" id="leftTab-VENDOR_SOLICITATION" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/20 text-rose-400 border-rose-500/40 hover:bg-rose-500/30">
+              🚩 Vendor Solicitation
             </button>
             <button onclick="switchLeftPaneFilter('CONTACTS')" id="leftTab-CONTACTS" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
               📇 User Directory
@@ -2636,7 +2633,7 @@ function switchLeftPaneFilter(filterKey) {
 
   const activeBtn = document.getElementById(`leftTab-${filterKey}`);
   if (activeBtn) {
-    if (filterKey === 'FLAGGED') {
+    if (filterKey === 'FLAGGED' || filterKey === 'VENDOR_SOLICITATION') {
       activeBtn.className = "left-pane-filter-btn active px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/20 text-rose-400 border-rose-500/40";
     } else {
       activeBtn.className = "left-pane-filter-btn active px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-amber-500/20 text-amber-400 border-amber-500/30";
@@ -2734,7 +2731,8 @@ function renderLeftPaneThreadsList() {
     if (currentLeftFilter === 'MARKETPLACE') return !t.isDirect;
     if (currentLeftFilter === 'ACTION_REQUIRED') return t.statusBadge === 'AWAITING_ATTENTION';
     if (currentLeftFilter === 'FLAGGED') return t.hasFlaggedRisk;
-        if (currentLeftFilter === 'VENDOR_SOLICITATION') return t.hasVendorSolicitation;
+    if (currentLeftFilter === 'VENDOR_SOLICITATION') return t.hasVendorSolicitation;
+        
     return true; // 'ALL'
   });
 
@@ -3041,8 +3039,6 @@ function renderActiveThreadTranscript() {
         <span class="text-[9px] text-slate-500 mt-1 px-1">${timeStr}</span>
       </div>
     `;
-  }).join('');
-
     }).join('');
 
   // Smart scroll: only jump to bottom if user was already there
@@ -3051,7 +3047,6 @@ function renderActiveThreadTranscript() {
   } else {
     container.scrollTop = previousScrollTop;
   }
-}
 }
 
 /* Admin Direct Message Reply */
