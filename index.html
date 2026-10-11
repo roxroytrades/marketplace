@@ -692,28 +692,63 @@ eh
 <p>Choose a thread from the left to start messaging.</p>
 </div>
 </div>
-<!-- Interactive Attachment Options Drawer (Initially Hidden) -->
-<div id="attachmentOptionsDrawer" class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-72 space-y-2">
-<div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
-<span>Attach Options</span>
-<button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-</div>
-<button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
-<div class="w-7 h-7 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
-<div>
-<p class="font-semibold">Submit Review URL</p>
-<p class="text-[10px] text-slate-400">Paste live store/Amazon review link</p>
-</div>
-</button>
-<button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
-<div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
-<div>
-<p class="font-semibold">Attach Screenshot Proof</p>
-<p class="text-[10px] text-slate-400">Upload image with thumbnail preview</p>
-</div>
-</button>
-<!-- Hidden file uploader container -->
-<input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
+<!-- Interactive Attachment Options Drawer — DUAL MODE -->
+<div id="attachmentOptionsDrawer" class="absolute bottom-20 left-4 bg-slate-900 border border-borderSlate rounded-2xl p-3 shadow-2xl hidden z-30 w-80 space-y-3">
+  <div class="text-[11px] font-semibold text-slate-300 px-2 pb-1 border-b border-borderSlate flex justify-between items-center">
+    <span>Attach Options</span>
+    <button onclick="toggleAttachmentDrawer()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <!-- GROUP 1: General Chat -->
+  <div class="space-y-1">
+    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2">General Chat</p>
+
+    <button onclick="openGenericLinkInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+      <div class="w-7 h-7 bg-slate-700/60 text-slate-300 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
+      <div>
+        <p class="font-semibold">Send a Link</p>
+        <p class="text-[10px] text-slate-400">Just a chat link (no review submission)</p>
+      </div>
+    </button>
+
+    <button onclick="triggerGenericPhotoUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-slate-800 transition flex items-center space-x-2.5">
+      <div class="w-7 h-7 bg-slate-700/60 text-slate-300 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></div>
+      <div>
+        <p class="font-semibold">Send a Photo</p>
+        <p class="text-[10px] text-slate-400">Just a chat photo (no review submission)</p>
+      </div>
+    </button>
+  </div>
+
+  <div class="border-t border-borderSlate/60"></div>
+
+  <!-- GROUP 2: Review Proof Submission -->
+  <div class="space-y-1">
+    <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-2 flex items-center space-x-1">
+      <i class="fa-solid fa-circle-check text-[9px]"></i>
+      <span>Submit Review Proof</span>
+    </p>
+
+    <button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-emerald-500/10 transition flex items-center space-x-2.5 border border-emerald-500/20">
+      <div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
+      <div>
+        <p class="font-semibold">Submit Review URL</p>
+        <p class="text-[10px] text-slate-400">Formal submission — vendor will see Approve/Deny</p>
+      </div>
+    </button>
+
+    <button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-emerald-500/10 transition flex items-center space-x-2.5 border border-emerald-500/20">
+      <div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-image"></i></div>
+      <div>
+        <p class="font-semibold">Submit Review Screenshot</p>
+        <p class="text-[10px] text-slate-400">Formal submission — vendor will see Approve/Deny</p>
+      </div>
+    </button>
+  </div>
+
+  <!-- Hidden file inputs -->
+  <input type="file" id="inlineChatFileInput" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
+  <input type="file" id="inlineGenericPhotoInput" accept="image/*" class="hidden" onchange="handleGenericPhotoUpload(event)">
 </div>
 <!-- Inline Review URL Input Prompt Modal / Container -->
 <div id="reviewUrlInputBoxContainer" class="px-4 py-2 bg-slate-900/90 border-t border-borderSlate hidden flex items-center space-x-2">
@@ -798,6 +833,64 @@ eh
               disabled
               class="bg-amber-500 hover:bg-amber-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-amber-500/20">
         <i class="fa-solid fa-paperclip mr-1"></i> Continue
+      </button>
+    </div>
+
+  </div>
+</div>
+<!-- ================= REVIEW SUBMISSION PREVIEW MODAL ================= -->
+<div id="submissionPreviewModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[70] hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+        <i class="fa-solid fa-eye text-emerald-400"></i>
+        <span>Preview — How the Vendor Will See This</span>
+      </h3>
+      <button type="button" onclick="closeSubmissionPreviewModal()" class="text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+    </div>
+
+    <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-[11px] text-amber-300 flex items-start space-x-2">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 shrink-0"></i>
+      <span>
+        This will appear to the vendor as an <strong>official Review Submission</strong>.
+        They will see <strong>Approve / Deny</strong> buttons and can pay you or reject it based on this.
+        Make sure the link or image points directly to <strong>your posted review</strong> — not a product page.
+      </span>
+    </div>
+
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl p-3 space-y-2">
+      <div class="flex items-center justify-between border-b border-white/10 pb-2">
+        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border bg-amber-500/20 text-amber-300 border-amber-500/40">
+          AWAITING_ATTENTION
+        </span>
+        <span class="text-[10px] font-mono text-slate-400">FB ID: Pending</span>
+      </div>
+
+      <div id="submissionPreviewBody" class="text-xs text-slate-200 space-y-2">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div class="border-t border-white/10 pt-2 flex space-x-2">
+        <div class="flex-1 bg-emerald-600/40 text-emerald-200 text-[11px] font-semibold py-1.5 rounded-lg text-center">
+          <i class="fa-solid fa-check mr-1"></i> Approve (preview)
+        </div>
+        <div class="flex-1 bg-rose-600/40 text-rose-200 text-[11px] font-semibold py-1.5 rounded-lg text-center">
+          <i class="fa-solid fa-xmark mr-1"></i> Deny (preview)
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end space-x-2 pt-2 border-t border-borderSlate">
+      <button type="button" onclick="closeSubmissionPreviewModal()"
+              class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">
+        Cancel
+      </button>
+      <button type="button" id="submissionConfirmBtn" onclick="confirmSubmissionSend()"
+              class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-emerald-500/20">
+        <i class="fa-solid fa-paper-plane mr-1"></i> Yes, Submit as Review Proof
       </button>
     </div>
 
@@ -1583,6 +1676,141 @@ document.addEventListener('click', (e) => {
   }
 });
 
+/* ==========================================================================
+   DUAL-MODE ATTACHMENTS + SUBMISSION PREVIEW
+   ========================================================================== */
+
+let pendingSubmissionPayload = null;
+
+// ---------- GENERAL CHAT SENDERS (no approval badge) ----------
+
+function openGenericLinkInput() {
+  toggleAttachmentDrawer();
+  const url = prompt("Paste the link you want to share (chat only — not a review submission):");
+  if (!url || !url.trim()) return;
+
+  let normalized = url.trim();
+  if (!/^https?:\/\//i.test(normalized)) normalized = 'https://' + normalized;
+
+  let parsed;
+  try { parsed = new URL(normalized); } catch {
+    alert("That doesn't look like a valid URL.");
+    return;
+  }
+
+  // Guard: warn if it's actually a review link
+  if (/\/customer-reviews\/|\/product-reviews\/|\/review\//i.test(parsed.pathname)) {
+    const reroute = confirm(
+      "This looks like a review link.\n\n" +
+      "If you want the vendor to Approve/Deny it as a formal review submission, " +
+      "cancel this and use 'Submit Review URL' instead.\n\n" +
+      "Send it as a plain chat message anyway?"
+    );
+    if (!reroute) return;
+  }
+
+  sendGenericChatLink(normalized);
+}
+
+async function sendGenericChatLink(url) {
+  if (!activeRecipientId) return;
+  try {
+    const payload = {
+      sender_id: currentUser.id,
+      receiver_id: activeRecipientId,
+      buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
+      vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
+      product_id: activeProductId || null,
+      text: url,
+      status_badge: null,
+      message_type: 'chat'
+    };
+    const { error } = await _supabase.from('messages').insert([payload]);
+    if (error) throw error;
+    await loadMessageStream(activeRecipientId, activeProductId);
+    await loadMessagingThreads(true);
+  } catch (err) {
+    alert("Failed to send link: " + err.message);
+  }
+}
+
+function triggerGenericPhotoUploader() {
+  toggleAttachmentDrawer();
+  document.getElementById('inlineGenericPhotoInput')?.click();
+}
+
+function handleGenericPhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result;
+    try {
+      const payload = {
+        sender_id: currentUser.id,
+        receiver_id: activeRecipientId,
+        buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
+        vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
+        product_id: activeProductId || null,
+        text: null,
+        proof_base64: base64,
+        status_badge: null,
+        message_type: 'chat'
+      };
+      const { error } = await _supabase.from('messages').insert([payload]);
+      if (error) throw error;
+      await loadMessageStream(activeRecipientId, activeProductId);
+      await loadMessagingThreads(true);
+    } catch (err) {
+      alert("Failed to send photo: " + err.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ---------- SUBMISSION PREVIEW FLOW ----------
+
+function closeSubmissionPreviewModal() {
+  document.getElementById('submissionPreviewModal')?.classList.add('hidden');
+  pendingSubmissionPayload = null;
+}
+
+async function confirmSubmissionSend() {
+  if (!pendingSubmissionPayload) {
+    closeSubmissionPreviewModal();
+    return;
+  }
+  try {
+    const { error } = await _supabase.from('messages').insert([pendingSubmissionPayload]);
+    if (error) throw error;
+
+    const urlField = document.getElementById('reviewUrlField');
+    if (urlField) urlField.value = '';
+    clearChatThumbnail();
+    document.getElementById('reviewUrlInputBoxContainer')?.classList.add('hidden');
+
+    closeSubmissionPreviewModal();
+    await loadMessageStream(activeRecipientId, activeProductId);
+    await loadMessagingThreads(true);
+  } catch (err) {
+    alert("Failed to submit: " + err.message);
+    closeSubmissionPreviewModal();
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeSubmissionPreviewModal();
+});
+
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('submissionPreviewModal');
+  if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+    closeSubmissionPreviewModal();
+  }
+});
+
 function toggleAttachmentDrawer() {
 const drawer = document.getElementById('attachmentOptionsDrawer');
 if (drawer) drawer.classList.toggle('hidden');
@@ -1603,20 +1831,38 @@ document.getElementById('inlineChatFileInput')?.click();
 }
 
 function handleChatImageUpload(event) {
-const file = event.target.files[0];
-if (!file) return;
-const reader = new FileReader();
-reader.onload = (e) => {
-attachedImageBase64 = e.target.result;
-const thumb = document.getElementById('chatPreviewThumb');
-const container = document.getElementById('chatThumbnailPreviewContainer');
-if (thumb) {
-thumb.src = attachedImageBase64;
-thumb.classList.remove('hidden');
-}
-if (container) container.classList.remove('hidden');
-};
-reader.readAsDataURL(file);
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const base64 = e.target.result;
+
+    pendingSubmissionPayload = {
+      sender_id: currentUser.id,
+      receiver_id: activeRecipientId,
+      buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
+      vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
+      product_id: activeProductId || null,
+      text: null,
+      proof_base64: base64,
+      status_badge: 'AWAITING_ATTENTION',
+      message_type: 'review_screenshot'
+    };
+
+    const previewBody = document.getElementById('submissionPreviewBody');
+    if (previewBody) {
+      previewBody.innerHTML = `
+        <p class="text-[11px] font-semibold text-slate-300">Attached Screenshot Proof:</p>
+        <div class="rounded-lg overflow-hidden border border-white/20">
+          <img src="${base64}" class="max-h-40 w-full object-contain bg-slate-950">
+        </div>
+      `;
+    }
+
+    document.getElementById('submissionPreviewModal')?.classList.remove('hidden');
+    event.target.value = '';
+  };
+  reader.readAsDataURL(file);
 }
 
 function clearChatThumbnail() {
@@ -2196,13 +2442,13 @@ async function submitReviewUrlMessage() {
   const rawUrl = field ? field.value.trim() : '';
   if (!rawUrl || !activeRecipientId) return;
 
-  // ---- 1. Normalize: add https:// if the user pasted a bare domain ----
+  // 1. Normalize
   let normalized = rawUrl;
   if (!/^https?:\/\//i.test(normalized)) {
     normalized = 'https://' + normalized;
   }
 
-  // ---- 2. Must be a parseable URL ----
+  // 2. Parseable URL?
   let parsed;
   try {
     parsed = new URL(normalized);
@@ -2211,7 +2457,7 @@ async function submitReviewUrlMessage() {
     return;
   }
 
-  // ---- 3. Must be an Amazon-family host ----
+  // 3. Amazon-family host?
   const host = parsed.hostname.toLowerCase();
   const isAmazon = host.includes('amazon.') || host === 'a.co' || host === 'amzn.to';
   if (!isAmazon) {
@@ -2219,11 +2465,12 @@ async function submitReviewUrlMessage() {
     return;
   }
 
-  // ---- 4. Classify the URL shape ----
+  // 4. Classify shape
   const isExplicitReviewUrl = /(\/gp\/customer-reviews\/|\/review\/|\/product-reviews\/)/i.test(parsed.pathname);
   const isShortLink = host === 'a.co' || host === 'amzn.to';
   const isProductUrl = /(\/dp\/|\/gp\/product\/|\/shop\/|\/stores\/)/i.test(parsed.pathname);
-  // ---- 5. Confirmation popup ----
+
+  // 5. Pre-confirmation for suspicious URLs
   let confirmMsg;
   if (isProductUrl && !isExplicitReviewUrl) {
     confirmMsg =
@@ -2241,36 +2488,34 @@ async function submitReviewUrlMessage() {
       "You're about to submit this URL:\n\n" + normalized + "\n\n" +
       "Confirm that this link points to YOUR posted Amazon review (not the product page).";
   } else {
-    confirmMsg =
-      "Submit this review URL?\n\n" + normalized;
+    confirmMsg = "Submit this review URL?\n\n" + normalized;
   }
 
   if (!confirm(confirmMsg)) return;
 
-  // ---- 6. Send the message (with the normalized URL) ----
-  try {
-    const payload = {
-      sender_id: currentUser.id,
-      receiver_id: activeRecipientId,
-      buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
-      vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
-      product_id: activeProductId || null,
-      text: `Submitted Review URL: ${normalized}`,
-      review_url: normalized,
-      status_badge: 'AWAITING_ATTENTION'
-    };
+  // 6. Queue payload → open visual preview modal
+  pendingSubmissionPayload = {
+    sender_id: currentUser.id,
+    receiver_id: activeRecipientId,
+    buyer_id: currentProfile.role === 'buyer' ? currentUser.id : activeRecipientId,
+    vendor_id: currentProfile.role === 'seller' ? currentUser.id : activeRecipientId,
+    product_id: activeProductId || null,
+    text: `Submitted Review URL: ${normalized}`,
+    review_url: normalized,
+    status_badge: 'AWAITING_ATTENTION',
+    message_type: 'review_submission'
+  };
 
-    const { error } = await _supabase.from('messages').insert([payload]);
-    if (error) throw error;
-
-    if (field) field.value = '';
-    document.getElementById('reviewUrlInputBoxContainer')?.classList.add('hidden');
-
-    await loadMessageStream(activeRecipientId, activeProductId);
-    await loadMessagingThreads(true);
-  } catch (err) {
-    alert("Failed to submit review link: " + err.message);
+  const previewBody = document.getElementById('submissionPreviewBody');
+  if (previewBody) {
+    previewBody.innerHTML = `
+      <p class="text-[11px]"><strong>Review Link:</strong>
+        <a href="${normalized}" target="_blank" class="text-blue-400 underline break-all">${normalized}</a>
+      </p>
+    `;
   }
+
+  document.getElementById('submissionPreviewModal')?.classList.remove('hidden');
 }
 
 function updateUnreadBadge() {
