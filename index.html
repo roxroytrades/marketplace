@@ -1023,7 +1023,7 @@ const SUPABASE_URL = 'https://mjnwonkepgxhtdnxsrjw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_f9Cb0CJCTdonBJ7UsxFqMA_S8DGmkpx';
 const { createClient } = supabase;
 const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+const DEFAULT_COMMISSION = 5.00;
 
 
 let activeCommTab = 'incoming';
@@ -1321,17 +1321,31 @@ async function loadMarketplaceProducts(isPolling = false) {
   }
 }
 
-function filterMarketplaceProducts() {
-const search = (document.getElementById('marketSearchInput')?.value || '').toLowerCase();
+const searchRaw = (document.getElementById('marketSearchInput')?.value || '').trim().toLowerCase();
 const grid = document.getElementById('marketplaceGrid');
 if (!grid) return;
+
+const tokens = searchRaw.split(/[,\s]+/).filter(Boolean);
+
 const filtered = marketplaceProducts.filter(item => {
 const vendorId = item.seller_id || item.vendor_id;
 const vendorProfile = profilesCache[vendorId];
 const vendorName = vendorProfile ? (vendorProfile.full_name || vendorProfile.email || '') : '';
-return (item.title || '').toLowerCase().includes(search) ||
-(item.description || '').toLowerCase().includes(search) ||
-vendorName.toLowerCase().includes(search);
+
+const title = (item.title || '').toLowerCase();
+const description = (item.description || '').toLowerCase();
+const keywords = Array.isArray(item.search_keywords) ? item.search_keywords : [];
+const keywordStr = keywords.join(' ').toLowerCase();
+const vendor = vendorName.toLowerCase();
+
+if (tokens.length === 0) return true;
+
+return tokens.every(token =>
+title.includes(token) ||
+description.includes(token) ||
+keywordStr.includes(token) ||
+vendor.includes(token)
+);
 });
 
 if (filtered.length === 0) {
@@ -1349,7 +1363,7 @@ const vendorId = item.seller_id || item.vendor_id;
 const vendorProfile = profilesCache[vendorId];
 const vendorName = resolveVendorName(vendorId);
 const retailPrice = Number(item.price || 0).toFixed(2);
-const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
+const rewardAmount = Number(item.commission || item.commission_amount || DEFAULT_COMMISSION).toFixed(2);
 return `
 <div class="bg-cardBg border border-borderSlate rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group hover:border-accentBlue/50 transition duration-200">
 <div>
@@ -1428,7 +1442,7 @@ try {
 const prod = marketplaceProducts.find(p => p.id === productId);
 const prodTitle = prod ? prod.title : 'Marketplace Item';
 const prodPrice = prod ? Number(prod.price || 0).toFixed(2) : '0.00';
-const prodReward = prod ? Number(prod.commission || prod.commission_amount || 15.00).toFixed(2) : '15.00';
+const prodReward = prod ? Number(prod.commission || prod.commission_amount || DEFAULT_COMMISSION).toFixed(2) : DEFAULT_COMMISSION.toFixed(2);
 
 toggleMessagingHub();
 await openThread(null, vendorId, productId);
@@ -2499,7 +2513,7 @@ if (targetProdId) {
 const prod = marketplaceProducts.find(p => p.id === targetProdId);
 if (prod) {
 const pPrice = Number(prod.price || 0).toFixed(2);
-const pReward = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
+const pReward = Number(prod.commission || prod.commission_amount || DEFAULT_COMMISSION).toFixed(2);
 productHeaderCard = `
 <div class="bg-cardBg border border-blue-500/30 rounded-2xl p-3 mb-3 shadow-lg flex items-center justify-between gap-3 shrink-0">
 <div class="flex items-center space-x-3 truncate">
@@ -2533,7 +2547,7 @@ if (msgProdId && !targetProdId) {
 const prod = marketplaceProducts.find(p => p.id === msgProdId);
 if (prod) {
 const pPrice = Number(prod.price || 0).toFixed(2);
-const pComm = Number(prod.commission || prod.commission_amount || 15.00).toFixed(2);
+const pComm = Number(prod.commission || prod.commission_amount || DEFAULT_COMMISSION).toFixed(2);
 const pImg = getProductImageUrl(prod);
 const cardBg = isMe
 ? 'bg-black/30 border-white/20 text-white hover:border-white/50 hover:bg-black/50'
@@ -2833,7 +2847,7 @@ const vendorId = item.seller_id || item.vendor_id;
 const vendorProfile = profilesCache[vendorId] || {};
 const vendorName = resolveVendorName(vendorId);
 const retailPrice = Number(item.price || 0).toFixed(2);
-const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
+const rewardAmount = Number(item.commission || item.commission_amount || DEFAULT_COMMISSION).toFixed(2);
 const shareUrl = `${window.location.origin}${window.location.pathname}?prod=${item.id}`;
 const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
 
@@ -2967,7 +2981,7 @@ return `<div class="p-8 text-center text-xs text-slate-400 col-span-full bg-dark
 const isLocked = currentProfile && currentProfile.role === 'buyer' && currentProfile.verification_status !== 'VERIFIED';
 return products.map(item => {
 const retailPrice = Number(item.price || 0).toFixed(2);
-const rewardAmount = Number(item.commission || item.commission_amount || 15.00).toFixed(2);
+const rewardAmount = Number(item.commission || item.commission_amount || DEFAULT_COMMISSION).toFixed(2);
 return `
 <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-3 hover:border-accentBlue/50 transition flex flex-col justify-between">
 <div class="space-y-2">
