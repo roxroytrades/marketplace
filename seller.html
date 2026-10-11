@@ -765,8 +765,7 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const SCHEMA_COLUMNS = {
   profiles: ['id', 'full_name', 'email', 'role', 'verification_status', 'whatsapp', 'paypal_email', 'referral_code', 'invited_by_code', 'categories', 'commission_amount', 'national_id_base64', 'commission_policy_agreed', 'created_at'],
   products: ['id', 'seller_id', 'vendor_id', 'title', 'category', 'image', 'image_url', 'image_url_2', 'product_link', 'price', 'commission', 'commission_amount', 'status', 'is_active', 'description', 'amazon_url', 'product_url', 'amazon_link', 'created_at'],
-  messages: ['id', 'buyer_id', 'vendor_id', 'sender_id', 'receiver_id', 'product_id', 'text', 'message_text', 'content', 'body', 'review_url', 'link', 'image_url', 'file_url', 'attachment_url', 'proof_base64', 'status_badge', 'status', 'feedback_id', 'submission_cycle', 'is_read', 'channel_type', 'created_at'],
-  commissions: ['id', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'role_type', 'queue_type', 'amount', 'status', 'status_tag', 'paypal_tx_id', 'receipt_base64', 'receipt_url', 'created_at'],
+messages: ['id', 'buyer_id', 'vendor_id', 'sender_id', 'receiver_id', 'product_id', 'text', 'message_text', 'content', 'body', 'review_url', 'link', 'image_url', 'file_url', 'attachment_url', 'proof_base64', 'status_badge', 'status', 'feedback_id', 'submission_cycle', 'is_read', 'channel_type', 'message_type', 'created_at'],  commissions: ['id', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'role_type', 'queue_type', 'amount', 'status', 'status_tag', 'paypal_tx_id', 'receipt_base64', 'receipt_url', 'created_at'],
   system_settings: ['key', 'value', 'updated_at', 'created_at'],
   notifications: ['id', 'user_id', 'title', 'message', 'is_read', 'created_at']
 };
@@ -2368,8 +2367,11 @@ const hasAmazonReviewProof = hasAmazonReviewUrl(
   hasReviewStatus
 );
 const hasScreenshotProof = hasImageAttachment(m) && hasReviewStatus;
-const showAsReviewCard = hasReviewStatus && (hasAmazonReviewProof || hasScreenshotProof);
-    const feedbackId = m.feedback_id || 'Pending Approval';
+// Trust explicit message_type first; fall back to heuristic for legacy rows
+const isExplicitSubmission = m.message_type === 'review_submission'
+                          || m.message_type === 'review_screenshot';
+const isLegacySubmission = !m.message_type && hasReviewStatus && (hasAmazonReviewProof || hasScreenshotProof);
+const showAsReviewCard = isExplicitSubmission || isLegacySubmission;    const feedbackId = m.feedback_id || 'Pending Approval';
     const amazonUrl = m.amazon_review_url || m.link || (text.match(/https?:\/\/[^\s]+/) ? text.match(/https?:\/\/[^\s]+/)[0] : '#');
     const commissionAmount = m.commission_amount || 5.00;
     let bubbleContent = '';
