@@ -916,6 +916,8 @@ let activeThreadId = null;
 let activeRecipientId = null;
 let activeProductId = null;
 let messageSubscription = null;
+let shopperGlobalChannel = null;
+let shopperRenderDebounceTimer = null;
 let attachedImageBase64 = null;
 let currentProfile = null;
 let currentUser = null;
@@ -1023,13 +1025,14 @@ await loadMessagingThreads();
 await loadShopperReferralStats();
 
 loadAppBranding();
+setupShopperGlobalRealtime();
 
 if (pollingInterval) clearInterval(pollingInterval);
 pollingInterval = setInterval(async () => {
 await loadMarketplaceProducts(true);
 await loadShopperCommissions(true);
 await loadMessagingThreads(true);
-}, 60000);
+}, 120000);
 
 } catch (err) {
 console.error("Workspace initialization error:", err.message);
@@ -2282,6 +2285,15 @@ if (m2 && m2[1]) return m2[1];
 return null;
 }
 
+function debouncedLoadMessageStream() {
+  if (!activeRecipientId) return;
+  if (shopperRenderDebounceTimer) clearTimeout(shopperRenderDebounceTimer);
+  shopperRenderDebounceTimer = setTimeout(() => {
+    loadMessageStream(activeRecipientId, activeProductId);
+    shopperRenderDebounceTimer = null;
+  }, 150);
+}
+
 async function loadMessageStream(recipientId, productId) {
 const container = document.getElementById('messageStreamContainer');
 if (!container) return;
@@ -2394,11 +2406,55 @@ ${innerHtml}
 `;
 }).join('');
 
+const wasAtBottom =
+  (container.scrollHeight - container.scrollTop - container.clientHeight) < 60;
+
 container.innerHTML = productHeaderCard + messagesHtml;
-container.scrollTop = container.scrollHeight;
+
+if (wasAtBottom) {
+  container.scrollTop = container.scrollHeight;
+}
 } catch (err) {
 container.innerHTML = `<div class="m-auto text-center text-xs text-rose-400">Error loading messages.</div>`;
 }
+}
+
+function setupShopperGlobalRealtime() {
+  if (!currentUser?.id) return;
+  if (shopperGlobalChannel) _supabase.removeChannel(shopperGlobalChannel);
+
+  shopperGlobalChannel = _supabase
+    .channel('shopper-global-' + currentUser.id)
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'messages' },
+      (payload) => {
+        const row = payload.new || payload.old || {};
+        const involvesMe =
+          row.sender_id === currentUser.id ||
+          row.receiver_id === currentUser.id ||
+          row.buyer_id === currentUser.id ||
+          row.vendor_id === currentUser.id;
+        if (!involvesMe) return;
+
+        loadMessagingThreads(true);
+        debouncedLoadMessageStream();
+      })
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'commissions' },
+      (payload) => {
+        const row = payload.new || payload.old || {};
+        if (row.recipient_id !== currentUser.id) return;
+        loadShopperCommissions(true);
+        loadShopperReferralStats();
+      })
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'products' },
+      () => {
+        loadMarketplaceProducts(true);
+      })
+    .subscribe((status) => {
+      console.log('[Shopper Realtime]', status);
+    });
 }
 
 async function setupRealtimeMessageSubscription(recipientId, productId) {
@@ -2560,6 +2616,9 @@ badge.classList.add('hidden');
 
 async function handleLogout() {
 if (pollingInterval) clearInterval(pollingInterval);
+if (shopperRenderDebounceTimer) clearTimeout(shopperRenderDebounceTimer);
+if (shopperGlobalChannel) _supabase.removeChannel(shopperGlobalChannel);
+if (messageSubscription) _supabase.removeChannel(messageSubscription);
 await _supabase.auth.signOut();
 window.location.href = 'login.html';
 }
