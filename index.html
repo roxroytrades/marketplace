@@ -894,6 +894,124 @@ eh
 
   </div>
 </div>
+
+<!-- ================= MESSAGING HUB EDUCATIONAL POPUP (ONBOARDING MODAL) ================= -->
+<div id="messagingEducationModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[80] hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-blue-500/20 border border-blue-500/40 rounded-xl flex items-center justify-center text-blue-400 text-lg">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Messaging Hub Guide</h3>
+          <p class="text-[11px] text-slate-400">Learn what each attachment option is for — and what it's not.</p>
+        </div>
+      </div>
+      <button onclick="closeMessagingEducationModal()" class="text-slate-400 hover:text-white transition text-xl leading-none">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Intro -->
+    <div class="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-4 text-xs text-blue-200 flex items-start space-x-3">
+      <i class="fa-solid fa-circle-info text-blue-400 mt-0.5 shrink-0"></i>
+      <span>
+        The Messaging Hub has <strong>two different types of attachments</strong>.
+        Using the wrong one can delay your commission or cause your review proof to be rejected.
+        Please read this quick guide before attaching a file or link.
+      </span>
+    </div>
+
+    <!-- Two-column explanation -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Column 1: General Chat -->
+      <div class="bg-slate-900/60 border border-slate-700/60 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-slate-700/60 text-slate-300 rounded-lg flex items-center justify-center text-sm">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-white">General Chat</h4>
+            <p class="text-[10px] text-slate-400">Casual conversation & sharing</p>
+          </div>
+        </div>
+        <ul class="space-y-2 text-xs text-slate-300">
+          <li class="flex items-start space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-400 mt-0.5 text-[10px]"></i>
+            <span><strong class="text-white">Send a Link</strong> — share a product page, YouTube video, or any non-review URL.</span>
+          </li>
+          <li class="flex items-start space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-400 mt-0.5 text-[10px]"></i>
+            <span><strong class="text-white">Send a Photo</strong> — share a casual image, product screenshot, or chat picture.</span>
+          </li>
+          <li class="flex items-start space-x-2">
+            <i class="fa-solid fa-circle-xmark text-rose-400 mt-0.5 text-[10px]"></i>
+            <span class="text-slate-400"><strong>Not for:</strong> Formal review proof. Vendors won't see Approve/Deny buttons on these.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Column 2: Review Proof Submission -->
+      <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-sm">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-white">Submit Review Proof</h4>
+            <p class="text-[10px] text-emerald-300">Formal claim — triggers Approve/Deny</p>
+          </div>
+        </div>
+        <ul class="space-y-2 text-xs text-slate-300">
+          <li class="flex items-start space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-400 mt-0.5 text-[10px]"></i>
+            <span><strong class="text-white">Submit Review URL</strong> — a direct link to the review you posted (e.g., Amazon review page).</span>
+          </li>
+          <li class="flex items-start space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-400 mt-0.5 text-[10px]"></i>
+            <span><strong class="text-white">Submit Review Screenshot</strong> — a clear image of your posted review showing stars & text.</span>
+          </li>
+          <li class="flex items-start space-x-2">
+            <i class="fa-solid fa-circle-xmark text-rose-400 mt-0.5 text-[10px]"></i>
+            <span class="text-slate-400"><strong>Not for:</strong> Product pages, storefronts, or unrelated files — these will be denied.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Critical warning -->
+    <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs text-amber-200 flex items-start space-x-3">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 shrink-0"></i>
+      <div class="space-y-1">
+        <p class="font-semibold text-amber-300">Important: Only submit proof after you've received the product.</p>
+        <p>You must have the product in hand and have posted a genuine review before using "Submit Review Proof". Sending proof for a product you haven't received will result in denial and may affect your account standing.</p>
+      </div>
+    </div>
+
+    <!-- Footer actions -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-borderSlate pt-4">
+      <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+        <input type="checkbox" id="dontShowEducationAgain" class="rounded border-borderSlate bg-darkBg text-blue-600 focus:ring-0 cursor-pointer">
+        <span>Don't show this guide again</span>
+      </label>
+      <div class="flex items-center space-x-2">
+        <button onclick="closeMessagingEducationModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">
+          Skip
+        </button>
+        <button onclick="closeMessagingEducationModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-bold px-5 py-2 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-1.5">
+          <i class="fa-solid fa-check"></i>
+          <span>Got it, let's chat</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- Footer -->
 <footer class="border-t border-borderSlate bg-cardBg py-6 text-center text-xs text-slate-500">
 <p>&copy; 2026 Echo Hub Marketplace. Shopper Workspace & Referral Engine.</p>
@@ -1596,13 +1714,76 @@ document.getElementById('receiptModal')?.classList.remove('hidden');
 }
 
 /* ================= WHATSAPP-STYLE TWO-PANEL MESSAGING HUB MODAL ================= */
-function toggleMessagingHub() {
-const modal = document.getElementById('messagingHubModal');
-if (!modal) return;
-modal.classList.toggle('hidden');
-if (!modal.classList.contains('hidden')) {
-loadMessagingThreads();
+/* ==========================================================================
+   MESSAGING HUB EDUCATIONAL POPUP — First-Time User Guide
+   ========================================================================== */
+
+const EDUCATION_DISMISS_KEY = 'echohub_messaging_education_dismissed';
+
+function shouldShowMessagingEducation() {
+  // Don't show if user checked "Don't show again"
+  if (localStorage.getItem(EDUCATION_DISMISS_KEY) === 'true') return false;
+
+  // Don't show if user is a returning visitor with existing threads
+  if (messagingThreads && messagingThreads.length > 0) return false;
+
+  return true;
 }
+
+function openMessagingEducationModal() {
+  const modal = document.getElementById('messagingEducationModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+
+  // Reset checkbox every time it opens
+  const cb = document.getElementById('dontShowEducationAgain');
+  if (cb) cb.checked = false;
+}
+
+function closeMessagingEducationModal() {
+  const modal = document.getElementById('messagingEducationModal');
+  const cb = document.getElementById('dontShowEducationAgain');
+
+  if (cb && cb.checked) {
+    localStorage.setItem(EDUCATION_DISMISS_KEY, 'true');
+  }
+
+  if (modal) modal.classList.add('hidden');
+}
+
+// Close on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const eduModal = document.getElementById('messagingEducationModal');
+    if (eduModal && !eduModal.classList.contains('hidden')) {
+      closeMessagingEducationModal();
+    }
+  }
+});
+
+// Close on backdrop click
+document.addEventListener('click', (e) => {
+  const eduModal = document.getElementById('messagingEducationModal');
+  if (eduModal && !eduModal.classList.contains('hidden') && e.target === eduModal) {
+    closeMessagingEducationModal();
+  }
+});
+
+function toggleMessagingHub() {
+  const modal = document.getElementById('messagingHubModal');
+  if (!modal) return;
+
+  const isOpening = modal.classList.contains('hidden');
+  modal.classList.toggle('hidden');
+
+  if (isOpening) {
+    loadMessagingThreads();
+
+    // Show the education popup on first open
+    if (shouldShowMessagingEducation()) {
+      setTimeout(() => openMessagingEducationModal(), 250);
+    }
+  }
 }
 
 /* ==========================================================================
