@@ -1321,6 +1321,7 @@ async function loadMarketplaceProducts(isPolling = false) {
   }
 }
 
+function filterMarketplaceProducts() {
 const searchRaw = (document.getElementById('marketSearchInput')?.value || '').trim().toLowerCase();
 const grid = document.getElementById('marketplaceGrid');
 if (!grid) return;
