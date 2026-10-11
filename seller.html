@@ -850,6 +850,8 @@ function saveLocalVendorReadState(partnerId) {
 let activeSubTab = 'incoming';
 let selectedSellerCommIds = new Set();
 let pollingInterval = null;
+let sellerRealtimeChannel = null;
+let renderDebounceTimer = null;
 let chatAttachedFile = null;
 /* Status Badge Sanitizer Helper */
 const sanitizeStatusBadge = (payload) => {
@@ -899,23 +901,71 @@ async function initSellerWorkspace() {
     if (document.getElementById('refLinkInput')) {
       document.getElementById('refLinkInput').value = `https://echohub.ja/register?ref=vendor_${currentUser.id.substring(0, 8)}`;
     }
-    /* Step E: Load Vendor Workspace Data */
+        /* Step E: Load Vendor Workspace Data */
     await preloadSellerProfiles();
     await loadVendorProducts();
     await loadVendorCommissions();
     await loadVendorThreads();
-    /* Step F: Start Live Polling Loop (10-second sync) */
+    /* Step F: Setup Realtime + slow safety-net poll */
+    setupSellerRealtime();
     if (pollingInterval) {
       clearInterval(pollingInterval);
     }
-    pollingInterval = setInterval(pollVendorData, 60000);
+    pollingInterval = setInterval(pollVendorData, 120000);
   } catch (err) {
     console.error("Initialization error:", err.message);
     window.location.href = 'login.html';
   }
 }
+
+function debouncedRenderActiveChat() {
+  if (renderDebounceTimer) clearTimeout(renderDebounceTimer);
+  renderDebounceTimer = setTimeout(() => {
+    if (activeThreadId) renderActiveChat();
+    renderDebounceTimer = null;
+  }, 150);
+}
+
+function setupSellerRealtime() {
+  if (!currentUser?.id) return;
+  if (sellerRealtimeChannel) _supabase.removeChannel(sellerRealtimeChannel);
+
+  sellerRealtimeChannel = _supabase
+    .channel('seller-realtime-' + currentUser.id)
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'messages' },
+      (payload) => {
+        const row = payload.new || payload.old || {};
+        const involvesMe =
+          row.sender_id === currentUser.id ||
+          row.receiver_id === currentUser.id ||
+          row.vendor_id === currentUser.id ||
+          row.buyer_id === currentUser.id;
+        if (!involvesMe) return;
+
+        // Refresh thread list, then debounced-render the active thread
+        loadVendorThreads(true).then(() => {
+          debouncedRenderActiveChat();
+        });
+      })
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'commissions' },
+      (payload) => {
+        const row = payload.new || payload.old || {};
+        const involvesMe =
+          row.seller_id === currentUser.id ||
+          row.vendor_id === currentUser.id ||
+          row.recipient_id === currentUser.id;
+        if (!involvesMe) return;
+        loadVendorCommissions(true);
+      })
+    .subscribe((status) => {
+      console.log('[Seller Realtime]', status);
+    });
+}
+
 async function pollVendorData() {
-  await preloadSellerProfiles();
+  // Profiles rarely change — skip them; Realtime handles live updates
   await loadVendorProducts(true);
   await loadVendorCommissions(true);
   await loadVendorThreads(true);
@@ -923,9 +973,9 @@ async function pollVendorData() {
 /* 2. Sign Out Handler */
 async function handleLogout() {
   try {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-    }
+    if (pollingInterval) clearInterval(pollingInterval);
+    if (renderDebounceTimer) clearTimeout(renderDebounceTimer);
+    if (sellerRealtimeChannel) _supabase.removeChannel(sellerRealtimeChannel);
     await _supabase.auth.signOut();
   } catch (err) {
     console.error("Logout error:", err.message);
@@ -2282,7 +2332,11 @@ function renderActiveChat(shouldScroll = false) {
   let thread = vendorThreads.find(t => t.partnerId === activeThreadId);
   const container = document.getElementById('chatMessagesContainer');
   if (!container) return;
-  const currentScrollTop = container.scrollTop;
+
+  // Smart scroll: detect if user was already at the bottom (within 60px tolerance)
+  const wasAtBottom =
+    (container.scrollHeight - container.scrollTop - container.clientHeight) < 60;
+  const previousScrollTop = container.scrollTop;
   const titleEl = document.getElementById('activeChatTitle');
   const subEl = document.getElementById('activeChatSub');
   if (!profilesCache[activeThreadId] && activeThreadId && activeThreadId.length > 20) {
@@ -2514,10 +2568,10 @@ const showAsReviewCard = isExplicitSubmission || isLegacySubmission;    const fe
     `;
   }
   container.innerHTML = receiptThreadBanner + productHeaderCard + messagesHtml;
-  if (shouldScroll) {
+    if (shouldScroll || wasAtBottom) {
     container.scrollTop = container.scrollHeight;
   } else {
-    container.scrollTop = currentScrollTop;
+    container.scrollTop = previousScrollTop;
   }
 }
 async function handleInlineApprove(messageId, reviewerId, commissionAmount) {
