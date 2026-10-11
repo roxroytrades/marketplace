@@ -33,7 +33,14 @@ tailwind.config = {
   h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </style>
 <script src="//cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
+<script>
+  eruda.init({
+    defaults: {
+      displaySize: 25,      // Panel takes 30% of screen height
+      transparency: 0.9     // Optional: slight transparency
+    }
+  });
+</script>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col justify-between">
 <!-- Top Bar -->
