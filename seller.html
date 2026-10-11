@@ -559,84 +559,100 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
 </main>
 <!-- ================= MODALS ================= -->
 <!-- Add/Edit Product Modal -->
+<!-- Add/Edit Product Modal -->
 <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-<div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-6 shadow-2xl">
-<div class="flex items-center justify-between border-b border-borderSlate pb-4">
-<h3 id="productModalTitle" class="text-lg font-bold text-white">Add New Marketplace Product</h3>
-<button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-</div>
-<form id="productForm" onsubmit="handleSaveProduct(event)" class="space-y-4">
-<input type="hidden" id="editingProductId">
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Product Title</label>
-<input type="text" id="prodTitle" required placeholder="e.g., Wireless Gaming Keyboard" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Description</label>
-<textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
-</div>
-<!-- ================= SEARCH KEYWORDS INPUT ================= -->
-<div class="space-y-2">
-  <label class="block text-xs font-medium text-slate-300">
-    Search Keywords
-    <span class="text-slate-500 font-normal">(help buyers find this product with alternate phrases)</span>
-  </label>
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl">
 
-  <div id="keywordPills" class="flex flex-wrap gap-1.5 min-h-[42px] bg-darkBg border border-borderSlate rounded-xl px-3 py-2">
-    <span class="text-[11px] text-slate-500 italic">No keywords added yet — buyers will only find this via the title.</span>
+    <!-- Sticky Header -->
+    <div class="flex items-center justify-between border-b border-borderSlate p-6 md:p-8 pb-4 shrink-0">
+      <h3 id="productModalTitle" class="text-lg font-bold text-white">Add New Marketplace Product</h3>
+      <button onclick="closeProductModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+
+    <!-- Scrollable Form Body -->
+    <div class="overflow-y-auto p-6 md:p-8 pt-4">
+      <form id="productForm" onsubmit="handleSaveProduct(event)" class="space-y-4">
+        <input type="hidden" id="editingProductId">
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Product Title</label>
+          <input type="text" id="prodTitle" required placeholder="e.g., Wireless Gaming Keyboard" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Description</label>
+          <textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
+        </div>
+
+        <!-- ================= SEARCH KEYWORDS INPUT ================= -->
+        <div class="space-y-2">
+          <label class="block text-xs font-medium text-slate-300">
+            Search Keywords
+            <span class="text-slate-500 font-normal">(help buyers find this product with alternate phrases)</span>
+          </label>
+
+          <div id="keywordPills" class="flex flex-wrap gap-1.5 min-h-[42px] bg-darkBg border border-borderSlate rounded-xl px-3 py-2">
+            <span class="text-[11px] text-slate-500 italic">No keywords added yet — buyers will only find this via the title.</span>
+          </div>
+
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="keywordInput"
+              placeholder="e.g. wireless earbuds, bluetooth headphones, gaming headset"
+              class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue"
+              onkeydown="handleKeywordKeydown(event)">
+            <button
+              type="button"
+              onclick="addKeywordFromInput()"
+              class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-3 py-2 rounded-xl transition">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+
+          <p class="text-[10px] text-slate-500">
+            Tip: Add phrases buyers would search for — brand names, alternate names, use cases. Max 15 keywords, 40 chars each.
+          </p>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Retail Price ($ USD) *</label>
+          <input type="number" id="prodPrice" step="0.01" min="0" required placeholder="0.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Product Thumbnail (Auto-Compressed)</label>
+          <input type="file" id="prodImageFile" accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-medium text-slate-300">Direct Amazon Listing URL</label>
+            <span class="text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full"><i class="fa-solid fa-lock mr-1"></i>Private to Vendor</span>
+          </div>
+          <input type="url" id="prodAmazonUrl" placeholder="https://www.amazon.com/dp/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+          <p class="text-[10px] text-amber-300/80 flex items-center space-x-1 mt-0.5">
+            <i class="fa-solid fa-shield-halved text-amber-400 shrink-0"></i>
+            <span>🔒 Private Reference Link: Strictly visible to YOU for easy inventory reference. Shoppers will NEVER see this link.</span>
+          </p>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300">Listing Status</label>
+          <select id="prodStatus" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
+            <option value="ACTIVE">ACTIVE (Visible on Marketplace)</option>
+            <option value="PAUSED">PAUSED (Hidden)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
+          Save Product Listing
+        </button>
+      </form>
+    </div>
   </div>
+</div>
 
-  <div class="flex gap-2">
-    <input
-      type="text"
-      id="keywordInput"
-      placeholder="e.g. wireless earbuds, bluetooth headphones, gaming headset"
-      class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-accentBlue"
-      onkeydown="handleKeywordKeydown(event)">
-    <button
-      type="button"
-      onclick="addKeywordFromInput()"
-      class="bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold px-3 py-2 rounded-xl transition">
-      <i class="fa-solid fa-plus"></i>
-    </button>
-  </div>
-
-  <p class="text-[10px] text-slate-500">
-    Tip: Add phrases buyers would search for — brand names, alternate names, use cases. Max 15 keywords, 40 chars each.
-  </p>
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Retail Price ($ USD) *</label>
-<input type="number" id="prodPrice" step="0.01" min="0" required placeholder="0.00" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Product Thumbnail (Auto-Compressed)</label>
-<input type="file" id="prodImageFile" accept="image/*" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
-</div>
-<div class="space-y-1.5">
-<div class="flex items-center justify-between">
-<label class="text-xs font-medium text-slate-300">Direct Amazon Listing URL</label>
-<span class="text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full"><i class="fa-solid fa-lock mr-1"></i>Private to Vendor</span>
-</div>
-<input type="url" id="prodAmazonUrl" placeholder="https://www.amazon.com/dp/..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-<p class="text-[10px] text-amber-300/80 flex items-center space-x-1 mt-0.5">
-<i class="fa-solid fa-shield-halved text-amber-400 shrink-0"></i>
-<span>🔒 Private Reference Link: Strictly visible to YOU for easy inventory reference. Shoppers will NEVER see this link.</span>
-</p>
-</div>
-<div class="space-y-1.5">
-<label class="text-xs font-medium text-slate-300">Listing Status</label>
-<select id="prodStatus" class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition">
-<option value="ACTIVE">ACTIVE (Visible on Marketplace)</option>
-<option value="PAUSED">PAUSED (Hidden)</option>
-</select>
-</div>
-<button type="submit" class="w-full bg-accentBlue hover:bg-accentHover text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
-Save Product Listing
-</button>
-</form>
-</div>
-</div>
 <!-- Pay & Settle Modal (Working Queue Settlement) -->
 <div id="settlementModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-md w-full p-6 md:p-8 space-y-6 shadow-2xl">
