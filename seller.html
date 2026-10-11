@@ -850,7 +850,7 @@ function saveLocalVendorReadState(partnerId) {
 let activeSubTab = 'incoming';
 let selectedSellerCommIds = new Set();
 let pollingInterval = null;
-let sellerRealtimeChannel = null;
+
 let renderDebounceTimer = null;
 let chatAttachedFile = null;
 /* Status Badge Sanitizer Helper */
@@ -861,6 +861,11 @@ const sanitizeStatusBadge = (payload) => {
   return payload;
 };
 /* 1. Page-Load Workspace Initialization & Role Security Guard */
+/* ================= GLOBAL REALTIME SUBSCRIPTION ================= */
+
+
+
+
 async function initSellerWorkspace() {
   loadAppBranding();
   try {
@@ -912,6 +917,7 @@ async function initSellerWorkspace() {
       clearInterval(pollingInterval);
     }
     pollingInterval = setInterval(pollVendorData, 120000);
+        
   } catch (err) {
     console.error("Initialization error:", err.message);
     window.location.href = 'login.html';
@@ -2826,6 +2832,12 @@ async function handleSendMessage(event) {
     alert('Error sending message: ' + err.message);
   }
 }
+
+/* ================= GLOBAL REALTIME SUBSCRIPTION ================= */
+let sellerRealtimeChannel = null;
+
+
+
 window.addEventListener('DOMContentLoaded', initSellerWorkspace);
 /* Global System Branding Loader */
 async function loadAppBranding() {
