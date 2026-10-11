@@ -386,7 +386,8 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
       <button onclick="switchAdminTab('messaging')" id="tabBtn-messaging" class="admin-tab-btn flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent relative">
         <i class="fa-solid fa-comments text-xs"></i>
         <span>System Messaging & Outreach</span>
-        <span id="unreadMessagesBadge" class="hidden bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+<span id="unreadMessagesBadge" class="hidden bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+<span id="solicitationBadge" class="hidden bg-rose-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full ml-1 animate-pulse" title="Vendor solicitation alerts">🚩 0</span>
       </button>
       <button onclick="switchAdminTab('referrals')" id="tabBtn-referrals" class="admin-tab-btn flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-xl font-semibold transition flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-darkBg border border-transparent">
         <i class="fa-solid fa-sitemap text-xs"></i>
@@ -717,6 +718,9 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
               Needs Attention
             </button>
             <button onclick="switchLeftPaneFilter('FLAGGED')" id="leftTab-FLAGGED" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20">
+              <button onclick="switchLeftPaneFilter('VENDOR_SOLICITATION')" id="leftTab-VENDOR_SOLICITATION" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-rose-500/20 text-rose-400 border-rose-500/40 hover:bg-rose-500/30">
+  🚩 Vendor Solicitation
+</button>
               🚨 Contact Risk
             </button>
             <button onclick="switchLeftPaneFilter('CONTACTS')" id="leftTab-CONTACTS" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
@@ -1401,6 +1405,27 @@ function hasContactRisk(text) {
          CONTACT_RISK_REGEX.phone.test(text) ||
          CONTACT_RISK_REGEX.links.test(text) ||
          CONTACT_RISK_REGEX.offplatform.test(text);
+}
+
+/* Detect when a VENDOR asks a non-vendor (buyer/shopper) for personal info */
+function isVendorSolicitation(msg) {
+  if (!msg) return false;
+
+  const senderProfile = (typeof profilesCache !== 'undefined' && profilesCache[msg.sender_id])
+                     || (typeof allUsersCache !== 'undefined' && allUsersCache.find(u => u.id === msg.sender_id))
+                     || null;
+  const senderRole = (senderProfile?.role || '').toLowerCase();
+  const isVendor = senderRole === 'seller' || senderRole === 'vendor';
+  if (!isVendor) return false;
+
+  const recipientProfile = (typeof profilesCache !== 'undefined' && profilesCache[msg.receiver_id])
+                        || (typeof allUsersCache !== 'undefined' && allUsersCache.find(u => u.id === msg.receiver_id))
+                        || null;
+  const recipientRole = (recipientProfile?.role || '').toLowerCase();
+  if (recipientRole === 'seller' || recipientRole === 'vendor') return false;
+
+  const text = msg.content || msg.text || msg.message_text || msg.message || msg.body || '';
+  return hasContactRisk(text);
 }
 
 /* Initialization on DOM Load */
@@ -2540,6 +2565,7 @@ async function loadMessagingData(isSilent = false) {
     });
 
     updateAdminUnreadBadge();
+    updateSolicitationBadge();
     filterLeftPaneThreads();
     if (activeSelectedThreadId) {
       renderActiveThreadTranscript();
@@ -2579,14 +2605,22 @@ function groupMessagesIntoThreads(messages) {
         statusBadge: m.status_badge || 'AWAITING_ATTENTION',
         messages: [],
         hasFlaggedRisk: false,
+        hasVendorSolicitation: false,
         lastTimestamp: m.created_at
       };
     }
 
     threadMap[threadKey].messages.push(m);
-    if (hasContactRisk(m.content)) {
-      threadMap[threadKey].hasFlaggedRisk = true;
-    }
+
+// Generic contact risk (email/phone/links anywhere in the message)
+if (hasContactRisk(m.content)) {
+  threadMap[threadKey].hasFlaggedRisk = true;
+}
+
+// Priority alert: vendor soliciting a non-vendor
+if (isVendorSolicitation(m)) {
+  threadMap[threadKey].hasVendorSolicitation = true;
+}
   });
 
   /* Convert to array and sort by newest message first */
@@ -2700,6 +2734,7 @@ function renderLeftPaneThreadsList() {
     if (currentLeftFilter === 'MARKETPLACE') return !t.isDirect;
     if (currentLeftFilter === 'ACTION_REQUIRED') return t.statusBadge === 'AWAITING_ATTENTION';
     if (currentLeftFilter === 'FLAGGED') return t.hasFlaggedRisk;
+        if (currentLeftFilter === 'VENDOR_SOLICITATION') return t.hasVendorSolicitation;
     return true; // 'ALL'
   });
 
@@ -2781,7 +2816,8 @@ function renderLeftPaneThreadsList() {
             ${isPinned ? `<i class="fa-solid fa-thumbtack text-amber-400 text-[10px]" title="Pinned"></i>` : ''}
             <span class="text-xs font-bold text-white truncate">${partnerName}</span>
             <span class="px-1.5 py-0.2 rounded text-[9px] font-mono border ${roleBadgeClass}">${partnerRole}</span>
-          </div>
+                  ${t.hasVendorSolicitation ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse" title="Vendor asked a shopper for personal/off-platform contact">🚩 SOLICITATION</span>` : ''}
+            </div>
           <div class="flex items-center space-x-1.5 shrink-0">
             ${unreadCount > 0 ? `<span class="bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">${unreadCount}</span>` : ''}
             <span class="text-[10px] text-slate-500">${timeStr}</span>
@@ -2902,6 +2938,9 @@ function renderActiveThreadTranscript() {
     return;
   }
 
+  const wasAtBottom = (container.scrollHeight - container.scrollTop - container.clientHeight) < 60;
+  const previousScrollTop = container.scrollTop;
+
   const partnerUser = allUsersCache.find(u => u.id === thread.partnerId);
   const partnerName = partnerUser ? partnerUser.full_name : thread.partnerId;
 
@@ -3004,7 +3043,15 @@ function renderActiveThreadTranscript() {
     `;
   }).join('');
 
-  container.scrollTop = container.scrollHeight;
+    }).join('');
+
+  // Smart scroll: only jump to bottom if user was already there
+  if (wasAtBottom) {
+    container.scrollTop = container.scrollHeight;
+  } else {
+    container.scrollTop = previousScrollTop;
+  }
+}
 }
 
 /* Admin Direct Message Reply */
@@ -4152,6 +4199,18 @@ function updateAdminUnreadBadge() {
   const totalUnread = allThreadsCache.reduce((sum, t) => sum + (t.messages || []).filter(m => m.sender_id !== currentAdminUser?.id && !m.is_read).length, 0);
   if (totalUnread > 0) {
     badge.textContent = totalUnread;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function updateSolicitationBadge() {
+  const badge = document.getElementById('solicitationBadge');
+  if (!badge) return;
+  const count = (allThreadsCache || []).filter(t => t.hasVendorSolicitation).length;
+  if (count > 0) {
+    badge.textContent = `🚩 ${count}`;
     badge.classList.remove('hidden');
   } else {
     badge.classList.add('hidden');
