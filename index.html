@@ -624,7 +624,6 @@ eh
 <div id="messagingHubModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-6" style="height: 100dvh; max-height: 100dvh; padding-bottom: max(0.5rem, env(safe-area-inset-bottom));">
 <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-5xl w-full flex overflow-hidden shadow-2xl" style="height: calc(100dvh - 1rem); max-height: calc(100dvh - 1rem);">
 <!-- Left Sidebar: Thread List -->
-<div id="threadsListContainerWrapper"
 <div id="threadsListContainerWrapper" class="w-full sm:w-80 border-r border-borderSlate flex flex-col bg-slate-900/50 overflow-hidden shrink-0">
 <div class="p-3 border-b border-borderSlate flex items-center justify-between">
 <h3 class="font-bold text-white text-sm flex items-center space-x-2">
@@ -729,7 +728,7 @@ eh
       <span>Submit Review Proof</span>
     </p>
 
-    <button onclick="openReviewUrlInput()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-emerald-500/10 transition flex items-center space-x-2.5 border border-emerald-500/20">
+    <button onclick="confirmThenSubmit('url')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-emerald-500/10 transition flex items-center space-x-2.5 border border-emerald-500/20">
       <div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-link"></i></div>
       <div>
         <p class="font-semibold">Submit Review URL</p>
@@ -737,7 +736,7 @@ eh
       </div>
     </button>
 
-    <button onclick="triggerScreenshotUploader()" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-emerald-500/10 transition flex items-center space-x-2.5 border border-emerald-500/20">
+    <button onclick="confirmThenSubmit('screenshot')" class="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-200 hover:bg-emerald-500/10 transition flex items-center space-x-2.5 border border-emerald-500/20">
       <div class="w-7 h-7 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-image"></i></div>
       <div>
         <p class="font-semibold">Submit Review Screenshot</p>
@@ -767,10 +766,9 @@ eh
 <!-- Message Input Footer with Paperclip Attachment Button -->
 <div id="messageInputArea" class="p-4 border-t border-borderSlate bg-slate-900/40" style="flex-shrink: 0;">
   <form onsubmit="handleSendMessage(event)" style="display: flex; flex-direction: row; align-items: flex-end; gap: 8px; width: 100%;">
-<button type="button" onclick="openAttachmentConfirmModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner shrink-0" title="Attach options">
+<button type="button" onclick="toggleAttachmentDrawer()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 px-3 py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-inner shrink-0" title="Attach options">
   <i class="fa-solid fa-paperclip text-blue-400"></i>
-</button>      <i class="fa-solid fa-paperclip text-blue-400"></i>
-    </button>
+</button>
     <textarea id="messageInputBox" placeholder="Type your message or attach review proof..." rows="1" class="flex-1 bg-darkBg border border-borderSlate rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-accentBlue transition resize-none" style="resize: none; overflow-y: hidden; max-height: 120px; line-height: 1.4; flex: 1 1 auto;"></textarea>
     <button type="submit" class="bg-accentBlue hover:bg-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center space-x-1 shrink-0">
       <span class="hidden sm:inline">Send</span>
@@ -829,11 +827,11 @@ eh
               class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">
         Cancel
       </button>
-      <button type="button" id="attachmentProceedBtn" onclick="proceedWithAttachment()"
-              disabled
-              class="bg-amber-500 hover:bg-amber-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-amber-500/20">
-        <i class="fa-solid fa-paperclip mr-1"></i> Continue
-      </button>
+      <button type="button" id="attachmentProceedBtn" onclick="proceedWithSubmission()"
+        disabled
+        class="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-lg shadow-emerald-500/20">
+  <i class="fa-solid fa-check mr-1"></i> Continue to Submit
+</button>
     </div>
 
   </div>
@@ -1626,6 +1624,14 @@ function openAttachmentConfirmModal() {
 function closeAttachmentConfirmModal() {
   const modal = document.getElementById('attachmentConfirmModal');
   if (modal) modal.classList.add('hidden');
+
+  // Reset queued mode and checkboxes
+  pendingSubmissionMode = null;
+  const cb1 = document.getElementById('confirmReceivedProduct');
+  const cb2 = document.getElementById('confirmReviewProof');
+  if (cb1) cb1.checked = false;
+  if (cb2) cb2.checked = false;
+  validateAttachmentConfirm();
 }
 
 function validateAttachmentConfirm() {
@@ -1647,20 +1653,42 @@ function validateAttachmentConfirm() {
   }
 }
 
-function proceedWithAttachment() {
+// Tracks which submission mode the user picked ('url' | 'screenshot')
+let pendingSubmissionMode = null;
+
+// Called from the two "Submit Review ..." buttons in the drawer
+function confirmThenSubmit(mode) {
+  pendingSubmissionMode = mode;
+
+  // Close the drawer so the modal is the focus
+  const drawer = document.getElementById('attachmentOptionsDrawer');
+  if (drawer) drawer.classList.add('hidden');
+
+  // Open the confirmation modal
+  openAttachmentConfirmModal();
+}
+
+// Called from the "Continue to Submit" button inside the confirmation modal
+function proceedWithSubmission() {
   const cb1 = document.getElementById('confirmReceivedProduct');
   const cb2 = document.getElementById('confirmReviewProof');
 
   if (!cb1?.checked || !cb2?.checked) {
-    alert("Both confirmations are required before attaching a file.");
+    alert("Both confirmations are required before submitting review proof.");
     return;
   }
 
-  // Close confirmation, then open the existing attachment drawer
+  const mode = pendingSubmissionMode;
+  pendingSubmissionMode = null;
+
   closeAttachmentConfirmModal();
 
-  const drawer = document.getElementById('attachmentOptionsDrawer');
-  if (drawer) drawer.classList.remove('hidden');
+  // Route to the correct input for the chosen mode
+  if (mode === 'url') {
+    openReviewUrlInput();
+  } else if (mode === 'screenshot') {
+    triggerScreenshotUploader();
+  }
 }
 
 // Close on Escape
