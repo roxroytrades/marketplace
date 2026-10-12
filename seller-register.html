@@ -337,6 +337,81 @@ Need Info
 </div>
 </div>
 
+<!-- ================= CAMPAIGN TYPE SECTION ================= -->
+<div class="space-y-3 pt-3 border-t border-borderSlate">
+  <div class="space-y-1">
+    <label class="text-xs font-semibold text-slate-300">Campaign Type — How Shoppers Get Rewarded</label>
+    <p class="text-[10px] text-slate-400 leading-relaxed">
+      Choose whether shoppers earn a cash reward for reviewing your products.
+      This is your default — you can override it per product later.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+    <!-- PAID CAMPAIGN -->
+    <label class="cursor-pointer">
+      <input type="radio" name="regCampaignType" value="PAID" checked
+             onchange="handleRegCampaignTypeChange(this.value)"
+             class="peer hidden">
+      <div class="peer-checked:bg-emerald-500/15 peer-checked:border-emerald-500/50
+                  bg-darkBg border border-borderSlate rounded-xl p-3.5 transition
+                  hover:border-emerald-500/30 h-full">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-sack-dollar text-emerald-400"></i>
+            <span class="text-xs font-bold text-white">Paid Campaign</span>
+          </div>
+          <span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded-full font-bold">Most Common</span>
+        </div>
+        <p class="text-[10px] text-slate-300 leading-snug mb-1.5">
+          Shopper earns your reward in cash for each approved review.
+        </p>
+        <p class="text-[10px] text-slate-400 leading-snug">
+          You pay: <strong class="text-slate-300">Reward + Agent / Platform Fee</strong>
+        </p>
+      </div>
+    </label>
+
+    <!-- PRODUCT-ONLY CAMPAIGN -->
+    <label class="cursor-pointer">
+      <input type="radio" name="regCampaignType" value="PRODUCT_ONLY"
+             onchange="handleRegCampaignTypeChange(this.value)"
+             class="peer hidden">
+      <div class="peer-checked:bg-blue-500/15 peer-checked:border-blue-500/50
+                  bg-darkBg border border-borderSlate rounded-xl p-3.5 transition
+                  hover:border-blue-500/30 h-full">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-box-open text-blue-400"></i>
+            <span class="text-xs font-bold text-white">Product-Only</span>
+          </div>
+          <span class="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded-full font-bold">Cheaper</span>
+        </div>
+        <p class="text-[10px] text-slate-300 leading-snug mb-1.5">
+          Shopper keeps the product for free. No cash reward.
+        </p>
+        <p class="text-[10px] text-slate-400 leading-snug">
+          You pay: <strong class="text-slate-300">Agent / Platform Fee only</strong>
+        </p>
+      </div>
+    </label>
+
+  </div>
+
+  <!-- Live preview (populated by JS) -->
+  <div id="regCampaignDetail" class="bg-darkBg border border-borderSlate rounded-xl p-3.5 space-y-2">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- Help link -->
+  <button type="button" onclick="openCampaignTypeHelpModal()"
+          class="text-[11px] text-blue-400 hover:text-blue-300 underline inline-flex items-center space-x-1">
+    <i class="fa-solid fa-circle-question text-[10px]"></i>
+    <span>Learn more about campaign types</span>
+  </button>
+</div>
+
 <!-- Primary Action Button -->
 <button type="submit" id="submitBtn" class="w-full bg-accentBlue hover:bg-accentHover text-white font-semibold text-xs py-3.5 rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 mt-4 cursor-pointer">
 <span>Complete Registration</span>
@@ -367,6 +442,102 @@ const form = document.getElementById('sellerRegisterForm');
 const alertBox = document.getElementById('formAlert');
 const submitBtn = document.getElementById('submitBtn');
 let commissionPolicyAgreed = true;
+
+/* ==========================================================================
+   CAMPAIGN TYPE SECTION — Registration Page Logic
+   ========================================================================== */
+
+function handleRegCampaignTypeChange(type) {
+  const rewardInput = document.getElementById('commissionAmount');
+  const rewardLabel = rewardInput?.closest('div.space-y-1.5')?.querySelector('label');
+  const detail = document.getElementById('regCampaignDetail');
+
+  // Update detail panel
+  if (detail) {
+    const vendorFee = 5.00; // default display fee
+    if (type === 'PRODUCT_ONLY') {
+      detail.innerHTML = `
+        <div class="flex items-start space-x-2">
+          <i class="fa-solid fa-box-open text-blue-400 mt-0.5 shrink-0 text-xs"></i>
+          <div class="space-y-1">
+            <p class="text-[11px] font-bold text-white">Product-Only Campaign</p>
+            <p class="text-[10px] text-slate-400">Shopper keeps the product at no cost. No cash reward is paid.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <div class="bg-cardBg border border-blue-500/30 rounded-lg p-2">
+            <p class="text-[9px] text-slate-400 mb-0.5">Shopper receives</p>
+            <p class="text-xs font-bold text-blue-400">The product</p>
+          </div>
+          <div class="bg-cardBg border border-amber-500/30 rounded-lg p-2">
+            <p class="text-[9px] text-slate-400 mb-0.5">You pay per review</p>
+            <p class="text-xs font-bold text-amber-400">$${vendorFee.toFixed(2)}</p>
+          </div>
+        </div>
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2 mt-2">
+          <p class="text-[10px] text-amber-200">
+            <strong class="text-amber-300">You still pay the Agent / Platform Fee.</strong>
+            Product-only only removes the shopper reward.
+          </p>
+        </div>
+      `;
+      // Hide reward field label visually
+      if (rewardLabel) rewardLabel.innerHTML = 'Reviewer Reward (Disabled for Product-Only)';
+      if (rewardInput) {
+        rewardInput.disabled = true;
+        rewardInput.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    } else {
+      detail.innerHTML = `
+        <div class="flex items-start space-x-2">
+          <i class="fa-solid fa-sack-dollar text-emerald-400 mt-0.5 shrink-0 text-xs"></i>
+          <div class="space-y-1">
+            <p class="text-[11px] font-bold text-white">Paid Campaign</p>
+            <p class="text-[10px] text-slate-400">Shopper earns cash per approved review.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <div class="bg-cardBg border border-emerald-500/30 rounded-lg p-2">
+            <p class="text-[9px] text-slate-400 mb-0.5">Shopper receives</p>
+            <p class="text-xs font-bold text-emerald-400" id="detailPaidReward">$${Number(rewardInput?.value || 5).toFixed(2)}</p>
+          </div>
+          <div class="bg-cardBg border border-amber-500/30 rounded-lg p-2">
+            <p class="text-[9px] text-slate-400 mb-0.5">You pay per review</p>
+            <p class="text-xs font-bold text-amber-400" id="detailPaidTotal">$${(Number(rewardInput?.value || 5) + vendorFee).toFixed(2)}</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-[10px] bg-cardBg border border-borderSlate rounded-lg px-2.5 py-1.5 mt-2">
+          <span class="text-slate-400">Breakdown:</span>
+          <span class="font-mono text-slate-300">$${Number(rewardInput?.value || 5).toFixed(2)} reward + $${vendorFee.toFixed(2)} Agent / Platform Fee</span>
+        </div>
+      `;
+      if (rewardLabel) rewardLabel.innerHTML = 'Reviewer Reward per Review (USD)';
+      if (rewardInput) {
+        rewardInput.disabled = false;
+        rewardInput.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+  }
+}
+
+function openCampaignTypeHelpModal() {
+  document.getElementById('campaignTypeHelpModal')?.classList.remove('hidden');
+}
+
+function closeCampaignTypeHelpModal() {
+  document.getElementById('campaignTypeHelpModal')?.classList.add('hidden');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeCampaignTypeHelpModal();
+});
+
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('campaignTypeHelpModal');
+  if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+    closeCampaignTypeHelpModal();
+  }
+});
 
 function toggleCommissionEduCard() {
 const body = document.getElementById('eduCardBody');
@@ -475,6 +646,9 @@ const refParam = urlParams.get('ref') || urlParams.get('ref_code') || urlParams.
 if (refParam) {
 document.getElementById('referralCode').value = refParam.trim();
 }
+  // Initialize campaign type detail
+handleRegCampaignTypeChange('PAID');
+
 });
 
 async function resolveRefereeProfile(client, rawCode) {
@@ -510,6 +684,9 @@ const lastName = document.getElementById('lastName').value.trim();
 const fullName = `${firstName} ${lastName}`;
 const vendorType = document.querySelector('input[name="vendorType"]:checked').value;
 const commissionAmount = parseFloat(document.getElementById('commissionAmount').value);
+const campaignType = document.querySelector('input[name="regCampaignType"]:checked')?.value || 'PAID';
+const effectiveCommission = campaignType === 'PRODUCT_ONLY' ? 0 : commissionAmount;
+const platformFee = commissionAmount;
 const businessDescription = document.getElementById('businessDescription').value.trim();
 const referralCode = document.getElementById('referralCode').value.trim();
 const paypalEmail = document.getElementById('paypalEmail').value.trim();
@@ -541,7 +718,9 @@ first_name: firstName,
 last_name: lastName,
 full_name: fullName,
 vendor_type: vendorType,
-commission_amount: commissionAmount,
+commission_amount: effectiveCommission,   // ← use effective value
+campaign_type: campaignType,               // ← NEW
+platform_fee: platformFee,                 // ← NEW
 business_description: businessDescription,
 invited_by_code: finalInvitedByCode,
 referred_by: finalReferredBy,
@@ -569,7 +748,9 @@ const { error: profileError } = await _supabase
     role: 'seller',
     verification_status: 'VERIFIED',
     commission_policy_agreed: commissionPolicyAgreed,
-    commission_amount: commissionAmount,   // ← ADDED
+        commission_amount: effectiveCommission,
+    campaign_type: campaignType,
+    platform_fee: platformFee,   // ← ADDED
     created_at: new Date().toISOString()
   });
 if (profileError) {
@@ -641,5 +822,107 @@ console.warn("Branding load bypassed:", err);
 }
 }
 </script>
+<!-- ================= CAMPAIGN TYPE HELP MODAL ================= -->
+<div id="campaignTypeHelpModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[95] hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-blue-500/20 border border-blue-500/40 rounded-xl flex items-center justify-center text-blue-400 text-lg">
+          <i class="fa-solid fa-circle-question"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Understanding Campaign Types</h3>
+          <p class="text-[11px] text-slate-400">Paid vs Product-Only — which one is right for you?</p>
+        </div>
+      </div>
+      <button onclick="closeCampaignTypeHelpModal()" class="text-slate-400 hover:text-white transition text-xl leading-none">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <p class="text-xs text-slate-300">
+        Every campaign has a <strong class="text-white">Campaign Type</strong> — the rules for what the shopper receives when their review is approved. Pick a default now, override per product later.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-emerald-500/5 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-sack-dollar text-emerald-400 text-xl"></i>
+            <h4 class="text-sm font-bold text-white">Paid Campaign</h4>
+          </div>
+          <ul class="space-y-1.5 text-xs text-slate-200">
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-[10px] mt-1 shrink-0"></i>
+              <span>Shopper gets a <strong class="text-white">cash reward</strong> per approved review</span>
+            </li>
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-[10px] mt-1 shrink-0"></i>
+              <span>Shopper buys the product at your retail price</span>
+            </li>
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-[10px] mt-1 shrink-0"></i>
+              <span>More shoppers claim paid campaigns</span>
+            </li>
+          </ul>
+          <p class="text-[11px] text-slate-400"><strong class="text-slate-300">Best for:</strong> competitive niches and high-value items.</p>
+        </div>
+
+        <div class="bg-blue-500/5 border border-blue-500/30 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-box-open text-blue-400 text-xl"></i>
+            <h4 class="text-sm font-bold text-white">Product-Only Campaign</h4>
+          </div>
+          <ul class="space-y-1.5 text-xs text-slate-200">
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-check text-blue-400 text-[10px] mt-1 shrink-0"></i>
+              <span>Shopper gets the <strong class="text-white">product for free</strong> and keeps it</span>
+            </li>
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-check text-blue-400 text-[10px] mt-1 shrink-0"></i>
+              <span>You cover shipping the product to the shopper</span>
+            </li>
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-check text-blue-400 text-[10px] mt-1 shrink-0"></i>
+              <span>No cash reward — cheaper per review</span>
+            </li>
+          </ul>
+          <p class="text-[11px] text-slate-400"><strong class="text-slate-300">Best for:</strong> low-cost items, samples, apparel.</p>
+        </div>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-circle-info text-amber-400"></i>
+          <p class="text-xs font-bold text-amber-300">What's the same in both</p>
+        </div>
+        <ul class="text-[11px] text-amber-200 space-y-1 pl-6 list-disc">
+          <li>You always pay the <strong>Agent / Platform Fee</strong> per approved review — even on product-only.</li>
+          <li>The fee is <strong>split</strong> between the Agent who runs Echo Hub and any friends who invited you or your shopper.</li>
+          <li>Referral bonuses are paid <strong>the same way</strong> on both campaign types.</li>
+          <li>You're only charged when a review is <strong>approved</strong>. Not on inquiry, not on claim.</li>
+        </ul>
+      </div>
+
+      <div class="bg-cardBg border border-borderSlate rounded-2xl p-4 space-y-2">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-toggle-on text-blue-400"></i>
+          <p class="text-xs font-bold text-white">You can mix both types on one account</p>
+        </div>
+        <p class="text-[11px] text-slate-400">
+          Your choice here becomes your default. New products will use it — but you can override the type per product any time.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end border-t border-borderSlate pt-4">
+      <button onclick="closeCampaignTypeHelpModal()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow-lg shadow-blue-500/20">
+        Got it
+      </button>
+    </div>
+
+  </div>
+</div>
 </body>
 </html>
