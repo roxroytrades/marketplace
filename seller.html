@@ -1284,6 +1284,36 @@ async function loadVendorProducts(isPolling = false) {
     console.error("Error loading products:", err);
   }
 }
+
+/* ==========================================================================
+   PRODUCT CAMPAIGN TYPE — Toggle Handler
+   ========================================================================== */
+function handleProductCampaignTypeChange(type) {
+  const preview = document.getElementById('prodCampaignPreview');
+  if (!preview) return;
+
+  const vendorReward = Number(currentProfile?.commission_amount || 5.00);
+  const vendorFee = Number(currentProfile?.platform_fee || 5.00);
+
+  if (type === 'PRODUCT_ONLY') {
+    preview.innerHTML = `
+      <span class="text-blue-400 font-semibold">Product-Only:</span>
+      Shopper keeps the product. You pay
+      <span class="text-slate-200 font-semibold">$${vendorFee.toFixed(2)}</span>
+      (Agent / Platform Fee) per approved review.
+    `;
+  } else {
+    preview.innerHTML = `
+      <span class="text-emerald-400 font-semibold">Paid:</span>
+      Shopper earns
+      <span class="text-slate-200 font-semibold">$${vendorReward.toFixed(2)}</span>
+      reward. You pay
+      <span class="text-slate-200 font-semibold">$${(vendorReward + vendorFee).toFixed(2)}</span>
+      per approved review (reward + Agent / Platform Fee).
+    `;
+  }
+}
+
 function openProductModal() {
   document.getElementById('productModalTitle').textContent = 'Add New Marketplace Product';
   document.getElementById('editingProductId').value = '';
@@ -1291,6 +1321,13 @@ function openProductModal() {
   if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = '';
   productKeywords = [];
   renderKeywordPills();
+    // Default campaign type to the vendor's account setting
+  const vendorDefault = currentProfile?.campaign_type || 'PAID';
+  const targetRadio = document.getElementById(vendorDefault === 'PRODUCT_ONLY'
+    ? 'prodCampaignProductOnly'
+    : 'prodCampaignPaid');
+  if (targetRadio) targetRadio.checked = true;
+  handleProductCampaignTypeChange(vendorDefault);
   document.getElementById('productModal').classList.remove('hidden');
 }
 function closeProductModal() {
