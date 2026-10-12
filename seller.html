@@ -583,52 +583,6 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
           <label class="text-xs font-medium text-slate-300">Description</label>
           <textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
         </div>
-        <!-- ================= CAMPAIGN TYPE TOGGLE ================= -->
-<div class="space-y-2">
-  <label class="block text-xs font-medium text-slate-300">Campaign Type</label>
-
-  <div class="grid grid-cols-2 gap-2">
-
-    <!-- PAID -->
-    <label class="cursor-pointer">
-      <input type="radio" name="prodCampaignType" value="PAID" id="prodCampaignPaid"
-             class="peer hidden"
-             onchange="handleProductCampaignTypeChange('PAID')">
-      <div class="peer-checked:bg-emerald-500/15 peer-checked:border-emerald-500/50
-                  bg-darkBg border border-borderSlate rounded-xl p-3 transition
-                  hover:border-emerald-500/30">
-        <div class="flex items-center space-x-2 mb-1">
-          <i class="fa-solid fa-sack-dollar text-emerald-400"></i>
-          <span class="text-xs font-bold text-white">Paid</span>
-        </div>
-        <p class="text-[10px] text-slate-400">Shopper earns your reward</p>
-      </div>
-    </label>
-
-    <!-- PRODUCT ONLY -->
-    <label class="cursor-pointer">
-      <input type="radio" name="prodCampaignType" value="PRODUCT_ONLY" id="prodCampaignProductOnly"
-             class="peer hidden"
-             onchange="handleProductCampaignTypeChange('PRODUCT_ONLY')">
-      <div class="peer-checked:bg-blue-500/15 peer-checked:border-blue-500/50
-                  bg-darkBg border border-borderSlate rounded-xl p-3 transition
-                  hover:border-blue-500/30">
-        <div class="flex items-center space-x-2 mb-1">
-          <i class="fa-solid fa-box-open text-blue-400"></i>
-          <span class="text-xs font-bold text-white">Product Only</span>
-        </div>
-        <p class="text-[10px] text-slate-400">Shopper keeps the product</p>
-      </div>
-    </label>
-
-  </div>
-
-  <!-- Live preview line — populated by JS -->
-  <div id="prodCampaignPreview" class="text-[11px] text-slate-400 bg-darkBg border border-borderSlate rounded-lg px-3 py-2">
-    <!-- Populated by handleProductCampaignTypeChange -->
-  </div>
-
-</div>
 
         <!-- ================= SEARCH KEYWORDS INPUT ================= -->
         <div class="space-y-2">
@@ -856,9 +810,9 @@ const DEFAULT_COMMISSION = 5.00;
 /* ================= SCHEMA GUARD & RUNTIME SANITIZER UTILITIES ================= */
 const SCHEMA_COLUMNS = {
   profiles: ['id', 'full_name', 'email', 'role', 'verification_status', 'whatsapp', 'paypal_email', 'referral_code', 'invited_by_code', 'categories', 'commission_amount', 'national_id_base64', 'commission_policy_agreed', 'created_at'],
-products: ['id', 'seller_id', 'vendor_id', 'title', 'category', 'image', 'image_url', 'image_url_2', 'product_link', 'price', 'status', 'is_active', 'description', 'amazon_url', 'product_url', 'amazon_link', 'campaign_type', 'search_keywords', 'created_at'],
-messages: ['id', 'buyer_id', 'vendor_id', 'sender_id', 'receiver_id', 'product_id', 'text', 'message_text', 'content', 'body', 'review_url', 'link', 'image_url', 'file_url', 'attachment_url', 'proof_base64', 'status_badge', 'status', 'feedback_id', 'submission_cycle', 'is_read', 'channel_type', 'message_type', 'campaign_type', 'created_at'],  
-commissions: ['id', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'role_type', 'queue_type', 'amount', 'status', 'status_tag', 'paypal_tx_id', 'receipt_base64', 'receipt_url', 'created_at'],
+products: ['id', 'seller_id', 'vendor_id', 'title', 'category', 'image', 'image_url', 'image_url_2', 'product_link', 'price', 'status', 'is_active', 'description', 'amazon_url', 'product_url', 'amazon_link', 'search_keywords', 'created_at'],
+messages: ['id', 'buyer_id', 'vendor_id', 'sender_id', 'receiver_id', 'product_id', 'text', 'message_text', 'content', 'body', 'review_url', 'link', 'image_url', 'file_url', 'attachment_url', 'proof_base64', 'status_badge', 'status', 'feedback_id', 'submission_cycle', 'is_read', 'channel_type', 'message_type', 'created_at'],  
+commissions: ['id', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'role_type', 'queue_type', 'amount', 'status', 'paypal_tx_id', 'receipt_base64', 'receipt_url', 'created_at'],
   system_settings: ['key', 'value', 'updated_at', 'created_at'],
   notifications: ['id', 'user_id', 'title', 'message', 'is_read', 'created_at']
 };
@@ -1289,31 +1243,7 @@ async function loadVendorProducts(isPolling = false) {
 /* ==========================================================================
    PRODUCT CAMPAIGN TYPE — Toggle Handler
    ========================================================================== */
-function handleProductCampaignTypeChange(type) {
-  const preview = document.getElementById('prodCampaignPreview');
-  if (!preview) return;
 
-  const vendorReward = Number(currentProfile?.commission_amount || 5.00);
-  const vendorFee = Number(currentProfile?.platform_fee || 5.00);
-
-  if (type === 'PRODUCT_ONLY') {
-    preview.innerHTML = `
-      <span class="text-blue-400 font-semibold">Product-Only:</span>
-      Shopper keeps the product. You pay
-      <span class="text-slate-200 font-semibold">$${vendorFee.toFixed(2)}</span>
-      (Agent / Platform Fee) per approved review.
-    `;
-  } else {
-    preview.innerHTML = `
-      <span class="text-emerald-400 font-semibold">Paid:</span>
-      Shopper earns
-      <span class="text-slate-200 font-semibold">$${vendorReward.toFixed(2)}</span>
-      reward. You pay
-      <span class="text-slate-200 font-semibold">$${(vendorReward + vendorFee).toFixed(2)}</span>
-      per approved review (reward + Agent / Platform Fee).
-    `;
-  }
-}
 
 function openProductModal() {
   document.getElementById('productModalTitle').textContent = 'Add New Marketplace Product';
@@ -1322,16 +1252,8 @@ function openProductModal() {
   if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = '';
   productKeywords = [];
   renderKeywordPills();
-    // Default campaign type to the vendor's account setting
-  const vendorDefault = currentProfile?.campaign_type || 'PAID';
-  const targetRadio = document.getElementById(vendorDefault === 'PRODUCT_ONLY'
-    ? 'prodCampaignProductOnly'
-    : 'prodCampaignPaid');
-  if (targetRadio) targetRadio.checked = true;
-  handleProductCampaignTypeChange(vendorDefault);
   document.getElementById('productModal').classList.remove('hidden');
-}
-function closeProductModal() {
+}function closeProductModal() {
   document.getElementById('productModal').classList.add('hidden');
 }
 async function editProduct(id) {
@@ -1346,13 +1268,6 @@ async function editProduct(id) {
   if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = prod.amazon_url || prod.product_url || prod.amazon_link || '';
  productKeywords = Array.isArray(prod.search_keywords) ? [...prod.search_keywords] : [];
 renderKeywordPills();
-    // Load the product's saved campaign type
-  const productType = prod.campaign_type || 'PAID';
-  const targetRadio = document.getElementById(productType === 'PRODUCT_ONLY'
-    ? 'prodCampaignProductOnly'
-    : 'prodCampaignPaid');
-  if (targetRadio) targetRadio.checked = true;
-  handleProductCampaignTypeChange(productType);
 document.getElementById('productModal').classList.remove('hidden');
 }
 /* Save Product Handler - Dual Owner Fields (vendor_id & seller_id) */
@@ -1374,7 +1289,7 @@ async function handleSaveProduct(event) {
 imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');
   }
   try {
-            const campaignType = document.querySelector('input[name="prodCampaignType"]:checked')?.value || 'PAID';
+
 
     const productData = {
       vendor_id: currentUser.id,
@@ -1388,7 +1303,6 @@ imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');
       amazon_url: amazonUrl,
       product_url: amazonUrl,
       product_link: amazonUrl,
-      campaign_type: campaignType,
       search_keywords: productKeywords
     };
     const saveToSupabase = async (payload) => {
@@ -2827,27 +2741,7 @@ const isAmazonValid = hasAmazonReviewUrl(reviewLink, true) || hasAmazonReviewUrl
     return;
   }
 
-  // ── Resolve the product's campaign_type so we know whether to pay cash ──
-  const threadForProduct = vendorThreads.find(t => t.partnerId === activeThreadId);
-  const msgForProduct = threadForProduct
-    ? threadForProduct.messages.find(m => m.id == messageId)
-    : null;
-  const productIdForCampaign = msgForProduct?.product_id || null;
-
-  let campaignType = 'PAID'; // safe default — matches DB fallback
-  if (productIdForCampaign) {
-    let prod = (vendorProducts || []).find(p => String(p.id) === String(productIdForCampaign));
-    if (!prod) {
-      prod = await getSellerChatProduct(productIdForCampaign);
-    }
-    if (prod && prod.campaign_type) {
-      campaignType = String(prod.campaign_type).toUpperCase();
-    }
-  }
-
-  const isProductOnly = campaignType === 'PRODUCT_ONLY';
-  const reviewerPayout = isProductOnly ? 0.00 : Number(commissionAmount);
-  const platformFee   = 10.00;
+ 
 
   const actionContainer = document.getElementById(`actions-${messageId}`);
   if (actionContainer) {
@@ -2858,15 +2752,14 @@ const isAmazonValid = hasAmazonReviewUrl(reviewLink, true) || hasAmazonReviewUrl
     const msg = thread ? thread.messages.find(m => m.id == messageId) : null;
     const reviewLink = msg ? (msg.amazon_review_url || msg.link || msg._normalizedText || 'N/A') : 'N/A';
     const currentCycle = msg ? msg.submission_cycle : null;
-    const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
+        const { data, error: rpcError } = await _supabase.rpc('approve_review_and_split', {
   p_message_id: String(messageId),
   p_vendor_id: currentUser.id,
   p_reviewer_id: reviewerId,
-  p_commission_amount: reviewerPayout,
-  p_platform_fee: platformFee,
+  p_commission_amount: Number(commissionAmount),
+  p_platform_fee: 10.00,
   p_link: reviewLink,
-  p_type: isProductOnly ? 'PRODUCT_ONLY_REVIEW' : 'REVIEW_COMMISSION',
-  p_campaign_type: campaignType
+  p_type: 'REVIEW_COMMISSION'
 });
     if (rpcError) throw rpcError;
     if (data && data.success === false) {
