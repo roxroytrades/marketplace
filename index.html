@@ -280,6 +280,10 @@ eh
 </div>
 <span id="headerUserName" class="text-xs font-semibold text-slate-200">Loading...</span>
 </div>
+<button onclick="openInteractiveGuide(0)" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-xs px-2.5 sm:px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer" title="Show guide">
+  <i class="fa-solid fa-circle-question"></i>
+  <span class="hidden sm:inline">Help</span>
+</button>
 <!-- Logout Button (Icon-Only on Small Mobile Screens) -->
 <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs px-2.5 sm:px-3 py-2 rounded-xl transition flex items-center space-x-1.5 cursor-pointer">
 <i class="fa-solid fa-right-from-bracket"></i>
@@ -681,6 +685,9 @@ eh
 </span>
 </div>
 </div>
+<button onclick="reportCurrentChat()" class="text-slate-400 hover:text-rose-400 transition p-1 mr-2" title="Report this vendor">
+  <i class="fa-solid fa-flag text-sm"></i>
+</button>
 <button onclick="toggleMessagingHub()" class="text-slate-400 hover:text-white transition">
 <i class="fa-solid fa-xmark text-lg"></i>
 </button>
@@ -924,7 +931,13 @@ eh
         Please read this quick guide before attaching a file or link.
       </span>
     </div>
-
+<div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs text-amber-200 flex items-start space-x-3">
+  <i class="fa-solid fa-lock text-amber-400 mt-0.5 shrink-0"></i>
+  <div class="space-y-1">
+    <p class="font-semibold text-amber-300">Keep communication on-platform.</p>
+    <p>Never share your phone, WhatsApp, email, or other contact info with a vendor. If a vendor asks — decline politely and use the 🚩 Report button. Off-platform communication risks losing your account.</p>
+  </div>
+</div>
     <!-- Two-column explanation -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -1007,6 +1020,108 @@ eh
           <span>Got it, let's chat</span>
         </button>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= SHOPPER WELCOME MODAL ================= -->
+<div id="shopperWelcomeModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[90] hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+    <div class="text-center space-y-3">
+      <div class="w-16 h-16 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-emerald-400 text-3xl mx-auto">
+        <i class="fa-solid fa-hand-sparkles"></i>
+      </div>
+      <h2 class="text-2xl font-bold text-white">Welcome to Echo Hub</h2>
+      <p class="text-sm text-slate-300">
+        Hey <span id="welcomeShopperName" class="font-bold text-white">there</span> — you're in.
+      </p>
+      <p class="text-xs text-slate-400 max-w-md mx-auto">
+        Echo Hub is a marketplace where you get rewarded for reviewing products. Vendors list products, you claim one, review it, and earn — some pay cash rewards, some just let you keep the product.
+      </p>
+    </div>
+
+    <div class="space-y-2">
+      <div class="flex items-center space-x-3 bg-darkBg border border-borderSlate rounded-xl p-3">
+        <i class="fa-solid fa-sack-dollar text-emerald-400 text-lg"></i>
+        <span class="text-xs text-slate-200">Earn rewards on eligible products — always shown before you inquire</span>
+      </div>
+      <div class="flex items-center space-x-3 bg-darkBg border border-borderSlate rounded-xl p-3">
+        <i class="fa-solid fa-box-open text-blue-400 text-lg"></i>
+        <span class="text-xs text-slate-200">Choose from real products you'll actually receive</span>
+      </div>
+      <div class="flex items-center space-x-3 bg-darkBg border border-borderSlate rounded-xl p-3">
+        <i class="fa-solid fa-users-rectangle text-amber-400 text-lg"></i>
+        <span class="text-xs text-slate-200">Refer friends, earn bonuses</span>
+      </div>
+    </div>
+
+    <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start space-x-2">
+      <i class="fa-solid fa-lock text-amber-400 mt-0.5 shrink-0 text-xs"></i>
+      <p class="text-[11px] text-amber-200">
+        <strong class="text-amber-300">Keep all communication inside Echo Hub.</strong>
+        Never share personal contact info with vendors — even if they ask. Off-platform communication puts your account at risk.
+      </p>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-borderSlate pt-4">
+      <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+        <input type="checkbox" id="dontShowWelcomeAgain" class="rounded border-borderSlate bg-darkBg text-blue-600 focus:ring-0 cursor-pointer">
+        <span>Don't show this again</span>
+      </label>
+      <div class="flex items-center space-x-2">
+        <button onclick="closeWelcomeModal()" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">
+          Skip
+        </button>
+        <button onclick="closeWelcomeAndOpenGuide()" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-bold px-5 py-2 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-right"></i>
+          <span>Show me how it works</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SHOPPER INTERACTIVE GUIDE MODAL ================= -->
+<div id="shopperGuideModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[90] hidden flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderSlate rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+
+    <div class="flex items-center justify-between border-b border-borderSlate pb-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-blue-500/20 border border-blue-500/40 rounded-xl flex items-center justify-center text-blue-400 text-lg">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">How Echo Hub Works</h3>
+          <p class="text-[10px] text-slate-400">A 60-second walkthrough</p>
+        </div>
+      </div>
+      <button onclick="closeInteractiveGuide()" class="text-slate-400 hover:text-white transition text-xl leading-none">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="flex items-center space-x-1.5" id="guideProgressBar">
+      <div class="guide-dot flex-1 h-1.5 rounded-full bg-slate-700 transition"></div>
+      <div class="guide-dot flex-1 h-1.5 rounded-full bg-slate-700 transition"></div>
+      <div class="guide-dot flex-1 h-1.5 rounded-full bg-slate-700 transition"></div>
+      <div class="guide-dot flex-1 h-1.5 rounded-full bg-slate-700 transition"></div>
+      <div class="guide-dot flex-1 h-1.5 rounded-full bg-slate-700 transition"></div>
+      <div class="guide-dot flex-1 h-1.5 rounded-full bg-slate-700 transition"></div>
+    </div>
+
+    <div id="guideSlideContainer" class="min-h-[320px]">
+      <!-- Dynamically populated -->
+    </div>
+
+    <div class="flex items-center justify-between border-t border-borderSlate pt-4">
+      <button onclick="guidePrevSlide()" id="guidePrevBtn" class="bg-darkBg hover:bg-slate-800 border border-borderSlate text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+        <i class="fa-solid fa-arrow-left mr-1"></i> Back
+      </button>
+      <span id="guideSlideCounter" class="text-[10px] text-slate-500 font-mono">1 of 6</span>
+      <button onclick="guideNextSlide()" id="guideNextBtn" class="bg-accentBlue hover:bg-accentHover text-white text-xs font-bold px-5 py-2 rounded-xl transition shadow-lg shadow-blue-500/20">
+        Next <i class="fa-solid fa-arrow-right ml-1"></i>
+      </button>
     </div>
 
   </div>
@@ -1141,6 +1256,11 @@ await loadMarketplaceProducts();
 await loadShopperCommissions();
 await loadMessagingThreads();
 await loadShopperReferralStats();
+
+/* Fire welcome modal on first-ever visit */
+if (shouldShowShopperWelcome()) {
+  setTimeout(() => openWelcomeModal(), 800);
+}
 
 loadAppBranding();
 setupShopperGlobalRealtime();
@@ -2670,6 +2790,41 @@ function autoGrowInput(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
+async function reportCurrentChat() {
+  if (!activeRecipientId) {
+    alert("Open a conversation first.");
+    return;
+  }
+
+  const reason = prompt(
+    "Report this conversation to admin.\n\n" +
+    "What's the issue? (e.g., 'vendor asked for my WhatsApp', 'vendor offered to pay me off-platform', 'inappropriate message')"
+  );
+  if (!reason || !reason.trim()) return;
+
+  try {
+    const payload = {
+      sender_id: currentUser.id,
+      receiver_id: activeRecipientId,
+      buyer_id: currentProfile?.role === 'buyer' ? currentUser.id : activeRecipientId,
+      vendor_id: activeRecipientId,
+      product_id: activeProductId || null,
+      text: `[REPORT] ${reason.trim()}`,
+      content: `[REPORT] ${reason.trim()}`,
+      message: `[REPORT] ${reason.trim()}`,
+      status_badge: 'REPORTED',
+      channel_type: 'USER_REPORT'
+    };
+
+    const { error } = await _supabase.from('messages').insert(payload);
+    if (error) throw error;
+
+    alert("Report submitted to admin. Thank you for keeping Echo Hub safe.");
+  } catch (err) {
+    alert("Failed to submit report: " + err.message);
+  }
+}
+
 async function handleSendMessage(e) {
   e.preventDefault();
 
@@ -3031,6 +3186,296 @@ grid.innerHTML = renderVendorStorefrontCards(filtered);
 function closeVendorStorefrontModal() {
 document.getElementById('vendorStorefrontModal')?.classList.add('hidden');
 }
+
+/* ==========================================================================
+   SHOPPER WELCOME + INTERACTIVE GUIDE ENGINE
+   ========================================================================== */
+
+const WELCOME_DISMISS_KEY = 'echohub_shopper_welcome_dismissed';
+const GUIDE_SEEN_KEY = 'echohub_shopper_guide_seen';
+
+let currentGuideSlide = 0;
+
+const GUIDE_SLIDES = [
+  {
+    icon: 'fa-sack-dollar',
+    color: 'emerald',
+    title: 'What You Earn',
+    body: `
+      <p class="text-xs text-slate-300 mb-3">Every product shows two numbers <strong class="text-white">before</strong> you inquire:</p>
+      <div class="bg-darkBg border border-borderSlate rounded-xl p-3 space-y-2">
+        <div class="flex justify-between text-xs">
+          <span class="text-slate-400">🛍️ Retail Price:</span>
+          <span class="text-slate-200 font-mono">what you pay to buy the product</span>
+        </div>
+        <div class="flex justify-between text-xs">
+          <span class="text-emerald-400 font-semibold">💰 Review Reward:</span>
+          <span class="text-emerald-400 font-mono">what the vendor pays you</span>
+        </div>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-3">Most products offer a reward ($5 is common). Some products are <strong class="text-blue-400">product-only</strong> — no reward, but you keep the product.</p>
+      <div class="grid grid-cols-2 gap-2 mt-3">
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-1">
+          <p class="text-[10px] font-bold uppercase text-emerald-400">Paid Campaign</p>
+          <p class="text-xs text-slate-200">Retail: $49.99</p>
+          <p class="text-xs text-emerald-400 font-bold">Reward: $5.00</p>
+        </div>
+        <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 space-y-1">
+          <p class="text-[10px] font-bold uppercase text-blue-400">Product Only</p>
+          <p class="text-xs text-slate-200">Retail: $12.00</p>
+          <p class="text-xs text-blue-400 font-bold">Reward: $0.00</p>
+        </div>
+      </div>
+    `
+  },
+  {
+    icon: 'fa-list-check',
+    color: 'blue',
+    title: 'How It Works',
+    body: `
+      <div class="space-y-2.5">
+        <div class="flex items-start space-x-3">
+          <span class="w-6 h-6 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs font-bold shrink-0">1</span>
+          <p class="text-xs text-slate-200">Browse and pick a product</p>
+        </div>
+        <div class="flex items-start space-x-3">
+          <span class="w-6 h-6 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs font-bold shrink-0">2</span>
+          <p class="text-xs text-slate-200">Inquire — vendor sends you the link to buy it yourself</p>
+        </div>
+        <div class="flex items-start space-x-3">
+          <span class="w-6 h-6 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs font-bold shrink-0">3</span>
+          <p class="text-xs text-slate-200">Receive it, use it, then post a genuine review</p>
+        </div>
+        <div class="flex items-start space-x-3">
+          <span class="w-6 h-6 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center text-xs font-bold shrink-0">4</span>
+          <p class="text-xs text-slate-200">Submit proof in the chat → vendor approves → <strong class="text-emerald-400">if a reward is offered, you get paid</strong></p>
+        </div>
+      </div>
+    `
+  },
+  {
+    icon: 'fa-receipt',
+    color: 'amber',
+    title: 'Where the Money Comes From',
+    body: `
+      <p class="text-xs text-slate-300 mb-3">For products that offer a reward:</p>
+      <div class="bg-darkBg border border-borderSlate rounded-xl p-3 space-y-2 mb-3">
+        <div class="flex justify-between text-xs">
+          <span class="text-emerald-400 font-semibold">Your Reward:</span>
+          <span class="text-emerald-400 font-mono">$5.00 → You</span>
+        </div>
+        <div class="flex justify-between text-xs">
+          <span class="text-amber-400 font-semibold">Platform Fee:</span>
+          <span class="text-amber-400 font-mono">$5.00 → Agent + Inviters</span>
+        </div>
+      </div>
+      <p class="text-[11px] text-slate-400 mb-3">The platform fee covers the Agent who runs Echo Hub plus any friends who invited you or the vendor.</p>
+      <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
+        <p class="text-[10px] font-bold uppercase text-blue-400 mb-1">Product-Only Campaigns</p>
+        <p class="text-[11px] text-slate-300">No money changes hands. You claim the product, review it, and keep it. That's the whole deal.</p>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-3">You only ever see your reward — never the platform split.</p>
+    `
+  },
+  {
+    icon: 'fa-users-rectangle',
+    color: 'amber',
+    title: 'Refer Friends, Earn Bonuses',
+    body: `
+      <p class="text-xs text-slate-300 mb-3">Every friend you invite who joins and completes reviews earns you a cut of the platform fee — <strong class="text-white">forever</strong>.</p>
+      <div class="space-y-2">
+        <div class="flex items-center space-x-3 bg-darkBg border border-borderSlate rounded-xl p-2.5">
+          <i class="fa-solid fa-user-plus text-blue-400"></i>
+          <span class="text-xs text-slate-200">Buyer invites → new shoppers like you</span>
+        </div>
+        <div class="flex items-center space-x-3 bg-darkBg border border-borderSlate rounded-xl p-2.5">
+          <i class="fa-solid fa-store text-purple-400"></i>
+          <span class="text-xs text-slate-200">Seller invites → new vendors</span>
+        </div>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-3">Find your personal links in the <strong class="text-white">Referral Hub</strong> tab.</p>
+    `
+  },
+  {
+    icon: 'fa-lock',
+    color: 'rose',
+    title: 'Keep It On-Platform',
+    body: `
+      <p class="text-xs text-slate-300 mb-3">All conversations, reviews, and payments must happen <strong class="text-white">inside Echo Hub</strong> — even if a vendor asks for your phone, WhatsApp, Telegram, or email.</p>
+      <div class="bg-darkBg border border-emerald-500/30 rounded-xl p-3 space-y-1.5 mb-3">
+        <p class="text-[10px] font-bold uppercase text-emerald-400">Why it matters</p>
+        <p class="text-xs text-slate-200">✓ Your review stays trackable</p>
+        <p class="text-xs text-slate-200">✓ Your reward is protected</p>
+        <p class="text-xs text-slate-200">✓ Disputes stay visible to admins</p>
+        <p class="text-xs text-slate-200">✓ Your account stays in good standing</p>
+      </div>
+      <div class="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 space-y-2">
+        <div class="flex items-start space-x-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5 shrink-0"></i>
+          <p class="text-xs text-rose-200">
+            Going off-platform puts you at risk of <strong class="text-rose-300">losing access to Echo Hub</strong> — including all rewards and referrals you've built.
+          </p>
+        </div>
+        <p class="text-[11px] text-slate-300">
+          If a vendor pressures you — decline politely and use the <strong class="text-white">🚩 Report</strong> button in the chat. The admin will review it.
+        </p>
+      </div>
+    `
+  },
+  {
+    icon: 'fa-shield-halved',
+    color: 'rose',
+    title: 'The Ground Rules',
+    body: `
+      <div class="space-y-2">
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-1.5">
+          <p class="text-[10px] font-bold uppercase text-emerald-400">Do</p>
+          <p class="text-xs text-slate-200">✓ Post honest reviews</p>
+          <p class="text-xs text-slate-200">✓ Wait until you receive the product</p>
+          <p class="text-xs text-slate-200">✓ Only claim products you intend to review</p>
+          <p class="text-xs text-slate-200">✓ Report bad-faith vendors</p>
+        </div>
+        <div class="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 space-y-1.5">
+          <p class="text-[10px] font-bold uppercase text-rose-400">Don't</p>
+          <p class="text-xs text-slate-200">✗ Submit fake or copy-pasted reviews</p>
+          <p class="text-xs text-slate-200">✗ Pay anyone outside the platform</p>
+          <p class="text-xs text-slate-200">✗ Claim products you won't actually use</p>
+        </div>
+      </div>
+      <p class="text-[11px] text-rose-300 mt-3">Violations result in account suspension.</p>
+    `
+  }
+];
+
+function shouldShowShopperWelcome() {
+  if (localStorage.getItem(WELCOME_DISMISS_KEY) === 'true') return false;
+  return true;
+}
+
+function openWelcomeModal() {
+  const modal = document.getElementById('shopperWelcomeModal');
+  if (!modal) return;
+
+  const nameEl = document.getElementById('welcomeShopperName');
+  if (nameEl && currentUser) {
+    const rawName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'there';
+    nameEl.textContent = rawName.charAt(0).toUpperCase() + rawName.slice(1).split(' ')[0];
+  }
+
+  const cb = document.getElementById('dontShowWelcomeAgain');
+  if (cb) cb.checked = false;
+
+  modal.classList.remove('hidden');
+}
+
+function closeWelcomeModal() {
+  const modal = document.getElementById('shopperWelcomeModal');
+  const cb = document.getElementById('dontShowWelcomeAgain');
+  if (cb && cb.checked) {
+    localStorage.setItem(WELCOME_DISMISS_KEY, 'true');
+  }
+  if (modal) modal.classList.add('hidden');
+}
+
+function closeWelcomeAndOpenGuide() {
+  closeWelcomeModal();
+  setTimeout(() => openInteractiveGuide(0), 250);
+}
+
+function openInteractiveGuide(startSlide = 0) {
+  const modal = document.getElementById('shopperGuideModal');
+  if (!modal) return;
+  currentGuideSlide = startSlide;
+  renderGuideSlide();
+  modal.classList.remove('hidden');
+  localStorage.setItem(GUIDE_SEEN_KEY, 'true');
+}
+
+function closeInteractiveGuide() {
+  const modal = document.getElementById('shopperGuideModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function renderGuideSlide() {
+  const slide = GUIDE_SLIDES[currentGuideSlide];
+  const container = document.getElementById('guideSlideContainer');
+  const counter = document.getElementById('guideSlideCounter');
+  const prevBtn = document.getElementById('guidePrevBtn');
+  const nextBtn = document.getElementById('guideNextBtn');
+  const dots = document.querySelectorAll('#guideProgressBar .guide-dot');
+
+  const colorMap = {
+    emerald: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400',
+    blue: 'bg-blue-500/20 border-blue-500/40 text-blue-400',
+    amber: 'bg-amber-500/20 border-amber-500/40 text-amber-400',
+    rose: 'bg-rose-500/20 border-rose-500/40 text-rose-400'
+  };
+  const colorClass = colorMap[slide.color] || colorMap.blue;
+
+  container.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 rounded-2xl border flex items-center justify-center text-xl ${colorClass}">
+          <i class="fa-solid ${slide.icon}"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">${slide.title}</h3>
+      </div>
+      <div>${slide.body}</div>
+    </div>
+  `;
+
+  dots.forEach((dot, i) => {
+    dot.className = `guide-dot flex-1 h-1.5 rounded-full transition ${i <= currentGuideSlide ? 'bg-accentBlue' : 'bg-slate-700'}`;
+  });
+
+  if (counter) counter.textContent = `${currentGuideSlide + 1} of ${GUIDE_SLIDES.length}`;
+  if (prevBtn) prevBtn.disabled = currentGuideSlide === 0;
+
+  if (nextBtn) {
+    if (currentGuideSlide === GUIDE_SLIDES.length - 1) {
+      nextBtn.innerHTML = `Start Exploring <i class="fa-solid fa-rocket ml-1"></i>`;
+      nextBtn.onclick = () => {
+        closeInteractiveGuide();
+        if (typeof switchShopperTab === 'function') switchShopperTab('marketplace');
+      };
+    } else {
+      nextBtn.innerHTML = `Next <i class="fa-solid fa-arrow-right ml-1"></i>`;
+      nextBtn.onclick = guideNextSlide;
+    }
+  }
+}
+
+function guideNextSlide() {
+  if (currentGuideSlide < GUIDE_SLIDES.length - 1) {
+    currentGuideSlide++;
+    renderGuideSlide();
+  }
+}
+
+function guidePrevSlide() {
+  if (currentGuideSlide > 0) {
+    currentGuideSlide--;
+    renderGuideSlide();
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeWelcomeModal();
+    closeInteractiveGuide();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  const welcome = document.getElementById('shopperWelcomeModal');
+  const guide = document.getElementById('shopperGuideModal');
+  if (welcome && !welcome.classList.contains('hidden') && e.target === welcome) {
+    closeWelcomeModal();
+  }
+  if (guide && !guide.classList.contains('hidden') && e.target === guide) {
+    closeInteractiveGuide();
+  }
+});
 
 /* Initialize shopper workspace on load */
 document.addEventListener('DOMContentLoaded', () => {
