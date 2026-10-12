@@ -856,8 +856,9 @@ const DEFAULT_COMMISSION = 5.00;
 /* ================= SCHEMA GUARD & RUNTIME SANITIZER UTILITIES ================= */
 const SCHEMA_COLUMNS = {
   profiles: ['id', 'full_name', 'email', 'role', 'verification_status', 'whatsapp', 'paypal_email', 'referral_code', 'invited_by_code', 'categories', 'commission_amount', 'national_id_base64', 'commission_policy_agreed', 'created_at'],
-  products: ['id', 'seller_id', 'vendor_id', 'title', 'category', 'image', 'image_url', 'image_url_2', 'product_link', 'price', 'commission', 'commission_amount', 'status', 'is_active', 'description', 'amazon_url', 'product_url', 'amazon_link', 'search_keywords', 'search_keywords', 'created_at'],
-messages: ['id', 'buyer_id', 'vendor_id', 'sender_id', 'receiver_id', 'product_id', 'text', 'message_text', 'content', 'body', 'review_url', 'link', 'image_url', 'file_url', 'attachment_url', 'proof_base64', 'status_badge', 'status', 'feedback_id', 'submission_cycle', 'is_read', 'channel_type', 'message_type', 'created_at'],  commissions: ['id', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'role_type', 'queue_type', 'amount', 'status', 'status_tag', 'paypal_tx_id', 'receipt_base64', 'receipt_url', 'created_at'],
+products: ['id', 'seller_id', 'vendor_id', 'title', 'category', 'image', 'image_url', 'image_url_2', 'product_link', 'price', 'status', 'is_active', 'description', 'amazon_url', 'product_url', 'amazon_link', 'campaign_type', 'search_keywords', 'created_at'],
+messages: ['id', 'buyer_id', 'vendor_id', 'sender_id', 'receiver_id', 'product_id', 'text', 'message_text', 'content', 'body', 'review_url', 'link', 'image_url', 'file_url', 'attachment_url', 'proof_base64', 'status_badge', 'status', 'feedback_id', 'submission_cycle', 'is_read', 'channel_type', 'message_type', 'created_at'],  
+commissions: ['id', 'feedback_id', 'vendor_id', 'seller_id', 'recipient_id', 'role_type', 'queue_type', 'amount', 'status', 'status_tag', 'paypal_tx_id', 'receipt_base64', 'receipt_url', 'created_at'],
   system_settings: ['key', 'value', 'updated_at', 'created_at'],
   notifications: ['id', 'user_id', 'title', 'message', 'is_read', 'created_at']
 };
@@ -1345,7 +1346,14 @@ async function editProduct(id) {
   if (document.getElementById('prodAmazonUrl')) document.getElementById('prodAmazonUrl').value = prod.amazon_url || prod.product_url || prod.amazon_link || '';
  productKeywords = Array.isArray(prod.search_keywords) ? [...prod.search_keywords] : [];
 renderKeywordPills();
-  document.getElementById('productModal').classList.remove('hidden');
+    // Load the product's saved campaign type
+  const productType = prod.campaign_type || 'PAID';
+  const targetRadio = document.getElementById(productType === 'PRODUCT_ONLY'
+    ? 'prodCampaignProductOnly'
+    : 'prodCampaignPaid');
+  if (targetRadio) targetRadio.checked = true;
+  handleProductCampaignTypeChange(productType);
+document.getElementById('productModal').classList.remove('hidden');
 }
 /* Save Product Handler - Dual Owner Fields (vendor_id & seller_id) */
 async function handleSaveProduct(event) {
@@ -1366,23 +1374,23 @@ async function handleSaveProduct(event) {
 imageUrl = await uploadImageToStorage(fileInput.files[0], 'products');
   }
   try {
-        const sellerDefaultCommission = Number(currentProfile?.commission_amount ?? 15.00);
+            const campaignType = document.querySelector('input[name="prodCampaignType"]:checked')?.value || 'PAID';
+
     const productData = {
-  vendor_id: currentUser.id,
-  seller_id: currentUser.id,
-  title: title,
-  description: description,
-  price: price,
-  status: status,
-  image_url: imageUrl,
-  image: imageUrl,
-  amazon_url: amazonUrl,
-  product_url: amazonUrl,
-  product_link: amazonUrl,
-  commission: sellerDefaultCommission,
-  commission_amount: sellerDefaultCommission,
-  search_keywords: productKeywords
-};
+      vendor_id: currentUser.id,
+      seller_id: currentUser.id,
+      title: title,
+      description: description,
+      price: price,
+      status: status,
+      image_url: imageUrl,
+      image: imageUrl,
+      amazon_url: amazonUrl,
+      product_url: amazonUrl,
+      product_link: amazonUrl,
+      campaign_type: campaignType,
+      search_keywords: productKeywords
+    };
     const saveToSupabase = async (payload) => {
   let reqPayload = { ...payload };
   let attempts = 0;
