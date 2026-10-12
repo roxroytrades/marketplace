@@ -2591,14 +2591,35 @@ function groupMessagesIntoThreads(messages) {
       threadKey = `PROD_${m.buyer_id}_${m.vendor_id}_${m.product_id}`;
     }
 
-    if (!threadMap[threadKey]) {
+        if (!threadMap[threadKey]) {
+      // For marketplace threads, derive BOTH sides authoritatively.
+      // vendor_id / buyer_id are stable on the message; sender_id /
+      // receiver_id alternate depending on who wrote each message.
+      let derivedVendorId = m.vendor_id || null;
+      let derivedBuyerId  = m.buyer_id  || null;
+
+      if (!isDirect && (!derivedVendorId || !derivedBuyerId)) {
+        // Fallback: infer roles from sender/receiver
+        const senderProf   = profilesCache[m.sender_id]   || allUsersCache.find(u => u.id === m.sender_id);
+        const receiverProf = profilesCache[m.receiver_id] || allUsersCache.find(u => u.id === m.receiver_id);
+        const senderIsVendor   = ['seller', 'vendor'].includes((senderProf?.role   || '').toLowerCase());
+        const receiverIsVendor = ['seller', 'vendor'].includes((receiverProf?.role || '').toLowerCase());
+
+        if (senderIsVendor && !derivedVendorId)   derivedVendorId = m.sender_id;
+        if (!senderIsVendor && !derivedBuyerId)   derivedBuyerId  = m.sender_id;
+        if (receiverIsVendor && !derivedVendorId) derivedVendorId = m.receiver_id;
+        if (!receiverIsVendor && !derivedBuyerId) derivedBuyerId  = m.receiver_id;
+      }
+
       threadMap[threadKey] = {
         key: threadKey,
         isDirect: isDirect,
-        buyerId: m.buyer_id,
-        vendorId: m.vendor_id,
+        buyerId:  derivedBuyerId,
+        vendorId: derivedVendorId,
         productId: m.product_id,
-        partnerId: isDirect ? ((m.sender_id === currentAdminUser?.id) ? (m.buyer_id || m.vendor_id) : m.sender_id) : (m.buyer_id || m.vendor_id),
+        partnerId: isDirect
+          ? ((m.sender_id === currentAdminUser?.id) ? (m.buyer_id || m.vendor_id) : m.sender_id)
+          : null,
         statusBadge: m.status_badge || 'AWAITING_ATTENTION',
         messages: [],
         hasFlaggedRisk: false,
@@ -2721,6 +2742,57 @@ function refreshThreadsUI() {
   if (typeof renderLeftPaneThreadsList === 'function') renderLeftPaneThreadsList();
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Resolve vendor + shopper names for a thread, safely.
+   Returns both names for marketplace threads, single name for
+   direct support threads.
+   ───────────────────────────────────────────────────────────── */
+function resolveThreadParticipants(thread) {
+  if (!thread) {
+    return { isMarketplace: false, label: 'Unknown Thread', partnerName: 'Unknown', partnerRole: 'USER' };
+  }
+
+  // Marketplace thread: show VENDOR ↔ SHOPPER
+  if (!thread.isDirect) {
+    const vendor = thread.vendorId
+      ? (profilesCache[thread.vendorId] || allUsersCache.find(u => u.id === thread.vendorId))
+      : null;
+    const buyer = thread.buyerId
+      ? (profilesCache[thread.buyerId] || allUsersCache.find(u => u.id === thread.buyerId))
+      : null;
+
+    const vendorName = vendor?.full_name
+      || vendor?.email
+      || (thread.vendorId ? `Vendor (${String(thread.vendorId).substring(0, 8)}…)` : 'Unknown Vendor');
+    const buyerName = buyer?.full_name
+      || buyer?.email
+      || (thread.buyerId ? `Shopper (${String(thread.buyerId).substring(0, 8)}…)` : 'Unknown Shopper');
+
+    return {
+      isMarketplace: true,
+      vendorName,
+      vendorEmail: vendor?.email || '',
+      buyerName,
+      buyerEmail: buyer?.email || '',
+      label: `${vendorName} ↔ ${buyerName}`
+    };
+  }
+
+  // Direct support thread: single partner
+  const partner = thread.partnerId
+    ? (profilesCache[thread.partnerId] || allUsersCache.find(u => u.id === thread.partnerId))
+    : null;
+
+  return {
+    isMarketplace: false,
+    partnerName: partner?.full_name || partner?.email
+      || (thread.partnerId ? `User (${String(thread.partnerId).substring(0, 8)}…)` : 'Unknown User'),
+    partnerEmail: partner?.email || '',
+    partnerRole: (partner?.role || 'USER').toUpperCase(),
+    label: partner?.full_name || partner?.email || 'Unknown User'
+  };
+}
+
 function renderLeftPaneThreadsList() {
   const container = document.getElementById('adminThreadsList');
   const search = (document.getElementById('leftPaneThreadSearch')?.value || '').toLowerCase();
@@ -2788,19 +2860,47 @@ function renderLeftPaneThreadsList() {
     return;
   }
 
-  container.innerHTML = filtered.map(t => {
-    const partnerUser = allUsersCache.find(u => u.id === t.partnerId);
-    const partnerName = partnerUser ? partnerUser.full_name : `User: ${t.partnerId.substring(0, 8)}`;
-    const partnerRole = partnerUser ? (partnerUser.role || 'BUYER').toUpperCase() : 'USER';
+    container.innerHTML = filtered.map(t => {
+    const participants = resolveThreadParticipants(t);
     const lastMsg = t.messages[0];
     const timeStr = lastMsg ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     const isSelected = t.key === activeSelectedThreadId;
     const isPinned = pinnedList.includes(t.key);
 
-    const roleBadgeClass = partnerRole === 'SELLER' || partnerRole === 'VENDOR' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'bg-blue-500/10 text-blue-400 border-blue-500/30';
-
     let unreadCount = (t.messages || []).filter(m => m.sender_id !== currentAdminUser?.id && !m.is_read).length;
     if (manualUnreadMap[t.key]) unreadCount = Math.max(1, unreadCount);
+
+    // ── Two layouts: marketplace (VENDOR + SHOPPER) vs direct (single) ──
+    let participantBlock = '';
+
+    if (participants.isMarketplace) {
+      participantBlock = `
+        <div class="flex flex-col gap-0.5 min-w-0 flex-1">
+          <div class="flex items-center space-x-1.5 truncate">
+            <span class="px-1.5 py-0.2 rounded text-[9px] font-mono border bg-purple-500/10 text-purple-400 border-purple-500/30 shrink-0">VENDOR</span>
+            <span class="text-xs font-bold text-white truncate">${participants.vendorName}</span>
+          </div>
+          <div class="flex items-center space-x-1.5 truncate">
+            <span class="px-1.5 py-0.2 rounded text-[9px] font-mono border bg-blue-500/10 text-blue-400 border-blue-500/30 shrink-0">SHOPPER</span>
+            <span class="text-xs font-medium text-slate-300 truncate">${participants.buyerName}</span>
+          </div>
+        </div>
+      `;
+    } else {
+      const roleBadgeClass =
+        participants.partnerRole === 'SELLER' || participants.partnerRole === 'VENDOR'
+          ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+          : participants.partnerRole === 'ADMIN'
+          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+          : 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+
+      participantBlock = `
+        <div class="flex items-center space-x-2 truncate flex-1">
+          <span class="text-xs font-bold text-white truncate">${participants.partnerName}</span>
+          <span class="px-1.5 py-0.2 rounded text-[9px] font-mono border ${roleBadgeClass} shrink-0">${participants.partnerRole}</span>
+        </div>
+      `;
+    }
 
     return `
       <div onclick="selectThreadForInspection('${t.key}')"
@@ -2809,19 +2909,18 @@ function renderLeftPaneThreadsList() {
            ontouchmove="handleTouchMove(event)"
            ontouchend="handleTouchEnd()"
            class="p-4 cursor-pointer transition ${isSelected ? 'bg-amber-500/10 border-l-4 border-amber-500' : 'hover:bg-darkBg/60'}">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center space-x-2 truncate">
-            ${isPinned ? `<i class="fa-solid fa-thumbtack text-amber-400 text-[10px]" title="Pinned"></i>` : ''}
-            <span class="text-xs font-bold text-white truncate">${partnerName}</span>
-            <span class="px-1.5 py-0.2 rounded text-[9px] font-mono border ${roleBadgeClass}">${partnerRole}</span>
-                  ${t.hasVendorSolicitation ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse" title="Vendor asked a shopper for personal/off-platform contact">🚩 SOLICITATION</span>` : ''}
-            </div>
-          <div class="flex items-center space-x-1.5 shrink-0">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0 flex-1">
+            ${isPinned ? `<i class="fa-solid fa-thumbtack text-amber-400 text-[10px] mr-1" title="Pinned"></i>` : ''}
+            ${participantBlock}
+            ${t.hasVendorSolicitation ? `<span class="inline-block mt-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse" title="Vendor asked a shopper for personal/off-platform contact">🚩 SOLICITATION</span>` : ''}
+          </div>
+          <div class="flex items-center space-x-1.5 shrink-0 pt-0.5">
             ${unreadCount > 0 ? `<span class="bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full shadow animate-pulse">${unreadCount}</span>` : ''}
             <span class="text-[10px] text-slate-500">${timeStr}</span>
           </div>
         </div>
-        <p class="text-xs text-slate-400 truncate mt-1">${lastMsg ? (lastMsg.content || lastMsg.text || 'Attachment') : 'No messages'}</p>
+        <p class="text-xs text-slate-400 truncate mt-1.5">${lastMsg ? (lastMsg.content || lastMsg.text || 'Attachment') : 'No messages'}</p>
       </div>
     `;
   }).join('');
@@ -2939,17 +3038,37 @@ function renderActiveThreadTranscript() {
   const wasAtBottom = (container.scrollHeight - container.scrollTop - container.clientHeight) < 60;
   const previousScrollTop = container.scrollTop;
 
-  const partnerUser = allUsersCache.find(u => u.id === thread.partnerId);
-  const partnerName = partnerUser ? partnerUser.full_name : thread.partnerId;
+    const participants = resolveThreadParticipants(thread);
 
-  document.getElementById('activeThreadTitle').textContent = `Auditing Channel: ${partnerName}`;
-  document.getElementById('activeThreadSubtitle').textContent = thread.isDirect ? `Isolated Support Channel (${thread.partnerId})` : `Marketplace Review Thread (${thread.productId || 'N/A'})`;
+  if (participants.isMarketplace) {
+    document.getElementById('activeThreadTitle').textContent =
+      `Auditing: ${participants.vendorName} ↔ ${participants.buyerName}`;
+    document.getElementById('activeThreadSubtitle').textContent =
+      `Vendor ↔ Shopper Thread • Product: ${thread.productId ? String(thread.productId).substring(0, 8) + '…' : 'N/A'}`;
+  } else {
+    document.getElementById('activeThreadTitle').textContent =
+      `Auditing: ${participants.partnerName} (${participants.partnerRole})`;
+    document.getElementById('activeThreadSubtitle').textContent =
+      `Isolated Direct Support Channel • ${participants.partnerEmail || thread.partnerId || ''}`;
+  }
 
   /* Render Message Bubbles chronologically */
   const sortedMsgs = [...thread.messages].reverse();
 
   container.innerHTML = sortedMsgs.map(m => {
     const isMe = m.sender_id === currentAdminUser?.id;
+        // Determine sender role for marketplace threads
+    let senderLabel = '';
+    if (!thread.isDirect && !isMe) {
+      const senderProf = profilesCache[m.sender_id] || allUsersCache.find(u => u.id === m.sender_id);
+      const senderRole = (senderProf?.role || '').toLowerCase();
+      const isVendor = senderRole === 'seller'
+                    || senderRole === 'vendor'
+                    || m.sender_id === thread.vendorId;
+      senderLabel = isVendor
+        ? `<span class="text-[9px] font-bold text-purple-400 mr-1">VENDOR</span>`
+        : `<span class="text-[9px] font-bold text-blue-400 mr-1">SHOPPER</span>`;
+    }
     const textContent = (m.content || m.text || m.message_text || m.message || m.body || m.link || '').trim();
     const isRisk = hasContactRisk(textContent);
     const timeStr = new Date(m.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
@@ -3034,7 +3153,7 @@ function renderActiveThreadTranscript() {
               <span>Off-Platform Contact Risk Detected</span>
             </div>
           ` : ''}
-          ${bodyBox}
+                    ${senderLabel}${bodyBox}
         </div>
         <span class="text-[9px] text-slate-500 mt-1 px-1">${timeStr}</span>
       </div>
