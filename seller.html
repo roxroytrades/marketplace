@@ -583,6 +583,52 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
           <label class="text-xs font-medium text-slate-300">Description</label>
           <textarea id="prodDesc" rows="3" required placeholder="Product details, requirements..." class="w-full bg-darkBg border border-borderSlate rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-accentBlue transition"></textarea>
         </div>
+        <!-- ================= CAMPAIGN TYPE TOGGLE ================= -->
+<div class="space-y-2">
+  <label class="block text-xs font-medium text-slate-300">Campaign Type</label>
+
+  <div class="grid grid-cols-2 gap-2">
+
+    <!-- PAID -->
+    <label class="cursor-pointer">
+      <input type="radio" name="prodCampaignType" value="PAID" id="prodCampaignPaid"
+             class="peer hidden"
+             onchange="handleProductCampaignTypeChange('PAID')">
+      <div class="peer-checked:bg-emerald-500/15 peer-checked:border-emerald-500/50
+                  bg-darkBg border border-borderSlate rounded-xl p-3 transition
+                  hover:border-emerald-500/30">
+        <div class="flex items-center space-x-2 mb-1">
+          <i class="fa-solid fa-sack-dollar text-emerald-400"></i>
+          <span class="text-xs font-bold text-white">Paid</span>
+        </div>
+        <p class="text-[10px] text-slate-400">Shopper earns your reward</p>
+      </div>
+    </label>
+
+    <!-- PRODUCT ONLY -->
+    <label class="cursor-pointer">
+      <input type="radio" name="prodCampaignType" value="PRODUCT_ONLY" id="prodCampaignProductOnly"
+             class="peer hidden"
+             onchange="handleProductCampaignTypeChange('PRODUCT_ONLY')">
+      <div class="peer-checked:bg-blue-500/15 peer-checked:border-blue-500/50
+                  bg-darkBg border border-borderSlate rounded-xl p-3 transition
+                  hover:border-blue-500/30">
+        <div class="flex items-center space-x-2 mb-1">
+          <i class="fa-solid fa-box-open text-blue-400"></i>
+          <span class="text-xs font-bold text-white">Product Only</span>
+        </div>
+        <p class="text-[10px] text-slate-400">Shopper keeps the product</p>
+      </div>
+    </label>
+
+  </div>
+
+  <!-- Live preview line — populated by JS -->
+  <div id="prodCampaignPreview" class="text-[11px] text-slate-400 bg-darkBg border border-borderSlate rounded-lg px-3 py-2">
+    <!-- Populated by handleProductCampaignTypeChange -->
+  </div>
+
+</div>
 
         <!-- ================= SEARCH KEYWORDS INPUT ================= -->
         <div class="space-y-2">
