@@ -2312,6 +2312,38 @@ function getCommissionStatusBadgeClass(status) {
   return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
 }
 
+/* ================= OPEN CONVERSATION FROM FEEDBACK ID ================= */
+
+async function openThreadFromFeedback(feedbackId) {
+  if (!feedbackId) return;
+
+  const { data: msg, error } = await _supabase
+    .from('messages')
+    .select('sender_id, receiver_id, buyer_id, vendor_id, product_id')
+    .eq('feedback_id', feedbackId)
+    .maybeSingle();
+
+  if (error || !msg) {
+    alert('Could not find the original conversation for this feedback ID.');
+    return;
+  }
+
+  /* Rebuild the thread key the same way groupMessagesIntoThreads does */
+  let threadKey;
+  if (msg.product_id) {
+    threadKey = `PROD_${msg.buyer_id}_${msg.vendor_id}_${msg.product_id}`;
+  } else {
+    const counterpart = msg.sender_id === currentAdminUser.id ? msg.receiver_id : msg.sender_id;
+    threadKey = `DIRECT_${counterpart}`;
+  }
+
+  switchAdminTab('messaging');
+  setTimeout(() => {
+    selectThreadForInspection(threadKey);
+  }, 100);
+}
+
+
 function inspectCommissionRecord(commId) {
   if (typeof viewCommissionDetails === 'function') {
     viewCommissionDetails(commId);
@@ -3644,6 +3676,20 @@ function viewCommissionDetails(commId) {
           </button>
         ` : ''}
       </div>
+    
+      ${c.feedback_id ? `
+        <div class="bg-emerald-500/5 border border-emerald-500/30 p-3 rounded-2xl">
+          <div class="text-[10px] text-emerald-400 font-semibold mb-2 flex items-center space-x-1">
+            <i class="fa-solid fa-comments"></i>
+            <span>Trace Conversation</span>
+          </div>
+          <div class="text-[10px] text-slate-400 mb-2 font-mono">Feedback ID: ${c.feedback_id}</div>
+          <button onclick="closeCommissionDetailsModal(); openThreadFromFeedback('${c.feedback_id}');" class="w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 py-2 rounded-xl text-[11px] font-bold transition flex items-center justify-center space-x-1.5">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>Open the Conversation that Earned this Feedback ID</span>
+          </button>
+        </div>
+      ` : ''}  
     </div>
 
     <div class="bg-darkBg border border-borderSlate p-3 rounded-2xl space-y-2">
