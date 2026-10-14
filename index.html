@@ -935,8 +935,8 @@ eh
   <i class="fa-solid fa-lock text-amber-400 mt-0.5 shrink-0"></i>
   <div class="space-y-1">
     <p class="font-semibold text-amber-300">Keep communication on-platform.</p>
-    <p>Never share your phone, WhatsApp, email, or other contact info with a vendor. If a vendor asks — decline politely and use the 🚩 Report button. Off-platform communication risks losing your account.</p>
-  </div>
+    <p class="font-semibold text-amber-300">Keep communication on-platform.</p>
+<p>Do not share your phone number, WhatsApp, Telegram, personal email, or social handles with a vendor. The only exception is your <strong class="text-amber-100">PayPal email</strong>, which may be shared for payouts only. If a vendor asks for anything else — decline politely and use the 🚩 Report button. Off-platform communication risks losing your account.</p>  </div>
 </div>
     <!-- Two-column explanation -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1060,7 +1060,7 @@ eh
       <i class="fa-solid fa-lock text-amber-400 mt-0.5 shrink-0 text-xs"></i>
       <p class="text-[11px] text-amber-200">
         <strong class="text-amber-300">Keep all communication inside Echo Hub.</strong>
-        Never share personal contact info with vendors — even if they ask. Off-platform communication puts your account at risk.
+Do not share your phone, WhatsApp, personal email, or social handles with vendors — even if they ask. Your <strong class="text-amber-100">PayPal email</strong> is the only exception, for payouts. Off-platform communication puts your account at risk.        Never share personal contact info with vendors — even if they ask. Off-platform communication puts your account at risk.
       </p>
     </div>
 
@@ -2797,9 +2797,12 @@ async function reportCurrentChat() {
   }
 
   const reason = prompt(
-    "Report this conversation to admin.\n\n" +
-    "What's the issue? (e.g., 'vendor asked for my WhatsApp', 'vendor offered to pay me off-platform', 'inappropriate message')"
-  );
+  "Report this conversation to admin.\n\n" +
+  "What's the issue?\n" +
+  "(e.g., 'vendor asked for my WhatsApp', 'vendor asked for my personal email', " +
+  "'vendor offered to pay me off-platform', 'inappropriate message')\n\n" +
+  "Note: A vendor requesting your PayPal email for payouts is allowed and is not a violation."
+);
   if (!reason || !reason.trim()) return;
 
   try {
@@ -3305,7 +3308,7 @@ const GUIDE_SLIDES = [
     color: 'rose',
     title: 'Keep It On-Platform',
     body: `
-      <p class="text-xs text-slate-300 mb-3">All conversations, reviews, and payments must happen <strong class="text-white">inside Echo Hub</strong> — even if a vendor asks for your phone, WhatsApp, Telegram, or email.</p>
+      <p class="text-xs text-slate-300 mb-3">All conversations, reviews, and payments must happen <strong class="text-white">inside Echo Hub</strong> — even if a vendor asks for your phone, WhatsApp, Telegram, or personal email. Your <strong class="text-white">PayPal email</strong> is the only thing you may share, and only for payouts.</p>
       <div class="bg-darkBg border border-emerald-500/30 rounded-xl p-3 space-y-1.5 mb-3">
         <p class="text-[10px] font-bold uppercase text-emerald-400">Why it matters</p>
         <p class="text-xs text-slate-200">✓ Your review stays trackable</p>
