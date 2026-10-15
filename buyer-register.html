@@ -457,17 +457,33 @@ form.addEventListener('submit', async (e) => {
   const email = document.getElementById('accountEmail').value.trim();
   const password = document.getElementById('password').value;
   const paypalEmail = document.getElementById('paypalEmail').value.trim();
-  const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
+  const whatsappNumber = (document.getElementById('whatsappNumber').value || '').trim();
+if (!whatsappNumber) {
+  alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+  alertBox.textContent = 'Please enter your phone number before submitting.';
+  alertBox.classList.remove('hidden');
+  return;
+}
   const categories = document.getElementById('categories').value.trim();
   const referralCode = document.getElementById('referralCode').value.trim();
   const policyAgreed = document.getElementById('policyAgreeCheckbox').checked;
 
-  if (!selectedIdFile) {
-    alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
-    alertBox.textContent = 'Please attach a valid Government National ID document before submitting.';
-    alertBox.classList.remove('hidden');
-    return;
-  }
+  /* Phone number guard — must have at least 7 digits */
+const phoneDigits = (whatsappNumber || '').replace(/\D/g, '');
+if (phoneDigits.length < 7) {
+  alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+  alertBox.textContent = 'Please enter a valid phone number (at least 7 digits) before submitting.';
+  alertBox.classList.remove('hidden');
+  return;
+}
+
+/* ID document guard */
+if (!selectedIdFile) {
+  alertBox.className = 'p-3.5 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+  alertBox.textContent = 'Please attach a valid Government National ID document before submitting.';
+  alertBox.classList.remove('hidden');
+  return;
+}
 
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Registering buyer account...';
@@ -518,9 +534,17 @@ form.addEventListener('submit', async (e) => {
     }
         // Upload the selected ID file now that the user is authenticated
     let nationalIdUrl = '';
-    if (selectedIdFile) {
-      nationalIdUrl = await uploadImageToStorage(selectedIdFile, 'ids');
-    }
+if (selectedIdFile) {
+  try {
+    nationalIdUrl = await uploadImageToStorage(selectedIdFile, 'ids');
+  } catch (uploadErr) {
+    console.error('ID upload failed:', uploadErr);
+    throw new Error('Your ID document could not be uploaded. Please check your connection and try again.');
+  }
+}
+if (!nationalIdUrl || !nationalIdUrl.startsWith('http')) {
+  throw new Error('ID document was not uploaded. Please re-attach your document and try again.');
+}
 
     /* Primary Profile Payload using correct database column 'whatsapp' from schema */
     const profilePayload = {
