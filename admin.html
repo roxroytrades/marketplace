@@ -2932,8 +2932,10 @@ function renderLeftPaneThreadsList() {
       );
       return t.isDirect && !t.productId && involvesAdmin;
     }
-    if (currentLeftFilter === 'MARKETPLACE') return !t.isDirect && Boolean(t.productId);
-    if (currentLeftFilter === 'ACTION_REQUIRED') return t.statusBadge === 'AWAITING_ATTENTION';
+    if (currentLeftFilter === 'MARKETPLACE') {
+      return !t.isDirect && (Boolean(t.productId) || t.isPair);
+    }
+        if (currentLeftFilter === 'ACTION_REQUIRED') return t.statusBadge === 'AWAITING_ATTENTION';
     if (currentLeftFilter === 'FLAGGED') return t.hasFlaggedRisk;
     if (currentLeftFilter === 'VENDOR_SOLICITATION') return t.hasVendorSolicitation;
 
