@@ -4483,6 +4483,7 @@ function updateAdminUnreadBadge() {
   } else {
     badge.classList.add('hidden');
   }
+    updateLeftPaneTabBadges();
 }
 
 function updateSolicitationBadge() {
@@ -4505,6 +4506,69 @@ function updateSolicitationBadge() {
   } else {
     badge.classList.add('hidden');
   }
+}
+
+// ---------------------------------------------------------------------------
+// Per-sub-tab unread counts
+// NOTE: the predicates below must mirror renderLeftPaneThreadsList's tab
+// filter. If you add/rename a tab, update both places.
+// ---------------------------------------------------------------------------
+function computeTabUnreadCounts() {
+  const adminId = currentAdminUser?.id;
+  const meta = getThreadMeta();
+  const hiddenMap = meta.hidden || {};
+
+  const isUnreadThread = (t) => {
+    if (hiddenMap[t.key]) return false;
+    return (t.messages || []).some(m => m.sender_id !== adminId && !m.is_read);
+  };
+
+  const counts = {
+    ALL: 0,
+    ADMIN_DIRECT: 0,
+    MARKETPLACE: 0,
+    FLAGGED: 0,
+    VENDOR_SOLICITATION: 0
+  };
+
+  (allThreadsCache || []).forEach(t => {
+    if (t.isUnscoped) return;
+    if (!isUnreadThread(t)) return;
+
+    counts.ALL += 1;
+
+    const involvesAdmin = adminId && (t.messages || []).some(
+      m => m.sender_id === adminId || m.receiver_id === adminId
+    );
+    if (t.isDirect && !t.productId && involvesAdmin) counts.ADMIN_DIRECT += 1;
+
+    if (!t.isDirect && (Boolean(t.productId) || t.isPair)) counts.MARKETPLACE += 1;
+
+    if (t.hasFlaggedRisk) counts.FLAGGED += 1;
+    if (t.hasVendorSolicitation) counts.VENDOR_SOLICITATION += 1;
+  });
+
+  return counts;
+}
+
+function updateLeftPaneTabBadges() {
+  const counts = computeTabUnreadCounts();
+
+  const labels = {
+    ALL: 'All',
+    ADMIN_DIRECT: 'Admin Direct',
+    MARKETPLACE: 'Reviews',
+    FLAGGED: '🚨 Contact Risk',
+    VENDOR_SOLICITATION: '🚩 Vendor Solicitation'
+  };
+
+  Object.keys(counts).forEach(key => {
+    const btn = document.getElementById(`leftTab-${key}`);
+    if (!btn) return;
+    const count = counts[key];
+    const baseLabel = labels[key];
+    btn.textContent = count > 0 ? `${baseLabel} (${count})` : baseLabel;
+  });
 }
 
 </script>
