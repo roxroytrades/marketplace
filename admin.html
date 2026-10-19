@@ -1409,10 +1409,10 @@ let adminRealtimeChannel = null;
 
 /* Contact Risk Detection Regex Patterns */
 const CONTACT_RISK_REGEX = {
-  email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi,
-  phone: /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
-  links: /(wa\.me|t\.me|telegram|whatsapp|instagram\.com|facebook\.com|tiktok\.com|twitter\.com|x\.com|paypal\.me)/gi,
-  offplatform: /\b(text me|call me|zelle|venmo|cashapp|paypal outside|off platform|external pay|pay me direct|contact me at)\b/gi
+  email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i,
+  phone: /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/,
+  links: /(wa\.me|t\.me|telegram|whatsapp|instagram\.com|facebook\.com|tiktok\.com|twitter\.com|x\.com|paypal\.me)/i,
+  offplatform: /\b(text me|call me|zelle|venmo|cashapp|paypal outside|off platform|external pay|pay me direct|contact me at)\b/i
 };
 
 /* Check if a message text contains contact risk indicators */
