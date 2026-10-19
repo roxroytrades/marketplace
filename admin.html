@@ -2692,25 +2692,65 @@ function groupMessagesIntoThreads(messages) {
           lastTimestamp: m.created_at
         };
       }
-    } else {
-      // Non-admin, non-marketplace messages: exclude from Admin Direct.
-      threadKey = `UNSCOPED_${m.id}`;
+        } else {
+      // Not admin-direct, and no product_id. If we can identify both a
+      // buyer and a vendor for this message, treat it as a marketplace
+      // pair thread so it isn't invisible to every tab. Only truly
+      // unidentifiable messages fall through to UNSCOPED_.
+      let pairBuyerId  = m.buyer_id  || null;
+      let pairVendorId = m.vendor_id || null;
 
-      if (!threadMap[threadKey]) {
-        threadMap[threadKey] = {
-          key: threadKey,
-          isDirect: false,
-          isUnscoped: true,
-          buyerId: m.buyer_id || null,
-          vendorId: m.vendor_id || null,
-          productId: null,
-          partnerId: null,
-          statusBadge: m.status_badge || 'AWAITING_ATTENTION',
-          messages: [],
-          hasFlaggedRisk: false,
-          hasVendorSolicitation: false,
-          lastTimestamp: m.created_at
-        };
+      if (!pairBuyerId || !pairVendorId) {
+        const senderProf   = profilesCache[m.sender_id]   || allUsersCache.find(u => u.id === m.sender_id);
+        const receiverProf = profilesCache[m.receiver_id] || allUsersCache.find(u => u.id === m.receiver_id);
+        const senderIsVendor   = ['seller', 'vendor'].includes((senderProf?.role   || '').toLowerCase());
+        const receiverIsVendor = ['seller', 'vendor'].includes((receiverProf?.role || '').toLowerCase());
+
+        if (senderIsVendor && !pairVendorId)     pairVendorId = m.sender_id;
+        if (!senderIsVendor && !pairBuyerId)     pairBuyerId  = m.sender_id;
+        if (receiverIsVendor && !pairVendorId)   pairVendorId = m.receiver_id;
+        if (!receiverIsVendor && !pairBuyerId)   pairBuyerId  = m.receiver_id;
+      }
+
+      if (pairBuyerId && pairVendorId && pairBuyerId !== pairVendorId) {
+        threadKey = `PAIR_${pairBuyerId}_${pairVendorId}`;
+
+        if (!threadMap[threadKey]) {
+          threadMap[threadKey] = {
+            key: threadKey,
+            isDirect: false,
+            isPair: true,
+            buyerId: pairBuyerId,
+            vendorId: pairVendorId,
+            productId: null,
+            partnerId: null,
+            statusBadge: m.status_badge || 'AWAITING_ATTENTION',
+            messages: [],
+            hasFlaggedRisk: false,
+            hasVendorSolicitation: false,
+            lastTimestamp: m.created_at
+          };
+        }
+      } else {
+        // Truly unscoped: no product, no identifiable buyer/vendor pair.
+        threadKey = `UNSCOPED_${m.id}`;
+
+        if (!threadMap[threadKey]) {
+          threadMap[threadKey] = {
+            key: threadKey,
+            isDirect: false,
+            isUnscoped: true,
+            buyerId: m.buyer_id || null,
+            vendorId: m.vendor_id || null,
+            productId: null,
+            partnerId: null,
+            statusBadge: m.status_badge || 'AWAITING_ATTENTION',
+            messages: [],
+            hasFlaggedRisk: false,
+            hasVendorSolicitation: false,
+            lastTimestamp: m.created_at
+          };
+        }
       }
     }
 
@@ -2718,8 +2758,9 @@ function groupMessagesIntoThreads(messages) {
     thread.messages.push(m);
     if (m.created_at > thread.lastTimestamp) thread.lastTimestamp = m.created_at;
 
-    if (hasContactRisk(m.content)) thread.hasFlaggedRisk = true;
-    if (isVendorSolicitation(m))    thread.hasVendorSolicitation = true;
+        const msgText = m.content || m.text || m.message_text || m.message || m.body || '';
+    if (hasContactRisk(msgText))  thread.hasFlaggedRisk = true;
+    if (isVendorSolicitation(m))  thread.hasVendorSolicitation = true;
   });
 
   return Object.values(threadMap).sort(
