@@ -2607,31 +2607,43 @@ async function loadMessagingData(isSilent = false) {
 /* Group messages by thread target (Direct Outreach vs Marketplace Product Thread) */
 function groupMessagesIntoThreads(messages) {
   const threadMap = {};
+  const adminId = currentAdminUser?.id;
 
   messages.forEach(m => {
-    /* Determine unique thread key */
+    const involvesAdmin =
+      adminId && (m.sender_id === adminId || m.receiver_id === adminId);
+
+    const hasProductContext = Boolean(m.product_id);
+    const isAdminDirect =
+      m.channel_type === 'ADMIN_DIRECT' && involvesAdmin && !hasProductContext;
+
     let threadKey;
-    let isDirect = false;
 
-    if (m.channel_type === 'ADMIN_DIRECT' || !m.product_id) {
-      /* Direct support channel between Admin and single user */
-      const targetUserId = (m.sender_id === currentAdminUser?.id) ? (m.buyer_id || m.vendor_id) : m.sender_id;
-      threadKey = `DIRECT_${targetUserId}`;
-      isDirect = true;
-    } else {
-      /* Marketplace review thread */
-      threadKey = `PROD_${m.buyer_id}_${m.vendor_id}_${m.product_id}`;
-    }
+    if (isAdminDirect) {
+      const partnerId = m.sender_id === adminId ? m.receiver_id : m.sender_id;
+      if (!partnerId) return;
+      threadKey = `DIRECT_${partnerId}`;
 
-        if (!threadMap[threadKey]) {
-      // For marketplace threads, derive BOTH sides authoritatively.
-      // vendor_id / buyer_id are stable on the message; sender_id /
-      // receiver_id alternate depending on who wrote each message.
+      if (!threadMap[threadKey]) {
+        threadMap[threadKey] = {
+          key: threadKey,
+          isDirect: true,
+          buyerId: null,
+          vendorId: null,
+          productId: null,
+          partnerId,
+          statusBadge: m.status_badge || 'AWAITING_ATTENTION',
+          messages: [],
+          hasFlaggedRisk: false,
+          hasVendorSolicitation: false,
+          lastTimestamp: m.created_at
+        };
+      }
+    } else if (hasProductContext) {
       let derivedVendorId = m.vendor_id || null;
       let derivedBuyerId  = m.buyer_id  || null;
 
-      if (!isDirect && (!derivedVendorId || !derivedBuyerId)) {
-        // Fallback: infer roles from sender/receiver
+      if (!derivedVendorId || !derivedBuyerId) {
         const senderProf   = profilesCache[m.sender_id]   || allUsersCache.find(u => u.id === m.sender_id);
         const receiverProf = profilesCache[m.receiver_id] || allUsersCache.find(u => u.id === m.receiver_id);
         const senderIsVendor   = ['seller', 'vendor'].includes((senderProf?.role   || '').toLowerCase());
@@ -2643,38 +2655,56 @@ function groupMessagesIntoThreads(messages) {
         if (!receiverIsVendor && !derivedBuyerId) derivedBuyerId  = m.receiver_id;
       }
 
-      threadMap[threadKey] = {
-        key: threadKey,
-        isDirect: isDirect,
-        buyerId:  derivedBuyerId,
-        vendorId: derivedVendorId,
-        productId: m.product_id,
-        partnerId: isDirect
-          ? ((m.sender_id === currentAdminUser?.id) ? (m.buyer_id || m.vendor_id) : m.sender_id)
-          : null,
-        statusBadge: m.status_badge || 'AWAITING_ATTENTION',
-        messages: [],
-        hasFlaggedRisk: false,
-        hasVendorSolicitation: false,
-        lastTimestamp: m.created_at
-      };
+      threadKey = `PROD_${derivedBuyerId}_${derivedVendorId}_${m.product_id}`;
+
+      if (!threadMap[threadKey]) {
+        threadMap[threadKey] = {
+          key: threadKey,
+          isDirect: false,
+          buyerId: derivedBuyerId,
+          vendorId: derivedVendorId,
+          productId: m.product_id,
+          partnerId: null,
+          statusBadge: m.status_badge || 'AWAITING_ATTENTION',
+          messages: [],
+          hasFlaggedRisk: false,
+          hasVendorSolicitation: false,
+          lastTimestamp: m.created_at
+        };
+      }
+    } else {
+      // Non-admin, non-marketplace messages: exclude from Admin Direct.
+      threadKey = `UNSCOPED_${m.id}`;
+
+      if (!threadMap[threadKey]) {
+        threadMap[threadKey] = {
+          key: threadKey,
+          isDirect: false,
+          isUnscoped: true,
+          buyerId: m.buyer_id || null,
+          vendorId: m.vendor_id || null,
+          productId: null,
+          partnerId: null,
+          statusBadge: m.status_badge || 'AWAITING_ATTENTION',
+          messages: [],
+          hasFlaggedRisk: false,
+          hasVendorSolicitation: false,
+          lastTimestamp: m.created_at
+        };
+      }
     }
 
-    threadMap[threadKey].messages.push(m);
+    const thread = threadMap[threadKey];
+    thread.messages.push(m);
+    if (m.created_at > thread.lastTimestamp) thread.lastTimestamp = m.created_at;
 
-// Generic contact risk (email/phone/links anywhere in the message)
-if (hasContactRisk(m.content)) {
-  threadMap[threadKey].hasFlaggedRisk = true;
-}
-
-// Priority alert: vendor soliciting a non-vendor
-if (isVendorSolicitation(m)) {
-  threadMap[threadKey].hasVendorSolicitation = true;
-}
+    if (hasContactRisk(m.content)) thread.hasFlaggedRisk = true;
+    if (isVendorSolicitation(m))    thread.hasVendorSolicitation = true;
   });
 
-  /* Convert to array and sort by newest message first */
-  return Object.values(threadMap).sort((a, b) => new Date(b.lastTimestamp) - new Date(a.lastTimestamp));
+  return Object.values(threadMap).sort(
+    (a, b) => new Date(b.lastTimestamp) - new Date(a.lastTimestamp)
+  );
 }
 
 /* 5-Tab Quick-Switch Filter for Left Pane */
@@ -2830,13 +2860,22 @@ function renderLeftPaneThreadsList() {
   const search = (document.getElementById('leftPaneThreadSearch')?.value || '').toLowerCase();
 
   /* Apply Tab Filter */
+    /* Apply Tab Filter */
   let filtered = allThreadsCache.filter(t => {
-    if (currentLeftFilter === 'ADMIN_DIRECT') return t.isDirect;
-    if (currentLeftFilter === 'MARKETPLACE') return !t.isDirect;
+    if (t.isUnscoped) return false;
+
+    if (currentLeftFilter === 'ADMIN_DIRECT') {
+      const adminId = currentAdminUser?.id;
+      const involvesAdmin = adminId && (t.messages || []).some(
+        m => m.sender_id === adminId || m.receiver_id === adminId
+      );
+      return t.isDirect && !t.productId && involvesAdmin;
+    }
+    if (currentLeftFilter === 'MARKETPLACE') return !t.isDirect && Boolean(t.productId);
     if (currentLeftFilter === 'ACTION_REQUIRED') return t.statusBadge === 'AWAITING_ATTENTION';
     if (currentLeftFilter === 'FLAGGED') return t.hasFlaggedRisk;
     if (currentLeftFilter === 'VENDOR_SOLICITATION') return t.hasVendorSolicitation;
-        
+
     return true; // 'ALL'
   });
 
@@ -3209,6 +3248,15 @@ async function handleAdminSendMessage(e) {
 
   const thread = allThreadsCache.find(t => t.key === activeSelectedThreadId);
   if (!thread) return;
+
+  const adminId = currentAdminUser?.id;
+  const involvesAdmin = adminId && (thread.messages || []).some(
+    m => m.sender_id === adminId || m.receiver_id === adminId
+  );
+  if (thread.isDirect && !involvesAdmin) {
+    alert('This thread is not an admin direct conversation. Reply blocked.');
+    return;
+  }
 
   try {
     let targetProdId = thread.isDirect ? null : thread.productId;
