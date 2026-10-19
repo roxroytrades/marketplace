@@ -4404,9 +4404,18 @@ async function uploadAndSaveBrandingIcon() {
 function updateAdminUnreadBadge() {
   const badge = document.getElementById('unreadMessagesBadge');
   if (!badge) return;
-  const totalUnread = allThreadsCache.reduce((sum, t) => sum + (t.messages || []).filter(m => m.sender_id !== currentAdminUser?.id && !m.is_read).length, 0);
-  if (totalUnread > 0) {
-    badge.textContent = totalUnread;
+
+  const adminId = currentAdminUser?.id;
+  const meta = getThreadMeta();
+  const hiddenMap = meta.hidden || {};
+
+  const count = (allThreadsCache || []).filter(t => {
+    if (hiddenMap[t.key]) return false;
+    return (t.messages || []).some(m => m.sender_id !== adminId && !m.is_read);
+  }).length;
+
+  if (count > 0) {
+    badge.textContent = count;
     badge.classList.remove('hidden');
   } else {
     badge.classList.add('hidden');
