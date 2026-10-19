@@ -2712,6 +2712,25 @@ function groupMessagesIntoThreads(messages) {
         if (!receiverIsVendor && !pairBuyerId)   pairBuyerId  = m.receiver_id;
       }
 
+      // Defensive: if buyer_id === vendor_id, the insert path wrote the
+// sender as both sides. Infer the correct pair from roles.
+if (pairBuyerId && pairVendorId && pairBuyerId === pairVendorId) {
+  const senderProf   = profilesCache[m.sender_id]   || allUsersCache.find(u => u.id === m.sender_id);
+  const receiverProf = profilesCache[m.receiver_id] || allUsersCache.find(u => u.id === m.receiver_id);
+  const senderIsVendor   = ['seller', 'vendor'].includes((senderProf?.role   || '').toLowerCase());
+  const receiverIsVendor = ['seller', 'vendor'].includes((receiverProf?.role || '').toLowerCase());
+
+  if (senderIsVendor && !receiverIsVendor) {
+    pairVendorId = m.sender_id;
+    pairBuyerId  = m.receiver_id;
+  } else if (!senderIsVendor && receiverIsVendor) {
+    pairBuyerId  = m.sender_id;
+    pairVendorId = m.receiver_id;
+  } else {
+    pairBuyerId = pairVendorId = null;
+  }
+}
+
       if (pairBuyerId && pairVendorId && pairBuyerId !== pairVendorId) {
         threadKey = `PAIR_${pairBuyerId}_${pairVendorId}`;
 
