@@ -4473,6 +4473,7 @@ function updateAdminUnreadBadge() {
   const hiddenMap = meta.hidden || {};
 
   const count = (allThreadsCache || []).filter(t => {
+    if (t.isUnscoped) return false;
     if (hiddenMap[t.key]) return false;
     return (t.messages || []).some(m => m.sender_id !== adminId && !m.is_read);
   }).length;
