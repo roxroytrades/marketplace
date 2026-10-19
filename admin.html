@@ -95,6 +95,23 @@ function undoHideThreadTile(threadId) {
   refreshThreadsUI();
 }
 
+function unhideAllThreads() {
+  const meta = getThreadMeta();
+  const hiddenKeys = Object.keys(meta.hidden || {});
+  if (hiddenKeys.length === 0) {
+    if (typeof showToast === 'function') showToast('No hidden threads to restore.');
+    return;
+  }
+  meta.hidden = {};
+  saveThreadMeta(meta);
+  if (typeof showToast === 'function') showToast(`Restored ${hiddenKeys.length} hidden thread(s).`);
+  if (typeof loadMessagingData === 'function') {
+    loadMessagingData();
+  } else if (typeof refreshThreadsUI === 'function') {
+    refreshThreadsUI();
+  }
+}
+
 function togglePinThread(threadId) {
   const meta = getThreadMeta();
   if (!meta.pinned) meta.pinned = [];
@@ -723,6 +740,9 @@ h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
             <button onclick="switchLeftPaneFilter('CONTACTS')" id="leftTab-CONTACTS" class="left-pane-filter-btn px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-darkBg text-slate-400 border-borderSlate hover:text-slate-200">
               📇 User Directory
             </button>
+          <button onclick="unhideAllThreads()" class="px-2.5 py-1.5 rounded-lg font-bold border transition shrink-0 bg-slate-800 text-slate-400 border-borderSlate hover:text-white hover:bg-slate-700" title="Restore all hidden conversation tiles">
+  ♻️ Restore Hidden
+</button>
           </div>
         </div>
 
@@ -4425,7 +4445,17 @@ function updateAdminUnreadBadge() {
 function updateSolicitationBadge() {
   const badge = document.getElementById('solicitationBadge');
   if (!badge) return;
-  const count = (allThreadsCache || []).filter(t => t.hasVendorSolicitation).length;
+
+  const adminId = currentAdminUser?.id;
+  const meta = getThreadMeta();
+  const hiddenMap = meta.hidden || {};
+
+  const count = (allThreadsCache || []).filter(t => {
+    if (!t.hasVendorSolicitation) return false;
+    if (hiddenMap[t.key]) return false;
+    return (t.messages || []).some(m => m.sender_id !== adminId && !m.is_read);
+  }).length;
+
   if (count > 0) {
     badge.textContent = `🚩 ${count}`;
     badge.classList.remove('hidden');
